@@ -8,6 +8,7 @@ out/
 .classpath
 .pydevproject
 .project
+PlaneSpotter.iml
 
 #intelliJ
 .idea/
