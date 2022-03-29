@@ -1,5 +1,12 @@
+
+#ignore compiled files
 bin/
+out/
+
+#ignore settings
 .settings
 .classpath
 .pydevproject
 
+#intelliJ
+.idea/
