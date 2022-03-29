@@ -3,8 +3,11 @@ package planespotter.display.display;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
 
-public class Init {
+public class Init implements ActionListener {
 
     /**
      * Components
@@ -25,6 +28,7 @@ public class Init {
         // TODO: new Frame
         frame = new JFrame("PlaneSpotter");
         frame.setSize(800, 500);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
         frame.setLayout(null);
         frame.setResizable(false);
@@ -39,7 +43,7 @@ public class Init {
         title.setVisible(true);
 
         // default button border
-        Border border = BorderFactory.createLineBorder(Color.BLACK);
+        Border border = BorderFactory.createLineBorder(Color.GRAY, 4);
 
         // TODO: new 'List View' Button
         btListView = new JButton("List View");
@@ -48,6 +52,7 @@ public class Init {
         btListView.setForeground(Color.WHITE);
         btListView.setFont(font);
         btListView.setBorder(border);
+        btListView.addActionListener(this);
         btListView.setVisible(true);
 
         // TODO: new 'Map View' Button
@@ -57,6 +62,7 @@ public class Init {
         btMapView.setForeground(Color.WHITE);
         btMapView.setFont(font);
         btMapView.setBorder(border);
+        btMapView.addActionListener(this);
         btMapView.setVisible(true);
 
         // TODO: new 'Exit' Button
@@ -66,6 +72,7 @@ public class Init {
         btExit.setForeground(Color.WHITE);
         btExit.setFont(font);
         btExit.setBorder(border);
+        btExit.addActionListener(this);
         btExit.setVisible(true);
 
         // TODO: new backround image (label)
@@ -76,10 +83,10 @@ public class Init {
 
         // TODO: adding components to frame
         frame.add(title);
-        frame.add(backround);
         frame.add(btListView);
         frame.add(btMapView);
         frame.add(btExit);
+        frame.add(backround);
 
         frame.setVisible(true);
         frame.requestFocus();
@@ -88,4 +95,17 @@ public class Init {
     }
 
 
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object src = e.getSource();
+        if (src == btExit) System.exit(0);
+        else if (src == btListView) {
+            frame.setVisible(false);
+            new ListView(frame);
+        }
+        else if (src == btMapView) {
+            frame.setVisible(false);
+            new MapView();
+        }
+    }
 }
