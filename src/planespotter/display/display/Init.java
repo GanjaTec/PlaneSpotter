@@ -16,7 +16,8 @@ public class Init implements ActionListener {
     private final ImageIcon img = new ImageIcon(this.getClass().getResource("/background.jpg"));
     private final JLabel title, backround;
     private final JButton btMapView, btListView, btExit;
-    private final Font font = new Font(Font.SANS_SERIF, 1, 20);
+
+    private final Font font = new Font("garamond", 1, 20);
 
     /**
      * Init-constructor
@@ -32,24 +33,27 @@ public class Init implements ActionListener {
         frame.setLocationRelativeTo(null);
         frame.setLayout(null);
         frame.setResizable(false);
+        frame.setUndecorated(true);
 
         // TODO: new title Component
         title = new JLabel("PlaneSpotter");
-        Font f2 = font.deriveFont(60f);
+        Font f2 = new Font("Atlantico", 1, 60);
         title.setFont(f2);
         title.setFocusable(false);
         title.setBounds(200, 60, 400, 60);
-        title.setForeground(Color.DARK_GRAY);
+        title.setForeground(Color.CYAN);
         title.setVisible(true);
 
-        // default button border
-        Border border = BorderFactory.createLineBorder(Color.GRAY, 4);
+        // default button border and colors
+        Border border = BorderFactory.createLineBorder(Color.BLACK, 4);
+        Color bg = Color.CYAN;
+        Color fg = Color.DARK_GRAY;
 
         // TODO: new 'List View' Button
         btListView = new JButton("List View");
-        btListView.setBounds(320, 180, 160, 40);
-        btListView.setBackground(Color.DARK_GRAY);
-        btListView.setForeground(Color.WHITE);
+        btListView.setBounds(300, 200, 200, 50);
+        btListView.setBackground(bg);
+        btListView.setForeground(fg);
         btListView.setFont(font);
         btListView.setBorder(border);
         btListView.addActionListener(this);
@@ -57,9 +61,9 @@ public class Init implements ActionListener {
 
         // TODO: new 'Map View' Button
         btMapView = new JButton("Map View");
-        btMapView.setBounds(320, 250, 160, 40);
-        btMapView.setBackground(Color.DARK_GRAY);
-        btMapView.setForeground(Color.WHITE);
+        btMapView.setBounds(300, 270, 200, 50);
+        btMapView.setBackground(bg);
+        btMapView.setForeground(fg);
         btMapView.setFont(font);
         btMapView.setBorder(border);
         btMapView.addActionListener(this);
@@ -67,9 +71,9 @@ public class Init implements ActionListener {
 
         // TODO: new 'Exit' Button
         btExit = new JButton("Exit");
-        btExit.setBounds(360, 320, 80, 40);
-        btExit.setBackground(Color.DARK_GRAY);
-        btExit.setForeground(Color.WHITE);
+        btExit.setBounds(350, 340, 100, 50);
+        btExit.setBackground(bg);
+        btExit.setForeground(fg);
         btExit.setFont(font);
         btExit.setBorder(border);
         btExit.addActionListener(this);
@@ -104,8 +108,8 @@ public class Init implements ActionListener {
             new ListView(frame);
         }
         else if (src == btMapView) {
-            frame.setVisible(false);
-            new MapView();
+            //frame.setVisible(false);
+            new MapView(frame);
         }
     }
 }

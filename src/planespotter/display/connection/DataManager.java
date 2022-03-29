@@ -6,6 +6,9 @@ public class DataManager {
 
     }
 
+    public static void recieve () {
+
+    }
 
 
 }
