@@ -1,6 +1,4 @@
-package planespotter.display.display;
-
-import planespotter.display.connection.Data;
+package planespotter.display;
 
 import javax.swing.*;
 import java.awt.*;

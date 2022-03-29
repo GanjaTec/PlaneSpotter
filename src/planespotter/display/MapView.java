@@ -1,4 +1,4 @@
-package planespotter.display.display;
+package planespotter.display;
 
 import javax.swing.*;
 

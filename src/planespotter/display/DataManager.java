@@ -1,4 +1,4 @@
-package planespotter.display.connection;
+package planespotter.display;
 
 public class DataManager {
 
