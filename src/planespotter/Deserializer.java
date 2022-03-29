@@ -7,11 +7,9 @@ import com.google.gson.*;
 
 public class Deserializer {
 	
-
-	public Deserializer(){
+	public Deserializer() {
 		
 	}
-	
 	
 	// Handle Response Data, this basically turns the output to CSV
 	// TODO REPLACE WITH PROPER JSON HANDLING
@@ -26,8 +24,7 @@ public class Deserializer {
 		String[] array = data.split(",", 3);
 
 		List<String> datalist = new ArrayList<String>();
-		for (String a : array)
-			datalist.add(a);
+		for (String a : array) datalist.add(a);
 
 		// Remove fr24 internal version info and such
 		datalist.remove(1);
@@ -50,6 +47,8 @@ public class Deserializer {
 		return datalist;
 	}
 
+	
+	//Convert Json to Frame-Objects
 	public List<Frame> deserialize(List<String> data) {
 		List<Frame> frames = new ArrayList<Frame>();
 		Gson gson = new Gson();
