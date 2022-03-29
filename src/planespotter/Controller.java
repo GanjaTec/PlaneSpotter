@@ -3,6 +3,7 @@ package planespotter;
 import planespotter.display.*;
 
 import javax.swing.*;
+import java.lang.module.Configuration;
 import java.util.HashMap;
 
 public class Controller {
@@ -11,6 +12,7 @@ public class Controller {
      * HashMap containing all working frames
      */
     private static HashMap<Class, Boolean> framesworking = new HashMap<>();
+    private static Configuration cfg;
 
     public Controller () {}
 
@@ -45,6 +47,7 @@ public class Controller {
     }
 
     protected static void initialize () {
+        cfg = loadConfig();
         framesworking.put(Init.class, false);
         framesworking.put(ListView.class, false);
         framesworking.put(MapView.class, false);
@@ -60,6 +63,14 @@ public class Controller {
         if (framesworking.containsKey(key))
             return framesworking.get(key);
         else throw new FrameNotFoundException();
+    }
+
+    private void loadConfig () {
+
+    }
+
+    private void saveConfig () {
+
     }
 
 
