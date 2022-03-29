@@ -1,0 +1,23 @@
+In diesem Ordner lege ich python Scripts ab die mir dabei helfen verschiedene
+Teile des Programms zu testen und schnelle Prototypen zu entwerfen
+Ich habe in meinem Eclipse plugins laufen die es mir ermöglichen auch mit python und csv zu arbeiten
+
+fr24_get_test.py
+short test to understand the get request from Flightrader24 and understand its response
+run with:
+	python3 fr24_get_test.py
+
+dbBuilder.py
+Builds DB and populates it with airline, airport and type data
+its honestly really redundant and ugly, i could shorten the code by a lot via handling of table creation and population 
+through functions, but it works as a quick botch and copy-and-pasting makes it easy to add tables and populate them
+run with:
+	python3 dbBuilder.py
+	
+dbPut.py
+snippet test for dbBuilder.py
+
+dbOut.py
+Outputs data from DB, sql Querry is modified in code
+run with:
+	python3 dbOut.py

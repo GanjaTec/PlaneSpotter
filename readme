@@ -1,0 +1,10 @@
+Der Code in diesem Projekt zum jetzigen Zeitpunkt ist Schlecht
+
+Sehr Schlecht
+
+Ich bin mir sicher es gibt bessere Wege das zu tun, eig sollte ich die Daten
+mittels Gson und der Klasse Fr24Data einfach entserialisieren können
+muss aber dazu nochmal in Code schauen der auf einem anderen Rechner liegt
+
+in der zwischenzeit wandel ich den Response Body in etwas CSV-ähnliches um
+damit sollte man zumindest arbeiten können
