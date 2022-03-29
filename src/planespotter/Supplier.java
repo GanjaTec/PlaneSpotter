@@ -11,7 +11,6 @@ import java.util.List;
 import java.io.File;
 import java.io.FileWriter;
 import java.sql.*;
-import com.google.gson.*;
 
 public class Supplier {
 
@@ -124,7 +123,7 @@ public class Supplier {
 	public static void main(String[] args) {
 		try {
 			Deserializer ds = new Deserializer();
-			List<String> list = ds.deserialize(fr24get());
+			List<String> list = ds.stringMagic(fr24get());
 			for(String a : list) {
 				System.out.println(a);
 			}
