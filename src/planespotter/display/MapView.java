@@ -7,23 +7,26 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.CompletionStage;
 
+/*
 import com.bbn.openmap.app.OpenMap;
 import org.lodgon.openmapfx.core.*;
 import org.lodgon.openmapfx.service.MapViewPane;
 import org.lodgon.openmapfx.service.OpenMapFXService;
+*/
+
 
 public class MapView {
 
-    //private JFrame frame, owner;
+    private JFrame frame, owner;
     //private JMenuBar menuBar;
     //private JMenu datei, settings;
 
     // Map Struktur
-    private OpenMap map;
+    /*private OpenMap map;*/
 
 
     public MapView (JFrame owner) {
-        map = new OpenMap();
+        //map = new OpenMap();
 
 
 
@@ -40,7 +43,7 @@ public class MapView {
         frame.setVisible(true);*/
     }
 
-    @Override
+
     public void actionPerformed(ActionEvent e) {
 
     }
