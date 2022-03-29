@@ -9,7 +9,7 @@ out/
 .pydevproject
 .project
 PlaneSpotter.iml
-src/module-info.java
+src/planespotter/module-info.java
 
 #intelliJ
 .idea/
