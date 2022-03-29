@@ -11,7 +11,7 @@ import java.util.List;
 import java.io.File;
 import java.io.FileWriter;
 import java.sql.*;
-//import com.google.gson.*;
+import com.google.gson.*;
 
 public class Supplier {
 
@@ -36,6 +36,9 @@ public class Supplier {
 		// Handle Response Data, this basically turns the output to CSV
 		// TODO REPLACE WITH PROPER JSON HANDLING
 		// This is an absolute mess...
+		//Gson gson = new Gson();
+		//Fr24Data FRdata = gson.fromJson(response.body(), Fr24Data.class);
+		
 		String data = response.body();
 		String[] array = data.split(",", 3);
 
