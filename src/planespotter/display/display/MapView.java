@@ -12,11 +12,12 @@ import org.lodgon.openmapfx.core.*;
 import org.lodgon.openmapfx.service.MapViewPane;
 import org.lodgon.openmapfx.service.OpenMapFXService;
 
-public class MapView implements ActionListener {
+public class MapView {
 
-    private JFrame frame, owner;
-    private JMenuBar menuBar;
-    private JMenu datei, settings;
+    //private JFrame frame, owner;
+    //private JMenuBar menuBar;
+    //private JMenu datei, settings;
+
     // Map Struktur
     private OpenMap map;
 
@@ -29,14 +30,14 @@ public class MapView implements ActionListener {
 
         this.owner = owner;
 
-        frame = new JFrame("Map-View");
+        /*frame = new JFrame("Map-View");
         frame.setSize(1280, 720);
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.setLocationRelativeTo(null);
         frame.setLayout(null);
         frame.setResizable(false);
         //frame.add((Component) map);
-        frame.setVisible(true);
+        frame.setVisible(true);*/
     }
 
     @Override
