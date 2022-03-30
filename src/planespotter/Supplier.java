@@ -11,11 +11,10 @@ import java.util.List;
 import java.io.File;
 import java.io.FileWriter;
 import java.sql.*;
-import com.google.gson.*;
 
 public class Supplier {
 
-	public static List<String> fr24get() throws Exception {
+	public static HttpResponse<String> fr24get() throws Exception {
 		HttpClient client = HttpClient.newHttpClient();
 		// Request flightradar24 data with Firefox UserAgent
 		// URL splitted only for visibility
@@ -32,39 +31,7 @@ public class Supplier {
 				// User agent to prevent Response Code 451
 				.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0").build();
 		HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-
-		// Handle Response Data, this basically turns the output to CSV
-		// TODO REPLACE WITH PROPER JSON HANDLING
-		// This is an absolute mess...
-		//Gson gson = new Gson();
-		//Fr24Data FRdata = gson.fromJson(response.body(), Fr24Data.class);
-		
-		String data = response.body();
-		String[] array = data.split(",", 3);
-
-		List<String> datalist = new ArrayList<String>();
-		for (String a : array)
-			datalist.add(a);
-
-		// Remove fr24 internal version info and such
-		datalist.remove(1);
-		datalist.remove(0);
-
-		// RegEx Magic to remove fr24 internal referencing (will be replaced by my own)
-		data = datalist.get(0);
-		data = data.replaceAll("\\[", "");
-		data = data.replaceAll("]\n,\"........\"", "\n");
-		data = data.replaceAll("]", "");
-		array = data.split(":");
-		for (String a : array)
-			datalist.add(a);
-
-		// remove last unneeded entrys from list
-		datalist.remove(1);
-		datalist.remove(0);
-
-		// return the cleaned list
-		return datalist;
+		return response;
 	}
 
 	public static void writeToDB(List<String> datalist) throws Exception {
@@ -88,7 +55,7 @@ public class Supplier {
 				ResultSet rs = stmt.executeQuery(planeFilter);
 				String icao = new String();
 				while (rs.next()) {icao = rs.getString(0);}
-				
+
 				if (data[0] != null) {}
 				// insert into planes
 				PreparedStatement pstmt = conn.prepareStatement(planequerry);
@@ -98,8 +65,8 @@ public class Supplier {
 				pstmt.setString(4, data[8]);
 				pstmt.setString(5, data[18]);
 				pstmt.executeUpdate();
-				
-				
+
+
 				// insert into flights
 				pstmt = conn.prepareStatement(flightquerry);
 				pstmt.setString(1, data[0]);
@@ -155,7 +122,11 @@ public class Supplier {
 	// Main loop
 	public static void main(String[] args) {
 		try {
-			writeToDB(fr24get());
+			Deserializer ds = new Deserializer();
+			List<String> list = ds.stringMagic(fr24get());
+			for(String a : list) {
+				System.out.println(a);
+			}
 		} catch (Exception e) {
 			// Auto-generated catch block
 			e.printStackTrace();

@@ -1,12 +1,27 @@
 package planespotter;
 
 public class Fr24Data {
-	private String framenumber;
+	private int count;
+	private int version;
 	private Frame frame;
 
-	private Fr24Data(String nr, Frame f) {
-		this.framenumber = nr;
+	private Fr24Data(int count, int ver, Frame f) {
+		this.count = count;
+		this.version = ver;
 		this.frame = f;
+		
+	}
+	
+	public int getCount() {
+		return this.count;
+	}
+	
+	public int getVersion() {
+		return this.version;
+	}
+	
+	public Frame getFrame() {
+		return this.frame;
 	}
 
 

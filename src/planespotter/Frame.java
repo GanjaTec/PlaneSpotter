@@ -46,6 +46,83 @@ public class Frame{
 		this.airline = airline;
 
 	}
-
+	
+	public String getIcaoAdr() {
+		return this.icaoaddr;
+	}
+	
+	public double getLat() {
+		return this.lat;
+	}
+	
+	public double getLon() {
+		return this.lon;
+	}
+	
+	public int getHeading() {
+		return this.heading;
+	}
+	
+	public int getAltitude() {
+		return this.altitude;
+	}
+	
+	public int getGroundspeed() {
+		return this.groundspeed;
+	}
+	
+	public int getSquawk() {
+		return this.squawk;
+	}
+	
+	public String getTailnr() {
+		return this.tailnumber;
+	}
+	
+	public String getPlanetype() {
+		return this.planetype;
+	}
+	
+	public String getRegistration() {
+		return this.registration;
+	}
+	
+	public String getUnknown0() {
+		return this.unknown0;
+	}
+	
+	public String getSrcAirport() {
+		return this.srcairport;
+	}
+	
+	public String getDestAirport() {
+		return this.destairport;
+	}
+	
+	public String getFlightnumber() {
+		return this.flightnumber;
+	}
+	
+	public String getUnknown1() {
+		return this.unknown1;
+	}
+	
+	public String getUnknown2() {
+		return this.unknown2;
+	}
+	
+	public String getCallsign() {
+		return this.callsign;
+	}
+	
+	public String getUnknown3() {
+		return this.unknown3;
+	}
+	
+	public String getAirline() {
+		return this.airline;
+	}
+	
+	
 }
 
