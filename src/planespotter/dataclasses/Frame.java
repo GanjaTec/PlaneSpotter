@@ -1,4 +1,4 @@
-package planespotter;
+package planespotter.dataclasses;
 
 public class Frame{
 	private String icaoaddr;

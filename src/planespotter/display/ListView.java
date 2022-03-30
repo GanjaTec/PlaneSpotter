@@ -1,8 +1,9 @@
 package planespotter.display;
 
-import planespotter.Frame;
-
 import javax.swing.*;
+
+import planespotter.dataclasses.Frame;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
