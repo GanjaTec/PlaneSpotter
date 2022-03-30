@@ -80,16 +80,7 @@ public class Controller {
      */
     public static DataPoint createDataPoint (Frame frame) {
         DataPoint point = new DataPoint(0001,
-                                        new Flight( 0001,
-                                                    new Airport(0, frame.getSrcAirport()),
-                                                    new Airport(1, frame.getDestAirport()),
-                                                    new Plane(  0, frame.getIcaoAdr(),
-                                                                frame.getTailnr(),
-                                                                frame.getPlanetype(),
-                                                                frame.getRegistration(),
-                                                                new Airline(frame.getAirline())),
-                                                    frame.getFlightnumber(),
-                                                    null),
+                                        0001,
                                         new Position(frame.getLat(), frame.getLon()),
                                         frame.getTimestamp(),
                                         frame.getSquawk(),

@@ -11,7 +11,7 @@ public class ListObject {
 
     public ListObject (DataPoint p) {
         data = p;
-        title = "Flightnr.: " + data.getFlightID() + ", Airline: " + data.getFlight().getPlane().getAirline().getName();
+        title = "FlightID.: " + data.getFlightID() + ", Airline: " + "//DBOut.getFlight(data.getFlightID()).getPlane().getAirline()";
     }
 
     /**
