@@ -103,8 +103,6 @@ public class DBOut {
 			Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), plane, rs.getString("flightnr"), dps);
 			flights.add(flight);
 		}
-
-		//Flight flight = new Flight();
 		return flights;
 	}
 
