@@ -21,7 +21,7 @@ public class Frame{
 	private String unknown3;
 	private String airline;
 
-	private Frame(String icao, double lat, double lon, int heading, int alt, int speed,
+	public Frame(String icao, double lat, double lon, int heading, int alt, int speed,
 			int squawk, String tail, String type, String registration, int time, 
 			String src, String dest, String flight, String unk1, String unk2, String callsign, String unk3,
 			String airline) {
