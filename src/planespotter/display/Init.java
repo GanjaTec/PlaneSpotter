@@ -1,5 +1,7 @@
 package planespotter.display;
 
+import planespotter.Controller;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -103,8 +105,7 @@ public class Init implements ActionListener {
         Object src = e.getSource();
         if (src == btExit) System.exit(0);
         else if (src == btListView) {
-            frame.setVisible(false);
-            new ListView(frame);
+            Controller.openWindow(ListView.class, frame);
         }
         else if (src == btMapView) {
             //frame.setVisible(false);
