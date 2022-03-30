@@ -1,6 +1,6 @@
 package planespotter;
 
-import planespotter.display.Init;
+import planespotter.display.GUI_alt;
 
 public class Main {
 
@@ -14,7 +14,7 @@ public class Main {
 
 
         // TODO: new Init Frame
-        Controller.openWindow(Init.class, null);
+        Controller.openWindow(GUI_alt.class, null);
     }
 
 }

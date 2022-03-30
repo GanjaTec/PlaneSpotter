@@ -8,7 +8,7 @@ import java.util.List;
 
 import planespotter.dataclasses.*;
 
-public class dbOut {
+public class DBOut {
 	
 	public ResultSet querryDB(String querry) {
 		ResultSet rs;
@@ -25,16 +25,14 @@ public class dbOut {
 		}
 		return rs;
 	}
+
+	public Flight querryFlight() {
+
+		return null;
+	}
 	
-	//public Flight querryFlight() {
-		
-		
-	//	Flight flight = new Flight();
-	//	return flight;
-	//}
-	
-	public List<DataPoint> querryTrackingData(int flightID) {
-		List<DataPoint> dps = new ArrayList<DataPoint>();
+	public ArrayList<DataPoint> querryTrackingData(int flightID) {
+		ArrayList<DataPoint> dps = new ArrayList<DataPoint>();
 		try {
 		String getFlightTracking = "SELECT * from tracking WHERE ID == " + flightID;
 		ResultSet rs = querryDB(getFlightTracking);

@@ -1,8 +1,7 @@
 package planespotter.dataclasses;
 
-import planespotter.dataclasses.DataPoint;
 
-import javax.swing.*;
+import planespotter.Controller;
 
 public class ListObject {
 
@@ -11,7 +10,8 @@ public class ListObject {
 
     public ListObject (DataPoint p) {
         data = p;
-        title = "FlightID.: " + data.getFlightID() + ", Airline: " + "//DBOut.getFlight(data.getFlightID()).getPlane().getAirline()";
+        int fid = data.getFlightID();
+        title = "FlightID.: " + fid + ", Airline: " + "// airline";
     }
 
     /**
