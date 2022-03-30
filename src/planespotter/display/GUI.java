@@ -83,6 +83,10 @@ public class GUI {
         fmenu = new JInternalFrame("Menu", false);
         fmenu.setBounds(0, 50, 100, 670);
 
+        // TODO: setting up internal info frame
+        info = new JInternalFrame("Info", false);
+        info.setBounds(0, 50, 100, 670);
+
         // TODO: setting up title pane
         pTitle = new JPanel();
         pTitle.setBounds(0, 0, 1280, 50);
