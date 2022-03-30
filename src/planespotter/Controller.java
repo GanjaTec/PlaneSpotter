@@ -74,7 +74,7 @@ public class Controller {
 
     /**
      * creates DataPoint object from a Frame object
-     * represents a Flight at one point
+     * represents a flight at one point
      *
      * (frame could be changed in the future)
      */
