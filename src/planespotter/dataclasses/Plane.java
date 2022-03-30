@@ -6,13 +6,15 @@ package planespotter.dataclasses;
 public class Plane {
 
     private int id;
+    private String icao;
     private String tailnr;
     private String planetype;
     private String registration;
     private Airline airline;
 
-    public Plane (int id, String tailnr, String planetype, String registration, Airline airline) {
+    public Plane (int id, String icao, String tailnr, String planetype, String registration, Airline airline) {
         this.id = id;
+        this.icao = icao;
         this.tailnr = tailnr;
         this.planetype = planetype;
         this.registration = registration;
@@ -21,9 +23,11 @@ public class Plane {
 
     /**
      * getter
-     * TODO: return the Flight attribute
+     * TODO: return the Plane attributes
      */
     public int getID () { return id; }
+
+    public String getIcao () { return icao; }
 
     public String getTailnr () { return tailnr; }
 

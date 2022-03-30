@@ -99,7 +99,8 @@ public class ListView implements ActionListener {
         list.addMouseWheelListener(new MouseWheelListener() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
-                
+                int rot = e.getWheelRotation();
+
             }
         });
         frame.add(scrollpane);

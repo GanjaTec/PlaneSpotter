@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Flight {
-    int id;
+    private int id;
     private Airport start, dest;
     private String callsign, flightnr;
     private Plane plane;
