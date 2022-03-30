@@ -8,14 +8,14 @@ package planespotter.dataclasses;
 public class DataPoint {
     private int id;
     private int flightid;
-    private int timestemp;
+    private long timestemp;
     private int sqawk;
     private Position pos;
     private int speed;
     private int heading;
     private int altitude;
 
-    public DataPoint (int id, int flightid, Position pos, int timestamp, int sqawk, int speed, int heading, int altitude) {
+    public DataPoint (int id, int flightid, Position pos, long timestamp, int sqawk, int speed, int heading, int altitude) {
         this.id = id;
         this.flightid = flightid;
         this.pos = pos;
@@ -35,7 +35,7 @@ public class DataPoint {
     public Position getPos () { return pos; }
 
 
-    public int getTimestemp () { return timestemp; }
+    public long getTimestemp () { return timestemp; }
 
     public int getSqawk () { return sqawk; }
 

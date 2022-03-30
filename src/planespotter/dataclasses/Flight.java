@@ -8,9 +8,9 @@ public class Flight {
     private Airport start, dest;
     private String callsign, flightnr;
     private Plane plane;
-    private HashMap<Long, ArrayList<DataPoint>> route;
+    private HashMap<Long, DataPoint> route;
 
-    public Flight (int id, Airport start, Airport dest, Plane plane, String flightnr, HashMap<Long, ArrayList<DataPoint>> route) {
+    public Flight (int id, Airport start, Airport dest, Plane plane, String flightnr, HashMap<Long, DataPoint> route) {
         this.id = id;
         this.start = start;
         this.dest = dest;

@@ -3,20 +3,20 @@ package planespotter;
 public class SqlQuerrys {
 	
 	//insert Querrys
-	public String planequerry = "INSERT INTO planes(icaonr, tailnr, registration, type, airline) VALUES(?,?,?,?,?)";
-	public String flightquerry = "INSERT INTO flights(plane,src,dest,flightnr,callsign) VALUES(?,?,?,?,?)";
-	public String trackingquerry = "INSERT INTO tracking(flightid,latitude,longitude,altitude,groundspeed,heading,squawk) VALUES(?,?,?,?,?,?,?)";
+	public static final String planequerry = "INSERT INTO planes(icaonr, tailnr, registration, type, airline) VALUES(?,?,?,?,?)";
+	public static final String flightquerry = "INSERT INTO flights(plane,src,dest,flightnr,callsign) VALUES(?,?,?,?,?)";
+	public static final String trackingquerry = "INSERT INTO tracking(flightid,latitude,longitude,altitude,groundspeed,heading,squawk) VALUES(?,?,?,?,?,?,?)";
 	
 	
 	//select Querrys
-	public String getLastFlightID = "SELECT * from flights ORDER BY ID DESC LIMIT 1";
-	public String getFlightTracking = "SELECT * from tracking WHERE ID == flightid";
-	public String querry6 = "";
-	public String querry7 = "";
-	public String querry8 = "";
-	public String querry9 = "";
-	public String querry10 = "";
-	public String querry11 = "";
+	public static final String getLastFlightID = "SELECT * from flights ORDER BY ID DESC LIMIT 1";
+	public static final String getTrackingByFlight = "SELECT * FROM tracking WHERE ID == ";
+	public static final String getFlights = "SELECT * FROM flights";
+	public static final String getFlightByID = "SELECT * FROM flight WHERE ID == ";
+	public static final String getAirportByTag = "SELECT * FROM airports WHERE iatatag == ";
+	public static final String getPlaneByID = "SELECT * FROM planes WHERE ID == ";
+	public static final String getAirlineByTag = "SELECT * FROM airlines WHERE icaotag == ";
+	public static final String getPlaneByICAO = "SELECT * FROM planes where icaonr == ";
 	public String querry12 = "";
 	public String querry13 = "";
 	public String querry14 = "";
