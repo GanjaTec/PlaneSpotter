@@ -1,6 +1,5 @@
 package planespotter;
 
-import planespotter.display.ConfigManager;
 import planespotter.display.Init;
 
 public class Main {

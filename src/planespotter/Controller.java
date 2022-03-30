@@ -1,5 +1,6 @@
 package planespotter;
 
+import planespotter.dataclasses.DataPoint;
 import planespotter.display.*;
 
 import javax.swing.*;
@@ -9,9 +10,9 @@ import java.util.HashMap;
 public class Controller {
 
     /**
-     * HashMap containing all working frames
+     * HashMap containing all visible frames
      */
-    private static HashMap<Class, Boolean> framesworking = new HashMap<>();
+    private static HashMap<Class, Boolean> framesvisible = new HashMap<>();
     private static Configuration cfg;
 
     public Controller () {}
@@ -29,13 +30,13 @@ public class Controller {
         if (opener != null) opener.setVisible(false);
         if (c == Init.class) {
             new Init();
-            framesworking.put(c, true);
+            framesvisible.put(c, true);
         } else if (c == ListView.class) {
             new ListView(opener);
-            framesworking.put(c, true);
+            framesvisible.put(c, true);
         } else if (c == MapView.class) {
             new MapView(opener);
-            framesworking.put(c, true);
+            framesvisible.put(c, true);
         }
     }
 
@@ -48,23 +49,30 @@ public class Controller {
 
     protected static void initialize () {
         ConfigManager.loadCofnig();
-        framesworking.put(Init.class, false);
-        framesworking.put(ListView.class, false);
-        framesworking.put(MapView.class, false);
+        framesvisible.put(Init.class, false);
+        framesvisible.put(ListView.class, false);
+        framesvisible.put(MapView.class, false);
     }
 
-    public static void setFrameWorking (Class key, boolean working) throws FrameNotFoundException {
-        if (framesworking.containsKey(key))
-            framesworking.replace(key, working);
+    public static void setFramevisible (Class key, boolean visible) throws FrameNotFoundException {
+        if (framesvisible.containsKey(key))
+            framesvisible.replace(key, visible);
         else throw new FrameNotFoundException();
     }
 
-    public static boolean getFrameWorking (Class key) throws FrameNotFoundException {
-        if (framesworking.containsKey(key))
-            return framesworking.get(key);
+    public static boolean getFramevisible (Class key) throws FrameNotFoundException {
+        if (framesvisible.containsKey(key))
+            return framesvisible.get(key);
         else throw new FrameNotFoundException();
     }
 
+    /**
+     * creates DataPoint object
+     * represents a Flight at one point
+     */
+    public DataPoint createDataPoint (Frame frame) {
+        DataPoint point = new DataPoint();
+    }
 
 
 }

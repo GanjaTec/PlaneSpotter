@@ -1,4 +1,6 @@
-package planespotter.display;
+package planespotter;
+
+import planespotter.display.FileAlreadyExistsException;
 
 import java.io.*;
 
