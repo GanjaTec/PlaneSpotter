@@ -7,6 +7,11 @@ import planespotter.dataclasses.Frame;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ListView implements ActionListener {
 
@@ -32,7 +37,7 @@ public class ListView implements ActionListener {
 
         // TODO: new list view frame
         frame = new JFrame("List-View");
-        frame.setSize(600, 800);
+        frame.setSize(700, 800);
         frame.setResizable(false);
         frame.setLayout(null);
         frame.setLocationRelativeTo(null);
@@ -76,19 +81,27 @@ public class ListView implements ActionListener {
         JMenu lbl = new JMenu("test-string");
         lbl.setVisible(true);
 
+        //ListOut out = new ListOut();
 
-        list = new JList<String>();
-        list.setBounds(0, 0, 600, 800);
+        list = new JList(Controller.titleArray(Controller.createObjectList()));
 
-        list.setVisible(true);
+        list.setBounds(0, 25, 700, 775);
+        list.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+
 
         scrollpane = new JScrollPane(list);
         scrollpane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         scrollpane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollpane.setVisible(true);
 
+        list.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                
+            }
+        });
         frame.add(scrollpane);
-
+        list.setVisible(true);
 
         frame.add(mb);
         frame.add(list);

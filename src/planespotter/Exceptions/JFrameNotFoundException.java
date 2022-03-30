@@ -1,10 +1,10 @@
-package planespotter.display;
+package planespotter.Exceptions;
 
-public class FrameNotFoundException extends Exception {
+public class JFrameNotFoundException extends Exception {
 
     private final String message = "FrameNotFoundException: Frame coldn't be found!";
 
-    public FrameNotFoundException () {
+    public JFrameNotFoundException () {
         super();
     }
 
