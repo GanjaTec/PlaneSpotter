@@ -26,4 +26,24 @@ public class DataPoint {
         this.heading = heading;
         this.altitude = altitude;
     }
+
+    /**
+     * getter
+     * TODO: return the DataPoint attributes
+     */
+    public Flight getFlight () { return flight; }
+
+    public Position getPos () { return pos; }
+
+    public String getIcao () { return icao; }
+
+    public int getTimestemp () { return timestemp; }
+
+    public int getSqawk () { return sqawk; }
+
+    public int getSpeed() { return speed; }
+
+    public int getHeading () { return heading; }
+
+    public int getAltitude () { return altitude; }
 }

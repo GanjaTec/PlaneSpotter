@@ -19,4 +19,18 @@ public class Plane {
         this.airline = airline;
     }
 
+    /**
+     * getter
+     * TODO: return the Flight attribute
+     */
+    public int getID () { return id; }
+
+    public String getTailnr () { return tailnr; }
+
+    public String getPlanetype () { return planetype; }
+
+    public String getRegistration () { return registration; }
+
+    public Airline getAirline () { return airline; }
+
 }

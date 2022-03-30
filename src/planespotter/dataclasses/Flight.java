@@ -14,4 +14,19 @@ public class Flight {
         this.flightnr = flightnr;
     }
 
+    /**
+     * getter
+     * TODO: return the Flight attribute
+     */
+    public int getID () { return id; }
+
+    public Airport getStart () { return start; }
+
+    public Airport getDest () { return dest; }
+
+    public Plane getPlane () { return plane; }
+
+    public String getFlightnr () { return flightnr; }
+
+
 }

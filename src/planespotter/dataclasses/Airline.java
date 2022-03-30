@@ -12,5 +12,11 @@ public class Airline {
         this.name = name;
     }
 
+    /**
+     * getter
+     */
+    public int getID () { return id; }
+    public String getName () { return name; }
+
 
 }

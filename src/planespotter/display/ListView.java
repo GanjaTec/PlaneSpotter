@@ -1,11 +1,15 @@
 package planespotter.display;
 
+import planespotter.Controller;
 import planespotter.Frame;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ListView implements ActionListener {
 
@@ -75,8 +79,10 @@ public class ListView implements ActionListener {
         JMenu lbl = new JMenu("test-string");
         lbl.setVisible(true);
 
+        //ListOut out = new ListOut();
 
-        list = new JList<String>();
+        list = new JList(Controller.createObjectList());
+
         list.setBounds(0, 0, 600, 800);
 
         list.setVisible(true);
