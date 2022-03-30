@@ -1,5 +1,7 @@
 package planespotter.display;
 
+import planespotter.Frame;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -14,7 +16,8 @@ public class ListView implements ActionListener {
     private final JMenuBar mb;
     private final JMenu mdatei, mimport, mexport;
     private final JMenuItem reload, close;
-    private final JTable table;  //JList<Data> datalist;
+    private final JList list;  //JList<Data> datalist;
+    private final JScrollPane scrollpane;
 
     /**
      * constructor ListView
@@ -72,14 +75,22 @@ public class ListView implements ActionListener {
         JMenu lbl = new JMenu("test-string");
         lbl.setVisible(true);
 
-        table = new JTable();
-        table.setBounds(0, 0, 600, 800);
 
-        table.setVisible(true);
+        list = new JList<String>();
+        list.setBounds(0, 0, 600, 800);
+
+        list.setVisible(true);
+
+        scrollpane = new JScrollPane(list);
+        scrollpane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollpane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollpane.setVisible(true);
+
+        frame.add(scrollpane);
 
 
         frame.add(mb);
-        frame.add(table);
+        frame.add(list);
 
         frame.setVisible(true);
 
@@ -92,6 +103,27 @@ public class ListView implements ActionListener {
             frame.dispose();
             owner.setVisible(true);
         } else if (src == reload) {
+
+        }
+    }
+
+
+    /**
+     * adds data to the list
+     * @param toList is the JList which the data is given to
+     * @param data is the data Frame given by the Controller
+     */
+    private void addListItem (JList toList, Frame data) {
+
+    }
+
+    /**
+     * adds all data to the list
+     * @param toList is the JList which the data is given to
+     * @param data is the data Frame array given by the Controller
+     */
+    private void fillList (JList toList, Frame[] data) {
+        for (Frame f : data) {
 
         }
     }
