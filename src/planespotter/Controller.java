@@ -3,6 +3,7 @@ package planespotter;
 import planespotter.Exceptions.JFrameNotFoundException;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
+import planespotter.model.DBOut;
 import planespotter.model.Deserializer;
 
 import javax.swing.*;
@@ -19,7 +20,6 @@ public class Controller {
      * HashMap containing all visible frames
      */
     private static HashMap<Class, Boolean> framesvisible = new HashMap<>();
-    private static Configuration cfg;
 
     public Controller () {}
 
@@ -27,15 +27,19 @@ public class Controller {
      * * * * * * * * * * * * * * *
      * static controller methods *
      * * * * * * * * * * * * * * *
-     *
+     **/
+
+
+
+    /**
      * openFrame() opens a frame
      * @param c is the Frame-Class to be opened
      * @param opener is the JFrame who opens the new Window
      */
     public static void openWindow (Class c, JFrame opener) {
         if (opener != null) opener.setVisible(false);
-        if (c == Init.class) {
-            new Init();
+        if (c == GUI_alt.class) {
+            new GUI_alt();
             framesvisible.put(c, true);
         } else if (c == ListView.class) {
             new ListView(opener);
@@ -46,16 +50,11 @@ public class Controller {
         }
     }
 
-    /**
-     *
-     */
-    public void addDataToList (Frame frame) {
 
-    }
 
     protected static void initialize () {
         ConfigManager.loadCofnig();
-        framesvisible.put(Init.class, false);
+        framesvisible.put(GUI_alt.class, false);
         framesvisible.put(ListView.class, false);
         framesvisible.put(MapView.class, false);
     }
@@ -80,7 +79,7 @@ public class Controller {
      */
     public static DataPoint createDataPoint (Frame frame) {
         DataPoint point = new DataPoint(0001,
-                                        0001,
+                                        22244,
                                         new Position(frame.getLat(), frame.getLon()),
                                         frame.getTimestamp(),
                                         frame.getSquawk(),
@@ -144,5 +143,43 @@ public class Controller {
         } return null;
     }
 
+
+    /**
+     * DB output method:
+     * uses DBOut Class to get Objects out of the DB
+     * (nicht funktionsfaehig)
+     */
+    /*
+    public static Object out (int id, ObjectType type) {
+        DBOut out = new DBOut();
+        switch (type) {
+            case AIRLINE:
+                break;
+            case AIRPORT:
+                break;
+            case DATA_POINT:
+                break;
+            case FLIGHT:
+                break;
+            case FR24_DATA:
+                break;
+            case FRAME:
+                break;
+            case LIST_OBJECT:
+                break;
+            case LIST_OUT:
+                break;
+            case PLANE:
+                break;
+            case POSITION:
+                break;
+            default:
+
+
+        }
+        return null;
+    }
+
+     */
 
 }

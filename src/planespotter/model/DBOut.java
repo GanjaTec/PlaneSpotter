@@ -1,15 +1,12 @@
 package planespotter.model;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashMap;
 
-import planespotter.dataclasses.*;
 import planespotter.SqlQuerrys;
+import planespotter.dataclasses.*;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class DBOut {
 
@@ -100,7 +97,7 @@ public class DBOut {
 
 		ResultSet rs = querryDB(SqlQuerrys.getFlights);
 		while(rs.next()) {
-			HashMap<Long, DataPoint> dps = getTrackingByFlight(rs.getInt("flightid"));
+			HashMap<Long, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
 			List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
 			Plane plane = getPlaneByICAO(rs.getString("plane"));
 			Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), plane, rs.getString("flightnr"), dps);
