@@ -10,7 +10,7 @@ public class SqlQuerrys {
 	
 	//select Querrys
 	public String getLastFlightID = "SELECT * from flights ORDER BY ID DESC LIMIT 1";
-	public String querry5 = "";
+	public String getFlightTracking = "SELECT * from tracking WHERE ID == flightid";
 	public String querry6 = "";
 	public String querry7 = "";
 	public String querry8 = "";

@@ -124,17 +124,20 @@ public class Supplier {
 
 	// Main loop
 	public static void main(String[] args) {
-		try {
-			while(true) {
-			Deserializer ds = new Deserializer();
-			List<String> list = ds.stringMagic(fr24get());
-			List<Frame> frames = ds.deserialize(list);			
-			writeToDB(frames);
-			TimeUnit.SECONDS.sleep(30);
-			}
-		} catch (Exception e) {
-			// Auto-generated catch block
-			e.printStackTrace();
-		}
+		//try {
+			//while(true) {
+			//Deserializer ds = new Deserializer();
+			//List<String> list = ds.stringMagic(fr24get());
+			//List<Frame> frames = ds.deserialize(list);			
+			//writeToDB(frames);
+			//TimeUnit.SECONDS.sleep(30);
+			//}
+		//} catch (Exception e) {
+		//	// Auto-generated catch block
+		//	e.printStackTrace();
+		//}
+		
+		//dbOut out = new dbOut();
+		//List<DataPoint> liste = out.querryTrackingData(12);
 	}
 }
