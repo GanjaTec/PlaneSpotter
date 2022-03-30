@@ -11,7 +11,7 @@ public class Frame{
 	private String tailnumber;
 	private String planetype;
 	private String registration;
-	private String unknown0;
+	private int timestamp;
 	private String srcairport;
 	private String destairport;
 	private String flightnumber;
@@ -21,8 +21,8 @@ public class Frame{
 	private String unknown3;
 	private String airline;
 
-	private Frame(String icao, double lat, double lon, int heading, int alt, int speed,
-			int squawk, String tail, String type, String registration, String unk0, 
+	public Frame(String icao, double lat, double lon, int heading, int alt, int speed,
+			int squawk, String tail, String type, String registration, int time, 
 			String src, String dest, String flight, String unk1, String unk2, String callsign, String unk3,
 			String airline) {
 		this.icaoaddr = icao;
@@ -35,7 +35,7 @@ public class Frame{
 		this.tailnumber = tail;
 		this.planetype = type;
 		this.registration = registration;
-		this.unknown0 = unk0;
+		this.timestamp = time;
 		this.srcairport = src;
 		this.destairport = dest;
 		this.flightnumber = flight;
@@ -87,8 +87,8 @@ public class Frame{
 		return this.registration;
 	}
 	
-	public String getUnknown0() {
-		return this.unknown0;
+	public int getTimestamp() {
+		return this.timestamp;
 	}
 	
 	public String getSrcAirport() {
