@@ -97,7 +97,7 @@ public class Controller {
      */
     private static DataPoint[] dataPointArray (List<Frame> frames) {
         ListIterator<Frame> it = frames.listIterator();
-        DataPoint[] data = null;
+        DataPoint[] data = new DataPoint[frames.size()];
         int i = 0;
         while (it.hasNext()) {
             data[i] = createDataPoint(it.next());
@@ -128,12 +128,21 @@ public class Controller {
      * @return array of list objects
      */
     public static ListObject[] createObjectList () {
-        ListObject[] o = null;
         DataPoint[] data = dataPointArray(getFrames());
+        ListObject[] o = new ListObject[data.length];
         for (int i = 0; i < data.length; i++) {
             o[i] = new ListObject(data[i]);
         }
         return o;
+    }
+
+    public static String[] titleArray (ListObject[] list) {
+        if (list[0] != null) {
+            String[] titles = new String[list.length];
+            for (int i = 0; i < list.length; i++) {
+                titles[i] = list[i].getTitle();
+            } return titles;
+        } return null;
     }
 
 
