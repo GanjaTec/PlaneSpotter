@@ -47,7 +47,7 @@ public class Controller {
     }
 
     protected static void initialize () {
-        cfg = loadConfig();
+        ConfigManager.loadCofnig();
         framesworking.put(Init.class, false);
         framesworking.put(ListView.class, false);
         framesworking.put(MapView.class, false);
@@ -65,13 +65,6 @@ public class Controller {
         else throw new FrameNotFoundException();
     }
 
-    private void loadConfig () {
-
-    }
-
-    private void saveConfig () {
-
-    }
 
 
 }
