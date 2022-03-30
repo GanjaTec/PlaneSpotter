@@ -13,6 +13,8 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import planespotter.Controller;
+
 public class ListView implements ActionListener {
 
     /**
@@ -97,7 +99,8 @@ public class ListView implements ActionListener {
         list.addMouseWheelListener(new MouseWheelListener() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
-                
+                int rot = e.getWheelRotation();
+
             }
         });
         frame.add(scrollpane);

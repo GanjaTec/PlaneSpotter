@@ -3,6 +3,7 @@ package planespotter;
 import planespotter.Exceptions.JFrameNotFoundException;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
+import planespotter.model.Deserializer;
 
 import javax.swing.*;
 import java.lang.module.Configuration;
@@ -10,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 
-import static planespotter.Supplier.fr24get;
+import static planespotter.model.Supplier.fr24get;
 
 public class Controller {
 
@@ -73,16 +74,14 @@ public class Controller {
 
     /**
      * creates DataPoint object from a Frame object
-     * represents a Flight at one point
+     * represents a flight at one point
+     *
+     * (frame could be changed in the future)
      */
     public static DataPoint createDataPoint (Frame frame) {
-        DataPoint point = new DataPoint(new Flight(0, new Airport(0, frame.getSrcAirport()),
-                                            new Airport(0, frame.getDestAirport()),
-                                            new Plane(0, frame.getTailnr(), frame.getPlanetype(), frame.getRegistration(),
-                                                new Airline(frame.getAirline())),
-                                            frame.getFlightnumber()),
+        DataPoint point = new DataPoint(0001,
+                                        0001,
                                         new Position(frame.getLat(), frame.getLon()),
-                                        frame.getIcaoAdr(),
                                         frame.getTimestamp(),
                                         frame.getSquawk(),
                                         frame.getGroundspeed(),

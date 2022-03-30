@@ -1,17 +1,22 @@
 package planespotter.dataclasses;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 public class Flight {
-    int id;
+    private int id;
     private Airport start, dest;
     private String callsign, flightnr;
     private Plane plane;
+    private HashMap<Long, ArrayList<DataPoint>> route;
 
-    public Flight (int id, Airport start, Airport dest, Plane plane, String flightnr) {
+    public Flight (int id, Airport start, Airport dest, Plane plane, String flightnr, HashMap<Long, ArrayList<DataPoint>> route) {
         this.id = id;
         this.start = start;
         this.dest = dest;
         this.plane = plane;
         this.flightnr = flightnr;
+        this.route = route;
     }
 
     /**
