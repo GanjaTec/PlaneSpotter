@@ -2,10 +2,14 @@ package planespotter;
 
 public class SqlQuerrys {
 	
-	public String querry1 = "";
-	public String querry2 = "";
-	public String querry3 = "";
-	public String querry4 = "";
+	//insert Querrys
+	public String planequerry = "INSERT INTO planes(icaonr, tailnr, registration, type, airline) VALUES(?,?,?,?,?)";
+	public String flightquerry = "INSERT INTO flights(plane,src,dest,flightnr,callsign) VALUES(?,?,?,?,?)";
+	public String trackingquerry = "INSERT INTO tracking(flightid,latitude,longitude,altitude,groundspeed,heading,squawk) VALUES(?,?,?,?,?,?,?)";
+	
+	
+	//select Querrys
+	public String getLastFlightID = "SELECT * from flights ORDER BY ID DESC LIMIT 1";
 	public String querry5 = "";
 	public String querry6 = "";
 	public String querry7 = "";
