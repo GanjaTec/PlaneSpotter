@@ -6,10 +6,10 @@ package planespotter.dataclasses;
  * represents a Flight
  */
 public class DataPoint {
-    int id;
+    private int id;
+    private int flightid;
     private int timestemp;
     private int sqawk;
-    private int flightid;
     private Position pos;
     private int speed;
     private int heading;
@@ -17,7 +17,7 @@ public class DataPoint {
 
     public DataPoint (int id, int flightid, Position pos, int timestamp, int sqawk, int speed, int heading, int altitude) {
         this.id = id;
-    	this.flightid = flightid;
+        this.flightid = flightid;
         this.pos = pos;
         this.timestemp = timestamp;
         this.sqawk = sqawk;
@@ -25,4 +25,23 @@ public class DataPoint {
         this.heading = heading;
         this.altitude = altitude;
     }
+
+    /**
+     * getter
+     * TODO: return the DataPoint attributes
+     */
+    public int getFlightID () { return flightid; }
+
+    public Position getPos () { return pos; }
+
+
+    public int getTimestemp () { return timestemp; }
+
+    public int getSqawk () { return sqawk; }
+
+    public int getSpeed() { return speed; }
+
+    public int getHeading () { return heading; }
+
+    public int getAltitude () { return altitude; }
 }

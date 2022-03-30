@@ -14,7 +14,8 @@ public class Init implements ActionListener {
      * Components
      */
     private final JFrame frame;
-    private final ImageIcon img = new ImageIcon(this.getClass().getResource("/background.jpg"));
+    private final ImageIcon img =   new ImageIcon(this.getClass().getResource("/background.jpg")),
+                                    listIcon = new ImageIcon(this.getClass().getResource("/background.jpg"));
     private final JLabel title, backround;
     private final JButton btMapView, btListView, btExit;
 

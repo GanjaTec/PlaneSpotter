@@ -9,4 +9,12 @@ public class Position {
         this.lon = lon;
     }
 
+    /**
+     * getter
+     * TODO: return the Flight attribute
+     */
+    public double getLat () { return lat; }
+
+    public double getLon () { return lon; }
+
 }
