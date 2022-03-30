@@ -1,6 +1,6 @@
 package planespotter;
 
-import planespotter.dataclasses.DataPoint;
+import planespotter.dataclasses.*;
 import planespotter.display.*;
 
 import javax.swing.*;
@@ -67,11 +67,23 @@ public class Controller {
     }
 
     /**
-     * creates DataPoint object
+     * creates DataPoint object from a Frame object
      * represents a Flight at one point
      */
     public DataPoint createDataPoint (Frame frame) {
-        DataPoint point = new DataPoint();
+        DataPoint point = new DataPoint(new Flight(0, new Airport(0, frame.getSrcAirport(), AirportType.START),
+                                            new Airport(0, frame.getDestAirport(), AirportType.DEST),
+                                            new Plane(0, frame.getTailnr(), frame.getPlanetype(), frame.getRegistration(),
+                                                    new Airline(frame.getAirline())),
+                                            frame.getFlightnumber()),
+                                        new Position(frame.getLat(), frame.getLon()),
+                                        frame.getIcaoAdr(),
+                                        Integer.parseInt(frame.getUnknown0()),
+                                        frame.getSquawk(),
+                                        frame.getGroundspeed(),
+                                        frame.getHeading(),
+                                        frame.getAltitude());
+        return point;
     }
 
 
