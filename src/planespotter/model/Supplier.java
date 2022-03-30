@@ -1,4 +1,4 @@
-package planespotter;
+package planespotter.model;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.io.File;
 import java.io.FileWriter;
 import java.sql.*;
+import planespotter.dataclasses.*;
 
 public class Supplier {
 
