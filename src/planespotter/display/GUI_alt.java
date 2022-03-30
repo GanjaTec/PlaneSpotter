@@ -8,7 +8,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class Init implements ActionListener {
+public class GUI_alt implements ActionListener {
 
     /**
      * Components
@@ -26,7 +26,7 @@ public class Init implements ActionListener {
      *
      * creates a new Init Frame
      */
-    public Init () {    // frame 800 * 500
+    public GUI_alt() {    // frame 800 * 500
 
         // TODO: new Frame
         frame = new JFrame("PlaneSpotter");

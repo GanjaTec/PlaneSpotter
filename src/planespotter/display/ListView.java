@@ -2,20 +2,20 @@ package planespotter.display;
 
 import javax.swing.*;
 
+import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Frame;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+import java.awt.event.*;
 import java.lang.reflect.Array;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import planespotter.Controller;
+import planespotter.model.DBOut;
 
-public class ListView implements ActionListener {
+public class ListView implements ActionListener, WindowListener {
 
     /**
      * components
@@ -24,8 +24,8 @@ public class ListView implements ActionListener {
     private final JMenuBar mb;
     private final JMenu mdatei, mimport, mexport;
     private final JMenuItem reload, close;
-    private final JList list;  //JList<Data> datalist;
-    private final JScrollPane scrollpane;
+    private final JList list;
+    private JScrollPane scrollpane;
 
     /**
      * constructor ListView
@@ -33,6 +33,7 @@ public class ListView implements ActionListener {
      * creates a list-view frame
      */
     public ListView (JFrame owner) {
+        JList list1;
 
         // TODO: set the owner
         this.owner = owner;
@@ -45,6 +46,7 @@ public class ListView implements ActionListener {
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.setBackground(Color.GRAY);
+        frame.addWindowListener(this);
 
                 // TODO: new 'reload' menu item
                 reload = new JMenuItem("Reload List");
@@ -85,29 +87,45 @@ public class ListView implements ActionListener {
 
         //ListOut out = new ListOut();
 
-        list = new JList(Controller.titleArray(Controller.createObjectList()));
+        //list = new JList(Controller.titleArray(Controller.createObjectList()));
+        String[] items = null;
+        try {
+            DBOut dbo = new DBOut();
+            items = new String[dbo.getAllFlights().size()];
 
+            for (Flight f : dbo.getAllFlights()) {
+                String title = "ID: " + f.getID() + " ,  FlugNr: " + f.getFlightnr() + " ,  Planetype: " +
+                            f.getPlane().getPlanetype() + " ,  Airline: " + f.getPlane().getAirline().getName();
+                            items[dbo.getAllFlights().indexOf(f)] = title;
+            }
+        } catch (SQLException sqle) {
+            sqle.printStackTrace();
+        }
+        list = new JList(items);
         list.setBounds(0, 25, 700, 775);
         list.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
 
 
-        scrollpane = new JScrollPane(list);
-        scrollpane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollpane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollpane.setVisible(true);
 
+        //scrollpane = new JScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        //scrollpane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        //scrollpane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        //scrollpane.setVisible(true);
+        /*
         list.addMouseWheelListener(new MouseWheelListener() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
-                int rot = e.getWheelRotation();
-
+                int scroll = e.getScrollAmount();
+                System.out.println(scroll);
             }
         });
+        //list.setVisible(true);
+        scrollpane.add(list);
         frame.add(scrollpane);
-        list.setVisible(true);
+        */
 
         frame.add(mb);
-        frame.add(list);
+        //frame.add(list);
 
         frame.setVisible(true);
 
@@ -144,4 +162,27 @@ public class ListView implements ActionListener {
 
         }
     }
+
+    @Override
+    public void windowOpened(WindowEvent e) {}
+
+    @Override
+    public void windowClosing(WindowEvent e) {}
+
+    @Override
+    public void windowClosed(WindowEvent e) {
+        owner.setVisible(true);
+    }
+
+    @Override
+    public void windowIconified(WindowEvent e) {}
+
+    @Override
+    public void windowDeiconified(WindowEvent e) {}
+
+    @Override
+    public void windowActivated(WindowEvent e) {}
+
+    @Override
+    public void windowDeactivated(WindowEvent e) {}
 }
