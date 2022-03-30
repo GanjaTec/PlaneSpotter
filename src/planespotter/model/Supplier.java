@@ -137,7 +137,7 @@ public class Supplier {
 		//	e.printStackTrace();
 		//}
 		
-		//dbOut out = new dbOut();
+		//dbOut out = new DBOut();
 		//List<DataPoint> liste = out.querryTrackingData(12);
 	}
 }
