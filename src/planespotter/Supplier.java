@@ -8,6 +8,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.io.File;
 import java.io.FileWriter;
 import java.sql.*;
@@ -34,11 +35,12 @@ public class Supplier {
 		return response;
 	}
 
-	public static void writeToDB(List<String> datalist) throws Exception {
+	public static void writeToDB(List<Frame> frames) throws Exception {
 		try {
 			// Timestamp ts = new Timestamp(System.currentTimeMillis());
 			// Instant inst = ts.toInstant();
-
+			
+			Class.forName("com.mysql.cj.jdbc.Driver");
 			String db = "jdbc:sqlite:plane.db";
 			Connection conn = DriverManager.getConnection(db);
 
@@ -47,33 +49,32 @@ public class Supplier {
 			String trackingquerry = "INSERT INTO tracking(flightid,latitude,longitude,altitude,groundspeed,heading,squawk) VALUES(?,?,?,?,?,?,?)";
 			String getFlightID = "SELECT * from flights ORDER BY ID DESC LIMIT 1";
 			long ts1 = System.nanoTime();
-			for (String row : datalist) {
-				String[] data = row.split(",");
-
-				String planeFilter = "SELECT icaonr from planes WHERE icaonr = " + data[0] + " LIMIT 1";
+			for (Frame f : frames) {
+				
+				String planeFilter = "SELECT icaonr from planes WHERE icaonr = " + f.getIcaoAdr() + " LIMIT 1";
 				Statement stmt = conn.createStatement();
 				ResultSet rs = stmt.executeQuery(planeFilter);
 				String icao = new String();
 				while (rs.next()) {icao = rs.getString(0);}
 
-				if (data[0] != null) {}
+				if (f.getIcaoAdr() != null) {}
 				// insert into planes
 				PreparedStatement pstmt = conn.prepareStatement(planequerry);
-				pstmt.setString(1, data[0]);
-				pstmt.setString(2, data[7]);
-				pstmt.setString(3, data[9]);
-				pstmt.setString(4, data[8]);
-				pstmt.setString(5, data[18]);
+				pstmt.setString(1, f.getIcaoAdr());
+				pstmt.setString(2, f.getTailnr());
+				pstmt.setString(3, f.getRegistration());
+				pstmt.setString(4, f.getPlanetype());
+				pstmt.setString(5, f.getAirline());
 				pstmt.executeUpdate();
 
 
 				// insert into flights
 				pstmt = conn.prepareStatement(flightquerry);
-				pstmt.setString(1, data[0]);
-				pstmt.setString(2, data[11]);
-				pstmt.setString(3, data[12]);
-				pstmt.setString(4, data[13]);
-				pstmt.setString(5, data[16]);
+				pstmt.setString(1, f.getIcaoAdr());
+				pstmt.setString(2, f.getSrcAirport());
+				pstmt.setString(3, f.getDestAirport());
+				pstmt.setString(4, f.getFlightnumber());
+				pstmt.setString(5, f.getCallsign());
 				pstmt.executeUpdate();
 
 				// get FlightID for
@@ -83,12 +84,12 @@ public class Supplier {
 				// insert into tracking
 				pstmt = conn.prepareStatement(trackingquerry);
 				pstmt.setInt(1, flightid);
-				pstmt.setString(2, data[1]);
-				pstmt.setString(3, data[2]);
-				pstmt.setString(4, data[4]);
-				pstmt.setString(5, data[5]);
-				pstmt.setString(6, data[3]);
-				pstmt.setString(7, data[6]);
+				pstmt.setDouble(2, f.getLat());
+				pstmt.setDouble(3, f.getLon());
+				pstmt.setInt(4, f.getAltitude());
+				pstmt.setInt(5, f.getGroundspeed());
+				pstmt.setInt(6, f.getHeading());
+				pstmt.setInt(7, f.getSquawk());
 				pstmt.executeUpdate();
 			}
 
@@ -97,8 +98,9 @@ public class Supplier {
 			System.out.println("filled DB in " + tdiff + "/10 seconds");
 		} catch (Exception e) {
 			e.printStackTrace();
+			// conn.rollback();
 		}
-		// conn.rollback();
+		
 	}
 
 	public static void writeToCSV(List<String> data) throws Exception {
@@ -122,10 +124,12 @@ public class Supplier {
 	// Main loop
 	public static void main(String[] args) {
 		try {
+			while(true) {
 			Deserializer ds = new Deserializer();
 			List<String> list = ds.stringMagic(fr24get());
-			for(String a : list) {
-				System.out.println(a);
+			List<Frame> frames = ds.deserialize(list);			
+			writeToDB(frames);
+			TimeUnit.SECONDS.sleep(30);
 			}
 		} catch (Exception e) {
 			// Auto-generated catch block
