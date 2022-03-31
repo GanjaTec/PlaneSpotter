@@ -7,6 +7,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Scanner;
 
 public class DBOut {
 
@@ -111,6 +112,27 @@ public class DBOut {
 		}
 		return flights;
 	}
-
+	
+        public static void getFlightByID(int id) throws SQLException {
+		
+		int flid;
+		
+		Scanner scanner = new Scanner(System.in);
+		System.out.print("Gebe die Flug ID an: ");
+                flid = scanner.nextInt();
+		
+		Connection con = DbConnection.connect();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		String sql = "SELECT * flights where ID = ?";
+		ps = con.prepareStatement(sql);
+		ps.setString(1, + flid );
+		rs = ps.executeQuery();
+		
+		// reading one row
+		String flight = rs.getString(1);
+		System.out.pringln(flight)
+			
+	}
 
 }
