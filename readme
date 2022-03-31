@@ -1,10 +1,19 @@
-Der Code in diesem Projekt zum jetzigen Zeitpunkt ist Schlecht
+Der Code in diesem Projekt zum jetzigen Zeitpunkt wird langsam besser
 
-Sehr Schlecht
+ist aber immernoch Sehr Schlecht
 
-Ich bin mir sicher es gibt bessere Wege das zu tun, eig sollte ich die Daten
-mittels Gson und der Klasse Fr24Data einfach entserialisieren können
-muss aber dazu nochmal in Code schauen der auf einem anderen Rechner liegt
+Ordnerstruktur
 
-in der zwischenzeit wandel ich den Response Body in etwas CSV-ähnliches um
-damit sollte man zumindest arbeiten können
+/                         #Project Root
+|
+|-> python-helper         #Python Helper Scripts
+--> src                   #Sourcecode
+     |
+     |->libs              #Librarys
+     -->planespotter      #Main Package
+        |
+        |->dataclasses    # Classes for Datastructure
+        |->display        # Classes for View
+        |->model          # Classes of the Data Model
+        |->exceptions     # Exceptions
+        -->unused         # unused or deprecated classes
