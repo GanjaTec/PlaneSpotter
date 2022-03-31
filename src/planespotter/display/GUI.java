@@ -1,38 +1,44 @@
 package planespotter.display;
 
-import planespotter.display.listeners.KeyListener;
-import planespotter.display.listeners.ListListener;
-import planespotter.display.listeners.RadioButtonListener;
+
+import planespotter.Controller;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 
 /**
  * @name
  * @author
  * @version
  */
-public class GUI {
+public class GUI implements     ActionListener, KeyListener, ListSelectionListener,
+                                MouseListener, MouseWheelListener, ChangeListener {
 
     /**
      * components
      */
     private JFrame frame;
-    private JInternalFrame flist, fmap, fmenu, info;
-    private JPanel pTitle, pList, pMap, pMenu, pSearch, pInfo;
-    private JLabel title;
-    private JLabel bground;
+    //private JDesktopPane dpleft, dpright;
+    private JInternalFrame flist, fmap, fmenu, finfo;
+    private JPanel pTitle, pList, pMap, pMenu, pSearch, pfinfo;
+    private JLabel title, bground;
     private JList menulist;
-    private JTextField search;
-    private JRadioButton rbFlight;
-    private JRadioButton rbAirline;
+    private JTree listView;
+    protected JTextField search;
+    protected JRadioButton rbFlight, rbAirline;
+    protected JButton exit;
 
     /**
      * global constants
      */
-    private final ImageIcon img = new ImageIcon(this.getClass().getResource("/background.jpg"));
+    private final ImageIcon img = new ImageIcon(this.getClass().getResource("/background.jpg")),
+                            img_exit = new ImageIcon(this.getClass().getResource("/img_exit.png"));
     private final Font font = new Font("Broadway", Font.BOLD, 20);
     private final Border LINE_BORDER = BorderFactory.createLineBorder(Color.CYAN, 1);
     private final Color DEFAULT_BG_COLOR = Color.DARK_GRAY,
@@ -65,6 +71,17 @@ public class GUI {
         frame.setLocationRelativeTo(null);
         frame.setBackground(DEFAULT_BG_COLOR);
 
+        /*
+        // TODO: setting up right desktop pane
+        dpright = new JDesktopPane();
+        dpright.setBorder(LINE_BORDER);
+        dpright.setBackground(DEFAULT_BG_COLOR);
+        // TODO: setting up left desktop pane
+        dpleft = new JDesktopPane();
+        dpleft.setBorder(LINE_BORDER);
+        dpleft.setBackground(DEFAULT_BG_COLOR);
+         */
+
         // TODO: setting up internal list frame
         flist = new JInternalFrame("List-Ansicht", false);
         flist.setBounds(100, 50, 1180, 670);
@@ -72,6 +89,7 @@ public class GUI {
         flist.setLayout(null);
         flist.setBorder(BorderFactory.createEmptyBorder());
         flist.setBackground(DEFAULT_BG_COLOR);
+        flist.setFocusable(false);
         //flist.hide();
 
         // TODO: setting up internal map frame
@@ -81,6 +99,7 @@ public class GUI {
         fmap.setLayout(null);
         fmap.setBorder(BorderFactory.createEmptyBorder());
         fmap.setBackground(DEFAULT_BG_COLOR);
+        fmap.setFocusable(false);
         //fmap.hide();
 
         // internal frames //
@@ -89,11 +108,13 @@ public class GUI {
         fmenu = new JInternalFrame("Menu", false);
         fmenu.setBounds(0, 50, 100, 670);
         fmenu.setBackground(DEFAULT_BG_COLOR);
+        fmenu.setFocusable(false);
 
-        // TODO: setting up internal info frame
-        info = new JInternalFrame("Info", false);
-        info.setBounds(0, 50, 100, 670);
-        info.setBackground(DEFAULT_BG_COLOR);
+        // TODO: setting up internal finfo frame
+        finfo = new JInternalFrame("finfo", false);
+        finfo.setBounds(0, 50, 100, 670);
+        finfo.setBackground(DEFAULT_BG_COLOR);
+        finfo.setFocusable(false);
 
         // panels //
 
@@ -102,6 +123,7 @@ public class GUI {
         pTitle.setBounds(0, 0, 1280, 50);
         pTitle.setOpaque(true);
         pTitle.setBackground(DEFAULT_BG_COLOR);
+        pTitle.setLayout(null);
 
         // TODO: setting up list panel
         pList = new JPanel();
@@ -121,13 +143,13 @@ public class GUI {
         // TODO: setting up search panel
         pSearch = new JPanel();
         pSearch.setBounds(0, 50, 100, 270);
-        pSearch.addKeyListener(new KeyListener());
+        pSearch.addKeyListener(this);
         pSearch.setBackground(DEFAULT_BG_COLOR);
 
-        // TODO: setting up info panel
-        pInfo = new JPanel();
-        pInfo.setBounds(0, 50, 100, 670);
-        pInfo.setBackground(DEFAULT_BG_COLOR);
+        // TODO: setting up finfo panel
+        pfinfo = new JPanel();
+        pfinfo.setBounds(0, 50, 100, 670);
+        pfinfo.setBackground(DEFAULT_BG_COLOR);
 
         // text field //
 
@@ -139,11 +161,19 @@ public class GUI {
         search.setFont(font);
         search.setBorder(LINE_BORDER);
 
+        // TODO: setting up exit button
+        exit = new JButton(img_exit);
+        exit.setOpaque(true);
+        exit.setBackground(DEFAULT_BG_COLOR);
+        exit.setBounds(1230, 0, 50, 50);
+        exit.addActionListener(this);
+
         // TODO: setting up title label
         title = new JLabel("PlaneSpotter");
-        title.setFont(font.deriveFont(35f));
+        title.setFont(font.deriveFont(45f));
         title.setForeground(DEFAULT_FG_COLOR);
         title.setFocusable(false);
+        title.setBounds((pTitle.getWidth() / 2) - (pTitle.getWidth() / 8), 0, 1280, 50);
 
         // TODO: setting up background image
         bground = new JLabel(img);
@@ -153,19 +183,20 @@ public class GUI {
         // TODO: setting up menu list
         String[] items = {"Datei", "View", "Exit"};
         menulist = new JList(items);
-        menulist.addListSelectionListener(new ListListener());
+        menulist.addListSelectionListener(this);
         menulist.setBounds(0, 50, 100, 670);
         menulist.setBackground(DEFAULT_BG_COLOR);
         menulist.setForeground(DEFAULT_FG_COLOR);
+        menulist.setFont(font);
 
 
         // TODO: setting up radio button: "search for airline"
         rbAirline = new JRadioButton();
-        rbAirline.addChangeListener(new RadioButtonListener());
+        rbAirline.addChangeListener(this);
 
         // TODO: setting up radio button: "search for flight"
         rbFlight = new JRadioButton();
-        rbFlight.addChangeListener(new RadioButtonListener());
+        rbFlight.addChangeListener(this);
 
 
         // TODO: adding everything to search panel
@@ -176,30 +207,121 @@ public class GUI {
         pMenu.add(menulist);
         // TODO: adding everything to title panel
         pTitle.add(title);
+        pTitle.add(exit);
         // TODO: adding everything to internal menu frame
         fmenu.add(pMenu);
-        // TODO: adding everything to internal info frame
-        info.add(pInfo);
+        // TODO: adding everything to internal finfo frame
+        finfo.add(pfinfo);
         // TODO: adding everything to internal map frame
         fmap.add(pMap);
         // TODO: adding everything to internal list frame
         flist.add(pList);
 
+        /*
+        // TODO: adding internal frames to dpright
+        dpright.add(flist);
+        dpright.add(fmap);
+        // TODO: adding internal frames to dpleft
+        dpleft.add(fmenu);
+        dpleft.add(finfo);
+         */
+
         // TODO: adding title panel to frame
         frame.add(pTitle);
-        // TODO: adding internal frames to frame
+        /*
+        // TODO: adding desktop panes to frame
+        frame.add(dpright);
+        frame.add(dpleft);
+
+        dpright.setVisible(true);
+        dpleft.setVisible(true);
+        dpright.moveToFront(flist);
+        dpleft.moveToFront(fmenu);
+         */
         frame.add(flist);
         frame.add(fmap);
         frame.add(fmenu);
-        frame.add(info);
+        frame.add(finfo);
 
         flist.show();
         //fmap.show();
         fmenu.show();
-        //info.show();
+        //finfo.show();
 
         return frame;
     }
 
+    /**T
+     * creates a new list component
+     * @return new JList for data models
+     */
+    private JTree createListView () {
+        listView = new JTree(Controller.createObjectList());
+
+
+        return listView;
+    }
+
     public static void main (String[] args) { new GUI(); }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object src = e.getSource();
+        if (src == exit)  System.exit(0);
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+        Object src = e.getSource();
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        Object src = e.getSource();
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        Object src = e.getSource();
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        Object src = e.getSource();
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        Object src = e.getSource();
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        Object src = e.getSource();
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+        Object src = e.getSource();
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+        Object src = e.getSource();
+    }
+
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        Object src = e.getSource();
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+        Object src = e.getSource();
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        Object src = e.getSource();
+    }
 }

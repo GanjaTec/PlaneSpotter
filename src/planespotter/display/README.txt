@@ -1,0 +1,1 @@
+neue gui lässt sich mit der GUI.main() - Methode testen
