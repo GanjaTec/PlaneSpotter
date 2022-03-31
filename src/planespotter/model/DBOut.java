@@ -106,7 +106,7 @@ public class DBOut {
 			HashMap<Long, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
 			List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
 			Plane plane = getPlaneByICAO(rs.getString("plane"));
- 			Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), plane, rs.getString("ID"), dps);
+ 			Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), plane, rs.getString("flightnr"), dps);
 			flights.add(flight);
 		}
 		return flights;
