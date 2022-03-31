@@ -1,4 +1,6 @@
-package planespotter.dataclasses;
+package planespotter.unused;
+
+import planespotter.dataclasses.Frame;
 
 public class Fr24Data {
 	private int count;
