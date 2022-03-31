@@ -178,7 +178,7 @@ public class DBOut {
 		List<Flight> flights = new ArrayList<Flight>();
 
 		ResultSet rs = querryDB(SqlQuerrys.getFlights);
-		int counter = 20;
+		int counter = 0;
 		while(rs.next() && counter <= 20) {
 			HashMap<Long, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
 			List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
