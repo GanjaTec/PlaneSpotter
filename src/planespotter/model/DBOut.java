@@ -75,8 +75,10 @@ public class DBOut {
 	public Airline getAirlineByTag(String tag) throws SQLException {
 		Airline a = null;
 		ResultSet rs = querryDB(SqlQuerrys.getAirlineByTag + tag);
-		while(rs.next()) {
+		if (rs.next()) {
 			a = new Airline(rs.getInt("ID"), rs.getString("icaotag"), rs.getString("name"));
+		} else {
+			a = new Airline(-1, "None", "None");
 		}
 
 		return a;
@@ -128,9 +130,12 @@ public class DBOut {
 		Plane p = null;
 		ResultSet rs = querryDB(SqlQuerrys.getPlaneByICAO + icao);
 
-		while(rs.next()) {
+		if (rs.next()) {
 			Airline a = getAirlineByTag(rs.getString("icaotag"));
 			p = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailn"), rs.getString("type"), rs.getString("registration"), a);
+		} else {
+			Airline a = new Airline(-1, "None", "None");
+			p = new Plane(-1, "None", "None", "None", "None", a);
 		}
 
 		return p;
@@ -149,6 +154,7 @@ public class DBOut {
 		HashMap<Long ,DataPoint> dps = new HashMap<Long, DataPoint>();
 		ResultSet rs = querryDB(SqlQuerrys.getTrackingByFlight + flightID);
 		while(rs.next()) {
+			// TODO: IF STATEMENT
 			Position p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
 			DataPoint dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"), p, rs.getInt("timestamp"),
 					rs.getInt("squawk"), rs.getInt("groundspeed"), rs.getInt("heading"), rs.getInt("altitude"));

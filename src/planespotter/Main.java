@@ -12,7 +12,6 @@ public class Main {
 
         // TODO: new GUI frame
         Controller.openWindow(GUI.class);
-        //Controller.initializeTree();
     }
 
 }

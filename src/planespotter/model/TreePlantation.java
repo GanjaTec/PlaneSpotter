@@ -1,6 +1,5 @@
 package planespotter.model;
 
-import planespotter.Controller;
 import planespotter.dataclasses.Airline;
 import planespotter.dataclasses.Airport;
 import planespotter.dataclasses.Flight;
@@ -9,40 +8,33 @@ import planespotter.dataclasses.Plane;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 
 import static planespotter.dataclasses.GUIConstants.*;
 
-public class TreeFactory {
-
-    /**
-     * private class constants
-     */
-    // -
+/**
+ * @name TreeFactory
+ * @author jml04
+ * @version 1.0
+ *
+ * class TreePlantation implements methods to create tree structures
+ * "abstract" and "static" may be deleted in the future (?)
+ */
+public abstract class TreePlantation {
 
     /**T
      * creates a new list component
      * @return new JList for data models
      */
     public static JTree createListView (DefaultMutableTreeNode node) {
-            JTree listView;
-        /*
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
-        DefaultMutableTreeNode n2 = new DefaultMutableTreeNode("test 2");
-        DefaultMutableTreeNode n3 = new DefaultMutableTreeNode("test test objekt test");
-        DefaultMutableTreeNode child = new DefaultMutableTreeNode("new test-child-object");
-        n2.add(child);
-        root.add(n2);
-        root.add(n3);
-        listView = new JTree(root); // change to (tree) for the real tree
-         */
+        JTree listView;
 
         listView = new JTree(node);
         // Exception in thread "main" java.lang.IndexOutOfBoundsException: Index 1 out of bounds for length 1
+        // bei großen Datensaetzen? schon gefixt?
         listView.setFont(FONT_MENU);
-        listView.setBackground(DEFAULT_BG_COLOR);
+        listView.setBackground(Color.WHITE);
         listView.setForeground(DEFAULT_FG_COLOR);
         listView.setBounds(0, 0, 1000, 650);
 
@@ -50,7 +42,8 @@ public class TreeFactory {
     }
 
     /**
-     *
+     * creates a 'Tree' of Flights
+     * @return root, the root of the tree
      */
     public static DefaultMutableTreeNode createFlightTree (List<Flight> list) {
         Iterator<Flight> it = list.iterator();

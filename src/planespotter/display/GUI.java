@@ -2,22 +2,14 @@ package planespotter.display;
 
 
 import planespotter.Controller;
-import planespotter.model.TreeFactory;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.*;
-import javax.swing.plaf.ButtonUI;
-import javax.swing.plaf.ColorUIResource;
-import javax.swing.plaf.InternalFrameUI;
-import javax.swing.plaf.basic.BasicInternalFrameUI;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellEditor;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.SQLException;
-import java.util.EventListener;
 
 import static planespotter.dataclasses.GUIConstants.*;
 
@@ -161,15 +153,6 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         pMenu.setBackground(DEFAULT_BG_COLOR);
         pMenu.setLayout(null);
 
-        /*
-        // TODO: setting up search panel
-        pSearch = new JPanel();
-        pSearch.setBounds(0, 70, 280, 250);
-        pSearch.addKeyListener(this);
-        pSearch.setBackground(DEFAULT_BG_COLOR);
-        */
-
-
         // TODO: setting up info panel
         pfinfo = new JPanel();
         pfinfo.setBounds(0, 0, 280, 650);
@@ -204,18 +187,6 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         // TODO: setting up background image
         bground = new JLabel(img);
         bground.setSize(frame.getSize());
-
-        // // // // // // //
-        /*
-        // TODO: setting up menu list
-        String[] items = {"Datei", "View", "Exit"};
-        menulist = new JList(items);
-        menulist.addListSelectionListener(this);
-        menulist.setBounds(0, 150, 280, 650);
-        menulist.setBackground(DEFAULT_BG_COLOR);
-        menulist.setForeground(DEFAULT_FG_COLOR);
-        menulist.setFont(FONT_MENU);
-        */
 
         // TODO: setting up datei menu
         datei = new JMenu("File");
@@ -258,20 +229,12 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         rbFlight = new JRadioButton();
         rbFlight.addChangeListener(this);
 
-        /*
-        // TODO: adding everything to search panel
-        pSearch.add(search);
-        pSearch.add(rbAirline);
-        pSearch.add(rbFlight);
-        */
-
         // TODO: adding everything to menu panel
         pMenu.add(datei);
         pMenu.add(view);
         pMenu.add(settings);
         pMenu.add(search_settings);
         pMenu.add(search);
-        //pMenu.add(search);
 
         // TODO: adding everything to title panel
         pTitle.add(title);
@@ -361,6 +324,7 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
     }
 
 
+    // listeners //
 
     @Override
     public void actionPerformed(ActionEvent e) {
