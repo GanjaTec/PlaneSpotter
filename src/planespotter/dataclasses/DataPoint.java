@@ -1,47 +1,98 @@
 package planespotter.dataclasses;
 
 /**
- * DataPoint Class
+ * @author Janne Matti
+ * @coauthor Lukas
  *
- * represents a Flight
+ * This Class is used to represent a single DB Entry from the 'Tracking'-Table
  */
 public class DataPoint {
-    private int id;
-    private int flightid;
-    private long timestemp;
-    private int sqawk;
-    private Position pos;
-    private int speed;
-    private int heading;
-    private int altitude;
+	private int id;
+	private int flightid;
+	private Position pos;
+	private long timestemp;
+	private int sqawk;
+	private int speed;
+	private int heading;
+	private int altitude;
 
-    public DataPoint (int id, int flightid, Position pos, long timestamp, int sqawk, int speed, int heading, int altitude) {
-        this.id = id;
-        this.flightid = flightid;
-        this.pos = pos;
-        this.timestemp = timestamp;
-        this.sqawk = sqawk;
-        this.speed = speed;
-        this.heading = heading;
-        this.altitude = altitude;
-    }
+	/**
+	 * Constructor
+	 * 
+	 * @param id int  Database ID
+	 * @param flightid int Database FlightID
+	 * @param pos Position Coordinates
+	 * @param timestamp long Unix epoche
+	 * @param sqawk int 4-Digit Sqaqkcode
+	 * @param speed int Groundspeed TODO Check units
+	 * @param heading int Compass Direction, 0-360
+	 * @param altitude int Alitude TODO Check units
+	 */
+	public DataPoint(int id, int flightid, Position pos, long timestamp, int sqawk, int speed, int heading, int altitude) {
+		this.id = id;
+		this.flightid = flightid;
+		this.pos = pos;
+		this.timestemp = timestamp;
+		this.sqawk = sqawk;
+		this.speed = speed;
+		this.heading = heading;
+		this.altitude = altitude;
+	}
 
-    /**
-     * getter
-     * TODO: return the DataPoint attributes
-     */
-    public int getFlightID () { return flightid; }
+	//Getter
+	/**
+	 * @return int Database ID
+	 */
+	public int getID() {
+		return this.id;
+	}
+	/**
+	 * @return int Database FlightID
+	 */
+	public int getFlightID() {
+		return this.flightid;
+	}
 
-    public Position getPos () { return pos; }
+	/**
+	 * @return Position Coordinates
+	 */
+	public Position getPos() {
+		return this.pos;
+	}
 
 
-    public long getTimestemp () { return timestemp; }
+	/**
+	 * @return long Unix Epoche
+	 */
+	public long getTimestemp() {
+		return this.timestemp;
+	}
 
-    public int getSqawk () { return sqawk; }
+	/**
+	 * @return int 4-Digit Sqawkcode
+	 */
+	public int getSqawk() {
+		return this.sqawk;
+	}
 
-    public int getSpeed() { return speed; }
+	/**
+	 * @return int Groundspeed in TODO check units
+	 */
+	public int getSpeed() {
+		return this.speed;
+	}
 
-    public int getHeading () { return heading; }
+	/**
+	 * @return int Compass Heading, 0-360
+	 */
+	public int getHeading() {
+		return this.heading;
+	}
 
-    public int getAltitude () { return altitude; }
+	/**
+	 * @return int Altitude in TODO check units
+	 */
+	public int getAltitude() {
+		return this.altitude;
+	}
 }
