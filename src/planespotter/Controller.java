@@ -4,17 +4,18 @@ import planespotter.dataclasses.*;
 import planespotter.display.*;
 import planespotter.model.DBOut;
 import planespotter.model.TreeFactory;
+
+import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Controller {
 
     /**
-     * HashMap containing all visible frames
+     * constructor (bisher nicht benötigt)
      */
-    private static HashMap<Class, Boolean> framesvisible = new HashMap<>();
-
     public Controller () {}
 
     /**
@@ -23,30 +24,74 @@ public class Controller {
      * * * * * * * * * * * * * * *
      **/
 
-
-
     /**
      * openFrame() opens a frame
      * @param c is the Frame-Class to be opened
      */
     public static void openWindow (Class c) {
         if (c == GUI.class) {
-            //createFlightTree(); // nur zum testen // auskommentieren!
+            try {
+                createFlightTree(); // nur zum testen // auskommentieren!
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
             new GUI();
         }
+    }
+
+    // testmethode
+    public static void main(String[] args) throws SQLException {
+        List<Flight> list = new DBOut().getAllFlights();
+        for (Flight f : list)
+        System.out.println(f.getID() + ", " + f.getCallsign() + ", " + f.getFlightnr());
+    }
+
+    /**
+     *
+     */
+    public static void initializeTree () {
+        /*
+        try {
+            //GUI.setListView(TreeFactory.createListView(createFlightTree()));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+         */
     }
 
     /**
      * @return flight tree node
      *      ->for flight list
      */
-    public static void createFlightTree () {
-        try {
-            List<Flight> list = new DBOut().getAllFlights();
-            GUI.recieveTree(TreeFactory.createFlightTree(list));
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    public static void createFlightTree () throws SQLException {
+        // laeuft noch nicht, zu viele Daten
+        List<Flight> list = new DBOut().getAllFlights();
+        //List<Flight> list = testFlightList();
+        JTree tree = TreeFactory.createListView(TreeFactory.createFlightTree(Controller.testFlightList()));
+        GUI.setListView(tree);
+        //return tree;
+    }
+
+    /**
+     * TestObjekt:
+     * @return Test-List-Object
+     */
+    public static List<Flight> testFlightList() {
+        List<Flight> list = new ArrayList<>();
+        Flight flight1 = new Flight(1234, new Airport(030, "BER", "Berlin", new Position(222.22, 333.33)),
+                                    new Airport(040, "HH", "Hamburg", new Position(123.45, 98.76)),
+                                    "HHBER",
+                                    new Plane(10045, "ABC111", "11", "Passagierflugzeug", "REG111", new Airline(21, "A21A", "Airline21")),
+                                    "BERHH1", null);
+        Flight flight2 = new Flight(6543, new Airport(324, "MI", "Minden", new Position(37.26237, 325.563)),
+                new Airport(367, "BEV", "Beverungen", new Position(52553.45, 58.5576)),
+                "MIBEV",
+                new Plane(10045, "ABC111", "11", "Passagierflugzeug", "REG111", new Airline(21, "A21A", "Airline21")),
+                "MIBEV1", null);
+        list.add(flight1);
+        list.add(flight2);
+        return list;
     }
 
     /**
