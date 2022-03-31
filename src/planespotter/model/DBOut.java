@@ -178,12 +178,14 @@ public class DBOut {
 		List<Flight> flights = new ArrayList<Flight>();
 
 		ResultSet rs = querryDB(SqlQuerrys.getFlights);
-		while(rs.next()) {
+		int counter = 20;
+		while(rs.next() && counter <= 20) {
 			HashMap<Long, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
 			List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
 			Plane plane = getPlaneByICAO(rs.getString("plane"));
  			Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
 			flights.add(flight);
+			counter++;
 		}
 		return flights;
 	}
