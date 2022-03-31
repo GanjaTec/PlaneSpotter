@@ -1,6 +1,7 @@
 package planespotter.dataclasses;
 
 /**
+ * @author Janne Matti
  * @author Lukas
  *
  * This Class is used to Represent a DB Entry from the 'Plane' Table 
