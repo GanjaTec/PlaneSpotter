@@ -136,7 +136,7 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
 
         // TODO: setting up list panel
         pList = new JPanel();
-        pList.setBounds(100, 50, 1180, 670);
+        pList.setBounds(0, 0, 1180, 670);
         pList.setBackground(DEFAULT_BG_COLOR);
         pList.setLayout(null);
 
@@ -275,9 +275,11 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
         DefaultMutableTreeNode n2 = new DefaultMutableTreeNode("test 2");
         DefaultMutableTreeNode n3 = new DefaultMutableTreeNode("test test objekt test");
+        DefaultMutableTreeNode child = new DefaultMutableTreeNode("new test-child-object");
+        n2.add(child);
         root.add(n2);
         root.add(n3);
-        listView = new JTree(tree);
+        listView = new JTree(root); // change to (tree) for the real tree
 
         //listView = new JTree(Controller.flightTree());
         // Exception in thread "main" java.lang.IndexOutOfBoundsException: Index 1 out of bounds for length 1

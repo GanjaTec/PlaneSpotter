@@ -41,7 +41,7 @@ public class Controller {
      */
     public static void openWindow (Class c) {
         if (c == GUI.class) {
-            createFlightTree(); // nur zum testen // auskommentieren!
+            //createFlightTree(); // nur zum testen // auskommentieren!
             new GUI();
         }
     }
