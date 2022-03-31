@@ -52,17 +52,23 @@ public class DBOut {
 		List<Airport> aps = new ArrayList<Airport>();
 		ResultSet rsSrc = querryDB(SqlQuerrys.getAirportByTag + srcAirport);
 		ResultSet rsDst = querryDB(SqlQuerrys.getAirportByTag + destAirport);
-
-		while(rsSrc.next()) {	
+		
+		if(rsSrc.next()) {
 			Airport srcAp = new Airport(rsSrc.getInt("ID"), rsSrc.getString("iatatag"), rsSrc.getString("name"), convertCoords(rsSrc.getString("coords")));
 			aps.add(srcAp);
+		
+		} else {
+			Airport srcAp = new Airport(0, "None", "None", new Position(0.0f, 0.0f));
+			aps.add(srcAp);
 		}
-
-		while(rsDst.next()) {
+		
+		if(rsDst.next()) {
 			Airport dstAp = new Airport(rsDst.getInt("ID"), rsDst.getString("iatatag"), rsDst.getString("name"), convertCoords(rsDst.getString("coords")));
 			aps.add(dstAp);
+		} else {
+			Airport dstAp = new Airport(0, "None", "None", new Position(0.0f, 0.0f));
+			aps.add(dstAp);
 		}
-
 
 		return aps;
 	}
@@ -103,8 +109,6 @@ public class DBOut {
  			Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), plane, rs.getString("ID"), dps);
 			flights.add(flight);
 		}
-
-		//Flight flight = new Flight();
 		return flights;
 	}
 
