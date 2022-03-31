@@ -1,4 +1,4 @@
-package planespotter.dataclasses;
+package planespotter.unused;
 
 import javax.swing.*;
 import javax.swing.event.ListDataListener;
