@@ -5,9 +5,13 @@ import planespotter.dataclasses.*;
 import planespotter.display.*;
 import planespotter.model.DBOut;
 import planespotter.model.Deserializer;
+import planespotter.model.TreeFactory;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.lang.module.Configuration;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
@@ -38,148 +42,23 @@ public class Controller {
      */
     public static void openWindow (Class c, JFrame opener) {
         if (opener != null) opener.setVisible(false);
-        if (c == GUI_alt.class) {
-            new GUI_alt();
-            framesvisible.put(c, true);
-        } else if (c == ListView.class) {
-            new ListView(opener);
-            framesvisible.put(c, true);
-        } else if (c == MapView.class) {
-            new MapView(opener);
-            framesvisible.put(c, true);
-        }
-    }
-
-
-
-    protected static void initialize () {
-        ConfigManager.loadCofnig();
-        framesvisible.put(GUI_alt.class, false);
-        framesvisible.put(ListView.class, false);
-        framesvisible.put(MapView.class, false);
-    }
-
-    public static void setFrameVisible (Class key, boolean visible) throws JFrameNotFoundException {
-        if (framesvisible.containsKey(key))
-            framesvisible.replace(key, visible);
-        else throw new JFrameNotFoundException();
-    }
-
-    public static boolean getFrameVisible (Class key) throws JFrameNotFoundException {
-        if (framesvisible.containsKey(key))
-            return framesvisible.get(key);
-        else throw new JFrameNotFoundException();
+        if (c == GUI.class) new GUI();
     }
 
     /**
-     * creates DataPoint object from a Frame object
-     * represents a flight at one point
-     *
-     * (frame could be changed in the future)
+     * @return flight tree node
+     *      ->for flight list
      */
-    public static DataPoint createDataPoint (Frame frame) {
-        DataPoint point = new DataPoint(0001,
-                                        22244,
-                                        new Position(frame.getLat(), frame.getLon()),
-                                        frame.getTimestamp(),
-                                        frame.getSquawk(),
-                                        frame.getGroundspeed(),
-                                        frame.getHeading(),
-                                        frame.getAltitude());
-        return point;
-    }
-
-    /**
-     * @param frames is the Frame list to convert
-     * @return array of DataPoints
-     */
-    private static DataPoint[] dataPointArray (List<Frame> frames) {
-        ListIterator<Frame> it = frames.listIterator();
-        DataPoint[] data = new DataPoint[frames.size()];
-        int i = 0;
-        while (it.hasNext()) {
-            data[i] = createDataPoint(it.next());
-            i++;
-        }
-        return data;
-    }
-
-    /**
-     * creates a Frame with deserializer
-     *
-     */
-    public static List<Frame> getFrames (){
+    public static DefaultMutableTreeNode flightTree () {
         try {
-            Deserializer ds = new Deserializer();
-            List<String> list = ds.stringMagic(fr24get());
-            List<Frame> frames = ds.deserialize(list);
-            return frames;
-        } catch (Exception e) {
-            // Auto-generated catch block
+            DBOut out = new DBOut();
+            return TreeFactory.createFlightTree(out.getAllFlights());
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    /**
-     * Method to create a list of Objects the JList can work with
-     * @return array of list objects
-     */
-    public static ListObject[] createObjectList () {
-        DataPoint[] data = dataPointArray(getFrames());
-        ListObject[] o = new ListObject[data.length];
-        for (int i = 0; i < data.length; i++) {
-            o[i] = new ListObject(data[i]);
-        }
-        return o;
-    }
 
-    public static String[] titleArray (ListObject[] list) {
-        if (list[0] != null) {
-            String[] titles = new String[list.length];
-            for (int i = 0; i < list.length; i++) {
-                titles[i] = list[i].getTitle();
-            } return titles;
-        } return null;
-    }
-
-
-    /**
-     * DB output method:
-     * uses DBOut Class to get Objects out of the DB
-     * (nicht funktionsfaehig)
-     */
-    /*
-    public static Object out (int id, ObjectType type) {
-        DBOut out = new DBOut();
-        switch (type) {
-            case AIRLINE:
-                break;
-            case AIRPORT:
-                break;
-            case DATA_POINT:
-                break;
-            case FLIGHT:
-                break;
-            case FR24_DATA:
-                break;
-            case FRAME:
-                break;
-            case LIST_OBJECT:
-                break;
-            case LIST_OUT:
-                break;
-            case PLANE:
-                break;
-            case POSITION:
-                break;
-            default:
-
-
-        }
-        return null;
-    }
-
-     */
 
 }

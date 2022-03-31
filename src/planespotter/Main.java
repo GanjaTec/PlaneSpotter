@@ -1,6 +1,6 @@
 package planespotter;
 
-import planespotter.display.GUI_alt;
+import planespotter.display.GUI;
 
 public class Main {
 
@@ -9,12 +9,9 @@ public class Main {
      * @param args -> null
      */
     public static void main (String[] args) {
-        // TODO: Controller Initialisation
-        Controller.initialize();
 
-
-        // TODO: new Init Frame
-        Controller.openWindow(GUI_alt.class, null);
+        // TODO: new GUI frame
+        Controller.openWindow(GUI.class, null);
     }
 
 }

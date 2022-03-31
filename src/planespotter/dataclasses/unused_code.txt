@@ -110,6 +110,25 @@
                 break;
             default:
 
+            protected static void initialize () {
+                    ConfigManager.loadCofnig();
+                    framesvisible.put(GUI_alt.class, false);
+                    framesvisible.put(ListView.class, false);
+                    framesvisible.put(MapView.class, false);
+                }
+
+                public static void setFrameVisible (Class key, boolean visible) throws JFrameNotFoundException {
+                    if (framesvisible.containsKey(key))
+                        framesvisible.replace(key, visible);
+                    else throw new JFrameNotFoundException();
+                }
+
+                public static boolean getFrameVisible (Class key) throws JFrameNotFoundException {
+                    if (framesvisible.containsKey(key))
+                        return framesvisible.get(key);
+                    else throw new JFrameNotFoundException();
+                }
+
 
         }
         return null;

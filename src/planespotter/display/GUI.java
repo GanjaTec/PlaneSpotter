@@ -9,6 +9,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -35,11 +36,12 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
     protected JButton exit;
 
     /**
-     * global constants
+     * local class constants
      */
     private final ImageIcon img = new ImageIcon(this.getClass().getResource("/background.jpg")),
                             img_exit = new ImageIcon(this.getClass().getResource("/img_exit.png"));
-    private final Font font = new Font("Broadway", Font.BOLD, 20);
+    private final Font  font = new Font("Broadway", Font.BOLD, 20),
+                        font_menu = new Font("DialogInput", Font.BOLD, 20);
     private final Border LINE_BORDER = BorderFactory.createLineBorder(Color.CYAN, 1);
     private final Color DEFAULT_BG_COLOR = Color.DARK_GRAY,
                         DEFAULT_FG_COLOR = Color.CYAN;
@@ -187,7 +189,7 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         menulist.setBounds(0, 50, 100, 670);
         menulist.setBackground(DEFAULT_BG_COLOR);
         menulist.setForeground(DEFAULT_FG_COLOR);
-        menulist.setFont(font);
+        menulist.setFont(font_menu);
 
 
         // TODO: setting up radio button: "search for airline"
@@ -208,6 +210,9 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         // TODO: adding everything to title panel
         pTitle.add(title);
         pTitle.add(exit);
+        // TODO: adding everything to list panel
+        pList.add(createListView());
+
         // TODO: adding everything to internal menu frame
         fmenu.add(pMenu);
         // TODO: adding everything to internal finfo frame
@@ -256,13 +261,24 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
      * @return new JList for data models
      */
     private JTree createListView () {
-        listView = new JTree(Controller.createObjectList());
 
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
+        DefaultMutableTreeNode n2 = new DefaultMutableTreeNode("test 2");
+        DefaultMutableTreeNode n3 = new DefaultMutableTreeNode("test test objekt test");
+        root.add(n2);
+        root.add(n3);
+        listView = new JTree(root);
+
+        //listView = new JTree(Controller.flightTree());
+        // Exception in thread "main" java.lang.IndexOutOfBoundsException: Index 1 out of bounds for length 1
+        listView.setFont(font_menu);
+        listView.setBackground(DEFAULT_BG_COLOR);
+        listView.setForeground(DEFAULT_FG_COLOR);
+        listView.setBounds(100, 50, 1180, 670);
 
         return listView;
     }
 
-    public static void main (String[] args) { new GUI(); }
 
     @Override
     public void actionPerformed(ActionEvent e) {
