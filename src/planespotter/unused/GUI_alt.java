@@ -1,4 +1,4 @@
-package planespotter.display;
+package planespotter.unused;
 
 import planespotter.Controller;
 

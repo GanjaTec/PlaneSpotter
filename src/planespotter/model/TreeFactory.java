@@ -1,7 +1,6 @@
 package planespotter.model;
 
 import planespotter.dataclasses.Flight;
-import planespotter.dataclasses.ObjectType;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Iterator;

@@ -1,4 +1,4 @@
-package planespotter.display;
+package planespotter.unused;
 
 import javax.swing.*;
 
@@ -7,12 +7,8 @@ import planespotter.dataclasses.Frame;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.reflect.Array;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
 
-import planespotter.Controller;
 import planespotter.model.DBOut;
 
 public class ListView implements ActionListener, WindowListener {
