@@ -2,7 +2,7 @@ package planespotter.dataclasses;
 
 /**
  * @author Janne Matti
- * @coauthor Lukas
+ * @author Lukas
  * 
  * Airline class: represents an airline
  */

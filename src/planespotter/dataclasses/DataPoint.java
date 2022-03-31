@@ -2,7 +2,7 @@ package planespotter.dataclasses;
 
 /**
  * @author Janne Matti
- * @coauthor Lukas
+ * @author Lukas
  *
  * This Class is used to represent a single DB Entry from the 'Tracking'-Table
  */

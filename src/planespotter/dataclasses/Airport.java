@@ -2,7 +2,7 @@ package planespotter.dataclasses;
 
 /**
  * @author Janne Matti
- * @coauthor Lukas
+ * @author Lukas
  *
  * Data Structure used to represent a DB entry from the 'Airports'-Table
  */
