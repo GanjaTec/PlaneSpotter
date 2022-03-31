@@ -9,6 +9,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.plaf.ButtonUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.*;
@@ -31,6 +32,7 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
     private JLabel title, bground;
     private JList menulist;
     private JTree listView;
+    private static DefaultMutableTreeNode tree;
     protected JTextField search;
     protected JRadioButton rbFlight, rbAirline;
     protected JButton exit;
@@ -38,11 +40,16 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
     /**
      * local class constants
      */
+    // icons / images
     private final ImageIcon img = new ImageIcon(this.getClass().getResource("/background.jpg")),
-                            img_exit = new ImageIcon(this.getClass().getResource("/img_exit.png"));
+                            img_exit = new ImageIcon(this.getClass().getResource("/img_exit.png")),
+                            img_exit_selected = new ImageIcon(this.getClass().getResource("/img_exit_selected.png"));
+    // default fonts
     private final Font  font = new Font("Broadway", Font.BOLD, 20),
                         font_menu = new Font("DialogInput", Font.BOLD, 20);
+    // line border
     private final Border LINE_BORDER = BorderFactory.createLineBorder(Color.CYAN, 1);
+    // default colors
     private final Color DEFAULT_BG_COLOR = Color.DARK_GRAY,
                         DEFAULT_FG_COLOR = Color.CYAN;
 
@@ -131,6 +138,7 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         pList = new JPanel();
         pList.setBounds(100, 50, 1180, 670);
         pList.setBackground(DEFAULT_BG_COLOR);
+        pList.setLayout(null);
 
         // TODO: setting up map panel
         pMap = new JPanel();
@@ -167,8 +175,10 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         exit = new JButton(img_exit);
         exit.setOpaque(true);
         exit.setBackground(DEFAULT_BG_COLOR);
-        exit.setBounds(1230, 0, 50, 50);
+        exit.setBounds(1247, 12, 25, 25);
         exit.addActionListener(this);
+        exit.setBorder(BorderFactory.createEmptyBorder());
+        exit.setSelectedIcon(img_exit_selected);
 
         // TODO: setting up title label
         title = new JLabel("PlaneSpotter");
@@ -267,23 +277,32 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         DefaultMutableTreeNode n3 = new DefaultMutableTreeNode("test test objekt test");
         root.add(n2);
         root.add(n3);
-        listView = new JTree(root);
+        listView = new JTree(tree);
 
         //listView = new JTree(Controller.flightTree());
         // Exception in thread "main" java.lang.IndexOutOfBoundsException: Index 1 out of bounds for length 1
         listView.setFont(font_menu);
         listView.setBackground(DEFAULT_BG_COLOR);
         listView.setForeground(DEFAULT_FG_COLOR);
-        listView.setBounds(100, 50, 1180, 670);
+        listView.setBounds(0, 0, 1180, 670);
 
         return listView;
     }
+
+    /**
+     * static, damit der controller die methode nutzen kann, ohne eine neue gui zu oefnen
+     * @param node is the tree node to recieve
+     */
+    public static void recieveTree (DefaultMutableTreeNode node) {
+        tree = node;
+    }
+
 
 
     @Override
     public void actionPerformed(ActionEvent e) {
         Object src = e.getSource();
-        if (src == exit)  System.exit(0);
+        if (src == exit)  Controller.exit();
     }
 
     @Override
