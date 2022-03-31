@@ -14,9 +14,19 @@ import java.io.FileWriter;
 import java.sql.*;
 import planespotter.dataclasses.*;
 
-public class Supplier {
+public class Supplier extends Thread{
 
-	public static HttpResponse<String> fr24get() throws Exception {
+	Deserializer ds = new Deserializer();
+	public void run(){
+		try {
+			writeToDB(ds.deserialize(fr24get()));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public HttpResponse<String> fr24get() throws Exception {
 		HttpClient client = HttpClient.newHttpClient();
 		// Request flightradar24 data with Firefox UserAgent
 		// URL splitted only for visibility
@@ -36,11 +46,11 @@ public class Supplier {
 		return response;
 	}
 
-	public static void writeToDB(List<Frame> frames) throws Exception {
+	public void writeToDB(List<Frame> frames) throws Exception {
 		try {
 			// Timestamp ts = new Timestamp(System.currentTimeMillis());
 			// Instant inst = ts.toInstant();
-			
+
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			String db = "jdbc:sqlite:plane.db";
 			Connection conn = DriverManager.getConnection(db);
@@ -51,7 +61,7 @@ public class Supplier {
 			String getFlightID = "SELECT * from flights ORDER BY ID DESC LIMIT 1";
 			long ts1 = System.nanoTime();
 			for (Frame f : frames) {
-				
+
 				String planeFilter = "SELECT icaonr from planes WHERE icaonr = " + f.getIcaoAdr() + " LIMIT 1";
 				Statement stmt = conn.createStatement();
 				ResultSet rs = stmt.executeQuery(planeFilter);
@@ -101,10 +111,10 @@ public class Supplier {
 			e.printStackTrace();
 			// conn.rollback();
 		}
-		
+
 	}
 
-	public static void writeToCSV(List<String> data) throws Exception {
+	public void writeToCSV(List<String> data) throws Exception {
 		// Create File and write to it
 		Timestamp ts = new Timestamp(System.currentTimeMillis());
 		Instant inst = ts.toInstant();
@@ -120,24 +130,5 @@ public class Supplier {
 		} else {
 			System.out.println("File already exists! This should not happen since epoch is unique");
 		}
-	}
-
-	// Main loop
-	public static void main(String[] args) {
-		//try {
-			//while(true) {
-			//Deserializer ds = new Deserializer();
-			//List<String> list = ds.stringMagic(fr24get());
-			//List<Frame> frames = ds.deserialize(list);			
-			//writeToDB(frames);
-			//TimeUnit.SECONDS.sleep(30);
-			//}
-		//} catch (Exception e) {
-		//	// Auto-generated catch block
-		//	e.printStackTrace();
-		//}
-		
-		//dbOut out = new DBOut();
-		//List<DataPoint> liste = out.querryTrackingData(12);
 	}
 }

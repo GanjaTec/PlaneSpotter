@@ -10,7 +10,6 @@ import planespotter.dataclasses.*;
 public class Deserializer {
 	
 	public Deserializer() {
-		
 	}
 	
 	// Handle Response Data, this basically turns the output to CSV
@@ -59,9 +58,9 @@ public class Deserializer {
 	}
 	
 	//Convert String to Frame-Objects
-	public List<Frame> deserialize(List<String> data) {
+	public List<Frame> deserialize(HttpResponse<String> resp) {
 		List<Frame> frames = new ArrayList<Frame>();
-		for(String row : data) {
+		for(String row : stringMagic(resp)) {
 			String[] r = row.split(",");
 			
 			String field;
