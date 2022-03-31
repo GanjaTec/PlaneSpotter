@@ -14,7 +14,7 @@ import java.io.FileWriter;
 import java.sql.*;
 import planespotter.dataclasses.*;
 
-public class Supplier extends Thread{
+public class Supplier implements Runnable{
 
 	Deserializer ds = new Deserializer();
 	public void run(){
