@@ -12,8 +12,8 @@ Ordnerstruktur
      |->libs              #Librarys
      -->planespotter      #Main Package
         |
-        |->dataclasses    # Classes for Datastructure
-        |->display        # Classes for View
-        |->model          # Classes of the Data Model
-        |->exceptions     # Exceptions
-        -->unused         # unused or deprecated classes
+        |->dataclasses    # Package for Datastructure
+        |->display        # Package for View
+        |->model          # Package for the Data Model
+        |->exceptions     # Package Exceptions
+        -->unused         # Package for unused or deprecated classes
