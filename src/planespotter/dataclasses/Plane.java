@@ -1,40 +1,79 @@
 package planespotter.dataclasses;
 
 /**
- * Plane class represents Plane Object
+ * @author Lukas
+ *
+ * This Class is used to Represent a DB Entry from the 'Plane' Table 
  */
 public class Plane {
 
-    private int id;
-    private String icao;
-    private String tailnr;
-    private String planetype;
-    private String registration;
-    private Airline airline;
+	private int id;
+	private String icao;
+	private String tailnr;
+	private String planetype;
+	private String registration;
+	private Airline airline;
 
-    public Plane (int id, String icao, String tailnr, String planetype, String registration, Airline airline) {
-        this.id = id;
-        this.icao = icao;
-        this.tailnr = tailnr;
-        this.planetype = planetype;
-        this.registration = registration;
-        this.airline = airline;
-    }
+	/**
+	 * Constructor
+	 * 
+	 * @param id int Database ID
+	 * @param icao String 24bit ICAO Address
+	 * @param tailnr String Tailnumber
+	 * @param planetype String Planetype
+	 * @param registration String Registrationnumber
+	 * @param airline Airline Airline the Plane belongs to
+	 */
+	public Plane (int id, String icao, String tailnr, String planetype, String registration, Airline airline) {
+		this.id = id;
+		this.icao = icao;
+		this.tailnr = tailnr;
+		this.planetype = planetype;
+		this.registration = registration;
+		this.airline = airline;
+	}
+	
+	//Getter
+	/**
+	 * @return int Database ID
+	 */
+	public int getID() {
+		return this.id;
+		}
 
-    /**
-     * getter
-     * TODO: return the Plane attributes
-     */
-    public int getID () { return id; }
+	/**
+	 * @return String 24bit ICAO Adress
+	 */
+	public String getIcao() {
+		return this.icao;
+		}
 
-    public String getIcao () { return icao; }
+	/**
+	 * @return String Tailnumber
+	 */
+	public String getTailnr() {
+		return this.tailnr;
+		}
 
-    public String getTailnr () { return tailnr; }
+	/**
+	 * @return String Planetype
+	 */
+	public String getPlanetype() {
+		return this.planetype;
+		}
 
-    public String getPlanetype () { return planetype; }
+	/**
+	 * @return String Registrationnumber
+	 */
+	public String getRegistration() {
+		return this.registration;
+		}
 
-    public String getRegistration () { return registration; }
-
-    public Airline getAirline () { return airline; }
+	/**
+	 * @return Airline Airline the Plane Belongs to
+	 */
+	public Airline getAirline() {
+		return this.airline;
+		}
 
 }

@@ -6,15 +6,13 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.io.File;
 import java.io.FileWriter;
 import java.sql.*;
 import planespotter.dataclasses.*;
 
-public class Supplier extends Thread{
+public class Supplier implements Runnable{
 
 	Deserializer ds = new Deserializer();
 	public void run(){

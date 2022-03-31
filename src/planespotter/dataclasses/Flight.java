@@ -1,37 +1,92 @@
 package planespotter.dataclasses;
-
-import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * @author Janne Matti
+ * @author Lukas
+ *	
+ * This Class is used to Represent a single Flight with all off its Datapoints
+ */
 public class Flight {
     private int id;
-    private Airport start, dest;
-    private String callsign, flightnr;
+    private Airport start;
+    private Airport dest;
+    private String callsign;
+    private String flightnr;
     private Plane plane;
-    private HashMap<Long, DataPoint> route;
+    private HashMap<Long, DataPoint> datapoints;
 
-    public Flight (int id, Airport start, Airport dest, Plane plane, String flightnr, HashMap<Long, DataPoint> route) {
+    /**
+     * Constructor
+     * 
+     * @param id int Database ID
+     * @param start Airport Starting Airport
+     * @param dest Airport Destination Airport
+     * @param callsign String Callsign of the Flight
+     * @param plane Plane a single Plane
+     * @param flightnr String Flightnumber, not the FlightID
+     * @param datapoints HashMap<Long, DataPoint> Hashmap containing all Datapoint keyed by Timestamp
+     */
+    public Flight (int id, Airport start, Airport dest, String callsign, Plane plane, String flightnr, HashMap<Long, DataPoint> datapoints) {
         this.id = id;
         this.start = start;
         this.dest = dest;
+        this.callsign = callsign;
         this.plane = plane;
         this.flightnr = flightnr;
-        this.route = route;
+        this.datapoints = datapoints;
     }
 
     /**
      * getter
      * TODO: return the Flight attribute
      */
-    public int getID () { return id; }
+    /**
+     * @return int Database ID
+     */
+    public int getID() {
+    	return this.id;
+    	}
 
-    public Airport getStart () { return start; }
+    /**
+     * @return Airport Starting Airport
+     */
+    public Airport getStart() {
+    	return this.start;
+    	}
 
-    public Airport getDest () { return dest; }
+    /**
+     * @return Airport Destination Airport
+     */
+    public Airport getDest() {
+    	return this.dest;
+    	}
+    
+    /**
+     * @return String Callsign of the Flight
+     */
+    public String getCallsign() {
+    	return this.callsign;
+    }
 
-    public Plane getPlane () { return plane; }
+    /**
+     * @return Plane Plane used for the Flight
+     */
+    public Plane getPlane(){
+    	return this.plane;
+    	}
 
-    public String getFlightnr () { return flightnr; }
+    /**
+     * @return String Flightnumber, !Important! do not confuse with FlightID
+     */
+    public String getFlightnr() {
+    	return this.flightnr;
+    	}
 
-
+    /**
+     * @return HashMap<Long, DataPoint> All of the Tracking Data of the Flight
+     */
+    public HashMap<Long, DataPoint> getDataPoints() {
+    	return this.datapoints;
+    }
 }
