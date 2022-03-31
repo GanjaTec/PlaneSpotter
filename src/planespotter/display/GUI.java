@@ -31,10 +31,11 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
     private JLabel title, bground;
     private JMenu datei, view, settings, search_settings;
     private static JTree listView;
-    private static DefaultMutableTreeNode tree;
-    protected JTextField search;
-    protected JRadioButton rbFlight, rbAirline;
-    protected JButton exit;
+    //private static DefaultMutableTreeNode tree;
+    private JTextField search;
+    private JRadioButton rbFlight, rbAirline;
+    private JButton exit;
+    private JScrollPane spList;
 
     /**
      * class constants
@@ -70,6 +71,7 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         frame = new JFrame("PlaneSpotter");
         frame.setSize(1280, 720);
         frame.setUndecorated(true);
+        frame.setResizable(false);
         frame.setLayout(null);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
@@ -158,8 +160,6 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         pfinfo.setBounds(0, 0, 280, 650);
         pfinfo.setBackground(DEFAULT_BG_COLOR);
 
-        // text field //
-
         // TODO: setting up search text field
         search = new JTextField();
         search.setToolTipText("Search");
@@ -245,7 +245,13 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         } catch (SQLException e) {
             e.printStackTrace();
         } // kommt noch in einen ActionListener oder so
-        pList.add(listView);
+
+        // TODO: setting up list scrollpane
+        spList = new JScrollPane();
+        spList.setViewportView(listView);
+        spList.setBounds(0, 0, 1000, 650);
+        // TODO: adding list scrollpane to list pane
+        pList.add(spList);
 
         // TODO: adding everything to internal menu frame
         fmenu.add(pMenu);
@@ -303,8 +309,9 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
      * static, damit der controller die methode nutzen kann, ohne eine neue gui zu oefnen
      * @param node is the tree node to recieve
      */
+    //@unused
     public static void recieveTree (DefaultMutableTreeNode node) {
-        tree = node;
+        //tree = node;
     }
 
     /**
