@@ -1,12 +1,13 @@
-package planespotter.dataclasses;
+package planespotter.constants;
 
 import java.awt.*;
 
 public abstract class GUIConstants {
 
     // default colors
-    public static final Color   DEFAULT_BG_COLOR = Color.DARK_GRAY,
-                                DEFAULT_FG_COLOR = Color.CYAN;
+    public static final Color   DEFAULT_BG_COLOR = Color.LIGHT_GRAY,
+                                DEFAULT_FG_COLOR = Color.BLACK,
+                                DEFAULT_BORDER_COLOR = Color.WHITE;
 
     // default fonts
     public static final Font    TITLE_FONT = new Font("Broadway", Font.BOLD, 20),
