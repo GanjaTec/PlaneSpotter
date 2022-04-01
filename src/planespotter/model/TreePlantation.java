@@ -11,7 +11,7 @@ import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
 
-import static planespotter.dataclasses.GUIConstants.*;
+import static planespotter.constants.GUIConstants.*;
 
 /**
  * @name TreeFactory

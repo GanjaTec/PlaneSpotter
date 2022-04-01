@@ -1,4 +1,4 @@
-package planespotter;
+package planespotter.constants;
 
 /**
  * @author Lukas

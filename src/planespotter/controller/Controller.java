@@ -1,4 +1,4 @@
-package planespotter;
+package planespotter.controller;
 
 import planespotter.dataclasses.*;
 import planespotter.display.*;
@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class Controller {
 
@@ -25,16 +26,32 @@ public class Controller {
 
     /**
      * openFrame() opens a frame
-     * @param c is the Frame-Class to be opened
      */
-    public static void openWindow (Class c) {
-        if (c == GUI.class) {
+    public static void openWindow () {
+
+        GUI gui = new GUI();
+
+        loadList(gui);
+    }
+
+    /**
+     *
+     */
+    public static void loadList (GUI gui) {
+        gui.progressbarVisible(true);
+        for (int i = gui.progressbarValue(); i <= 100; i++) {
+            gui.progressbarPP();
             try {
-                createFlightTree(); // nur zum testen // auskommentieren!
-            } catch (SQLException e) {
+                TimeUnit.MILLISECONDS.sleep(5);
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            new GUI();
+        }
+        try {
+            gui.progressbarVisible(false);
+            createFlightTree();     // nur zum testen
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
