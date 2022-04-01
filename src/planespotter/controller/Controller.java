@@ -65,7 +65,7 @@ public class Controller {
         List<Flight> list = new DBOut().getAllFlights();
         //List<Flight> list = testFlightList();
         JTree tree = TreePlantation.createListView(TreePlantation.createFlightTree(list));
-        GUI.setListView(tree);
+        GUI.recieveTree(tree);
         //return tree;
     }
 

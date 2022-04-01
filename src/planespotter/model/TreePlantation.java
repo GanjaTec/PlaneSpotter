@@ -1,5 +1,6 @@
 package planespotter.model;
 
+import planespotter.constants.Bounds;
 import planespotter.dataclasses.Airline;
 import planespotter.dataclasses.Airport;
 import planespotter.dataclasses.Flight;
@@ -36,7 +37,7 @@ public abstract class TreePlantation {
         listView.setFont(FONT_MENU);
         listView.setBackground(Color.WHITE);
         listView.setForeground(DEFAULT_FG_COLOR);
-        listView.setBounds(0, 0, 1000, 650);
+        listView.setBounds(Bounds.RIGHT);
 
         return listView;
     }
