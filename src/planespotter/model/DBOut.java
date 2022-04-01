@@ -26,13 +26,14 @@ public class DBOut {
 	 * @param querry String to use for the Querry
 	 * @return ResultSet containing the querried Data
 	 */
-	public ResultSet querryDB(String querry) throws Exception {
+	public static ResultSet querryDB(String querry) throws Exception {
 		ResultSet rs;
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			String db = "jdbc:sqlite:plane.db";
 			Connection conn = DriverManager.getConnection(db);
 			Statement stmt = conn.createStatement();
 			rs = stmt.executeQuery(querry);
+			
 		return rs;
 	}
 
@@ -146,6 +147,18 @@ public class DBOut {
 		return p;
 	}
 	
+	public static int checkPlaneInDB(String icao) throws Exception {
+		String planeFilter = "SELECT ID FROM planes WHERE icaonr = " + icao + " LIMIT 1";
+		ResultSet rs = querryDB(planeFilter);
+		int id;
+		if(rs.next() == true) {
+			id = rs.getInt(0);
+		} else {
+			id = -1;
+		}
+		return id;
+	}
+	
 	public Plane getPlaneByID(int id) throws Exception {
 		Plane p;
 		ResultSet rs = querryDB(SqlQuerrys.getPlaneByID + id);
@@ -216,6 +229,18 @@ public class DBOut {
 		}
 		return flights;
 	}
+	
+	public static int getLastFlightID() throws Exception {
+		ResultSet rs = querryDB(SqlQuerrys.getLastFlightID);
+		int flightid;
+		if(rs.next()==true) {
+			flightid = rs.getInt("ID");
+			}
+		else {
+			flightid = -1;
+		}
+		return flightid;
+	} 
 
 
 }
