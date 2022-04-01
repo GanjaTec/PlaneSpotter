@@ -6,6 +6,8 @@ import planespotter.controller.Controller;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.*;
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
+import javax.swing.plaf.basic.BasicInternalFrameUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.*;
@@ -28,8 +30,8 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
     private JDesktopPane dpleft, dpright;
     private JInternalFrame flist, fmap, fmenu, finfo;
     private static JPanel mainpanel, pTitle, pList, pMap, pMenu, pSearch, pInfo;
-    private JLabel title, icon, bground;
-    private JMenu datei, view, settings, search_settings;
+    private JLabel title, icon, bground, list_title;
+    private JMenu datei, settings, search_settings;
     private JMenuItem iport, export, exit, view_list, view_map;
     private static JTree listView;
     //private static DefaultMutableTreeNode tree;
@@ -37,6 +39,7 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
     private JRadioButton rbFlight, rbAirline;
     private JProgressBar progressbar;
     private JMenuBar menubar;
+    private JButton btList, btMap;
 
     /**
      * class constants
@@ -86,11 +89,13 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         dpright = new JDesktopPane();
         dpright.setBorder(LINE_BORDER);
         dpright.setBackground(DEFAULT_BG_COLOR);
+        dpright.setDesktopManager(new DefaultDesktopManager());
         dpright.setBounds(280, 70, 986, 615);
         // TODO: setting up left desktop pane
         dpleft = new JDesktopPane();
         dpleft.setBorder(LINE_BORDER);
         dpleft.setBackground(DEFAULT_BG_COLOR);
+        dpleft.setDesktopManager(new DefaultDesktopManager());
         dpleft.setBounds(0, 70, 280, 615);
 
 
@@ -139,6 +144,12 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
                 pTitle.setLayout(null);
                 pTitle.setBorder(LINE_BORDER);
 
+                    // TODO: setting up list panel title
+                    list_title = new JLabel("Data List");
+                    list_title.setBounds(315, 5, 300, 25);
+                    list_title.setForeground(DEFAULT_FG_COLOR);
+                    list_title.setBorder(LINE_BORDER);
+
                 // TODO: setting up list panel
                 pList = new JPanel();
                 pList.setBounds(0, 0, 990, 615);
@@ -164,7 +175,7 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
                     // TODO: setting up search text field
                     search = new JTextField();
                     search.setToolTipText("Search");
-                    search.setBounds(10, 470, 260, 25);
+                    search.setBounds(10, 470, 255, 25);
                     search.setBackground(Color.WHITE);
                     search.setFont(FONT_MENU);
                     search.setBorder(MENU_BORDER);
@@ -201,22 +212,23 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
                     datei.setBorder(MENU_BORDER);
                     datei.setBackground(DEFAULT_BG_COLOR);
                     datei.setForeground(DEFAULT_FG_COLOR);
-                    datei.setBounds(10, 15, 260,  25);
+                    datei.setBounds(10, 15, 255,  25);
                     datei.addActionListener(this);
 
+                    /*
                     // TODO: setting up view menu
                     view = new JMenu("View");
                     view.setFont(FONT_MENU);
                     view.setBorder(MENU_BORDER);
                     view.setBackground(DEFAULT_BG_COLOR);
                     view.setForeground(DEFAULT_FG_COLOR);
-                    view.setBounds(10, 55, 260, 25);
+                    view.setBounds(10, 55, 255, 25);
                     view.addActionListener(this);
 
                         // TODO: setting up view_list item
                         view_list = new JMenuItem("List-View");
                         view_list.addMouseListener(this);
-                        view_list.setBounds(10, 70, 260, 25);
+                        view_list.setBounds(10, 200, 300, 25);
                         view_list.setBackground(DEFAULT_BG_COLOR);
                         view_list.setForeground(DEFAULT_FG_COLOR);
                         view_list.setBorder(MENU_BORDER);
@@ -224,13 +236,32 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
                         view_list.setOpaque(true);
                         view_list.setVisible(true);
 
+                     */
+
+                    // TODO setting up list button
+                    btList = new JButton("List-View");
+                    btList.setBackground(Color.DARK_GRAY);
+                    btList.setForeground(DEFAULT_BORDER_COLOR);
+                    btList.setBorder(MENU_BORDER);
+                    btList.addMouseListener(this);
+                    btList.setBounds(10, 55, 120, 25);
+
+                    // TODO setting up list button
+                    btMap = new JButton("List-View");
+                    btMap.setBackground(Color.DARK_GRAY);
+                    btMap.setForeground(DEFAULT_BORDER_COLOR);
+                    btMap.setBorder(MENU_BORDER);
+                    btMap.addMouseListener(this);
+                    btMap.setBounds(145, 55, 120, 25);
+
+
                     // TODO: setting up settings menu
                     settings = new JMenu("Settings");
                     settings.setFont(FONT_MENU);
                     settings.setBorder(MENU_BORDER);
                     settings.setBackground(DEFAULT_BG_COLOR);
                     settings.setForeground(DEFAULT_FG_COLOR);
-                    settings.setBounds(10, 95, 260,  25);
+                    settings.setBounds(10, 95, 255,  25);
                     settings.addActionListener(this);
 
                     // TODO: setting up search-settings menu
@@ -239,15 +270,15 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
                     search_settings.setBorder(MENU_BORDER);
                     search_settings.setBackground(DEFAULT_BG_COLOR);
                     search_settings.setForeground(DEFAULT_FG_COLOR);
-                    search_settings.setBounds(10, 515, 260, 25);
+                    search_settings.setBounds(10, 515, 255, 25);
                     search_settings.addActionListener(this);
 
                     // TODO: seting up progress bar
                     progressbar = new JProgressBar(0, 100);
                     progressbar.setBorder(MENU_BORDER);
                     progressbar.setBackground(DEFAULT_BG_COLOR);
-                    progressbar.setForeground(DEFAULT_FG_COLOR);
-                    progressbar.setBounds(10, 555, 260, 25);
+                    progressbar.setForeground(new Color(0, 204, 153));
+                    progressbar.setBounds(10, 555, 255, 25);
                     progressbar.setVisible(false);
                     progressbar.setValue(0);
 
@@ -261,11 +292,12 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
 
 
                     // TODO: adding everything to view item
-                    view.add(view_list);
+                    //view.add(view_list);
 
                     // TODO: adding everything to menubar
                     menubar.add(datei);
-                    menubar.add(view);
+                    menubar.add(btList);
+                    menubar.add(btMap);
                     menubar.add(settings);
                     menubar.add(search_settings);
                     menubar.add(search);
@@ -328,7 +360,10 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
         // TODO: adding mainpanel to frame
         frame.add(mainpanel);
 
+        removeTitlePane();
+
         flist.show();
+
         //fmap.show();
         fmenu.show();
         //finfo.show();
@@ -336,6 +371,15 @@ public class GUI implements     ActionListener, KeyListener, ListSelectionListen
 
 
         return frame;
+    }
+
+    private void removeTitlePane () {
+        BasicInternalFrameTitlePane titlePane =(BasicInternalFrameTitlePane)((BasicInternalFrameUI)flist.getUI()).getNorthPane();
+        flist.remove(titlePane);
+        BasicInternalFrameTitlePane newTitlePane =(BasicInternalFrameTitlePane)((BasicInternalFrameUI)flist.getUI()).getNorthPane();
+        newTitlePane.setFocusable(false);
+        newTitlePane.setEnabled(false);
+        flist.add(newTitlePane);
     }
 
     /**

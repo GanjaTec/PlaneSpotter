@@ -32,6 +32,7 @@ public class Controller {
         GUI gui = new GUI();
 
         loadList(gui);
+
     }
 
     /**
@@ -42,7 +43,7 @@ public class Controller {
         for (int i = gui.progressbarValue(); i <= 100; i++) {
             gui.progressbarPP();
             try {
-                TimeUnit.MILLISECONDS.sleep(5);
+                TimeUnit.MILLISECONDS.sleep(15);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

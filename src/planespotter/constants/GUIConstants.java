@@ -6,7 +6,7 @@ public abstract class GUIConstants {
 
     // default colors
     public static final Color   DEFAULT_BG_COLOR = Color.LIGHT_GRAY,
-                                DEFAULT_FG_COLOR = new Color(0, 0, 144),
+                                DEFAULT_FG_COLOR = Color.BLACK,
                                 DEFAULT_BORDER_COLOR = Color.WHITE;
 
     // default fonts

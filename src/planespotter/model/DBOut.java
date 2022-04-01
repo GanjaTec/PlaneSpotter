@@ -63,6 +63,13 @@ public class DBOut {
 	}
 
 	/**
+	 *
+	 */
+	private String stripString (String in) {
+		return in.replaceAll("\"", "");
+	}
+
+	/**
 	 * This method is used to Querry the DB for Airline by its assigned ICAO Tag
 	 * It takes a String containing the ICAO Tag and returns
 	 * an Airline Object
@@ -74,6 +81,7 @@ public class DBOut {
 	 */
 	public Airline getAirlineByTag(String tag) throws SQLException {
 		Airline a = null;
+		tag = stripString(tag);
 		ResultSet rs = querryDB(SqlQuerrys.getAirlineByTag + tag); // ist leer TODO fixen
 		if (rs.next()) {
 			a = new Airline(rs.getInt("ID"), rs.getString("icaotag"), rs.getString("name"));
@@ -127,12 +135,15 @@ public class DBOut {
 	 * @throws SQLException
 	 */
 	public Plane getPlaneByICAO(String icao) throws SQLException {
-		Plane p = null;
+		Plane p;
+		// TODO: Bug fixen
+		// org.sqlite.SQLiteException: [SQLITE_ERROR] SQL error or missing database (unrecognized token: "06A1EB")
+		//icao = stripString(icao);
 		ResultSet rs = querryDB(SqlQuerrys.getPlaneByICAO + icao);
 
 		if (rs.next()) {
 			Airline a = getAirlineByTag(rs.getString("airline"));
-			p = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailn"), rs.getString("type"), rs.getString("registration"), a);
+			p = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailnr"), rs.getString("type"), rs.getString("registration"), a);
 		} else {
 			Airline a = new Airline(-1, "None", "None");
 			p = new Plane(-1, "None", "None", "None", "None", a);
