@@ -1,6 +1,6 @@
 package planespotter.model;
 
-import planespotter.SqlQuerrys;
+import planespotter.constants.SqlQuerrys;
 import planespotter.dataclasses.*;
 
 import java.sql.*;
@@ -74,7 +74,7 @@ public class DBOut {
 	 */
 	public Airline getAirlineByTag(String tag) throws SQLException {
 		Airline a = null;
-		ResultSet rs = querryDB(SqlQuerrys.getAirlineByTag + tag);
+		ResultSet rs = querryDB(SqlQuerrys.getAirlineByTag + tag); // ist leer TODO fixen
 		if (rs.next()) {
 			a = new Airline(rs.getInt("ID"), rs.getString("icaotag"), rs.getString("name"));
 		} else {
@@ -131,7 +131,7 @@ public class DBOut {
 		ResultSet rs = querryDB(SqlQuerrys.getPlaneByICAO + icao);
 
 		if (rs.next()) {
-			Airline a = getAirlineByTag(rs.getString("icaotag"));
+			Airline a = getAirlineByTag(rs.getString("airline"));
 			p = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailn"), rs.getString("type"), rs.getString("registration"), a);
 		} else {
 			Airline a = new Airline(-1, "None", "None");

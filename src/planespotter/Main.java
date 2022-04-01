@@ -1,5 +1,6 @@
 package planespotter;
 
+import planespotter.controller.Controller;
 import planespotter.display.GUI;
 
 public class Main {
@@ -11,7 +12,7 @@ public class Main {
     public static void main (String[] args) {
 
         // TODO: new GUI frame
-        Controller.openWindow(GUI.class);
+        Controller.openWindow();
     }
 
 }
