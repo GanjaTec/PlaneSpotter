@@ -19,14 +19,11 @@ public class DBIn {
 	}
 
 	public static void insertPlane(Frame f) throws Exception {
-		Connection conn = getDBConnection();
-		String planeFilter = "SELECT icaonr from planes WHERE icaonr = " + f.getIcaoAdr() + " LIMIT 1";
-		Statement stmt = conn.createStatement();
-		ResultSet rs = stmt.executeQuery(planeFilter);
-		String icao = new String();
-		while (rs.next()) {icao = rs.getString(0);}
+		Connection conn = getDBConnection();		
+		int id = DBOut.checkPlaneInDB(f.getIcaoAdr());
+		//TODO Airline ID anfrage
 
-		if (icao == null) {
+		if (id == -1) {
 			// insert into planes
 			PreparedStatement pstmt = conn.prepareStatement(SqlQuerrys.planequerry);
 			pstmt.setString(1, f.getIcaoAdr());
@@ -36,8 +33,6 @@ public class DBIn {
 			//TODO Airline ID anfrage
 			pstmt.setString(5, f.getAirline());
 			pstmt.executeUpdate();
-
-		} else {
 
 		}
 	}
@@ -51,15 +46,23 @@ public class DBIn {
 		pstmt.setString(4, f.getFlightnumber());
 		pstmt.setString(5, f.getCallsign());
 		pstmt.executeUpdate();
+		conn.close();
+		//return DBOut.getLastFlightID();
 	}
 
 	public static void insertTracking(Frame f) throws Exception {
-		// get FlightID for
+
 		Connection conn = getDBConnection();
+		
+		// get FlightID for
+		int flightid = DBOut.getLastFlightID();
+		/**
 		Statement stmt = conn.createStatement();
 		ResultSet rs = stmt.executeQuery(SqlQuerrys.getLastFlightID);
 		int flightid = 0;
 		while (rs.next()) {flightid = rs.getInt("ID");}
+		**/
+		
 		// insert into tracking
 		PreparedStatement pstmt = conn.prepareStatement(SqlQuerrys.trackingquerry);
 		pstmt.setInt(1, flightid);
