@@ -10,13 +10,32 @@ import java.util.List;
 import java.io.File;
 import java.io.FileWriter;
 import java.sql.*;
+
 import planespotter.dataclasses.*;
 
 public class Supplier implements Runnable{
+	private int threadNumber;
+	private String ThreadName;
+	//TODO Write getters
+	
+	public int getThreadNumber() {
+		return this.threadNumber;
+	}
+	
+	public String getThreadName() {
+		return this.ThreadName;
+	}
+	
+	public Supplier(int threadNumber) {
+		this.threadNumber = threadNumber;
+		this.ThreadName = "SupplierThread-" + threadNumber;
+	}
 
-	Deserializer ds = new Deserializer();
+	
 	public void run(){
 		try {
+			Deserializer ds = new Deserializer();
+			System.out.println("Starting Thread \"" + this.ThreadName + "\"");
 			writeToDB(ds.deserialize(fr24get()));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -32,79 +51,45 @@ public class Supplier implements Runnable{
 				.newBuilder(URI.create("https://data-live.flightradar24.com/zones/fcgi/feed.js?faa=1&"
 						// bounds defines the visible area on the live map, directly linked to planes in
 						// response, parameterize
-						+ "bounds=54.241%2C48.576%2C-14.184%2C13.94&" + "satellite=1&" + "mlat=1&" + "flarm=1&"
-						+ "adsb=1&" + "gnd=1&" + "air=1&"
+						+ "bounds=54.241%2C48.576%2C-14.184%2C13.94&"	
+						+ "satellite=1&"
+						+ "mlat=1&"
+						+ "flarm=1&"
+						+ "adsb=1&"
+						+ "gnd=1&"
+						+ "air=1&"
 						// Disable vehicles
-						+ "vehicles=0&" + "estimated=1&" + "maxage=14400&"
+						+ "vehicles=0&"
+						+ "estimated=1&"
+						+ "maxage=14400&"
 						// Disable gliders and stats
-						+ "gliders=0&" + "stats=0"))
+						+ "gliders=0&"
+						+ "stats=0"))
 				// User agent to prevent Response Code 451
 				.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0").build();
 		HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
 		return response;
 	}
 
-	public void writeToDB(List<Frame> frames) throws Exception {
+	public void writeToDB(List<Frame> frames) {
 		try {
-			// Timestamp ts = new Timestamp(System.currentTimeMillis());
-			// Instant inst = ts.toInstant();
-
-			Class.forName("com.mysql.cj.jdbc.Driver");
-			String db = "jdbc:sqlite:plane.db";
-			Connection conn = DriverManager.getConnection(db);
-
-			String planequerry = "INSERT INTO planes(icaonr, tailnr, registration, type, airline) VALUES(?,?,?,?,?)";
-			String flightquerry = "INSERT INTO flights(plane,src,dest,flightnr,callsign) VALUES(?,?,?,?,?)";
-			String trackingquerry = "INSERT INTO tracking(flightid,latitude,longitude,altitude,groundspeed,heading,squawk) VALUES(?,?,?,?,?,?,?)";
-			String getFlightID = "SELECT * from flights ORDER BY ID DESC LIMIT 1";
 			long ts1 = System.nanoTime();
 			for (Frame f : frames) {
-
-				String planeFilter = "SELECT icaonr from planes WHERE icaonr = " + f.getIcaoAdr() + " LIMIT 1";
-				Statement stmt = conn.createStatement();
-				ResultSet rs = stmt.executeQuery(planeFilter);
-				String icao = new String();
-				while (rs.next()) {icao = rs.getString(0);}
-
-				if (f.getIcaoAdr() != null) {}
+				
 				// insert into planes
-				PreparedStatement pstmt = conn.prepareStatement(planequerry);
-				pstmt.setString(1, f.getIcaoAdr());
-				pstmt.setString(2, f.getTailnr());
-				pstmt.setString(3, f.getRegistration());
-				pstmt.setString(4, f.getPlanetype());
-				pstmt.setString(5, f.getAirline());
-				pstmt.executeUpdate();
-
-
+				DBIn.insertPlane(f);
+				
 				// insert into flights
-				pstmt = conn.prepareStatement(flightquerry);
-				pstmt.setString(1, f.getIcaoAdr());
-				pstmt.setString(2, f.getSrcAirport());
-				pstmt.setString(3, f.getDestAirport());
-				pstmt.setString(4, f.getFlightnumber());
-				pstmt.setString(5, f.getCallsign());
-				pstmt.executeUpdate();
-
-				// get FlightID for
-				rs = stmt.executeQuery(getFlightID);
-				int flightid = 0;
-				while (rs.next()) {flightid = rs.getInt("ID");}
+				DBIn.insertFlight(f);
+				
 				// insert into tracking
-				pstmt = conn.prepareStatement(trackingquerry);
-				pstmt.setInt(1, flightid);
-				pstmt.setDouble(2, f.getLat());
-				pstmt.setDouble(3, f.getLon());
-				pstmt.setInt(4, f.getAltitude());
-				pstmt.setInt(5, f.getGroundspeed());
-				pstmt.setInt(6, f.getHeading());
-				pstmt.setInt(7, f.getSquawk());
-				pstmt.executeUpdate();
+				DBIn.insertTracking(f);
 			}
 
 			long ts2 = System.nanoTime();
 			long tdiff = ts2 - ts1;
-			System.out.println("filled DB in " + tdiff + "/10 seconds");
+			System.out.println("filled DB in " + tdiff + " seconds");
+		
 		} catch (Exception e) {
 			e.printStackTrace();
 			// conn.rollback();

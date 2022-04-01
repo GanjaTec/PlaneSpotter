@@ -14,10 +14,10 @@ public class Paralel {
 	}
 
 	public void startThreads() throws InterruptedException {
-		for(int i=0; i <= poolsize; i++) {
-			Supplier s = new Supplier();
-			exe.scheduleAtFixedRate(s, 0, 5, TimeUnit.MINUTES);
-			TimeUnit.SECONDS.sleep(30);
+		for(int i=0; i < poolsize; i++) {
+			Supplier s = new Supplier(i);
+			exe.scheduleAtFixedRate(s, i, 5, TimeUnit.MINUTES);
+			//TimeUnit.SECONDS.sleep(30);
 		}
 
 	}
