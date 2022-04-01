@@ -1,4 +1,4 @@
-package planespotter.dataclasses;
+package planespotter.constants;
 
 /**
  * enum ObjectType

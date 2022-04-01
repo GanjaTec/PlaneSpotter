@@ -1,15 +1,15 @@
-package planespotter;
+package planespotter.controller;
 
 import planespotter.dataclasses.*;
 import planespotter.display.*;
 import planespotter.model.DBOut;
-import planespotter.model.TreeFactory;
+import planespotter.model.TreePlantation;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class Controller {
 
@@ -26,49 +26,45 @@ public class Controller {
 
     /**
      * openFrame() opens a frame
-     * @param c is the Frame-Class to be opened
      */
-    public static void openWindow (Class c) {
-        if (c == GUI.class) {
-            try {
-                createFlightTree(); // nur zum testen // auskommentieren!
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            new GUI();
-        }
-    }
+    public static void openWindow () {
 
-    // testmethode
-    public static void main(String[] args) throws SQLException {
-        List<Flight> list = new DBOut().getAllFlights();
-        for (Flight f : list)
-        System.out.println(f.getID() + ", " + f.getCallsign() + ", " + f.getFlightnr());
+        GUI gui = new GUI();
+
+        loadList(gui);
+
     }
 
     /**
      *
      */
-    public static void initializeTree () {
-        /*
+    public static void loadList (GUI gui) {
+        gui.progressbarVisible(true);
+        for (int i = gui.progressbarValue(); i <= 100; i++) {
+            gui.progressbarPP();
+            try {
+                TimeUnit.MILLISECONDS.sleep(15);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         try {
-            //GUI.setListView(TreeFactory.createListView(createFlightTree()));
+            gui.progressbarVisible(false);
+            createFlightTree();     // nur zum testen
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-         */
     }
 
     /**
-     * @return flight tree node
-     *      ->for flight list
+     * creates flight tree in GUI
+     * sets tree to GUI.listView
      */
     public static void createFlightTree () throws SQLException {
         // laeuft noch nicht, zu viele Daten
         List<Flight> list = new DBOut().getAllFlights();
         //List<Flight> list = testFlightList();
-        JTree tree = TreeFactory.createListView(TreeFactory.createFlightTree(Controller.testFlightList()));
+        JTree tree = TreePlantation.createListView(TreePlantation.createFlightTree(list));
         GUI.setListView(tree);
         //return tree;
     }
@@ -97,7 +93,9 @@ public class Controller {
     /**
      * program exit method
      */
-    public static void exit () { System.exit(0); }
+    public static void exit () {
+        System.exit(0);
+    }
 
 
 

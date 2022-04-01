@@ -1,4 +1,4 @@
-package planespotter;
+package planespotter.controller;
 
 import planespotter.Exceptions.FileAlreadyExistsException;
 

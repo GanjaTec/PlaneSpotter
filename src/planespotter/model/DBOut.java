@@ -1,6 +1,6 @@
 package planespotter.model;
 
-import planespotter.SqlQuerrys;
+import planespotter.constants.SqlQuerrys;
 import planespotter.dataclasses.*;
 
 import java.sql.*;
@@ -63,6 +63,13 @@ public class DBOut {
 	}
 
 	/**
+	 *
+	 */
+	private String stripString (String in) {
+		return in.replaceAll("\"", "");
+	}
+
+	/**
 	 * This method is used to Querry the DB for Airline by its assigned ICAO Tag
 	 * It takes a String containing the ICAO Tag and returns
 	 * an Airline Object
@@ -74,9 +81,12 @@ public class DBOut {
 	 */
 	public Airline getAirlineByTag(String tag) throws SQLException {
 		Airline a = null;
-		ResultSet rs = querryDB(SqlQuerrys.getAirlineByTag + tag);
-		while(rs.next()) {
+		tag = stripString(tag);
+		ResultSet rs = querryDB(SqlQuerrys.getAirlineByTag + tag); // ist leer TODO fixen
+		if (rs.next()) {
 			a = new Airline(rs.getInt("ID"), rs.getString("icaotag"), rs.getString("name"));
+		} else {
+			a = new Airline(-1, "None", "None");
 		}
 
 		return a;
@@ -125,12 +135,18 @@ public class DBOut {
 	 * @throws SQLException
 	 */
 	public Plane getPlaneByICAO(String icao) throws SQLException {
-		Plane p = null;
+		Plane p;
+		// TODO: Bug fixen
+		// org.sqlite.SQLiteException: [SQLITE_ERROR] SQL error or missing database (unrecognized token: "06A1EB")
+		//icao = stripString(icao);
 		ResultSet rs = querryDB(SqlQuerrys.getPlaneByICAO + icao);
 
-		while(rs.next()) {
-			Airline a = getAirlineByTag(rs.getString("icaotag"));
-			p = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailn"), rs.getString("type"), rs.getString("registration"), a);
+		if (rs.next()) {
+			Airline a = getAirlineByTag(rs.getString("airline"));
+			p = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailnr"), rs.getString("type"), rs.getString("registration"), a);
+		} else {
+			Airline a = new Airline(-1, "None", "None");
+			p = new Plane(-1, "None", "None", "None", "None", a);
 		}
 
 		return p;
@@ -149,6 +165,7 @@ public class DBOut {
 		HashMap<Long ,DataPoint> dps = new HashMap<Long, DataPoint>();
 		ResultSet rs = querryDB(SqlQuerrys.getTrackingByFlight + flightID);
 		while(rs.next()) {
+			// TODO: IF STATEMENT
 			Position p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
 			DataPoint dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"), p, rs.getInt("timestamp"),
 					rs.getInt("squawk"), rs.getInt("groundspeed"), rs.getInt("heading"), rs.getInt("altitude"));
