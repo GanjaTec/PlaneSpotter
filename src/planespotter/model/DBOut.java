@@ -26,19 +26,13 @@ public class DBOut {
 	 * @param querry String to use for the Querry
 	 * @return ResultSet containing the querried Data
 	 */
-	public ResultSet querryDB(String querry) {
+	public ResultSet querryDB(String querry) throws Exception {
 		ResultSet rs;
-		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			String db = "jdbc:sqlite:plane.db";
 			Connection conn = DriverManager.getConnection(db);
 			Statement stmt = conn.createStatement();
 			rs = stmt.executeQuery(querry);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			rs = null;
-		}
 		return rs;
 	}
 
@@ -77,9 +71,9 @@ public class DBOut {
 	 * 
 	 * @param tag the ICAO-Tag used in the Querry
 	 * @return Airline Object
-	 * @throws SQLException
+	 * @throws Exception 
 	 */
-	public Airline getAirlineByTag(String tag) throws SQLException {
+	public Airline getAirlineByTag(String tag) throws Exception {
 		Airline a = null;
 		tag = stripString(tag);
 		ResultSet rs = querryDB(SqlQuerrys.getAirlineByTag + tag); // ist leer TODO fixen
@@ -99,9 +93,9 @@ public class DBOut {
 	 * @param srcAirport String containing the Departure Airports IATA Tag
 	 * @param destAirport String containing the Arrival Airports IATA Tag
 	 * @return List<Airport> the list containing the Airport Objects
-	 * @throws SQLException
+	 * @throws Exception 
 	 */
-	public List<Airport> getAirports(String srcAirport, String destAirport) throws SQLException{
+	public List<Airport> getAirports(String srcAirport, String destAirport) throws Exception{
 		List<Airport> aps = new ArrayList<Airport>();
 		ResultSet rsSrc = querryDB(SqlQuerrys.getAirportByTag + srcAirport);
 		ResultSet rsDst = querryDB(SqlQuerrys.getAirportByTag + destAirport);
@@ -132,9 +126,9 @@ public class DBOut {
 	 * 
 	 * @param icao Strin containing the ICAO Tag
 	 * @return Plane the Object containing all Information about the Plane
-	 * @throws SQLException
+	 * @throws Exception 
 	 */
-	public Plane getPlaneByICAO(String icao) throws SQLException {
+	public Plane getPlaneByICAO(String icao) throws Exception {
 		Plane p;
 		// TODO: Bug fixen
 		// org.sqlite.SQLiteException: [SQLITE_ERROR] SQL error or missing database (unrecognized token: "06A1EB")
@@ -151,6 +145,22 @@ public class DBOut {
 
 		return p;
 	}
+	
+	public Plane getPlaneByID(int id) throws Exception {
+		Plane p;
+		ResultSet rs = querryDB(SqlQuerrys.getPlaneByID + id);
+
+		if (rs.next()) {
+			Airline a = new Airline(-1, "BIA", "BUFU Int. Airlines");
+			//Airline a = getAirlineByTag(rs.getString("airline"));
+			p = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailnr"), rs.getString("type"), rs.getString("registration"), a);
+		} else {
+			Airline a = new Airline(-1, "None", "None");
+			p = new Plane(-1, "None", "None", "None", "None", a);
+		}
+		
+		return p;
+	}
 
 	/**
 	 * This Method is used to Querry all Datapoints belonging to a single Flight
@@ -159,9 +169,9 @@ public class DBOut {
 	 * 
 	 * @param flightID int representing the Flights Database ID
 	 * @return HashMap<Long, DataPoint> containing all Datapoints keyed with Timestamp
-	 * @throws SQLException
+	 * @throws Exception 
 	 */
-	public HashMap<Long, DataPoint> getTrackingByFlight(int flightID) throws SQLException {
+	public HashMap<Long, DataPoint> getTrackingByFlight(int flightID) throws Exception {
 		HashMap<Long ,DataPoint> dps = new HashMap<Long, DataPoint>();
 		ResultSet rs = querryDB(SqlQuerrys.getTrackingByFlight + flightID);
 		while(rs.next()) {
@@ -189,9 +199,9 @@ public class DBOut {
 	 * see errorlog "hs_err_pid30296.log" in the projects root directory
 	 * 
 	 * @return List<Flight> containing all Flight Objects
-	 * @throws SQLException
+	 * @throws Exception 
 	 */
-	public List<Flight> getAllFlights() throws SQLException {
+	public List<Flight> getAllFlights() throws Exception {
 		List<Flight> flights = new ArrayList<Flight>();
 
 		ResultSet rs = querryDB(SqlQuerrys.getFlights);
@@ -199,7 +209,7 @@ public class DBOut {
 		while(rs.next() && counter <= 20) {
 			HashMap<Long, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
 			List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
-			Plane plane = getPlaneByICAO(rs.getString("plane"));
+			Plane plane = getPlaneByID(5);
  			Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
 			flights.add(flight);
 			counter++;

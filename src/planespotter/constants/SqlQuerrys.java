@@ -26,8 +26,6 @@ public class SqlQuerrys {
 	public static final String getPlaneByID = "SELECT * FROM planes WHERE ID == ";
 	public static final String getAirlineByTag = "SELECT * FROM airlines WHERE icaotag == ";
 	public static final String getPlaneByICAO = "SELECT * FROM planes WHERE icaonr == ";
-	public String querry12 = "";
-	public String querry13 = "";
 	public String querry14 = "";
 
 }
