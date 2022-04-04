@@ -2,7 +2,7 @@ package planespotter.constants;
 
 import java.awt.*;
 
-public abstract class GUIConstants {
+public final class GUIConstants {
 
     // default colors
     public static final Color   DEFAULT_BG_COLOR = Color.GRAY,
