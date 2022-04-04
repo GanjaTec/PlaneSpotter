@@ -1,4 +1,4 @@
-package planespotter.model;
+package planespotter.display;
 
 import planespotter.constants.Bounds;
 import planespotter.constants.Paths;
@@ -33,7 +33,7 @@ public final class TreePlantation {
      * @return new JList for data models
      * @param node is the root node of the given tree
      */
-    public static JTree createListView (DefaultMutableTreeNode node) {
+    public static JTree createTree (DefaultMutableTreeNode node) {
         JTree listView;
         // initialisation new JTree
         listView = new JTree(node);
@@ -63,7 +63,7 @@ public final class TreePlantation {
     }
 
 
-    public static DefaultMutableTreeNode createFlightTree (List<Flight> list) {
+    public static DefaultMutableTreeNode createFlightTreeNode (List<Flight> list) {
         Iterator<Flight> it = list.iterator();
         // root node
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("");
@@ -138,7 +138,7 @@ public final class TreePlantation {
      * creates a 'Tree' of
      * @return root, the root node of the tree
      */
-    public static DefaultMutableTreeNode createAirlineTree (List<Airline> list) {
+    public static DefaultMutableTreeNode createAirlineTreeNode (List<Airline> list) {
         // list iterator for going through the list
         Iterator<Airline> it = list.iterator();
         // root node

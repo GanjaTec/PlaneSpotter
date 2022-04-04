@@ -26,19 +26,17 @@ public class DBOut {
 	 * @param querry String to use for the Querry
 	 * @return ResultSet containing the querried Data
 	 */
-	public ResultSet querryDB(String querry) {
+	public ResultSet querryDB(String querry) throws Exception {
 		ResultSet rs;
-		try {
+
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			String db = "jdbc:sqlite:plane.db";
 			Connection conn = DriverManager.getConnection(db);
 			Statement stmt = conn.createStatement();
 			rs = stmt.executeQuery(querry);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			rs = null;
-		}
+
+			// TODO Achtung! rs wurde hier auf null gesetzt
+			//rs = null;
 		return rs;
 	}
 
@@ -79,12 +77,12 @@ public class DBOut {
 	 * @return Airline Object
 	 * @throws SQLException
 	 */
-	public Airline getAirlineByTag(String tag) throws SQLException {
+	public Airline getAirlineByTag(String tag) throws Exception {
 		Airline a = null;
 		tag = stripString(tag);
 		ResultSet rs = querryDB(SqlQuerrys.getAirlineByTag + tag); // ist leer TODO fixen
 		if (rs.next()) {
-			a = new Airline(rs.getInt("ID"), rs.getString("icaotag"), rs.getString("name"));
+			a = new Airline(rs.getInt("ID"), rs.getString("iatatag"), rs.getString("name"));
 		} else {
 			a = new Airline(-1, "None", "None");
 		}
@@ -101,7 +99,7 @@ public class DBOut {
 	 * @return List<Airport> the list containing the Airport Objects
 	 * @throws SQLException
 	 */
-	public List<Airport> getAirports(String srcAirport, String destAirport) throws SQLException{
+	public List<Airport> getAirports(String srcAirport, String destAirport) throws Exception {
 		List<Airport> aps = new ArrayList<Airport>();
 		ResultSet rsSrc = querryDB(SqlQuerrys.getAirportByTag + srcAirport);
 		ResultSet rsDst = querryDB(SqlQuerrys.getAirportByTag + destAirport);
@@ -134,7 +132,7 @@ public class DBOut {
 	 * @return Plane the Object containing all Information about the Plane
 	 * @throws SQLException
 	 */
-	public Plane getPlaneByICAO(String icao) throws SQLException {
+	public Plane getPlaneByICAO(String icao) throws Exception {
 		Plane p;
 		// TODO: Bug fixen
 		// org.sqlite.SQLiteException: [SQLITE_ERROR] SQL error or missing database (unrecognized token: "06A1EB")
@@ -161,7 +159,7 @@ public class DBOut {
 	 * @return HashMap<Long, DataPoint> containing all Datapoints keyed with Timestamp
 	 * @throws SQLException
 	 */
-	public HashMap<Long, DataPoint> getTrackingByFlight(int flightID) throws SQLException {
+	public HashMap<Long, DataPoint> getTrackingByFlight(int flightID) throws Exception {
 		HashMap<Long ,DataPoint> dps = new HashMap<Long, DataPoint>();
 		ResultSet rs = querryDB(SqlQuerrys.getTrackingByFlight + flightID);
 		while(rs.next()) {
@@ -191,7 +189,7 @@ public class DBOut {
 	 * @return List<Flight> containing all Flight Objects
 	 * @throws SQLException
 	 */
-	public List<Flight> getAllFlights() throws SQLException {
+	public List<Flight> getAllFlights() throws Exception {
 		List<Flight> flights = new ArrayList<Flight>();
 
 		ResultSet rs = querryDB(SqlQuerrys.getFlights);
