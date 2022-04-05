@@ -12,6 +12,10 @@ public class Deserializer {
 	public Deserializer() {
 	}
 	
+	public String stripString (String in) {
+		return in.replaceAll("\"", "");
+	}
+	
 	// Handle Response Data, this basically turns the output to CSV
 	// TODO REPLACE WITH PROPER JSON HANDLING
 	// This is an absolute mess...
