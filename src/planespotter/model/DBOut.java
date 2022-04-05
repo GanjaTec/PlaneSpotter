@@ -26,6 +26,7 @@ public class DBOut {
 	 * @param querry String to use for the Querry
 	 * @return ResultSet containing the querried Data
 	 */
+
 	public static ResultSet querryDB(String querry) throws Exception {
 		ResultSet rs;
 		Class.forName("com.mysql.cj.jdbc.Driver");
@@ -33,6 +34,7 @@ public class DBOut {
 		Connection conn = DriverManager.getConnection(db);
 		Statement stmt = conn.createStatement();
 		rs = stmt.executeQuery(querry);
+
 		return rs;
 	}
 
@@ -78,7 +80,7 @@ public class DBOut {
 		tag = stripString(tag);
 		ResultSet rs = querryDB(SqlQuerrys.getAirlineByTag + tag); // ist leer TODO fixen
 		if (rs.next()) {
-			a = new Airline(rs.getInt("ID"), rs.getString("icaotag"), rs.getString("name"));
+			a = new Airline(rs.getInt("ID"), rs.getString("iatatag"), rs.getString("name"));
 		} else {
 			a = new Airline(-1, "None", "None");
 		}
@@ -95,7 +97,9 @@ public class DBOut {
 	 * @return List<Airport> the list containing the Airport Objects
 	 * @throws Exception 
 	 */
+
 	public List<Airport> getAirports(String srcAirport, String destAirport) throws Exception{
+
 		List<Airport> aps = new ArrayList<Airport>();
 		ResultSet rsSrc = querryDB(SqlQuerrys.getAirportByTag + srcAirport);
 		ResultSet rsDst = querryDB(SqlQuerrys.getAirportByTag + destAirport);

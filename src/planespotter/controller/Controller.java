@@ -1,15 +1,10 @@
 package planespotter.controller;
 
+import planespotter.constants.ViewType;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
-import planespotter.model.DBOut;
-import planespotter.model.TreePlantation;
-
-import javax.swing.*;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class Controller {
 
@@ -19,57 +14,35 @@ public class Controller {
     public Controller () {}
 
     /**
+     * the GUI
+     */
+    private static GUI gui;
+
+    /**
      * * * * * * * * * * * * * * *
      * static controller methods *
      * * * * * * * * * * * * * * *
      **/
 
     /**
-     * openFrame() opens a frame
+     * openWindow() opens a new GUI window as a thread
+     * // TODO überprüfen
      */
     public static void openWindow () {
-
-        GUI gui = new GUI();
-
-        loadList(gui);
-
+        gui = new GUI();
+        gui.run();
     }
 
     /**
-     *
+     * creates a GUI-view for a specific view-type
+     * @param type is the ViewType, sets the content type for the
+     *             created view (e.g. different List-View-Types)
      */
-    public static void loadList (GUI gui) {
-        gui.progressbarVisible(true);
-        for (int i = gui.progressbarValue(); i <= 100; i++) {
-            gui.progressbarPP();
-            try {
-                TimeUnit.MILLISECONDS.sleep(15);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        try {
-            gui.progressbarVisible(false);
-            createFlightTree();     // nur zum testen
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    public static void createDataView (ViewType type) {
+        gui.loadList(type);
     }
 
-    /**
-     * creates flight tree in GUI
-     * sets tree to GUI.listView
-     */
-    public static void createFlightTree () throws SQLException {
-        // laeuft noch nicht, zu viele Daten
-        List<Flight> list = new DBOut().getAllFlights();
-        //List<Flight> list = testFlightList();
-        JTree tree = TreePlantation.createListView(TreePlantation.createFlightTree(list));
-        GUI.setListView(tree);
-        //return tree;
-    }
-
-    /**
+    /** // nur test
      * TestObjekt:
      * @return Test-List-Object
      */
@@ -96,8 +69,6 @@ public class Controller {
     public static void exit () {
         System.exit(0);
     }
-
-
 
 
 
