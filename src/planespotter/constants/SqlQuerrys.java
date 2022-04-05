@@ -13,8 +13,9 @@ public class SqlQuerrys {
 	
 	//insert Querrys
 	public static final String planequerry = "INSERT INTO planes(icaonr, tailnr, registration, type, airline) VALUES(?,?,?,?,?)";
-	public static final String flightquerry = "INSERT INTO flights(plane,src,dest,flightnr,callsign) VALUES(?,?,?,?,?)";
-	public static final String trackingquerry = "INSERT INTO tracking(flightid,latitude,longitude,altitude,groundspeed,heading,squawk) VALUES(?,?,?,?,?,?,?)";
+	public static final String flightquerry = "INSERT INTO flights(plane,src,dest,flightnr,callsign,start) VALUES(?,?,?,?,?,?)";
+	public static final String trackingquerry = "INSERT INTO tracking(flightid,latitude,longitude,altitude,groundspeed,heading,squawk,timestamp) VALUES(?,?,?,?,?,?,?,?)";
+	public static final String checkFlightInDB = "SELECT ID FROM flights WHERE plane == (?) AND flightnr == (?) AND end IS NOT NULL";
 	
 	
 	//select Querrys
@@ -26,8 +27,6 @@ public class SqlQuerrys {
 	public static final String getPlaneByID = "SELECT * FROM planes WHERE ID == ";
 	public static final String getAirlineByTag = "SELECT * FROM airlines WHERE icaotag == ";
 	public static final String getPlaneByICAO = "SELECT * FROM planes WHERE icaonr == ";
-	public String querry12 = "";
-	public String querry13 = "";
-	public String querry14 = "";
+	public static final String fuck = "";
 
 }
