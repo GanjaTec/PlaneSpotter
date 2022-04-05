@@ -13,9 +13,14 @@ import java.sql.*;
 
 import planespotter.dataclasses.*;
 
+/**
+ * @author Lukas
+ *
+ */
 public class Supplier implements Runnable{
 	private int threadNumber;
 	private String ThreadName;
+	private String bounds;
 	//TODO Write getters
 	
 	public int getThreadNumber() {
@@ -77,13 +82,25 @@ public class Supplier implements Runnable{
 			for (Frame f : frames) {
 				
 				// insert into planes
-				DBIn.insertPlane(f);
+				int planeID = DBOut.checkPlaneInDB(f.getIcaoAdr());
+				boolean checkPlane =  planeID > -1;
+				
+				if(!checkPlane) {
+					planeID = DBIn.insertPlane(f);
+				}
+				
 				
 				// insert into flights
-				DBIn.insertFlight(f);
+				int flightID = DBOut.checkFlightInDB(f, planeID);
+				boolean checkFlight = flightID > -1;
+				
+				if(!checkFlight) {
+					flightID = DBIn.insertFlight(f, planeID);
+				}
+				
 				
 				// insert into tracking
-				DBIn.insertTracking(f);
+				DBIn.insertTracking(f, flightID);
 			}
 
 			long ts2 = System.nanoTime();
@@ -97,6 +114,13 @@ public class Supplier implements Runnable{
 
 	}
 
+	
+	/**
+	 * @deprecated
+	 * 
+	 * @param data
+	 * @throws Exception
+	 */
 	public void writeToCSV(List<String> data) throws Exception {
 		// Create File and write to it
 		Timestamp ts = new Timestamp(System.currentTimeMillis());

@@ -18,61 +18,61 @@ public class DBIn {
 		return conn;
 	}
 
-	public static void insertPlane(Frame f) throws Exception {
+	public static int insertPlane(Frame f) throws Exception {
 		Connection conn = getDBConnection();		
-		int id = DBOut.checkPlaneInDB(f.getIcaoAdr());
 		//TODO Airline ID anfrage
+		// insert into planes
+		PreparedStatement pstmt = conn.prepareStatement(SqlQuerrys.planequerry, Statement.RETURN_GENERATED_KEYS);
+		pstmt.setString(1, f.getIcaoAdr());
+		pstmt.setString(2, f.getTailnr());
+		pstmt.setString(3, f.getRegistration());
+		pstmt.setString(4, f.getPlanetype());
+		//TODO Airline ID anfrage
+		pstmt.setString(5, f.getAirline());
+		pstmt.executeUpdate();
 
-		if (id == -1) {
-			// insert into planes
-			PreparedStatement pstmt = conn.prepareStatement(SqlQuerrys.planequerry);
-			pstmt.setString(1, f.getIcaoAdr());
-			pstmt.setString(2, f.getTailnr());
-			pstmt.setString(3, f.getRegistration());
-			pstmt.setString(4, f.getPlanetype());
-			//TODO Airline ID anfrage
-			pstmt.setString(5, f.getAirline());
-			pstmt.executeUpdate();
-
+		ResultSet rs = pstmt.getGeneratedKeys();
+		int id = -1;
+		if(rs.next()) {
+			id = rs.getInt(1);
 		}
+		return id;
 	}
 
-	public static void insertFlight(Frame f) throws Exception {
+	public static int insertFlight(Frame f, int planeID) throws Exception {
 		Connection conn = getDBConnection();
-		PreparedStatement pstmt = conn.prepareStatement(SqlQuerrys.flightquerry);
-		pstmt.setString(1, f.getIcaoAdr());
+		PreparedStatement pstmt = conn.prepareStatement(SqlQuerrys.flightquerry, Statement.RETURN_GENERATED_KEYS);
+		pstmt.setInt(1, planeID);
 		pstmt.setString(2, f.getSrcAirport());
 		pstmt.setString(3, f.getDestAirport());
 		pstmt.setString(4, f.getFlightnumber());
 		pstmt.setString(5, f.getCallsign());
+		pstmt.setLong(6, f.getTimestamp());
 		pstmt.executeUpdate();
+
+		ResultSet rs = pstmt.getGeneratedKeys();
+		int id = -1;
+		if(rs.next()) {
+			id = rs.getInt(1);
+		}
 		conn.close();
-		//return DBOut.getLastFlightID();
+		return id;
 	}
 
-	public static void insertTracking(Frame f) throws Exception {
+	public static void insertTracking(Frame f, int id) throws Exception {
 
 		Connection conn = getDBConnection();
-		
-		// get FlightID for
-		int flightid = DBOut.getLastFlightID();
-		/**
-		Statement stmt = conn.createStatement();
-		ResultSet rs = stmt.executeQuery(SqlQuerrys.getLastFlightID);
-		int flightid = 0;
-		while (rs.next()) {flightid = rs.getInt("ID");}
-		**/
-		
+
 		// insert into tracking
 		PreparedStatement pstmt = conn.prepareStatement(SqlQuerrys.trackingquerry);
-		pstmt.setInt(1, flightid);
+		pstmt.setInt(1, id);
 		pstmt.setDouble(2, f.getLat());
 		pstmt.setDouble(3, f.getLon());
 		pstmt.setInt(4, f.getAltitude());
 		pstmt.setInt(5, f.getGroundspeed());
 		pstmt.setInt(6, f.getHeading());
 		pstmt.setInt(7, f.getSquawk());
-		//TODO ADD TIMESTAMP
+		pstmt.setLong(8, f.getTimestamp());
 		pstmt.executeUpdate();
 	}
 

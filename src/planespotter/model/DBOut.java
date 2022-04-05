@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class DBOut {
 
-	
+
 	/**
 	 * This method is used to querry the DB
 	 * it takes a String and returns a ResultSet
@@ -28,12 +28,12 @@ public class DBOut {
 	 */
 	public static ResultSet querryDB(String querry) throws Exception {
 		ResultSet rs;
-			Class.forName("com.mysql.cj.jdbc.Driver");
-			String db = "jdbc:sqlite:plane.db";
-			Connection conn = DriverManager.getConnection(db);
-			Statement stmt = conn.createStatement();
-			rs = stmt.executeQuery(querry);
-			
+		Class.forName("com.mysql.cj.jdbc.Driver");
+		String db = "jdbc:sqlite:plane.db";
+		Connection conn = DriverManager.getConnection(db);
+		Statement stmt = conn.createStatement();
+		rs = stmt.executeQuery(querry);
+
 		return rs;
 	}
 
@@ -100,16 +100,16 @@ public class DBOut {
 		List<Airport> aps = new ArrayList<Airport>();
 		ResultSet rsSrc = querryDB(SqlQuerrys.getAirportByTag + srcAirport);
 		ResultSet rsDst = querryDB(SqlQuerrys.getAirportByTag + destAirport);
-		
+
 		if(rsSrc.next()) {
 			Airport srcAp = new Airport(rsSrc.getInt("ID"), rsSrc.getString("iatatag"), rsSrc.getString("name"), convertCoords(rsSrc.getString("coords")));
 			aps.add(srcAp);
-		
+
 		} else {
 			Airport srcAp = new Airport(0, "None", "None", new Position(0.0f, 0.0f));
 			aps.add(srcAp);
 		}
-		
+
 		if(rsDst.next()) {
 			Airport dstAp = new Airport(rsDst.getInt("ID"), rsDst.getString("iatatag"), rsDst.getString("name"), convertCoords(rsDst.getString("coords")));
 			aps.add(dstAp);
@@ -120,7 +120,7 @@ public class DBOut {
 
 		return aps;
 	}
-	
+
 	/**
 	 * This Method is used to Querry a single Plane by its ICAO Tag
 	 * It takes a String containing the ICAO Tag and returns a Plane Object
@@ -146,19 +146,7 @@ public class DBOut {
 
 		return p;
 	}
-	
-	public static int checkPlaneInDB(String icao) throws Exception {
-		String planeFilter = "SELECT ID FROM planes WHERE icaonr = " + icao + " LIMIT 1";
-		ResultSet rs = querryDB(planeFilter);
-		int id;
-		if(rs.next() == true) {
-			id = rs.getInt(0);
-		} else {
-			id = -1;
-		}
-		return id;
-	}
-	
+
 	public Plane getPlaneByID(int id) throws Exception {
 		Plane p;
 		ResultSet rs = querryDB(SqlQuerrys.getPlaneByID + id);
@@ -171,8 +159,20 @@ public class DBOut {
 			Airline a = new Airline(-1, "None", "None");
 			p = new Plane(-1, "None", "None", "None", "None", a);
 		}
-		
+
 		return p;
+	}
+
+	public static int checkPlaneInDB(String icao) throws Exception {
+		String planeFilter = "SELECT ID FROM planes WHERE icaonr = " + icao + " LIMIT 1";
+		ResultSet rs = querryDB(planeFilter);
+		int id;
+		if(rs.next() == true) {
+			id = rs.getInt(0);
+		} else {
+			id = -1;
+		}
+		return id;
 	}
 
 	/**
@@ -197,7 +197,7 @@ public class DBOut {
 		return dps;
 
 	}
-	
+
 	/**
 	 * This Method is used to retrieve ALL flights and their representative Data from the DB
 	 * It takes no Parameters and returns a List<Flight> containing all Flight Objects
@@ -223,24 +223,35 @@ public class DBOut {
 			HashMap<Long, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
 			List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
 			Plane plane = getPlaneByID(5);
- 			Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
+			Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
 			flights.add(flight);
 			counter++;
 		}
 		return flights;
 	}
-	
+
 	public static int getLastFlightID() throws Exception {
 		ResultSet rs = querryDB(SqlQuerrys.getLastFlightID);
 		int flightid;
 		if(rs.next()==true) {
 			flightid = rs.getInt("ID");
-			}
-		else {
+		} else {
 			flightid = -1;
 		}
 		return flightid;
 	} 
+
+	public static int checkFlightInDB(Frame f, int planeid) throws Exception {
+		ResultSet rs = querryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == " + f.getFlightnumber() + " AND end == null");
+		int flightID;
+		if(rs.next() == true) {
+			flightID = rs.getInt("ID");
+		} else {
+			flightID = -1;
+		}
+
+		return flightID;
+	}
 
 
 }
