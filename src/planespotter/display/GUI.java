@@ -1,6 +1,13 @@
 package planespotter.display;
 
 
+import org.openstreetmap.gui.jmapviewer.DefaultMapController;
+import org.openstreetmap.gui.jmapviewer.JMapViewer;
+import org.openstreetmap.gui.jmapviewer.MemoryTileCache;
+import org.openstreetmap.gui.jmapviewer.interfaces.TileLoader;
+import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import planespotter.constants.Bounds;
 import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
@@ -34,17 +41,26 @@ public class GUI extends Thread implements     ActionListener, KeyListener, List
     /**
      * components
      */
-    private JFrame frame;
+    private JFrame window;
     private JDesktopPane dpleft, dpright;
     private JInternalFrame flist, fmap, fmenu, finfo;
     private static JPanel mainpanel, pTitle, pList, pMap, pMenu, pInfo;
     private JLabel title, bground, title_bground;
-    private static JTree listView;
+    private JTree listView;
+    private JMapViewer mapViewer;
     private JTextField search;
     private JRadioButton rbFlight, rbAirline;
     private JProgressBar progressbar;
     private JMenuBar menubar;
-    private JButton datei, settings, search_settings, btList, btMap;
+    private JButton datei, settings, search_settings, btList, btMap, closeView;
+
+    /**
+     * view semaphor
+     * can be:
+     *  null -> no view opened
+     *  not null -> view opened
+     */
+    private static Component runningView = null;
 
     /**
      * class constants
@@ -64,15 +80,16 @@ public class GUI extends Thread implements     ActionListener, KeyListener, List
      */
     public GUI() {
 
-        JFrame frame = this.initialize();
-        frame.setVisible(true);
+    }
 
-
+    public void run () {
+        JFrame window = this.initialize();
+        window.setVisible(true);
     }
 
     /**
      * initialize method
-     * creates new GUI frame
+     * creates new GUI window
      */
     private JFrame initialize () {
 
@@ -82,13 +99,13 @@ public class GUI extends Thread implements     ActionListener, KeyListener, List
         // large menu item width
         int WIDTH_MENUITEM = WIDTH_LEFT-25;
 
-        // TODO: setting up frame
-        frame = new JFrame("PlaneSpotter");
-        frame.setSize(Bounds.ALL.getSize());
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
-        frame.setResizable(false);
-        frame.setLayout(null);
+        // TODO: setting up window
+        window = new JFrame("PlaneSpotter");
+        window.setSize(Bounds.ALL.getSize());
+        window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        window.setLocationRelativeTo(null);
+        window.setResizable(false);
+        window.setLayout(null);
 
         // TODO: setting up mainpanel
         mainpanel = new JPanel();
@@ -96,6 +113,16 @@ public class GUI extends Thread implements     ActionListener, KeyListener, List
         mainpanel.setLayout(null);
         mainpanel.setBackground(DEFAULT_BG_COLOR);
         mainpanel.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 6));
+
+                // TODO: setting up view close button
+                closeView = new JButton("Close");
+                closeView.setBounds(955, 605, 30, 20);
+                closeView.setBackground(DEFAULT_BG_COLOR);
+                closeView.setForeground(DEFAULT_FONT_COLOR);
+                closeView.setFont(FONT_MENU);
+                closeView.setBorder(MENU_BORDER);
+                closeView.addActionListener(this);
+
 
         // TODO: setting up right desktop pane
         dpright = new JDesktopPane();
@@ -171,6 +198,9 @@ public class GUI extends Thread implements     ActionListener, KeyListener, List
                 pMap = new JPanel();
                 pMap.setBounds(0, 0, WIDTH_RIGHT, 615);
                 pMap.setBackground(DEFAULT_BG_COLOR);
+                pMap.setLayout(null);
+
+
 
                 // TODO: setting up menu panel
                 pMenu = new JPanel();
@@ -193,11 +223,11 @@ public class GUI extends Thread implements     ActionListener, KeyListener, List
                     search.addKeyListener(this);
 
                     // TODO: setting up title label
-                    title = new JLabel("P l a n e S p    t t e r");
+                    title = new JLabel("P l a n e S p o t t e r");
                     title.setFont(TITLE_FONT);
                     title.setForeground(DEFAULT_FG_COLOR);
                     title.setFocusable(false);
-                    title.setBounds(400, 0, 1660, 70);
+                    title.setBounds(420, 0, 1660, 70); // bounds in Bounds Klasse
 
                     // TODO: setting up background image
                     bground = new JLabel(img);
@@ -294,16 +324,6 @@ public class GUI extends Thread implements     ActionListener, KeyListener, List
                 pTitle.add(title);
                 pTitle.add(title_bground);
 
-        /*
-        // TODO: adding everything to list panel
-        try {
-            Controller.createFlightTree();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } // kommt noch in einen ActionListener oder so
-        */
-
-
 
 
             // TODO: adding everything to internal menu frame
@@ -317,6 +337,7 @@ public class GUI extends Thread implements     ActionListener, KeyListener, List
 
 
         // TODO: adding internal frames to dpright
+        dpright.add(closeView);
         dpright.add(flist);
         dpright.add(fmap);
         // TODO: adding internal frames to dpleft
@@ -337,33 +358,16 @@ public class GUI extends Thread implements     ActionListener, KeyListener, List
         mainpanel.add(dpleft);
         
         // TODO: adding mainpanel to frame
-        frame.add(mainpanel);
+        window.add(mainpanel);
 
         removeAllTitlePanes();
 
-        flist.show();
-
-        //fmap.show();
         fmenu.show();
-        //finfo.show();
+
 
         search.requestFocus();
 
-
-        return frame;
-    }
-
-    /**
-     * removes the title pane from intl. list frame
-     * -> makes it un-movable
-     */
-    private void removeListTitlePane () {
-        BasicInternalFrameTitlePane titlePane =(BasicInternalFrameTitlePane)((BasicInternalFrameUI)flist.getUI()).getNorthPane();
-        flist.remove(titlePane);
-        BasicInternalFrameTitlePane newTitlePane =(BasicInternalFrameTitlePane)((BasicInternalFrameUI)flist.getUI()).getNorthPane();
-        newTitlePane.setFocusable(false);
-        newTitlePane.setEnabled(false);
-        flist.add(newTitlePane);
+        return window;
     }
 
     /**
@@ -413,8 +417,10 @@ public class GUI extends Thread implements     ActionListener, KeyListener, List
      * @param tree is the tree to set
      */
     public void recieveTree (JTree tree) {
+        if (runningView != null) {
+            disposeView();
+        }
         listView = tree;
-
         // TODO: setting up list scrollpane
         JScrollPane spList = new JScrollPane();
         spList.add(listView);
@@ -423,9 +429,51 @@ public class GUI extends Thread implements     ActionListener, KeyListener, List
         spList.setBackground(DEFAULT_BG_COLOR);
         // TODO: adding list scrollpane to list pane
         pList.add(spList);
-        // revalidate frame -> to make the tree visible
-        frame.revalidate();
-        System.out.println("tree created");
+        flist.show();
+        // revalidate window -> making the tree visible
+        window.revalidate();
+        // setting viewRunning to TRUE
+        runningView = listView;
+    }
+
+    /**
+     *
+     */
+    private void disposeView () {
+        if (runningView == listView) {
+            listView.setVisible(false);
+            listView = null;
+            flist.hide();
+        } else if (runningView == mapViewer) {
+            mapViewer.setVisible(false);
+            mapViewer = null;
+            fmap.hide();
+        }
+        runningView = null;
+        window.revalidate();
+    }
+
+    /**
+     *
+     */
+    private void recieveMap () {
+        if (runningView != null) {
+            disposeView();
+        }
+        // TODO: trying to set up JMapViewer
+        mapViewer = new JMapViewer(new MemoryTileCache());
+        mapViewer.setBounds(Bounds.RIGHT );
+        mapViewer.setBorder(LINE_BORDER);
+        new DefaultMapController(mapViewer);
+        mapViewer.setTileSource(new BingAerialTileSource());
+        mapViewer.setVisible(true);
+        // TODO: adding MapViewer to panel
+        pMap.add(mapViewer);
+        fmap.show();
+
+        window.revalidate();
+
+        runningView = mapViewer;
     }
 
     /**
@@ -448,28 +496,32 @@ public class GUI extends Thread implements     ActionListener, KeyListener, List
     }
 
     /**
-     * @return running instance of the GUI
-     */
-    public GUI getInstance () {
-        return (this != null) ? this : null;
-    }
-
-    /**
      *
      */
-    public void loadList () {
+    public void loadList (ViewType type) {
         this.progressbarVisible(true);
         for (int i = this.progressbarValue(); i <= 100; i++) {
             this.progressbarPP();
-            /*try {                                     // hier wird nur herumgespielt
-                TimeUnit.MILLISECONDS.sleep(10);
+            try {    //                                 // hier wird nur herumgespielt
+                TimeUnit.MILLISECONDS.sleep(1);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-                System.out.println("interrupted");
-            }*/
+                System.out.println("Interrupted!");
+            }       //
         }
         this.progressbarVisible(false);
-        createFlightTree();     // nur zum testen // wird noch verallgemeinert (comment in: Controller)
+        switch (type) {
+            case LIST_FLIGHT:
+                createFlightTree();
+                break;
+            case LIST_PLANE:
+                break;
+            case LIST_AIRLINE:
+                break;
+            case LIST_AIRPORT:
+                break;
+            default:
+        }
     }
 
     /**
@@ -505,6 +557,10 @@ public class GUI extends Thread implements     ActionListener, KeyListener, List
         Object src = e.getSource();
         if (src == btList) {
             Controller.createDataView(ViewType.LIST_FLIGHT);
+        } else if (src == btMap) {
+            recieveMap();
+        } else if (src == closeView) {
+            disposeView();
         }
 
     }

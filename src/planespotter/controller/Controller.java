@@ -3,11 +3,6 @@ package planespotter.controller;
 import planespotter.constants.ViewType;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
-import planespotter.model.DBOut;
-import planespotter.display.TreePlantation;
-
-import javax.swing.*;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +14,7 @@ public class Controller {
     public Controller () {}
 
     /**
-     *
+     * the GUI
      */
     private static GUI gui;
 
@@ -30,14 +25,12 @@ public class Controller {
      **/
 
     /**
-     * openFrame() opens a frame
+     * openWindow() opens a new GUI window as a thread
+     * // TODO überprüfen
      */
     public static void openWindow () {
-
         gui = new GUI();
-
-        //createDataView(ViewType.LIST_FLIGHT);
-
+        gui.run();
     }
 
     /**
@@ -46,15 +39,10 @@ public class Controller {
      *             created view (e.g. different List-View-Types)
      */
     public static void createDataView (ViewType type) {
-        switch (type) {
-            case LIST_FLIGHT:
-                gui.loadList();
-                break;
-            default:
-        }
+        gui.loadList(type);
     }
 
-    /**
+    /** // nur test
      * TestObjekt:
      * @return Test-List-Object
      */
@@ -81,8 +69,6 @@ public class Controller {
     public static void exit () {
         System.exit(0);
     }
-
-
 
 
 
