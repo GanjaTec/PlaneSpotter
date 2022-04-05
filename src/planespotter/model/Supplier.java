@@ -20,7 +20,8 @@ import planespotter.dataclasses.*;
 public class Supplier implements Runnable{
 	private int threadNumber;
 	private String ThreadName;
-	private String bounds;
+	private String bounds = "54.241%2C48.576%2C-14.184%2C13.94";
+	private String testbounds = "51.055%2C50.853%2C6.544%2C7.422";
 	//TODO Write getters
 	
 	public int getThreadNumber() {
@@ -56,7 +57,7 @@ public class Supplier implements Runnable{
 				.newBuilder(URI.create("https://data-live.flightradar24.com/zones/fcgi/feed.js?faa=1&"
 						// bounds defines the visible area on the live map, directly linked to planes in
 						// response, parameterize
-						+ "bounds=54.241%2C48.576%2C-14.184%2C13.94&"	
+						+ "bounds=" + testbounds + "&"	
 						+ "satellite=1&"
 						+ "mlat=1&"
 						+ "flarm=1&"

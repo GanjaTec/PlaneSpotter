@@ -36,6 +36,7 @@ public class DBIn {
 		if(rs.next()) {
 			id = rs.getInt(1);
 		}
+		conn.close();
 		return id;
 	}
 
@@ -74,6 +75,7 @@ public class DBIn {
 		pstmt.setInt(7, f.getSquawk());
 		pstmt.setLong(8, f.getTimestamp());
 		pstmt.executeUpdate();
+		conn.close();
 	}
 
 }

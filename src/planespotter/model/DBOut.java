@@ -33,7 +33,6 @@ public class DBOut {
 		Connection conn = DriverManager.getConnection(db);
 		Statement stmt = conn.createStatement();
 		rs = stmt.executeQuery(querry);
-
 		return rs;
 	}
 
@@ -164,14 +163,15 @@ public class DBOut {
 	}
 
 	public static int checkPlaneInDB(String icao) throws Exception {
-		String planeFilter = "SELECT ID FROM planes WHERE icaonr = " + icao + " LIMIT 1";
+		String planeFilter = "SELECT ID FROM planes WHERE icaonr = '" + icao + "' LIMIT 1";
 		ResultSet rs = querryDB(planeFilter);
 		int id;
 		if(rs.next() == true) {
-			id = rs.getInt(0);
+			id = rs.getInt(1);
 		} else {
 			id = -1;
 		}
+		rs.close();
 		return id;
 	}
 
@@ -242,14 +242,14 @@ public class DBOut {
 	} 
 
 	public static int checkFlightInDB(Frame f, int planeid) throws Exception {
-		ResultSet rs = querryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == " + f.getFlightnumber() + " AND end == null");
+		ResultSet rs = querryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
 		int flightID;
 		if(rs.next() == true) {
 			flightID = rs.getInt("ID");
 		} else {
 			flightID = -1;
 		}
-
+		rs.close();
 		return flightID;
 	}
 
