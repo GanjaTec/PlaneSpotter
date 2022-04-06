@@ -320,5 +320,17 @@ public class DBOut {
 		
 	}
 
+        public Plane getFlightByID(int id) throws Exception{
+		Flight f;
+		ResultSet rs = querryDB(SqlQuerrys.getFlightByID + id);
 
+		if (rs.next()) {
+		
+			f = new Flight(rs.getInt("ID"), rs.getString("plane"), rs.getString("src"), rs.getString("dest"), rs.getString("flightnr"), rs.getString("callsign"), a);
+		} else {
+			
+			f = new Flight(-1, "None", "None", "None", "None", "None", a);
+		}
+
+		return f;
 }
