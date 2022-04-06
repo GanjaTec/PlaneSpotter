@@ -77,5 +77,17 @@ public class DBIn {
 		pstmt.executeUpdate();
 		conn.close();
 	}
+	
+	public static void updateFlightEnd(int id, long timestamp) throws Exception {
+		Connection conn = getDBConnection();
+		
+		PreparedStatement pstmt = conn.prepareStatement(SqlQuerrys.updateFlightEnd);
+		pstmt.setInt(2, id);
+		pstmt.setLong(1, timestamp);
+		pstmt.executeUpdate();
+		conn.close();
+		
+		
+	}
 
 }

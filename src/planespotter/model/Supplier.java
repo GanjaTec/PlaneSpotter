@@ -7,6 +7,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.io.File;
 import java.io.FileWriter;
 import java.sql.*;
@@ -20,8 +21,7 @@ import planespotter.dataclasses.*;
 public class Supplier implements Runnable{
 	private int threadNumber;
 	private String ThreadName;
-	private String bounds = "54.241%2C48.576%2C-14.184%2C13.94";
-	private String testbounds = "51.055%2C50.853%2C6.544%2C7.422";
+	private String area = "54.241%2C48.576%2C-14.184%2C13.94";
 	//TODO Write getters
 	
 	public int getThreadNumber() {
@@ -32,9 +32,10 @@ public class Supplier implements Runnable{
 		return this.ThreadName;
 	}
 	
-	public Supplier(int threadNumber) {
+	public Supplier(int threadNumber, String area) {
 		this.threadNumber = threadNumber;
 		this.ThreadName = "SupplierThread-" + threadNumber;
+		this.area = area;
 	}
 
 	
@@ -57,7 +58,7 @@ public class Supplier implements Runnable{
 				.newBuilder(URI.create("https://data-live.flightradar24.com/zones/fcgi/feed.js?faa=1&"
 						// bounds defines the visible area on the live map, directly linked to planes in
 						// response, parameterize
-						+ "bounds=" + testbounds + "&"	
+						+ "bounds=" + area + "&"	
 						+ "satellite=1&"
 						+ "mlat=1&"
 						+ "flarm=1&"
@@ -106,7 +107,8 @@ public class Supplier implements Runnable{
 
 			long ts2 = System.nanoTime();
 			long tdiff = ts2 - ts1;
-			System.out.println("filled DB in " + tdiff + " seconds");
+			double tdiffSec = (double) tdiff / 1_000_000_000;
+			System.out.println("filled DB in " + tdiffSec + " seconds");
 		
 		} catch (Exception e) {
 			e.printStackTrace();
