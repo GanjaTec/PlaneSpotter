@@ -1,4 +1,4 @@
-package planespotter.Exceptions;
+package planespotter.exceptions;
 
 public class FileAlreadyExistsException extends Exception {
 
