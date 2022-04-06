@@ -326,17 +326,21 @@ public class DBOut {
 
 	}
 
-        public Plane getFlightByID(int id) throws Exception{
+        public Flight getFlightByID(int id) throws Exception{
 		Flight f;
 		ResultSet rs = querryDB(SqlQuerrys.getFlightByID + id);
 
 		if (rs.next()) {
-		
-			f = new Flight(rs.getInt("ID"), rs.getString("plane"), rs.getString("src"), rs.getString("dest"), rs.getString("flightnr"), rs.getString("callsign"));
+			Object[] airports = getAirports(rs.getString("src"), rs.getString("dest")).toArray();
+			f = new Flight(rs.getInt("ID"), (Airport) airports[0], (Airport) airports[1], rs.getString("callsign"), getPlaneByID(rs.getInt("plane")), rs.getString("flightnr"), getTrackingByFlight(rs.getInt("ID")));
 		} else {
-			
-			f = new Flight(-1, "None", "None", "None", "None", "None");
+				Airline a = new Airline(-1, "None", "None");
+				Airport airnull = new Airport(-1, "None", "None", new Position(0d, 0d));
+				Plane p = new Plane(-1, "None", "None", "None", "None", a);
+			f = new Flight(-1, airnull, airnull, "None", p, "None", new HashMap<Integer, DataPoint>());
 		}
 
 		return f;
+		}
+
 }
