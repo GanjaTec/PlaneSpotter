@@ -223,7 +223,7 @@ public class DBOut {
 
 		ResultSet rs = querryDB(SqlQuerrys.getFlights);
 		int counter = 0;
-		while(rs.next() && counter <= 20) {
+		while(rs.next() && counter <= 50) { // counter: max flights -> to limit the incoming data (prevents a crash)
 			HashMap<Long, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
 			List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
 			Plane plane = getPlaneByID(5);

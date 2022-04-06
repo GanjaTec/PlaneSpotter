@@ -2,6 +2,7 @@ package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.JMapViewer;
 import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
+import planespotter.constants.GUIConstants;
 import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
@@ -10,6 +11,7 @@ import planespotter.dataclasses.Position;
 import planespotter.model.DBOut;
 import planespotter.unused.MapView;
 
+import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
@@ -57,10 +59,12 @@ public class MapManager extends Thread {
 
         for (Flight f : list) {
             // TODO: getting the last data point => where the plane is at the moment
-             Object[] keySetArray = f.getDataPoints().keySet().toArray();
+            Object[] keySetArray = f.getDataPoints().keySet().toArray();
             DataPoint lastDataPoint = f.getDataPoints().get(keySetArray[keySetArray.length-1]);
             Position lastPos = lastDataPoint.getPos();
             MapMarkerDot newPlaneDot = new MapMarkerDot(lastPos.getLat(), lastPos.getLon());
+            newPlaneDot.setBackColor(Color.RED);
+            newPlaneDot.setColor(Color.WHITE);
             viewer.addMapMarker(newPlaneDot);
         }
 

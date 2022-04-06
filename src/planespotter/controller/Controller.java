@@ -46,6 +46,7 @@ public class Controller {
      *             created view (e.g. different List-View-Types)
      */
     public static void createDataView (ViewType type) {
+        gui.disposeView();
         gui.loadView(type);
     }
 
