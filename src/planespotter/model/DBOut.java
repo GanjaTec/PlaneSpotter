@@ -215,7 +215,8 @@ public class DBOut {
 
 	public static long getLastTrackingByFlightID(int id) throws Exception {
 		long timestamp = -1;
-		ResultSet rs = querryDB(SqlQuerrys.getLastTracking);
+		String getLastTracking = "SELECT timestamp FROM tracking WHERE flightid == "+ id +" ORDER BY ID DESC LIMIT 1";
+		ResultSet rs = querryDB(getLastTracking);
 
 		while(rs.next()) {
 			timestamp = rs.getLong(1);

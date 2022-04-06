@@ -1,13 +1,16 @@
 package planespotter.constants;
 
 /**
- * @author Lukas
+ * 
  *
  *
  * This Class is used to hold All SQL Querries that we need to use
  * Please insert your Querry depending on what they do, Mainly Insertion and Selection
  * 
  * TODO Sort Querrys by Table
+ * 
+ * @author Lukas
+ * 
  */
 public class SqlQuerrys {
 	
@@ -29,7 +32,7 @@ public class SqlQuerrys {
 	public static final String getPlaneByICAO = "SELECT * FROM planes WHERE icaonr == ";
 	public static final String getFlightByCallsign = "SELECT * FROM flights WHERE callsign == ";
 	public static final String checkEndOfFlight = "SELECT ID FROM flights WHERE endTime IS NULL";
-	public static final String getLastTracking = "SELECT timestamp FROM tracking ORDER BY ID DESC LIMIT 1";
+	public static final String getLastTracking = "SELECT timestamp FROM tracking WHERE ID == () ORDER BY ID DESC LIMIT 1";
 	
 	//update Querries
 	public static final String updateFlightEnd = "UPDATE flights SET endTime = (?) WHERE ID == (?)";
