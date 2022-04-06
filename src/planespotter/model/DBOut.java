@@ -59,7 +59,8 @@ public class DBOut {
 	}
 
 	/**
-	 *
+	 * @param in
+	 * @return
 	 */
 	private String stripString (String in) {
 		return in.replaceAll("\"", "");
@@ -150,6 +151,11 @@ public class DBOut {
 		return p;
 	}
 
+	/**
+	 * @param id
+	 * @return
+	 * @throws Exception
+	 */
 	public Plane getPlaneByID(int id) throws Exception {
 		Plane p;
 		ResultSet rs = querryDB(SqlQuerrys.getPlaneByID + id);
@@ -166,6 +172,11 @@ public class DBOut {
 		return p;
 	}
 
+	/**
+	 * @param icao
+	 * @return
+	 * @throws Exception
+	 */
 	public static int checkPlaneInDB(String icao) throws Exception {
 		String planeFilter = "SELECT ID FROM planes WHERE icaonr = '" + icao + "' LIMIT 1";
 		ResultSet rs = querryDB(planeFilter);
@@ -201,6 +212,16 @@ public class DBOut {
 		return dps;
 
 	}
+	
+	public static long getLastTrackingByFlightID(int id) throws Exception {
+		long timestamp = -1;
+		ResultSet rs = querryDB(SqlQuerrys.getLastTracking);
+		
+		while(rs.next()) {
+			timestamp = rs.getLong(1);
+		}
+		return timestamp;
+	}
 
 	/**
 	 * This Method is used to retrieve ALL flights and their representative Data from the DB
@@ -220,20 +241,44 @@ public class DBOut {
 	 */
 	public List<Flight> getAllFlights() throws Exception {
 		List<Flight> flights = new ArrayList<Flight>();
-
 		ResultSet rs = querryDB(SqlQuerrys.getFlights);
+		
 		int counter = 0;
 		while(rs.next() && counter <= 50) { // counter: max flights -> to limit the incoming data (prevents a crash)
 			HashMap<Long, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
 			List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
-			Plane plane = getPlaneByID(5);
+			Plane plane = getPlaneByID(rs.getInt("plane"));
 			Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
 			flights.add(flight);
 			counter++;
 		}
 		return flights;
 	}
+	
+	/**
+	 * @param callsign
+	 * @return
+	 * @throws Exception
+	 */
+	public List<Flight> getFlightsByCallsign(String callsign) throws Exception {
+		List<Flight> flights = new ArrayList<Flight>();
+		ResultSet rs = querryDB(SqlQuerrys.getFlightByCallsign + callsign);
+		
+		while(rs.next()) {
+			HashMap<Long, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
+			List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
+			Plane plane = getPlaneByID(rs.getInt("plane"));
+			Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
+			flights.add(flight);
+		}
+		
+		return flights;
+	}
 
+	/**
+	 * @return
+	 * @throws Exception
+	 */
 	public static int getLastFlightID() throws Exception {
 		ResultSet rs = querryDB(SqlQuerrys.getLastFlightID);
 		int flightid;
@@ -245,6 +290,12 @@ public class DBOut {
 		return flightid;
 	} 
 
+	/**
+	 * @param f
+	 * @param planeid
+	 * @return
+	 * @throws Exception
+	 */
 	public static int checkFlightInDB(Frame f, int planeid) throws Exception {
 		ResultSet rs = querryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
 		int flightID;
@@ -255,6 +306,18 @@ public class DBOut {
 		}
 		rs.close();
 		return flightID;
+	}
+	
+	public static List<Integer> checkEnded() throws Exception{
+		ResultSet rs = querryDB(SqlQuerrys.checkEndOfFlight);
+		List<Integer> flightIDs= new ArrayList<Integer>();
+		
+		if(rs.next()) {
+			flightIDs.add(rs.getInt(1));
+		}
+		rs.close();
+		return flightIDs;
+		
 	}
 
 
