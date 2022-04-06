@@ -199,24 +199,24 @@ public class DBOut {
 	 * @return HashMap<Long, DataPoint> containing all Datapoints keyed with Timestamp
 	 * @throws Exception 
 	 */
-	public HashMap<Long, DataPoint> getTrackingByFlight(int flightID) throws Exception {
-		HashMap<Long ,DataPoint> dps = new HashMap<Long, DataPoint>();
+	public HashMap<Integer, DataPoint> getTrackingByFlight(int flightID) throws Exception {
+		HashMap<Integer ,DataPoint> dps = new HashMap<Integer, DataPoint>();
 		ResultSet rs = querryDB(SqlQuerrys.getTrackingByFlight + flightID);
 		while(rs.next()) {
 			// TODO: IF STATEMENT
 			Position p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
 			DataPoint dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"), p, rs.getInt("timestamp"),
 					rs.getInt("squawk"), rs.getInt("groundspeed"), rs.getInt("heading"), rs.getInt("altitude"));
-			dps.put((long)rs.getInt("timestamp"), dp);
+			dps.put(rs.getInt("ID"), dp);
 		}
 		return dps;
 
 	}
-	
+
 	public static long getLastTrackingByFlightID(int id) throws Exception {
 		long timestamp = -1;
 		ResultSet rs = querryDB(SqlQuerrys.getLastTracking);
-		
+
 		while(rs.next()) {
 			timestamp = rs.getLong(1);
 		}
@@ -242,10 +242,10 @@ public class DBOut {
 	public List<Flight> getAllFlights() throws Exception {
 		List<Flight> flights = new ArrayList<Flight>();
 		ResultSet rs = querryDB(SqlQuerrys.getFlights);
-		
+
 		int counter = 0;
 		while(rs.next() && counter <= 50) { // counter: max flights -> to limit the incoming data (prevents a crash)
-			HashMap<Long, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
+			HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
 			List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
 			Plane plane = getPlaneByID(rs.getInt("plane"));
 			Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
@@ -254,7 +254,7 @@ public class DBOut {
 		}
 		return flights;
 	}
-	
+
 	/**
 	 * @param callsign
 	 * @return
@@ -263,15 +263,15 @@ public class DBOut {
 	public List<Flight> getFlightsByCallsign(String callsign) throws Exception {
 		List<Flight> flights = new ArrayList<Flight>();
 		ResultSet rs = querryDB(SqlQuerrys.getFlightByCallsign + callsign);
-		
+
 		while(rs.next()) {
-			HashMap<Long, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
+			HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
 			List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
 			Plane plane = getPlaneByID(rs.getInt("plane"));
 			Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
 			flights.add(flight);
 		}
-		
+
 		return flights;
 	}
 
@@ -307,17 +307,17 @@ public class DBOut {
 		rs.close();
 		return flightID;
 	}
-	
+
 	public static List<Integer> checkEnded() throws Exception{
 		ResultSet rs = querryDB(SqlQuerrys.checkEndOfFlight);
 		List<Integer> flightIDs= new ArrayList<Integer>();
-		
-		if(rs.next()) {
+
+		while(rs.next()) {
 			flightIDs.add(rs.getInt(1));
 		}
 		rs.close();
 		return flightIDs;
-		
+
 	}
 
 
