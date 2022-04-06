@@ -4,6 +4,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import planespotter.constants.*;
+
 public class Paralel {
 	private int poolsize = 1;
 	private ScheduledExecutorService exe = Executors.newScheduledThreadPool(poolsize);
@@ -14,11 +16,13 @@ public class Paralel {
 	}
 
 	public void startThreads() throws InterruptedException {
-		for(int i=0; i < poolsize; i++) {
-			Supplier s = new Supplier(i);
-			exe.scheduleAtFixedRate(s, i, 10, TimeUnit.SECONDS);
-			//TimeUnit.SECONDS.sleep(30);
+		String[] areay= Areas.EASTERN_FRONT;
+		for(int i=0; i < areay.length; i++) {
+			Supplier s = new Supplier(i, areay[i]);
+			exe.scheduleAtFixedRate(s, i*5, 60, TimeUnit.SECONDS);
+			
 		}
-
+		KeeperOfTheArchives bofh = new KeeperOfTheArchives(areay.length, 1200L);
+		exe.scheduleAtFixedRate(bofh, 0, 20, TimeUnit.MINUTES);
 	}
 }
