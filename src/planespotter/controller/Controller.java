@@ -3,6 +3,8 @@ package planespotter.controller;
 import planespotter.constants.ViewType;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
+import planespotter.model.DBOut;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,9 +47,22 @@ public class Controller {
      * @param type is the ViewType, sets the content type for the
      *             created view (e.g. different List-View-Types)
      */
-    public static void createDataView (ViewType type) {
+    public static void createDataView (ViewType type, String data) {
         gui.disposeView();
-        gui.loadView(type);
+        try {
+            switch (type) {
+                case LIST_FLIGHT:
+                    gui.loadView(type, new DBOut().getAllFlights());
+                    break;
+                case MAP_ALL:
+                    gui.loadView(type, new DBOut().getAllFlights());
+                    break;
+                case MAP_FLIGHTROUTE:
+                    gui.loadView(type, new DBOut().getFlightsByCallsign(data));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /** // nur test

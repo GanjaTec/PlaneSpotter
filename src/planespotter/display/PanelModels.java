@@ -8,7 +8,7 @@ import java.awt.*;
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.GUIConstants.LINE_BORDER;
 
-public class PanelModels {
+public final class PanelModels {
 
     //default desktop width
     static int WIDTH_RIGHT = 1259-280;
@@ -26,7 +26,6 @@ public class PanelModels {
         mainpanel.setLayout(null);
         mainpanel.setBackground(DEFAULT_BG_COLOR);
         mainpanel.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 6));
-
         return mainpanel;
     }
 
@@ -41,19 +40,18 @@ public class PanelModels {
         title.setBackground(DEFAULT_ACCENT_COLOR);
         title.setLayout(null);
         title.setBorder(LINE_BORDER);
-
         return title;
     }
+
 
     /**
      * title background img label
      */
-    public static JLabel titleBgLabel (ImageIcon img) {
+    public static JLabel titleBgLabel() {
         // TODO: setting up title backround img
-        JLabel title_bground = new JLabel(img);
+        JLabel title_bground = new JLabel(title_bground_img);
         title_bground.setBounds(Bounds.TITLE);
         title_bground.setBorder(LINE_BORDER);
-
         return title_bground;
     }
 

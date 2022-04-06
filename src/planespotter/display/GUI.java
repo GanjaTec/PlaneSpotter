@@ -3,8 +3,8 @@ package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
+
 import planespotter.constants.Bounds;
-import planespotter.constants.GUIConstants;
 import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.Flight;
@@ -19,6 +19,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.sql.SQLException;
+import java.text.MessageFormat;
 import java.util.List;
 
 import static planespotter.constants.GUIConstants.*;
@@ -165,7 +166,7 @@ public class GUI extends Thread implements ActionListener, KeyListener {
             // TODO: adding everything to internal list frame
             flist.add(pList);
 
-            //läuft noch nicht                 // auslagern
+            //läuft noch nicht                 // auslagern (?)
             dpright.add(closeView);
             closeView.setVisible(true);
             closeView.grabFocus();
@@ -178,7 +179,7 @@ public class GUI extends Thread implements ActionListener, KeyListener {
         dpleft.add(finfo);
 
                 // TODO: adding to pTitle
-                pTitle.add(PanelModels.titleBgLabel(title_bground_img));
+                pTitle.add(PanelModels.titleBgLabel());
                 pTitle.add(PanelModels.titleTxtLabel());
 
         // TODO: adding title panel to frame
@@ -274,7 +275,7 @@ public class GUI extends Thread implements ActionListener, KeyListener {
      *
      */
     public void disposeView () {
-        if (listView != null) {
+        if (listView != null || mapViewer != null) {
             if (runningView == listView) {
                 listView.setVisible(false);
                 listView = null;
@@ -336,32 +337,9 @@ public class GUI extends Thread implements ActionListener, KeyListener {
     }
 
     /**
-     * enters the text in the textfield (use for key listener)
-     */
-    protected void enterText () {
-        String text = search.getText().toLowerCase();
-        if (!text.isBlank()) {
-            switch (text) {
-                case "exit":
-                    Controller.exit();
-                    break;
-                case "loadlist":
-                    Controller.createDataView(ViewType.LIST_FLIGHT);
-                    break;
-                case "loadmap":
-                    Controller.createDataView(ViewType.MAP);
-                    break;
-                default:
-
-            }
-        }
-        search.setText("");
-    }
-
-    /**
      *
      */
-    public void loadView (ViewType type) {
+    public void loadView (ViewType type, List<Flight> list) {
         this.progressbarVisible(true);
         for (int i = 0; i <= 100; i++) progressbarPP();
         this.progressbarVisible(false);
@@ -375,8 +353,20 @@ public class GUI extends Thread implements ActionListener, KeyListener {
                 break;
             case LIST_AIRPORT:
                 break;
-            case MAP:
-                new MapManager(this).createAllFlightsMap();
+            case MAP_ALL:
+                try {           // TODO in DBOut catchen
+                    new MapManager(this).createAllFlightsMap(list);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                window.revalidate();
+                break;
+            case MAP_FLIGHTROUTE:
+                try {
+                    new MapManager(this).createFlightRoute(list);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 window.revalidate();
                 break;
             default:
@@ -403,6 +393,42 @@ public class GUI extends Thread implements ActionListener, KeyListener {
         }
     }
 
+    /**
+     * enters the text in the textfield (use for key listener)
+     */
+    protected void enterText () {
+        String text = search.getText().toLowerCase();
+        if (!text.isBlank()) {
+            if (text.startsWith("exit")) {
+                Controller.exit();
+            }
+            if (text.startsWith("loadlist")) {
+                Controller.createDataView(ViewType.LIST_FLIGHT, "");
+            }
+            if (text.startsWith("loadmap")) {
+                Controller.createDataView(ViewType.MAP_ALL, "");
+            }
+            if (text.startsWith("maxload")) {
+                String[] args = text.split(" ");
+                try {
+                    if (Integer.parseInt(args[1]) <= 10000) {
+                        DBOut.maxLoadedFlights = Integer.parseInt(args[1]);
+                        System.out.println("maxload changed to " + args[1] + " !");
+                    } else {
+                        System.out.println("Failed! Maximum is 10000!");
+                    }
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                if (runningView == null && !text.contains(" ")) {
+                    Controller.createDataView(ViewType.MAP_FLIGHTROUTE, text);
+                }
+            }
+        }
+        search.setText("");
+    }
+
     /********************************************
      *                listeners                 *
      * *****************************************+
@@ -412,9 +438,9 @@ public class GUI extends Thread implements ActionListener, KeyListener {
     public void actionPerformed(ActionEvent e) {
         Object src = e.getSource();
         if (src == btList) {
-            Controller.createDataView(ViewType.LIST_FLIGHT);
+            Controller.createDataView(ViewType.LIST_FLIGHT, "");
         } else if (src == btMap) {
-            Controller.createDataView(ViewType.MAP);
+            Controller.createDataView(ViewType.MAP_ALL, "");
         } else if (src == closeView) {
             disposeView();
         }

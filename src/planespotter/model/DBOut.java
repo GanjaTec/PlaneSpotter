@@ -18,6 +18,11 @@ import java.util.List;
  */
 public class DBOut {
 
+	/**
+	 * test: max loaded flights
+	 */
+	public static int maxLoadedFlights = 2000;
+
 
 	/**
 	 * This method is used to querry the DB
@@ -46,7 +51,7 @@ public class DBOut {
 	 * @param coords The string containing the Coords
 	 * @return Position containing Latitude and Longitude
 	 */
-	private Position convertCoords(String coords) {	
+	private Position convertCoords(String coords) {
 		String[] splitCoords = coords.split(",");
 		List<Double> processedCoords = new ArrayList<Double>();
 
@@ -70,11 +75,11 @@ public class DBOut {
 	 * This method is used to Querry the DB for Airline by its assigned ICAO Tag
 	 * It takes a String containing the ICAO Tag and returns
 	 * an Airline Object
-	 * 
-	 * 
+	 *
+	 *
 	 * @param tag the ICAO-Tag used in the Querry
 	 * @return Airline Object
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public Airline getAirlineByTag(String tag) throws Exception {
 		Airline a = null;
@@ -91,12 +96,12 @@ public class DBOut {
 
 	/**
 	 * This Method is used to Querry both the Departure (src) and the Arrival (dst)
-	 * Airports of a Flight and returns a List containing two Airport Objects 
-	 * 
+	 * Airports of a Flight and returns a List containing two Airport Objects
+	 *
 	 * @param srcAirport String containing the Departure Airports IATA Tag
 	 * @param destAirport String containing the Arrival Airports IATA Tag
 	 * @return List<Airport> the list containing the Airport Objects
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 
 	public List<Airport> getAirports(String srcAirport, String destAirport) throws Exception{
@@ -128,10 +133,10 @@ public class DBOut {
 	/**
 	 * This Method is used to Querry a single Plane by its ICAO Tag
 	 * It takes a String containing the ICAO Tag and returns a Plane Object
-	 * 
+	 *
 	 * @param icao Strin containing the ICAO Tag
 	 * @return Plane the Object containing all Information about the Plane
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public Plane getPlaneByICAO(String icao) throws Exception {
 		Plane p;
@@ -193,11 +198,11 @@ public class DBOut {
 	/**
 	 * This Method is used to Querry all Datapoints belonging to a single Flight
 	 * It takes an int FlightID and returns a HashMap<Long, DataPoint> containing the Tracking Data
-	 * 
-	 * 
+	 *
+	 *
 	 * @param flightID int representing the Flights Database ID
-	 * @return HashMap<Long, DataPoint> containing all Datapoints keyed with Timestamp
-	 * @throws Exception 
+	 * @return HashMap<Integer, DataPoint> containing all Datapoints keyed with Timestamp
+	 * @throws Exception
 	 */
 	public HashMap<Integer, DataPoint> getTrackingByFlight(int flightID) throws Exception {
 		HashMap<Integer ,DataPoint> dps = new HashMap<Integer, DataPoint>();
@@ -227,25 +232,25 @@ public class DBOut {
 	/**
 	 * This Method is used to retrieve ALL flights and their representative Data from the DB
 	 * It takes no Parameters and returns a List<Flight> containing all Flight Objects
-	 * 
+	 *
 	 * It relies on a lot of other Methods in this class to gather the Objects needed to construct the
 	 * Flight objects.
-	 * 
+	 *
 	 * TODO Fix Bug causing OutOfMemoryError
 	 * This will be kinda hard, the method constructs a massive List
 	 * that is way to big to hold in memory
-	 * 
+	 *
 	 * see errorlog "hs_err_pid30296.log" in the projects root directory
-	 * 
+	 *
 	 * @return List<Flight> containing all Flight Objects
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public List<Flight> getAllFlights() throws Exception {
 		List<Flight> flights = new ArrayList<Flight>();
 		ResultSet rs = querryDB(SqlQuerrys.getFlights);
 
 		int counter = 0;
-		while(rs.next() && counter <= 50) { // counter: max flights -> to limit the incoming data (prevents a crash)
+		while(rs.next() && counter <= maxLoadedFlights) { // counter: max flights -> to limit the incoming data (prevents a crash)
 			HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
 			List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
 			Plane plane = getPlaneByID(rs.getInt("plane"));

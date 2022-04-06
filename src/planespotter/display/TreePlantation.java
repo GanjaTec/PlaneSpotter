@@ -7,6 +7,7 @@ import planespotter.dataclasses.*;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
@@ -46,9 +47,9 @@ public final class TreePlantation {
         listView.setBounds(Bounds.RIGHT);
 
         // creating tree cell renderer
-        DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
-        renderer.setBackgroundNonSelectionColor(DEFAULT_BG_COLOR);
-        renderer.setBackgroundSelectionColor(DEFAULT_BORDER_COLOR);
+        CustomCellRenderer renderer = new CustomCellRenderer();
+        //renderer.setBackgroundNonSelectionColor(DEFAULT_BG_COLOR);
+        //renderer.setBackgroundSelectionColor(DEFAULT_BORDER_COLOR);
         renderer.setBorderSelectionColor(Color.ORANGE);
         renderer.setTextNonSelectionColor(new Color(255, 255, 102));
         renderer.setTextSelectionColor(Color.ORANGE);
@@ -57,6 +58,7 @@ public final class TreePlantation {
 
         // adding it to the tree
         listView.setCellRenderer(renderer);
+        listView.setVisible(true);
 
         // return
         return listView;
@@ -164,5 +166,23 @@ public final class TreePlantation {
 
         return root;
     }
+
+        private static class CustomCellRenderer extends DefaultTreeCellRenderer {
+            @Override
+            public Component getTreeCellRendererComponent(JTree tree, Object value,
+                                                          boolean sel, boolean exp, boolean leaf, int row, boolean hasFocus) {
+                super.getTreeCellRendererComponent(tree, value, sel, exp, leaf, row, hasFocus);
+                // Assuming you have a tree of Strings
+                String node = (String) ((DefaultMutableTreeNode) value).getUserObject();
+                if (row % 2 == 0) {
+                    setBackgroundNonSelectionColor(DEFAULT_BG_COLOR);
+                } else {
+                    setBackgroundNonSelectionColor(new Color(140, 140, 140));
+                }
+                setBackgroundSelectionColor(DEFAULT_BORDER_COLOR);
+
+                return this;
+            }
+        }
 
 }

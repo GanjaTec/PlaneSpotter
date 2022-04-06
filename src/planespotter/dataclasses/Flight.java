@@ -25,7 +25,7 @@ public class Flight {
      * @param callsign String Callsign of the Flight
      * @param plane Plane a single Plane
      * @param flightnr String Flightnumber, not the FlightID
-     * @param datapoints HashMap<Long, DataPoint> Hashmap containing all Datapoint keyed by Timestamp
+     * @param datapoints HashMap<Integer, DataPoint> Hashmap containing all Datapoint keyed by Timestamp
      */
     public Flight (int id, Airport start, Airport dest, String callsign, Plane plane, String flightnr, HashMap<Integer, DataPoint> datapoints) {
         this.id = id;
