@@ -13,7 +13,7 @@ import static planespotter.constants.GUIConstants.*;
  *
  * contains internal frame models for GUI
  */
-public class InternalFrameModels {
+public final class InternalFrameModels {
 
     /**
      *

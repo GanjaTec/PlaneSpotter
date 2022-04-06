@@ -11,7 +11,8 @@ public final class GUIConstants {
                                 DEFAULT_FG_COLOR = Color.BLACK,
                                 DEFAULT_BORDER_COLOR = Color.DARK_GRAY,
                                 DEFAULT_FONT_COLOR = new Color(230, 230,230),
-                                DEFAULT_ACCENT_COLOR = new Color(84, 101, 210);
+                                DEFAULT_ACCENT_COLOR = new Color(84, 101, 210),
+                                DEFAULT_MAP_ICON_COLOR = new Color(255, 214, 51);
 
     // default fonts
     public static final Font    TITLE_FONT = new Font("Copperplate Gothic", Font.BOLD, 40),

@@ -5,7 +5,8 @@ public enum ViewType {
     LIST_PLANE,
     LIST_AIRLINE,
     LIST_AIRPORT,
-    MAP;
+    MAP_ALL,
+    MAP_FLIGHTROUTE;
     // TODO weitere
     // map ansichten
 }
