@@ -21,6 +21,7 @@ public class Bounds {
 
     public static Rectangle TITLE = new Rectangle(0, 0, MAINPANEL.width, 70);
 
+    // TODO BEARBEITEN
     public static Rectangle BIG_ITEM = new Rectangle(3, 4, ALL.width-20, ALL.height-35);
 
     public static Rectangle SMALL_ITEM = new Rectangle(3, 4, ALL.width-20, ALL.height-35);

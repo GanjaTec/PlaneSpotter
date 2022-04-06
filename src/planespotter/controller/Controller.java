@@ -34,12 +34,20 @@ public class Controller {
     }
 
     /**
+     * returns the gui
+     */
+    public static GUI getGUI () {
+        return (gui != null) ? gui : null;
+    }
+
+    /**
      * creates a GUI-view for a specific view-type
      * @param type is the ViewType, sets the content type for the
      *             created view (e.g. different List-View-Types)
      */
     public static void createDataView (ViewType type) {
-        gui.loadList(type);
+        gui.disposeView();
+        gui.loadView(type);
     }
 
     /** // nur test
