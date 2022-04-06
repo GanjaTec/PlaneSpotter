@@ -14,7 +14,7 @@ public class Flight {
     private String callsign;
     private String flightnr;
     private Plane plane;
-    private HashMap<Long, DataPoint> datapoints;
+    private HashMap<Integer, DataPoint> datapoints;
 
     /**
      * Constructor
@@ -25,9 +25,9 @@ public class Flight {
      * @param callsign String Callsign of the Flight
      * @param plane Plane a single Plane
      * @param flightnr String Flightnumber, not the FlightID
-     * @param datapoints HashMap<Long, DataPoint> Hashmap containing all Datapoint keyed by Timestamp
+     * @param datapoints HashMap<Integer, DataPoint> Hashmap containing all Datapoint keyed by Timestamp
      */
-    public Flight (int id, Airport start, Airport dest, String callsign, Plane plane, String flightnr, HashMap<Long, DataPoint> datapoints) {
+    public Flight (int id, Airport start, Airport dest, String callsign, Plane plane, String flightnr, HashMap<Integer, DataPoint> datapoints) {
         this.id = id;
         this.start = start;
         this.dest = dest;
@@ -86,7 +86,7 @@ public class Flight {
     /**
      * @return HashMap<Long, DataPoint> All of the Tracking Data of the Flight
      */
-    public HashMap<Long, DataPoint> getDataPoints() {
+    public HashMap<Integer, DataPoint> getDataPoints() {
     	return this.datapoints;
     }
 }

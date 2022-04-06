@@ -50,7 +50,7 @@ public class MapManager extends Thread {
     public void createFlightRoute (List<Flight> flights) {
         JMapViewer viewer = gui.createMap();
         Flight f = flights.get(0);
-        HashMap<Long, DataPoint> dataPoints = f.getDataPoints();
+        HashMap<Integer, DataPoint> dataPoints = f.getDataPoints();
         int counter = 0;
         Queue<Coordinate> coords = new ArrayDeque<>();
         for (long g : dataPoints.keySet()) {
