@@ -326,10 +326,10 @@ public class DBOut {
 
 		if (rs.next()) {
 		
-			f = new Flight(rs.getInt("ID"), rs.getString("plane"), rs.getString("src"), rs.getString("dest"), rs.getString("flightnr"), rs.getString("callsign"), a);
+			f = new Flight(rs.getInt("ID"), rs.getString("plane"), rs.getString("src"), rs.getString("dest"), rs.getString("flightnr"), rs.getString("callsign"));
 		} else {
 			
-			f = new Flight(-1, "None", "None", "None", "None", "None", a);
+			f = new Flight(-1, "None", "None", "None", "None", "None");
 		}
 
 		return f;
