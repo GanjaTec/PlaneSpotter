@@ -3,6 +3,8 @@ package planespotter.controller;
 import planespotter.constants.ViewType;
 import planespotter.dataclasses.*;
 import planespotter.display.GUI;
+import planespotter.display.MapManager;
+import planespotter.display.TreePlantation;
 import planespotter.model.DBOut;
 
 import javax.swing.*;
@@ -71,17 +73,26 @@ public class Controller {
         gui.disposeView();
         try {
             switch (type) {
-                case LIST_FLIGHT: // both need the same
+                case LIST_FLIGHT:
+                    List<Flight> list = new DBOut().getAllFlights();
+                    gui.recieveTree(new TreePlantation().createTree(TreePlantation.createFlightTreeNode(list), gui));
+                    gui.window.revalidate();
+                    break;
                 case MAP_ALL:
-                    gui.loadView(type, new DBOut().getAllFlights());
+                    new MapManager(gui).createAllFlightsMap(new DBOut().getAllFlights());
+                    gui.window.revalidate();
                     break;
                 case MAP_FLIGHTROUTE:
-                    gui.loadView(type, new DBOut().getFlightsByCallsign(data));
+                    new MapManager(gui).createFlightRoute(new DBOut().getFlightsByCallsign(data));
+                    gui.window.revalidate();
+                    break;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+
 
     /** // nur test
      * TestObjekt:
