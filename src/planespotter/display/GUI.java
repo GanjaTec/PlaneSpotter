@@ -151,9 +151,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 progressbar.addComponentListener(this);
                 settings_intlFrame = MenuModels.settings_intlFrame(mainpanel);
                 settings_intlFrame.addComponentListener(this);
-                settings_intlFrame.addKeyListener(this);
                 settings_iFrame_maxLoad = MenuModels.settingsOP_maxLoadTxtField();
                 settings_iFrame_maxLoad.addComponentListener(this);
+                settings_iFrame_maxLoad.addKeyListener(this);
 
             // TODO: initializing close view button
             closeView = MenuModels.closeViewButton(dpright);
@@ -490,6 +490,13 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             }
         } else if (src == settings_iFrame_maxLoad) {
             if (key == KeyEvent.VK_ENTER) {
+                try {
+                    Controller.setMaxLoadedData(Integer.parseInt(settings_iFrame_maxLoad.getText()));
+                    settings_iFrame_maxLoad.setText("");
+                    settings_intlFrame.dispose();
+                } catch (NumberFormatException ex) {
+                    settings_iFrame_maxLoad.setText("Error");
+                }
 
             }
         } else if (src == mapViewer) {
