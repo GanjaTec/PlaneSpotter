@@ -9,21 +9,25 @@ import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
 import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
 import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
 import planespotter.constants.Bounds;
+import planespotter.constants.Paths;
 import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.Flight;
 import planespotter.model.DBOut;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 import javax.swing.plaf.basic.BasicInternalFrameUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-import static planespotter.constants.GUIConstants.DEFAULT_BG_COLOR;
-import static planespotter.constants.GUIConstants.LINE_BORDER;
+import static planespotter.constants.GUIConstants.*;
 
 /**
  * @name GUI
@@ -205,6 +209,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         // TODO: adding mainpanel to frame
         window.add(mainpanel);
 
+        pList.setVisible(false);
+        pMap.setVisible(false);
+
         return window;
     }
 
@@ -277,6 +284,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         // TODO: adding list scrollpane to list pane
         pList.add(spList);
         dpright.moveToFront(pList);
+        pList.setVisible(true);
         //flist.show();
         // revalidate window -> making the tree visible
         window.revalidate();
@@ -313,7 +321,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         mapViewer = map;
         // TODO: adding MapViewer to panel
         pMap.add(mapViewer);
-        pMap.show();
+        pMap.setVisible(true);
         //fmap.show();
         // revalidating window frame to refresh everything
         window.revalidate();
@@ -548,6 +556,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         } else {
             try {
                 if (comp == pList) {
+                    spList.setBounds(pList.getBounds());
                     listView.setBounds(pList.getBounds());
                 } else if (comp == pMap) {
                     mapViewer.setBounds(pMap.getBounds());
@@ -566,8 +575,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         Component comp = e.getComponent();
         if (comp == pList) {
             pList.setBounds(0, 0, dpright.getWidth(), dpright.getHeight());
-            listView.setBounds(flist.getBounds());
-            spList.setBounds(flist.getBounds());
+            listView.setBounds(pList.getBounds());
+            spList.setBounds(pList.getBounds());
         } else if (comp == pMap) {
             pMap.setBounds(0, 0, dpright.getWidth(), dpright.getHeight());
             mapViewer.setBounds(pMap.getBounds());
