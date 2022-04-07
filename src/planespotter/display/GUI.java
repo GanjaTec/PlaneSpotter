@@ -43,8 +43,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     protected JFrame window;
     protected JDesktopPane dpleft, dpright;
     protected JInternalFrame flist, fmap, fmenu, finfo;
-    protected JPanel mainpanel, pTitle, pList, pMap, pMenu, pInfo;
-    protected JLabel title, bground, title_bground;
+    protected JPanel mainpanel, pTitle, pList, pMap, pMenu, pInfo, pStartScreen;
+    protected JLabel title, bground, title_bground, lblStartScreen;
     protected JTree listView;
     protected JMapViewer mapViewer;
     protected JTextField search, settings_iFrame_maxLoad;
@@ -123,6 +123,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             // TODO: initializing info panel
             pInfo = PanelModels.infoPanel(dpleft);
             pInfo.addComponentListener(this);
+            // TODO: initializing start screen panel
+            pStartScreen = PanelModels.startPanel(dpright);
+            pStartScreen.addComponentListener(this);
             // TODO: initializing background label
             bground = PanelModels.backgroundLabel();
 
@@ -146,7 +149,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 search_settings.addComponentListener(this);
                 progressbar = MenuModels.progressBar(menubar);
                 progressbar.addComponentListener(this);
-                settings_intlFrame = MenuModels.settings_intlFrame();
+                settings_intlFrame = MenuModels.settings_intlFrame(mainpanel);
                 settings_intlFrame.addComponentListener(this);
                 settings_intlFrame.addKeyListener(this);
                 settings_iFrame_maxLoad = MenuModels.settingsOP_maxLoadTxtField();
@@ -157,15 +160,21 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             closeView.addActionListener(this);
 
         /**
-         * title background img (label)
+         * putting images to labels
          */
             // TODO: setting up title backround img
             // ich bekomme nur mit der getRessource methode ein Bild zurückgeliefert
             ImageIcon img = new ImageIcon(this.getClass().getResource("/title_background.jpg"));
             title_bground = new JLabel(img);
-            title_bground.setBounds(0, 0, pTitle.getWidth(), pTitle.getHeight());
+            title_bground.setBounds(pTitle.getBounds());
             title_bground.setBorder(LINE_BORDER);
+            // title text (might be replaced through one image)
             title = PanelModels.titleTxtLabel(pTitle);
+            // TODO: setting up start screen
+            ImageIcon start_image = new ImageIcon(this.getClass().getResource("/start_image.png"));
+            lblStartScreen = new JLabel(start_image);
+            lblStartScreen.setBounds(pStartScreen.getBounds());
+            lblStartScreen.setBorder(LINE_BORDER);
 
          // Adding to Window
 
@@ -180,23 +189,28 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
 
             // TODO: adding menubar to menu panel
             pMenu.add(menubar);
+            // TODO: adding label to start screen panel
+            pStartScreen.add(lblStartScreen);
 
-            // TODO: adding everything to internal menu frame
-            dpleft.add(pMenu);
-            // TODO: adding everything to internal finfo frame
-            dpleft.add(pInfo);
-            // TODO: adding everything to internal map frame
-            dpright.add(pMap);
-            // TODO: adding everything to internal list frame
+            // TODO: adding everything to right desktop pane
             dpright.add(pList);
+            dpright.add(pMap);
+            dpright.add(pStartScreen);
+            // TODO: adding everything to left desktop pane
+            dpleft.add(pMenu);
+            dpleft.add(pInfo);
 
                 // TODO: adding to pTitle
                 pTitle.add(PanelModels.titleTxtLabel(pTitle));
                 pTitle.add(title_bground);
 
+                // TODO: adding textfield to internal settings frame
+                settings_iFrame_maxLoad.setText(Controller.getMaxLoadedData() + "");
+                settings_intlFrame.add(settings_iFrame_maxLoad);
+
         // TODO: adding title panel to frame
         mainpanel.add(pTitle);
-            settings_intlFrame.add(settings_iFrame_maxLoad);
+        // TODO: adding settings internal frame to mainpanel
         mainpanel.add(settings_intlFrame);
         // TODO: moving flist and fmenu to front
         dpright.setVisible(true);
@@ -211,27 +225,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
 
         pList.setVisible(false);
         pMap.setVisible(false);
+        pStartScreen.setVisible(true);
 
         return window;
-    }
-
-    /**
-     * removes all title panes from all intl. frames
-     * -> makes it un-movable
-     */
-    protected void removeAllTitlePanes () {
-        //flist
-        BasicInternalFrameTitlePane titlePane =(BasicInternalFrameTitlePane)((BasicInternalFrameUI)flist.getUI()).getNorthPane();
-        flist.remove(titlePane);
-        //fmap
-        titlePane =(BasicInternalFrameTitlePane)((BasicInternalFrameUI)fmap.getUI()).getNorthPane();
-        fmap.remove(titlePane);
-        //fmenu
-        titlePane =(BasicInternalFrameTitlePane)((BasicInternalFrameUI)fmenu.getUI()).getNorthPane();
-        fmenu.remove(titlePane);
-        //finfo
-        titlePane =(BasicInternalFrameTitlePane)((BasicInternalFrameUI)finfo.getUI()).getNorthPane();
-        finfo.remove(titlePane);
     }
 
     /**
@@ -436,7 +432,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 String[] args = text.split(" ");
                 try {
                     if (Integer.parseInt(args[1]) <= 10000) {
-                        DBOut.maxLoadedFlights = Integer.parseInt(args[1]);
+                        Controller.setMaxLoadedData(Integer.parseInt(args[1]));
                         System.out.println("maxload changed to " + args[1] + " !");
                     } else {
                         System.out.println("Failed! Maximum is 10000!");
@@ -546,10 +542,13 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         } else if (comp == dpright) {
             pList.setBounds(0, 0, dpright.getWidth(), dpright.getHeight());
             pMap.setBounds(0, 0, dpright.getWidth(), dpright.getHeight());
+            pStartScreen.setBounds(0, 0, dpright.getWidth(), dpright.getHeight());
             closeView.setBounds(dpright.getWidth() - 95, dpright.getHeight() - 45, 80, 30);
         } else if (comp == pTitle) {
-                title_bground.setBounds(pTitle.getBounds());
-                title.setBounds(pTitle.getWidth()/2-200, 0, 400, 70);
+            title_bground.setBounds(pTitle.getBounds());
+            title.setBounds(pTitle.getWidth()/2-200, 0, 400, 70);
+        } else if (comp == pStartScreen) {
+            lblStartScreen.setBounds(pStartScreen.getBounds());
         } else if (comp == menubar) {
             search.setBounds(10, menubar.getHeight()-80, 255, 25);
             search_settings.setBounds(10, menubar.getHeight()-40, 255, 25);

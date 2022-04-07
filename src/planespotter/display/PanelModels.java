@@ -118,6 +118,20 @@ public final class PanelModels {
     /**
      *
      */
+    public static JPanel startPanel (JDesktopPane parent) {
+        // TODO setting up start screen panel
+        JPanel start = new JPanel();
+        start.setBounds(0, 0, parent.getWidth(), parent.getHeight());
+        start.setBackground(DEFAULT_BG_COLOR);
+        start.setLayout(null);
+        start.setBorder(LINE_BORDER);
+
+        return start;
+    }
+
+    /**
+     *
+     */
     public static JLabel backgroundLabel () {
         // TODO: setting up background image
         JLabel bground = new JLabel(img);
@@ -125,6 +139,8 @@ public final class PanelModels {
 
         return bground;
     }
+
+
 
 
 }

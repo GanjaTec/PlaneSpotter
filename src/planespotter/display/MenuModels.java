@@ -191,15 +191,15 @@ public final class MenuModels extends GUI {
     /**
      * @return settings option pane (which pops up)
      */
-    public static JInternalFrame settings_intlFrame () {
+    public static JInternalFrame settings_intlFrame (JPanel parent) {
             JLabel maxLoadLbl = new JLabel("Max. loaded Data:");
-            maxLoadLbl.setBounds(50, 90, 80, 20);
+            maxLoadLbl.setBounds(20, 20, 180, 30);
             maxLoadLbl.setForeground(DEFAULT_MAP_ICON_COLOR);
             maxLoadLbl.setFont(FONT_MENU);
         JInternalFrame settings = new JInternalFrame();
-        settings.setSize(200, 200);
+        settings.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 500, 400);
         settings.setLayout(null);
-        settings.setBackground(DEFAULT_BORDER_COLOR);
+        settings.setBackground(Color.LIGHT_GRAY);
         settings.add(maxLoadLbl);
         settings.hide();
 
@@ -211,8 +211,10 @@ public final class MenuModels extends GUI {
      */
     public static JTextField settingsOP_maxLoadTxtField () {
         JTextField maxLoadTxtfield = new JTextField();
-        maxLoadTxtfield.setBounds(120, 80, 40, 40);
-        maxLoadTxtfield.setBorder(MENU_BORDER);
+        maxLoadTxtfield.setBounds(200, 20, 50, 30);
+        maxLoadTxtfield.setBorder(LINE_BORDER);
+        maxLoadTxtfield.setBackground(DEFAULT_BG_COLOR);
+        maxLoadTxtfield.setForeground(DEFAULT_FONT_COLOR);
         maxLoadTxtfield.setFont(FONT_MENU);
         return maxLoadTxtfield;
     }

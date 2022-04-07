@@ -49,6 +49,20 @@ public class Controller {
     }
 
     /**
+     * sets the MaxLoadedData variable in DBOut
+     */
+    public static void setMaxLoadedData (int max) {
+        DBOut.maxLoadedFlights = max;
+    }
+
+    /**
+     * @return MaxLoadedData variable from DBOut
+     */
+    public static int getMaxLoadedData () {
+        return DBOut.maxLoadedFlights;
+    }
+
+    /**
      * creates a GUI-view for a specific view-type
      * @param type is the ViewType, sets the content type for the
      *             created view (e.g. different List-View-Types)
