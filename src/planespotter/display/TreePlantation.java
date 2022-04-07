@@ -2,12 +2,14 @@ package planespotter.display;
 
 import planespotter.constants.Bounds;
 import planespotter.constants.Paths;
-import planespotter.dataclasses.*;
+import planespotter.dataclasses.Airline;
+import planespotter.dataclasses.Airport;
+import planespotter.dataclasses.Flight;
+import planespotter.dataclasses.Plane;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
@@ -15,12 +17,11 @@ import java.util.List;
 import static planespotter.constants.GUIConstants.*;
 
 /**
- * @name TreeFactory
+ * @name TreePlantation
  * @author jml04
- * @version 1.0
+ * @version 1.1
  *
  * class TreePlantation implements methods to create tree structures
- * "abstract" and "static" may be deleted in the future (?)
  */
 public final class TreePlantation {
 
@@ -34,7 +35,7 @@ public final class TreePlantation {
      * @return new JList for data models
      * @param node is the root node of the given tree
      */
-    public static JTree createTree (DefaultMutableTreeNode node) {
+    public JTree createTree(DefaultMutableTreeNode node, GUI gui) {
         JTree listView;
         // initialisation new JTree
         listView = new JTree(node);
@@ -44,7 +45,6 @@ public final class TreePlantation {
         // setting tree attributes
         listView.setFont(FONT_MENU);
         listView.setBackground(DEFAULT_BG_COLOR);
-        listView.setBounds(Bounds.RIGHT);
 
         // creating tree cell renderer
         CustomCellRenderer renderer = new CustomCellRenderer();

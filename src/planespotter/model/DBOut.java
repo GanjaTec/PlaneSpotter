@@ -16,7 +16,23 @@ import java.util.List;
  * It relies heavily on planespotter.SQLQuerrys
  *
  */
-public class DBOut {
+public class DBOut extends Thread {
+
+	/**
+	 * constructor
+	 */
+	public DBOut () {
+		start(); // ?
+	}
+
+	/**
+	 * ? ? ? ? TODO richtig machen
+	 */
+	@Override
+	public void run () {
+		this.setPriority(8);
+		System.out.println("[DBOut] Priorität auf 8 gesetzt!");
+	}
 
 	/**
 	 * test: max loaded flights
@@ -248,7 +264,6 @@ public class DBOut {
 	public List<Flight> getAllFlights() throws Exception {
 		List<Flight> flights = new ArrayList<Flight>();
 		ResultSet rs = querryDB(SqlQuerrys.getFlights);
-
 		int counter = 0;
 		while(rs.next() && counter <= maxLoadedFlights) { // counter: max flights -> to limit the incoming data (prevents a crash)
 			HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));

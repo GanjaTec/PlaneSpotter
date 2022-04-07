@@ -23,7 +23,7 @@ public final class GUIConstants {
                                     title_bground_img = new ImageIcon(Paths.SRC_PATH + "title_background.jpg"),
                                     flying_plane_icon = new ImageIcon(Paths.SRC_PATH + "flying_plane_icon.png");
     // line border
-    public static final Border  LINE_BORDER = BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR, 1),
+    public static final Border  LINE_BORDER = BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR, 2),
                                 MENU_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY), BorderFactory.createLineBorder(DEFAULT_FG_COLOR));
 
 

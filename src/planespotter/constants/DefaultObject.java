@@ -1,6 +1,6 @@
 package planespotter.constants;
 
-import planespotter.dataclasses.*;
+import planespotter.dataclasses.Airline;
 
 /**
     @name DefaultObject

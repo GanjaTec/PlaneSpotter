@@ -2,12 +2,18 @@ package planespotter.controller;
 
 import planespotter.constants.ViewType;
 import planespotter.dataclasses.*;
-import planespotter.display.*;
+import planespotter.display.GUI;
 import planespotter.model.DBOut;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @name    Controller
+ * @author  @all Lukas   jml04   Bennet
+ * @version 1.1
+ */
 public class Controller {
 
     /**
@@ -51,9 +57,7 @@ public class Controller {
         gui.disposeView();
         try {
             switch (type) {
-                case LIST_FLIGHT:
-                    gui.loadView(type, new DBOut().getAllFlights());
-                    break;
+                case LIST_FLIGHT: // both need the same
                 case MAP_ALL:
                     gui.loadView(type, new DBOut().getAllFlights());
                     break;

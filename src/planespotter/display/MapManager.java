@@ -75,7 +75,6 @@ public class MapManager extends Thread {
 
         }
         gui.recieveMap(viewer);
-
     }
 
     /**
