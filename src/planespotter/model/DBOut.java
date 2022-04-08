@@ -7,7 +7,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -452,7 +451,28 @@ public class DBOut implements Runnable {
 		try {
 			ResultSet rs = querryDB(SqlQuerrys.getFlightsFromID + id);
 			int counter = 0;
-			while (rs.next() && counter < maxLoadedFlights/4) { // counter: immer nur 100 Datensätze
+			while (rs.next() && counter <= maxLoadedFlights/4) { // counter: immer nur 100 Datensätze
+				HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
+				List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
+				Plane plane = getPlaneByID(rs.getInt("plane"));
+				Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
+				flights.add(flight);
+				counter++;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return flights;
+	}
+
+	public List<Flight> getAllFlightsFromID(int start_id, int end_id) {
+		List<Flight> flights = new ArrayList<Flight>();
+		try {
+			ResultSet rs = querryDB("SELECT * FROM flights WHERE ID >= " + start_id + " AND ID <= " + end_id);
+			int counter = 0;
+			while (rs.next() && counter <= end_id-start_id) { // counter: immer begrenzte Anzahl an Datensätzen
 				HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
 				List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
 				Plane plane = getPlaneByID(rs.getInt("plane"));

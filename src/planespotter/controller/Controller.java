@@ -1,5 +1,6 @@
 package planespotter.controller;
 
+import planespotter.constants.GUIConstants;
 import planespotter.constants.ViewType;
 import planespotter.dataclasses.*;
 import planespotter.display.GUI;
@@ -50,6 +51,8 @@ public class Controller implements Runnable {
      */
     private static GUI gui;
 
+    private static List<Flight> preloadedFlights = null;
+
     /**
      * * * * * * * * * * * * * * *
      * static controller methods *
@@ -61,8 +64,16 @@ public class Controller implements Runnable {
      * // TODO überprüfen
      */
     public static void openWindow () {
+        long startTime = System.nanoTime();
+        System.out.println("[Controller] initialisation started!");
         gui = new GUI();
         exe.execute(gui);
+        try {
+            doThreadedTask(preloadedFlights);
+        } catch (Exception e) {
+            System.err.println("preloading interrupted!");
+        }
+        System.out.println("[Controller] " + ANSI_GREEN + "initialized in " + (System.nanoTime()+-startTime)/Math.pow(1000, 3) + " seconds!");
     }
 
     /**
@@ -97,35 +108,26 @@ public class Controller implements Runnable {
             long startTime = System.nanoTime();
             List<Flight> listFlights = new ArrayList<>();
             // TODO verschiedene Möglichkeiten (für große Datenmengen)
-            int from0 = getMaxLoadedData();
-            int from1 = from0 + getMaxLoadedData()/4;
-            int from2 = from1 + getMaxLoadedData()/4;
-            int from3 = from2 + getMaxLoadedData()/4;
-            DBOut out0 = new DBOut(0, exe);
-            DBOut out1 = new DBOut(1, exe);
-            DBOut out2 = new DBOut(2, exe);
-            DBOut out3 = new DBOut(3, exe);
-            List<Flight> list0 = out0.getAllFlightsFromID(from0);
-            List<Flight> list1 = out1.getAllFlightsFromID(from1);
-            List<Flight> list2 = out2.getAllFlightsFromID(from2);
-            List<Flight> list3 = out3.getAllFlightsFromID(from3);
+            if (preloadedFlights == null) {
+                doThreadedTask(listFlights);
+            }
             switch (type) {
                 case LIST_FLIGHT:
-                    listFlights.addAll(list0);
-                    listFlights.addAll(list1);
-                    listFlights.addAll(list2);
-                    listFlights.addAll(list3);
-                    gui.recieveTree(new TreePlantation().createTree(TreePlantation.createFlightTreeNode(listFlights), gui));
+                    if (preloadedFlights == null) {
+                        gui.recieveTree(new TreePlantation().createTree(TreePlantation.createFlightTreeNode(listFlights), gui));
+                    } else {
+                        gui.recieveTree(new TreePlantation().createTree(TreePlantation.createFlightTreeNode(preloadedFlights), gui));
+                    }
                     gui.window.revalidate();
                     break;
                 case MAP_ALL:
                     // TODO // Dieses Threading ist besser als das alte von LIST_FLIGHT
                     // TODO // MAP_ALL braucht ca. 9s im Gegensatz zu LIST_FLIGHT mit ca. 12s (bei 2000 DB-entries)
-                    listFlights.addAll(list0);
-                    listFlights.addAll(list1);
-                    listFlights.addAll(list2);
-                    listFlights.addAll(list3);
-                    new MapManager(gui).createAllFlightsMap(listFlights);
+                    if (preloadedFlights == null) {
+                        new MapManager(gui).createAllFlightsMap(listFlights);
+                    } else {
+                        new MapManager(gui).createAllFlightsMap(preloadedFlights);
+                    }
                     gui.window.revalidate();
                     break;
                 case MAP_FLIGHTROUTE:   // läuft nicht // hier wird (String) data gebraucht
@@ -141,8 +143,44 @@ public class Controller implements Runnable {
     }
 
     // TODO: threading methoden -> die dann in createDataView einfügen!
-    // eine für maxLoad < ca.1000
-    // eine für maxLoad > ca.1000
+    // maxload < oder > 1000
+    private static void doThreadedTask (List<Flight> toList) {
+        if (getMaxLoadedData() <= 1000) {
+            int from0 = 0;
+            int from1 = from0 + getMaxLoadedData()/4;
+            int from2 = from1 + getMaxLoadedData()/4;
+            int from3 = from2 + getMaxLoadedData()/4;
+            DBOut out0 = new DBOut(0, exe);
+            DBOut out1 = new DBOut(1, exe);
+            DBOut out2 = new DBOut(2, exe);
+            DBOut out3 = new DBOut(3, exe);
+            List<Flight> list0 = out0.getAllFlightsFromID(from0);
+            List<Flight> list1 = out1.getAllFlightsFromID(from1);
+            List<Flight> list2 = out2.getAllFlightsFromID(from2);
+            List<Flight> list3 = out3.getAllFlightsFromID(from3);
+            toList.addAll(list0);
+            toList.addAll(list1);
+            toList.addAll(list2);
+            toList.addAll(list3);
+        } else {
+            int from0 = 0;
+            int from1 = from0 + getMaxLoadedData()/4;
+            int from2 = from1 + getMaxLoadedData()/4;
+            int from3 = from2 + getMaxLoadedData()/4;
+            DBOut out0 = new DBOut(0, exe);
+            DBOut out1 = new DBOut(1, exe);
+            DBOut out2 = new DBOut(2, exe);
+            DBOut out3 = new DBOut(3, exe);
+            List<Flight> list0 = out0.getAllFlightsFromID(from0, from1);
+            List<Flight> list1 = out1.getAllFlightsFromID(from1, from2-1);
+            List<Flight> list2 = out2.getAllFlightsFromID(from2, from3-1);
+            List<Flight> list3 = out3.getAllFlightsFromID(from3, (from3+getMaxLoadedData()/4)-1);
+            toList.addAll(list0);
+            toList.addAll(list1);
+            toList.addAll(list2);
+            toList.addAll(list3);
+        }
+    }
 
     /**
      * program exit method
