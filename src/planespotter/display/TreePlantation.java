@@ -72,7 +72,7 @@ public final class TreePlantation {
             DefaultMutableTreeNode root = new DefaultMutableTreeNode("");
             while (it.hasNext()) {
                 Flight f = it.next();
-                String titleStr = "Flugnummer: " + f.getFlightnr() + " ,   Airline: " + f.getPlane().getAirline().getName();
+                String titleStr = "Flugnummer: " + f.getFlightnr() + " ,   Planytype: " + f.getPlane().getPlanetype();
                 // Title Object
                 DefaultMutableTreeNode flight = new DefaultMutableTreeNode(titleStr);
                 // Attributes

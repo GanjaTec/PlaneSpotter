@@ -31,7 +31,7 @@ public class DBOut implements Runnable {
 	 */
 	public DBOut (int number, ThreadPoolExecutor executor) {
 		this.threadNumber = number;
-		this.threadName = "Datenbankausgabe-" + this.threadNumber;
+		this.threadName = "db-out" + this.threadNumber;
 		executor.execute(this);
 	}
 
@@ -41,7 +41,14 @@ public class DBOut implements Runnable {
 	@Override
 	public void run () {
 		Thread.currentThread().setPriority(8);
-		System.out.println("[DBOut] new DBOut thread created!");
+		System.out.println("[DBOut] thread " + this.getName() + " created!");
+	}
+
+	/**
+	 * @return name of the running threa
+	 */
+	public String getName () {
+		return threadName;
 	}
 
 	/**

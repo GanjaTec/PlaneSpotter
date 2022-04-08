@@ -95,6 +95,8 @@ public class Controller implements Runnable {
         gui.disposeView();
         try {
             long startTime = System.nanoTime();
+            List<Flight> listFlights = new ArrayList<>();
+            // TODO verschiedene Möglichkeiten (für große Datenmengen)
             int from0 = getMaxLoadedData();
             int from1 = from0 + getMaxLoadedData()/4;
             int from2 = from1 + getMaxLoadedData()/4;
@@ -109,7 +111,6 @@ public class Controller implements Runnable {
             List<Flight> list3 = out3.getAllFlightsFromID(from3);
             switch (type) {
                 case LIST_FLIGHT:
-                    List<Flight> listFlights = new ArrayList<>();
                     listFlights.addAll(list0);
                     listFlights.addAll(list1);
                     listFlights.addAll(list2);
@@ -120,15 +121,14 @@ public class Controller implements Runnable {
                 case MAP_ALL:
                     // TODO // Dieses Threading ist besser als das alte von LIST_FLIGHT
                     // TODO // MAP_ALL braucht ca. 9s im Gegensatz zu LIST_FLIGHT mit ca. 12s (bei 2000 DB-entries)
-                    List<Flight> listMap = new ArrayList<>();
-                    listMap.addAll(list0);
-                    listMap.addAll(list1);
-                    listMap.addAll(list2);
-                    listMap.addAll(list3);
-                    new MapManager(gui).createAllFlightsMap(listMap);
+                    listFlights.addAll(list0);
+                    listFlights.addAll(list1);
+                    listFlights.addAll(list2);
+                    listFlights.addAll(list3);
+                    new MapManager(gui).createAllFlightsMap(listFlights);
                     gui.window.revalidate();
                     break;
-                case MAP_FLIGHTROUTE:   // läuft nicht
+                case MAP_FLIGHTROUTE:   // läuft nicht // hier wird (String) data gebraucht
                     //new MapManager(gui).createFlightRoute(mainOut.getAllFlights());
                     gui.window.revalidate();
                     break;
@@ -140,28 +140,9 @@ public class Controller implements Runnable {
         }
     }
 
-
-
-    /** // nur test
-     * TestObjekt:
-     * @return Test-List-Object
-     */
-    public static List<Flight> testFlightList() {
-        List<Flight> list = new ArrayList<>();
-        Flight flight1 = new Flight(1234, new Airport(030, "BER", "Berlin", new Position(222.22, 333.33)),
-                                    new Airport(040, "HH", "Hamburg", new Position(123.45, 98.76)),
-                                    "HHBER",
-                                    new Plane(10045, "ABC111", "11", "Passagierflugzeug", "REG111", new Airline(21, "A21A", "Airline21")),
-                                    "BERHH1", null);
-        Flight flight2 = new Flight(6543, new Airport(324, "MI", "Minden", new Position(37.26237, 325.563)),
-                new Airport(367, "BEV", "Beverungen", new Position(52553.45, 58.5576)),
-                "MIBEV",
-                new Plane(10045, "ABC111", "11", "Passagierflugzeug", "REG111", new Airline(21, "A21A", "Airline21")),
-                "MIBEV1", null);
-        list.add(flight1);
-        list.add(flight2);
-        return list;
-    }
+    // TODO: threading methoden -> die dann in createDataView einfügen!
+    // eine für maxLoad < ca.1000
+    // eine für maxLoad > ca.1000
 
     /**
      * program exit method
@@ -170,30 +151,24 @@ public class Controller implements Runnable {
         System.exit(0);
     }
 
-    /**
-     * berechnet die quersumme einer zahl
-     * @unused
+    /** // nur test
+     * TestObjekt:
+     * @return Test-List-Object
      */
-    public static int checksum (int n) {
-        if (n <= 9) {
-            return n;
-        }
-        return n%10 + checksum(n/10);
-    }
-
-    /**
-     * background task method
-     * starts a background task from BackgroundWorker class
-     */
-    private static List<Flight> loadFlightsInBackgroundFromID (int id) {
+    public static List<Flight> testFlightList() {
         List<Flight> list = new ArrayList<>();
-        long startTime = System.nanoTime();
-        DBOut thread1 = new DBOut(5, exe);
-        exe.execute(thread1);
-            list = thread1.getAllFlightsFromID(id);
-                //TODO fix Exception in thread "AWT-EventQueue-0" java.util.ConcurrentModificationException
-        exe.remove(thread1);
-        System.out.println("[DBOut] loaded 250 DB-entries (from id " + id + ") in " + (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!");
+        Flight flight1 = new Flight(1234, new Airport(030, "BER", "Berlin", new Position(222.22, 333.33)),
+                new Airport(040, "HH", "Hamburg", new Position(123.45, 98.76)),
+                "HHBER",
+                new Plane(10045, "ABC111", "11", "Passagierflugzeug", "REG111", new Airline(21, "A21A", "Airline21")),
+                "BERHH1", null);
+        Flight flight2 = new Flight(6543, new Airport(324, "MI", "Minden", new Position(37.26237, 325.563)),
+                new Airport(367, "BEV", "Beverungen", new Position(52553.45, 58.5576)),
+                "MIBEV",
+                new Plane(10045, "ABC111", "11", "Passagierflugzeug", "REG111", new Airline(21, "A21A", "Airline21")),
+                "MIBEV1", null);
+        list.add(flight1);
+        list.add(flight2);
         return list;
     }
 
