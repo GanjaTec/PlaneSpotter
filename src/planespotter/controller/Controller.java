@@ -94,46 +94,38 @@ public class Controller implements Runnable {
     public static void createDataView (ViewType type, String data) {
         gui.disposeView();
         try {
-            //DBOut mainOut = new DBOut(0, exe);
-            //exe.execute(dbOut);
+            long startTime = System.nanoTime();
+            int from0 = getMaxLoadedData();
+            int from1 = from0 + getMaxLoadedData()/4;
+            int from2 = from1 + getMaxLoadedData()/4;
+            int from3 = from2 + getMaxLoadedData()/4;
+            DBOut out0 = new DBOut(0, exe);
+            DBOut out1 = new DBOut(1, exe);
+            DBOut out2 = new DBOut(2, exe);
+            DBOut out3 = new DBOut(3, exe);
+            List<Flight> list0 = out0.getAllFlightsFromID(from0);
+            List<Flight> list1 = out1.getAllFlightsFromID(from1);
+            List<Flight> list2 = out2.getAllFlightsFromID(from2);
+            List<Flight> list3 = out3.getAllFlightsFromID(from3);
             switch (type) {
                 case LIST_FLIGHT:
-                    // läuft noch nicht / soll laden der Daten in mehrere Threads aufteilen
                     List<Flight> listFlights = new ArrayList<>();
-                    for (int id = 0; id <= getMaxLoadedData(); ) {
-                        List<Flight> list1 = null;
-                        list1 = loadFlightsInBackgroundFromID(id);
-                            listFlights.addAll(list1);
-                        id = id + getMaxLoadedData()/4;
-                    }
+                    listFlights.addAll(list0);
+                    listFlights.addAll(list1);
+                    listFlights.addAll(list2);
+                    listFlights.addAll(list3);
                     gui.recieveTree(new TreePlantation().createTree(TreePlantation.createFlightTreeNode(listFlights), gui));
                     gui.window.revalidate();
                     break;
                 case MAP_ALL:
-                    // TODO // Dieses Threading ist besser als das von LIST_FLIGHT
+                    // TODO // Dieses Threading ist besser als das alte von LIST_FLIGHT
                     // TODO // MAP_ALL braucht ca. 9s im Gegensatz zu LIST_FLIGHT mit ca. 12s (bei 2000 DB-entries)
-                    long startTime = System.nanoTime();
                     List<Flight> listMap = new ArrayList<>();
-                    int from1 = getMaxLoadedData();
-                    int from2 = from1 + getMaxLoadedData()/4;
-                    int from3 = from2 + getMaxLoadedData()/4;
-                    int from4 = from3 + getMaxLoadedData()/4;
-                    DBOut out1 = new DBOut(1, exe);
-                    DBOut out2 = new DBOut(2, exe);
-                    DBOut out3 = new DBOut(3, exe);
-                    DBOut out4 = new DBOut(4, exe);
-                    List<Flight> list1 = out1.getAllFlightsFromID(from1);
-                    List<Flight> list2 = out2.getAllFlightsFromID(from2);
-                    List<Flight> list3 = out3.getAllFlightsFromID(from3);
-                    List<Flight> list4 = out4.getAllFlightsFromID(from4);
+                    listMap.addAll(list0);
                     listMap.addAll(list1);
                     listMap.addAll(list2);
                     listMap.addAll(list3);
-                    listMap.addAll(list4);
                     new MapManager(gui).createAllFlightsMap(listMap);
-                    System.out.println( ANSI_ORANGE + "[DBOut] " + ANSI_GREEN + "loaded " + getMaxLoadedData() + " DB-entries in "
-                                        + (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
-
                     gui.window.revalidate();
                     break;
                 case MAP_FLIGHTROUTE:   // läuft nicht
@@ -141,6 +133,8 @@ public class Controller implements Runnable {
                     gui.window.revalidate();
                     break;
             }
+            System.out.println( "[DBOut] " + ANSI_GREEN + "loaded " + getMaxLoadedData() + " DB-entries in " +
+                                (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
         } catch (Exception e) {
             e.printStackTrace();
         }
