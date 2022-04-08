@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author Lukas
@@ -28,9 +29,10 @@ public class DBOut implements Runnable {
 	/**
 	 * constructor
 	 */
-	public DBOut (int number) {
+	public DBOut (int number, ThreadPoolExecutor executor) {
 		this.threadNumber = number;
 		this.threadName = "Datenbankausgabe-" + this.threadNumber;
+		executor.execute(this);
 	}
 
 	/**
@@ -443,7 +445,7 @@ public class DBOut implements Runnable {
 		try {
 			ResultSet rs = querryDB(SqlQuerrys.getFlightsFromID + id);
 			int counter = 0;
-			while (rs.next() && counter < 250) { // counter: immer nur 100 Datensätze
+			while (rs.next() && counter < maxLoadedFlights/4) { // counter: immer nur 100 Datensätze
 				HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
 				List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
 				Plane plane = getPlaneByID(rs.getInt("plane"));

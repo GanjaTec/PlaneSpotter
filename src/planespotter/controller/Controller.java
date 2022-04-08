@@ -7,11 +7,12 @@ import planespotter.display.MapManager;
 import planespotter.display.TreePlantation;
 import planespotter.model.DBOut;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+
+import static planespotter.constants.GUIConstants.*;
 
 /**
  * @name    Controller
@@ -20,7 +21,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 public class Controller implements Runnable {
     // test-ThreadPoolExecutor
-    static ThreadPoolExecutor exe = (ThreadPoolExecutor) Executors.newFixedThreadPool(8);
+    static ThreadPoolExecutor exe = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
 
     /**
      * class variables
@@ -61,7 +62,7 @@ public class Controller implements Runnable {
      */
     public static void openWindow () {
         gui = new GUI();
-        gui.run();
+        exe.execute(gui);
     }
 
     /**
@@ -93,34 +94,50 @@ public class Controller implements Runnable {
     public static void createDataView (ViewType type, String data) {
         gui.disposeView();
         try {
-            DBOut dbOut = new DBOut(0);
+            //DBOut mainOut = new DBOut(0, exe);
             //exe.execute(dbOut);
             switch (type) {
                 case LIST_FLIGHT:
                     // läuft noch nicht / soll laden der Daten in mehrere Threads aufteilen
                     List<Flight> listFlights = new ArrayList<>();
                     for (int id = 0; id <= getMaxLoadedData(); ) {
-                        synchronized (listFlights) {
-                            listFlights.addAll(loadFlightsInBackground(id));
-                        }
-                        id = id + 250;
+                        List<Flight> list1 = null;
+                        list1 = loadFlightsInBackgroundFromID(id);
+                            listFlights.addAll(list1);
+                        id = id + getMaxLoadedData()/4;
                     }
                     gui.recieveTree(new TreePlantation().createTree(TreePlantation.createFlightTreeNode(listFlights), gui));
                     gui.window.revalidate();
                     break;
                 case MAP_ALL:
+                    // TODO // Dieses Threading ist besser als das von LIST_FLIGHT
+                    // TODO // MAP_ALL braucht ca. 9s im Gegensatz zu LIST_FLIGHT mit ca. 12s (bei 2000 DB-entries)
+                    long startTime = System.nanoTime();
                     List<Flight> listMap = new ArrayList<>();
-                    for (int id = 0; id <= getMaxLoadedData(); ) {
-                        synchronized (listMap) {
-                            listMap.addAll(loadFlightsInBackground(id));
-                        }
-                        id = id + 250;
-                    }
+                    int from1 = getMaxLoadedData();
+                    int from2 = from1 + getMaxLoadedData()/4;
+                    int from3 = from2 + getMaxLoadedData()/4;
+                    int from4 = from3 + getMaxLoadedData()/4;
+                    DBOut out1 = new DBOut(1, exe);
+                    DBOut out2 = new DBOut(2, exe);
+                    DBOut out3 = new DBOut(3, exe);
+                    DBOut out4 = new DBOut(4, exe);
+                    List<Flight> list1 = out1.getAllFlightsFromID(from1);
+                    List<Flight> list2 = out2.getAllFlightsFromID(from2);
+                    List<Flight> list3 = out3.getAllFlightsFromID(from3);
+                    List<Flight> list4 = out4.getAllFlightsFromID(from4);
+                    listMap.addAll(list1);
+                    listMap.addAll(list2);
+                    listMap.addAll(list3);
+                    listMap.addAll(list4);
                     new MapManager(gui).createAllFlightsMap(listMap);
+                    System.out.println( ANSI_ORANGE + "[DBOut] " + ANSI_GREEN + "loaded " + getMaxLoadedData() + " DB-entries in "
+                                        + (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
+
                     gui.window.revalidate();
                     break;
-                case MAP_FLIGHTROUTE:
-                    new MapManager(gui).createFlightRoute(dbOut.getFlightsByCallsign(data));
+                case MAP_FLIGHTROUTE:   // läuft nicht
+                    //new MapManager(gui).createFlightRoute(mainOut.getAllFlights());
                     gui.window.revalidate();
                     break;
             }
@@ -174,10 +191,10 @@ public class Controller implements Runnable {
      * background task method
      * starts a background task from BackgroundWorker class
      */
-    private static List<Flight> loadFlightsInBackground (int id) {
+    private static List<Flight> loadFlightsInBackgroundFromID (int id) {
         List<Flight> list = new ArrayList<>();
         long startTime = System.nanoTime();
-        DBOut thread1 = new DBOut(1);
+        DBOut thread1 = new DBOut(5, exe);
         exe.execute(thread1);
             list = thread1.getAllFlightsFromID(id);
                 //TODO fix Exception in thread "AWT-EventQueue-0" java.util.ConcurrentModificationException

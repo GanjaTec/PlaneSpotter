@@ -389,7 +389,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
-            } else {
+            } else if (text.startsWith("flightroute")) {
                 if (view_SEM.value() == 0 && !text.contains(" ")) {
                     Controller.createDataView(ViewType.MAP_FLIGHTROUTE, text);
                 }
@@ -604,7 +604,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         @Override
         protected void done () {
             progressbar.setVisible(false);
-            System.out.println("[GUI] db-data loaded!");
+            //System.out.println("[GUI] DB-data loaded!");
         }
     }
 
