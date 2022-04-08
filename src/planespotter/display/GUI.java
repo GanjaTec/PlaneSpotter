@@ -11,15 +11,11 @@ import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
 import planespotter.constants.Bounds;
 import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
-import planespotter.dataclasses.Flight;
 import planespotter.exceptions.SemaphorError;
-import planespotter.model.DBOut;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.sql.SQLException;
-import java.util.List;
 
 import static planespotter.constants.GUIConstants.DEFAULT_BG_COLOR;
 import static planespotter.constants.GUIConstants.LINE_BORDER;
@@ -278,19 +274,19 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      */
     public void disposeView () {
         if (listView != null || mapViewer != null || pStartScreen != null) { // braucht man das
-            if (runningView == listView) {
+            if (runningView == listView && mapViewer != null) {
                 listView.setVisible(false);
                 listView = null;
                 pList.setVisible(false);
                 pStartScreen.setVisible(true);
                 runningView = null;
-            } else if (runningView == mapViewer) {
+            } else if (runningView == mapViewer && mapViewer != null) {
                 mapViewer.setVisible(false);
                 mapViewer = null;
                 pMap.setVisible(false);
                 pStartScreen.setVisible(true);
                 runningView = null;
-            } else if (runningView == pStartScreen) {
+            } else if (runningView == pStartScreen && pStartScreen != null) {
                 pStartScreen.setVisible(false);
             }
 
@@ -302,6 +298,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 pStartScreen.setVisible(true);
 
                 view_SEM.decrease();
+            } else {
+                pStartScreen.setVisible(false);
             }
         }
         window.revalidate();
@@ -363,27 +361,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
 
         return mapViewer;
     }
-
-
-
-    /**
-     * creates flight tree in GUI
-     * sets tree to GUI.listView
-     * TODO: add param class -> switch case -> to create every tree wanted in one method ?inController?
-     */
-    /*protected void createFlightTree () {
-        // laeuft noch nicht, zu viele Daten
-        try {
-            List<Flight> list = new DBOut().getAllFlights();
-            this.recieveTree(new TreePlantation().createTree(TreePlantation.createFlightTreeNode(list), this));
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }*/
-
-
 
     /**
      * enters the text in the textfield (use for key listener)
@@ -588,8 +565,11 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * runs background task
      */
     private void runBackgroundTask (ViewType type) {
-        BackgroundWorker.actionViewType = type;
-        new BackgroundWorker().execute();
+        BackgroundWorker bgworker = new BackgroundWorker();
+        synchronized (this) {
+            BackgroundWorker.actionViewType = type;
+            bgworker.execute();
+        }
     }
 
     private class BackgroundWorker extends SwingWorker<String, Void> {
@@ -603,6 +583,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         protected String doInBackground() throws Exception {
             switch (actionViewType) {
                 case LIST_FLIGHT:
+                    // TODO controller zum Thread machen der die anderen (DBOut) ausführt
                     Controller.createDataView(ViewType.LIST_FLIGHT, "");
                     runningView = listView;
                     view_SEM.increase();
@@ -626,6 +607,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             System.out.println("[GUI] db-data loaded!");
         }
     }
+
 
     /**
      * private semaphor class represents a semaphor with methods

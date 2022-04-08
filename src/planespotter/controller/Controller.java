@@ -10,18 +10,39 @@ import planespotter.model.DBOut;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @name    Controller
  * @author  @all Lukas   jml04   Bennet
  * @version 1.1
  */
-public class Controller {
+public class Controller implements Runnable {
+    // test-ThreadPoolExecutor
+    static ThreadPoolExecutor exe = (ThreadPoolExecutor) Executors.newFixedThreadPool(8);
+
+    /**
+     * class variables
+     */
+    private int threadNumber;
+    private String threadName;
 
     /**
      * constructor (bisher nicht benötigt)
      */
-    public Controller () {}
+    public Controller (int threadNumber) {
+        this.threadNumber = threadNumber;
+        this.threadName = "Controller-Thread" + this.threadNumber;
+    }
+
+    /**
+     * Controller run method
+     */
+    @Override
+    public void run() {
+
+    }
 
     /**
      * the GUI
@@ -72,18 +93,34 @@ public class Controller {
     public static void createDataView (ViewType type, String data) {
         gui.disposeView();
         try {
+            DBOut dbOut = new DBOut(0);
+            //exe.execute(dbOut);
             switch (type) {
                 case LIST_FLIGHT:
-                    List<Flight> list = new DBOut().getAllFlights();
-                    gui.recieveTree(new TreePlantation().createTree(TreePlantation.createFlightTreeNode(list), gui));
+                    // läuft noch nicht / soll laden der Daten in mehrere Threads aufteilen
+                    List<Flight> listFlights = new ArrayList<>();
+                    for (int id = 0; id <= getMaxLoadedData(); ) {
+                        synchronized (listFlights) {
+                            listFlights.addAll(loadFlightsInBackground(id));
+                        }
+                        id = id + 250;
+                    }
+                    gui.recieveTree(new TreePlantation().createTree(TreePlantation.createFlightTreeNode(listFlights), gui));
                     gui.window.revalidate();
                     break;
                 case MAP_ALL:
-                    new MapManager(gui).createAllFlightsMap(new DBOut().getAllFlights());
+                    List<Flight> listMap = new ArrayList<>();
+                    for (int id = 0; id <= getMaxLoadedData(); ) {
+                        synchronized (listMap) {
+                            listMap.addAll(loadFlightsInBackground(id));
+                        }
+                        id = id + 250;
+                    }
+                    new MapManager(gui).createAllFlightsMap(listMap);
                     gui.window.revalidate();
                     break;
                 case MAP_FLIGHTROUTE:
-                    new MapManager(gui).createFlightRoute(new DBOut().getFlightsByCallsign(data));
+                    new MapManager(gui).createFlightRoute(dbOut.getFlightsByCallsign(data));
                     gui.window.revalidate();
                     break;
             }
@@ -122,6 +159,32 @@ public class Controller {
         System.exit(0);
     }
 
+    /**
+     * berechnet die quersumme einer zahl
+     * @unused
+     */
+    public static int checksum (int n) {
+        if (n <= 9) {
+            return n;
+        }
+        return n%10 + checksum(n/10);
+    }
+
+    /**
+     * background task method
+     * starts a background task from BackgroundWorker class
+     */
+    private static List<Flight> loadFlightsInBackground (int id) {
+        List<Flight> list = new ArrayList<>();
+        long startTime = System.nanoTime();
+        DBOut thread1 = new DBOut(1);
+        exe.execute(thread1);
+            list = thread1.getAllFlightsFromID(id);
+                //TODO fix Exception in thread "AWT-EventQueue-0" java.util.ConcurrentModificationException
+        exe.remove(thread1);
+        System.out.println("[DBOut] loaded 250 DB-entries (from id " + id + ") in " + (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!");
+        return list;
+    }
 
 
 }

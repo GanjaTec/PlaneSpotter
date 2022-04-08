@@ -33,7 +33,10 @@ public class SqlQuerrys {
 	public static final String getFlightByCallsign = "SELECT * FROM flights WHERE callsign == ";
 	public static final String checkEndOfFlight = "SELECT ID FROM flights WHERE endTime IS NULL";
 	public static final String getLastTracking = "SELECT timestamp FROM tracking WHERE ID == () ORDER BY ID DESC LIMIT 1";
-	
+	// alle flüge ab einer bestimmten id
+	public static final String getFlightsFromID = "SELECT * FROM flights WHERE ID >= ";
+
+
 	//update Querries
 	public static final String updateFlightEnd = "UPDATE flights SET endTime = (?) WHERE ID == (?)";
 
