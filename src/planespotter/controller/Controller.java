@@ -51,7 +51,7 @@ public class Controller implements Runnable {
      */
     private static GUI gui;
 
-    private static List<Flight> preloadedFlights = null;
+    private static List<Flight> preloadedFlights = new ArrayList<>();
 
     /**
      * * * * * * * * * * * * * * *
@@ -70,10 +70,12 @@ public class Controller implements Runnable {
         exe.execute(gui);
         try {
             doThreadedTask(preloadedFlights);
+            System.out.println("[Controller] " + ANSI_GREEN + "initialized in " + (System.nanoTime()+-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
+
         } catch (Exception e) {
-            System.err.println("preloading interrupted!");
+            System.err.println("preloading-tasks interrupted by controller!");
+            e.printStackTrace();
         }
-        System.out.println("[Controller] " + ANSI_GREEN + "initialized in " + (System.nanoTime()+-startTime)/Math.pow(1000, 3) + " seconds!");
     }
 
     /**
@@ -175,10 +177,13 @@ public class Controller implements Runnable {
             List<Flight> list1 = out1.getAllFlightsFromID(from1, from2-1);
             List<Flight> list2 = out2.getAllFlightsFromID(from2, from3-1);
             List<Flight> list3 = out3.getAllFlightsFromID(from3, (from3+getMaxLoadedData()/4)-1);
-            toList.addAll(list0);
-            toList.addAll(list1);
-            toList.addAll(list2);
-            toList.addAll(list3);
+            //toList = new ArrayList<>();
+            //synchronized (toList) {     // this methods waits if toList is modified
+                toList.addAll(list0);
+                toList.addAll(list1);
+                toList.addAll(list2);
+                toList.addAll(list3);
+            //}
         }
     }
 
