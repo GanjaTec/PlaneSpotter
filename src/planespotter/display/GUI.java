@@ -17,8 +17,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import static planespotter.constants.GUIConstants.DEFAULT_BG_COLOR;
-import static planespotter.constants.GUIConstants.LINE_BORDER;
+import static planespotter.constants.GUIConstants.*;
 
 /**
  * @name GUI
@@ -213,6 +212,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         progressbar.setIndeterminate(true);
         progressbar.setString("Loading data...");
         progressbar.setStringPainted(true);
+        //progressbar.setFont(FONT_MENU.deriveFont(16));
     }
     /**
      * sets the vivibility of the progressBar
@@ -605,10 +605,15 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             return "";
         }
 
+        /**
+         * background worker done method
+         * is executed when a background task is done
+         */
         @Override
         protected void done () {
-            progressbar.setVisible(false);
-            //System.out.println("[GUI] DB-data loaded!");
+            if (!Controller.initializing) {
+                progressbar.setVisible(false);
+            }
         }
     }
 

@@ -73,7 +73,7 @@ public class Controller implements Runnable {
         exe.execute(gui);
         try {
             doThreadedTask(preloadedFlights);
-            System.out.println("[Controller] " + ANSI_GREEN + "initialized in " + (System.nanoTime()+-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
+            System.out.println("[Controller] " + ANSI_GREEN + "pre-loaded DB-data in " + (System.nanoTime()+-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
 
         } catch (Exception e) {
             System.err.println("preloading-tasks interrupted by controller!");
@@ -152,19 +152,19 @@ public class Controller implements Runnable {
     // TODO: threading methoden -> die dann in createDataView einfügen!
     // maxload < oder > 1000
     private static void doThreadedTask (List<Flight> toList) {
+        int from0 = 0;
+        int from1 = from0 + getMaxLoadedData()/4;
+        int from2 = from1 + getMaxLoadedData()/4;
+        int from3 = from2 + getMaxLoadedData()/4;
         if (getMaxLoadedData() <= 1000) {
-            int from0 = 0;
-            int from1 = from0 + getMaxLoadedData()/4;
-            int from2 = from1 + getMaxLoadedData()/4;
-            int from3 = from2 + getMaxLoadedData()/4;
             DBOut out0 = new DBOut(0, exe);
             DBOut out1 = new DBOut(1, exe);
             DBOut out2 = new DBOut(2, exe);
             DBOut out3 = new DBOut(3, exe);
-            List<Flight> list0 = out0.getAllFlightsFromID(from0);
-            List<Flight> list1 = out1.getAllFlightsFromID(from1);
-            List<Flight> list2 = out2.getAllFlightsFromID(from2);
-            List<Flight> list3 = out3.getAllFlightsFromID(from3);
+            List<Flight> list0 = out0.getAllFlightsFromID(from0, from1);
+            List<Flight> list1 = out1.getAllFlightsFromID(from1, from2-1);
+            List<Flight> list2 = out2.getAllFlightsFromID(from2, from3-1);
+            List<Flight> list3 = out3.getAllFlightsFromID(from3, (from3+getMaxLoadedData()/4)-1);
             // kann man das irgendwie parallel laufen lassen?
             // glaube nicht weil die auf die gleiche liste zugreifen
             toList.addAll(list0);
@@ -172,10 +172,8 @@ public class Controller implements Runnable {
             toList.addAll(list2);
             toList.addAll(list3);
         } else {
-            int from0 = 0;
-            int from1 = from0 + getMaxLoadedData()/4;
-            int from2 = from1 + getMaxLoadedData()/4;
-            int from3 = from2 + getMaxLoadedData()/4;
+            // "from" weiter aufteilen, kleinere Schritte, mehr Threads
+            // evtl. hier PRINT output ?
             DBOut out0 = new DBOut(0, exe);
             DBOut out1 = new DBOut(1, exe);
             DBOut out2 = new DBOut(2, exe);
@@ -185,12 +183,12 @@ public class Controller implements Runnable {
             List<Flight> list2 = out2.getAllFlightsFromID(from2, from3-1);
             List<Flight> list3 = out3.getAllFlightsFromID(from3, (from3+getMaxLoadedData()/4)-1);
             //toList = new ArrayList<>();
-            //synchronized (toList) {     // this methods waits if toList is modified
+            synchronized (toList) {     // this methods waits if toList is modified
                 toList.addAll(list0);
                 toList.addAll(list1);
                 toList.addAll(list2);
                 toList.addAll(list3);
-            //}
+            }
         }
     }
 

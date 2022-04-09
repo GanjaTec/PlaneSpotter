@@ -219,4 +219,10 @@ public final class MenuModels extends GUI {
         return maxLoadTxtfield;
     }
 
+    // TODO SETTINGS
+    // reload data button
+    // confirm button
+    // other settings
+    // evtl. Theme oder so -> Farbe
+
 }
