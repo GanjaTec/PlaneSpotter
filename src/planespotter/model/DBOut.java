@@ -460,6 +460,7 @@ public class DBOut implements Runnable {
 	public List<Flight> getAllFlightsFromID(int id) {
 		List<Flight> flights = new ArrayList<Flight>();
 		try {
+			// FALSCH
 			ResultSet rs = querryDB(SQLQuerrys.getFlightsFromID + id);
 			int counter = 0;
 			while (rs.next() && counter <= maxLoadedFlights/4) { // counter: immer nur 100 Datensätze

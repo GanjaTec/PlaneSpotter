@@ -243,12 +243,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * @param tree is the tree to set
      */
     public void recieveTree (JTree tree) {
-        if (runningView != null) {
-            disposeView();
-        }
-        if (view_SEM.value() == 1) {
-            disposeView();
-        }
+        disposeView();
         listView = tree;
         listView.add(closeView);
         // TODO: setting up list scrollpane
@@ -313,12 +308,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * @param map is the map to be set
      */
     public void recieveMap (JMapViewer map) {
-        if (runningView != null) {
-            disposeView();
-        }
-        if (view_SEM.value() == 1) {
-            disposeView();
-        }
+        disposeView();
         mapViewer = map;
         // TODO: adding MapViewer to panel
         pMap.add(mapViewer);
