@@ -1,6 +1,5 @@
 package planespotter.controller;
 
-import planespotter.constants.GUIConstants;
 import planespotter.constants.ViewType;
 import planespotter.dataclasses.*;
 import planespotter.display.GUI;
@@ -8,6 +7,7 @@ import planespotter.display.MapManager;
 import planespotter.display.TreePlantation;
 import planespotter.model.DBOut;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -23,6 +23,8 @@ import static planespotter.constants.GUIConstants.*;
 public class Controller implements Runnable {
     // test-ThreadPoolExecutor
     static ThreadPoolExecutor exe = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
+    //
+    public static boolean initializing;
 
     /**
      * class variables
@@ -43,7 +45,6 @@ public class Controller implements Runnable {
      */
     @Override
     public void run() {
-
     }
 
     /**
@@ -64,9 +65,11 @@ public class Controller implements Runnable {
      * // TODO überprüfen
      */
     public static void openWindow () {
+        initializing = true;
         long startTime = System.nanoTime();
         System.out.println("[Controller] initialisation started!");
         gui = new GUI();
+        //gui.progressbarStart();
         exe.execute(gui);
         try {
             doThreadedTask(preloadedFlights);
@@ -76,6 +79,8 @@ public class Controller implements Runnable {
             System.err.println("preloading-tasks interrupted by controller!");
             e.printStackTrace();
         }
+        gui.progressbarVisible(false);
+        initializing = false;
     }
 
     /**
@@ -160,6 +165,8 @@ public class Controller implements Runnable {
             List<Flight> list1 = out1.getAllFlightsFromID(from1);
             List<Flight> list2 = out2.getAllFlightsFromID(from2);
             List<Flight> list3 = out3.getAllFlightsFromID(from3);
+            // kann man das irgendwie parallel laufen lassen?
+            // glaube nicht weil die auf die gleiche liste zugreifen
             toList.addAll(list0);
             toList.addAll(list1);
             toList.addAll(list2);
@@ -214,6 +221,5 @@ public class Controller implements Runnable {
         list.add(flight2);
         return list;
     }
-
 
 }

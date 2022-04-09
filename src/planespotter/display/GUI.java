@@ -201,7 +201,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         pMap.setVisible(false);
         pStartScreen.setVisible(true);
         runningView = pStartScreen;
-
+        progressbarStart();
         return window;
     }
 
@@ -211,6 +211,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     public void progressbarStart () {
         progressbarVisible(true);
         progressbar.setIndeterminate(true);
+        progressbar.setString("Loading data...");
+        progressbar.setStringPainted(true);
     }
     /**
      * sets the vivibility of the progressBar
@@ -581,22 +583,24 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
          */
         @Override
         protected String doInBackground() throws Exception {
-            switch (actionViewType) {
-                case LIST_FLIGHT:
-                    // TODO controller zum Thread machen der die anderen (DBOut) ausführt
-                    Controller.createDataView(ViewType.LIST_FLIGHT, "");
-                    runningView = listView;
-                    view_SEM.increase();
-                    return "[GUI] backround tast started!";
-                case LIST_AIRPORT:
-                case LIST_AIRLINE:
-                case LIST_PLANE:
-                case MAP_ALL:
-                    Controller.createDataView(ViewType.MAP_ALL, "");
-                    runningView = mapViewer;
-                    view_SEM.increase();
-                    return "[GUI] background task started!";
-                case MAP_FLIGHTROUTE:
+            if (!Controller.initializing) {
+                switch (actionViewType) {
+                    case LIST_FLIGHT:
+                        // TODO controller zum Thread machen der die anderen (DBOut) ausführt
+                        Controller.createDataView(ViewType.LIST_FLIGHT, "");
+                        runningView = listView;
+                        view_SEM.increase();
+                        return "[GUI] backround tast started!";
+                    case LIST_AIRPORT:
+                    case LIST_AIRLINE:
+                    case LIST_PLANE:
+                    case MAP_ALL:
+                        Controller.createDataView(ViewType.MAP_ALL, "");
+                        runningView = mapViewer;
+                        view_SEM.increase();
+                        return "[GUI] background task started!";
+                    case MAP_FLIGHTROUTE:
+                }
             }
             return "";
         }
