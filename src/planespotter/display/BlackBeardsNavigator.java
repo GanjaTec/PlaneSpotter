@@ -6,6 +6,7 @@ import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Position;
+import planespotter.model.DBOut;
 
 import java.awt.*;
 import java.util.ArrayDeque;
@@ -86,14 +87,9 @@ public class BlackBeardsNavigator extends Thread {
         Queue<Coordinate> coords = new ArrayDeque<>();
         for (Flight f : list) {
             // TODO: getting the last data point => where the plane is at the moment
-            Object[] keySetArray = f.getDataPoints().keySet().toArray();
+            Object[] keySetArray = f.getDataPoints().keySet().toArray(); // keySetArray[keySetArray.length-1]
+            //int lastID = new DBOut(9).getLastTrackingIDByFlightID(f.getID());
             DataPoint lastDataPoint = f.getDataPoints().get(keySetArray[keySetArray.length-1]);
-            /*DataPoint lastDp = null;
-            for (int i = 0; i < keySetArray.length; i++) {
-                if (i == keySetArray.length-1) {
-                    lastDp = f.getDataPoints().get(keySetArray[i]);
-                } // TODO: METHODE letztes element aus der hashmap // DEBUGGER
-            }*/
             Position lastPos = lastDataPoint.getPos();
             MapMarkerDot newPlaneDot = new MapMarkerDot(lastPos.getLat(), lastPos.getLon());
             newPlaneDot.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
