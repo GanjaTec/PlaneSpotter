@@ -1,8 +1,12 @@
 package planespotter;
 
 import planespotter.controller.Controller;
-import planespotter.display.GUI;
 
+/**
+ * @name Main
+ * @author jml04
+ * @version 1.0
+ */
 public class Main {
 
     /**

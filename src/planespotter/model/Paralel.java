@@ -1,16 +1,13 @@
 package planespotter.model;
 
+import planespotter.constants.Areas;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import planespotter.constants.*;
-
-/**
- * @author Lukas
- *
- */
 public class Paralel {
 	private int poolsize = 1;
 	private ThreadPoolExecutor exe =  (ThreadPoolExecutor) Executors.newFixedThreadPool(poolsize);

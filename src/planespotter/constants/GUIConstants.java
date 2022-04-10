@@ -11,7 +11,8 @@ public final class GUIConstants {
                                 DEFAULT_FG_COLOR = Color.BLACK,
                                 DEFAULT_BORDER_COLOR = Color.DARK_GRAY,
                                 DEFAULT_FONT_COLOR = new Color(230, 230,230),
-                                DEFAULT_ACCENT_COLOR = new Color(84, 101, 210);
+                                DEFAULT_ACCENT_COLOR = new Color(84, 101, 210),
+                                DEFAULT_MAP_ICON_COLOR = new Color(255, 214, 51);
 
     // default fonts
     public static final Font    TITLE_FONT = new Font("Copperplate Gothic", Font.BOLD, 40),
@@ -22,9 +23,12 @@ public final class GUIConstants {
                                     title_bground_img = new ImageIcon(Paths.SRC_PATH + "title_background.jpg"),
                                     flying_plane_icon = new ImageIcon(Paths.SRC_PATH + "flying_plane_icon.png");
     // line border
-    public static final Border  LINE_BORDER = BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR, 1),
+    public static final Border  LINE_BORDER = BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR, 2),
                                 MENU_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY), BorderFactory.createLineBorder(DEFAULT_FG_COLOR));
 
-
+    // ANSI colors -> für System.out.println
+    public static final String  ANSI_GREEN = "\u001B[92m",
+                                ANSI_ORANGE = "\u001B[33m",
+                                ANSI_RESET = "\u001B[0m";
 
 }

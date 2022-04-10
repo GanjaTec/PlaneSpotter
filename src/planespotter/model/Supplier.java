@@ -1,17 +1,17 @@
 package planespotter.model;
 
+import planespotter.dataclasses.Frame;
+
+import java.io.File;
+import java.io.FileWriter;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
-import java.io.File;
-import java.io.FileWriter;
-import java.sql.*;
-
-import planespotter.dataclasses.*;
 
 /**
  * @author Lukas

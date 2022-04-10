@@ -1,32 +1,36 @@
-package planespotter.controller;
+package planespotter.model;
 
 import planespotter.exceptions.FileAlreadyExistsException;
 
 import java.io.*;
 
+import static planespotter.constants.Paths.SRC_PATH;
+
 public class ConfigManager {
 
-    private static File config = new File("/config.cfg");
+    private static File config = new File(SRC_PATH + "config.cfg");
     private static FileWriter writer;
     private static FileReader fileReader;
     private static BufferedReader reader;
 
     public static void createConfig () throws FileAlreadyExistsException, FileNotFoundException {
         if (!config.exists()) {
-            /*
+
             try {
 
                 config = new File("/config.cfg");
 
                 writer = new FileWriter(config);
-                writer.write("test-boolean: true");
-                writer.write("test-pw: 12345");
+                writer.write("maxFlightsLoaded: 2000");
                 writer.close();
 
+                
             } catch (IOException ioe) {
                 ioe.printStackTrace();
-            }*/
-        } else throw new FileAlreadyExistsException();
+            }
+        } else {
+
+        }
     }
 
     /**
