@@ -1,17 +1,20 @@
 package planespotter.display;
 
-import org.openstreetmap.gui.jmapviewer.*;
-
+import org.openstreetmap.gui.jmapviewer.Coordinate;
+import org.openstreetmap.gui.jmapviewer.JMapViewer;
+import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
+import org.openstreetmap.gui.jmapviewer.MapPolygonImpl;
 import planespotter.constants.GUIConstants;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Position;
-import planespotter.model.DBOut;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Queue;
 
 
 /**

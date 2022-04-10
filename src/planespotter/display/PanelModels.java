@@ -3,7 +3,6 @@ package planespotter.display;
 import planespotter.constants.Bounds;
 
 import javax.swing.*;
-import java.awt.*;
 
 import static planespotter.constants.GUIConstants.*;
 

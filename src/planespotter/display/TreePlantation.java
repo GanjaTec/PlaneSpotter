@@ -1,6 +1,5 @@
 package planespotter.display;
 
-import planespotter.constants.Bounds;
 import planespotter.constants.Paths;
 import planespotter.dataclasses.Airline;
 import planespotter.dataclasses.Airport;

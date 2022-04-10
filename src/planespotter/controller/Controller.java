@@ -12,7 +12,8 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import static planespotter.constants.GUIConstants.*;
+import static planespotter.constants.GUIConstants.ANSI_GREEN;
+import static planespotter.constants.GUIConstants.ANSI_RESET;
 
 /**
  * @name    Controller
