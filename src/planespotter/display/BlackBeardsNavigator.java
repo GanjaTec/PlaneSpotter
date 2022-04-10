@@ -97,7 +97,6 @@ public class BlackBeardsNavigator extends Thread {
             Position lastPos = lastDataPoint.getPos();
             MapMarkerDot newPlaneDot = new MapMarkerDot(lastPos.getLat(), lastPos.getLon());
             newPlaneDot.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
-            newPlaneDot.setStroke(new BasicStroke(5, 2, 1));
             viewer.addMapMarker(newPlaneDot);
 
             if (coords.isEmpty() || coords.size() == 1) {
