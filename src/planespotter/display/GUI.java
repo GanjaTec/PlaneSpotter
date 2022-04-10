@@ -304,7 +304,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      */
     public void disposeView () {
         if (listView != null || mapViewer != null || pStartScreen != null) { // braucht man das
-            if (runningView == listView && mapViewer != null) {
+            if (runningView == listView && listView != null) {
                 listView.setVisible(false);
                 listView = null;
                 pList.setVisible(false);
@@ -471,9 +471,15 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         } else if (src == settings_iFrame_maxLoad) {
             if (key == KeyEvent.VK_ENTER) {
                 try {
-                    Controller.setMaxLoadedData(Integer.parseInt(settings_iFrame_maxLoad.getText()));
-                    settings_iFrame_maxLoad.setText("");
-                    settings_intlFrame.dispose();
+                    // TODO fixen: settings fenster schließt erst nach loading
+                    if (Integer.parseInt(settings_iFrame_maxLoad.getText()) >= 4) {
+                        progressbarStart();
+                        Controller.setMaxLoadedData(Integer.parseInt(settings_iFrame_maxLoad.getText()));
+                        settings_iFrame_maxLoad.setText("");
+                        settings_intlFrame.dispose();
+                        // work with background worker?
+                        Controller.reloadData();
+                    }
                 } catch (NumberFormatException ex) {
                     settings_iFrame_maxLoad.setText("Error");
                 }
@@ -607,7 +613,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
          */
         @Override
         protected String doInBackground() throws Exception {
-            if (!Controller.initializing) {
+            if (!Controller.loading) {
                 switch (actionViewType) {
                     case LIST_FLIGHT:
                         // TODO controller zum Thread machen der die anderen (DBOut) ausführt
@@ -624,6 +630,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                         view_SEM.increase();
                         return "[GUI] background task started!";
                     case MAP_FLIGHTROUTE:
+                    default:
+                        Controller.reloadData();
                 }
             }
             return "";
@@ -635,7 +643,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
          */
         @Override
         protected void done () {
-            if (!Controller.initializing) {
+            if (!Controller.loading) {
                 progressbar.setVisible(false);
             }
         }
