@@ -30,11 +30,11 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     /**
      * components
      */
-    public JFrame window;
+    public JFrame window, loadingScreen;
     protected JDesktopPane dpleft, dpright;
     protected JInternalFrame flist, fmap, fmenu, finfo;
     protected JPanel mainpanel, pTitle, pList, pMap, pMenu, pInfo, pStartScreen;
-    protected JLabel title, bground, title_bground, lblStartScreen;
+    protected JLabel title, bground, title_bground, lblStartScreen, lblLoading;
     protected JTree listView;
     protected JMapViewer mapViewer;
     protected JTextField search, settings_iFrame_maxLoad;
@@ -44,6 +44,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     protected JButton datei, settings, search_settings, btList, btMap, closeView;
     protected JInternalFrame settings_intlFrame;
     protected JScrollPane spList;
+
+    private ImageIcon loading_gif = new ImageIcon(this.getClass().getResource("/loading.gif"));
+
 
     /**
      * view semaphor
@@ -58,6 +61,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * constructor for GUI
      */
     public GUI() {
+        JFrame window = this.initialize();
     }
 
     /**
@@ -65,8 +69,10 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      */
     @Override
     public void run() {
-        JFrame window = this.initialize();
-        window.setVisible(true);
+        JFrame loading = this.loadingScreen();
+        loading.setVisible(true);
+        new BackgroundWorker().execute();
+
     }
 
     /**
@@ -75,8 +81,15 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * @return loading screen JFrame
      */
     public JFrame loadingScreen () {
-        JFrame loadingScreen = new JFrame();
-        // label für loading gif
+        loadingScreen = new JFrame();
+        loadingScreen.setSize(420, 400);
+        loadingScreen.setLocationRelativeTo(null);
+        loadingScreen.setLayout(null);
+        loadingScreen.setOpacity(1f);
+        loadingScreen.setUndecorated(true);
+            lblLoading = new JLabel(loading_gif);
+            lblLoading.setBounds(0, 0, 420, 400);
+        loadingScreen.add(lblLoading);
         return loadingScreen;
     }
 
@@ -211,8 +224,18 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         pMap.setVisible(false);
         pStartScreen.setVisible(true);
         runningView = pStartScreen;
-        progressbarStart();
+        System.out.println("[GUI] " + ANSI_GREEN + "initialized sucsessfully!" + ANSI_RESET);
         return window;
+    }
+
+    /**
+     * this method is executed when pre-loading is done
+     */
+    public void donePreLoading () {
+        Toolkit.getDefaultToolkit().beep();
+        loadingScreen.setVisible(false);
+        window.setVisible(true);
+        window.requestFocus();
     }
 
     /**
@@ -225,6 +248,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         progressbar.setStringPainted(true);
         //progressbar.setFont(FONT_MENU.deriveFont(16));
     }
+
     /**
      * sets the vivibility of the progressBar
      *
@@ -261,7 +285,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         spList = new JScrollPane();
         spList.add(listView);
         spList.setViewportView(listView);
-        //spList.setBounds(Bounds.RIGHT);
         spList.setBackground(DEFAULT_BG_COLOR);
         spList.setBounds(pList.getBounds());
         spList.addComponentListener(this);
@@ -270,10 +293,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         pList.add(spList);
         dpright.moveToFront(pList);
         pList.setVisible(true);
-        //flist.show();
         // revalidate window -> making the tree visible
         window.revalidate();
-        // setting viewRunning to TRUE
     }
 
     /**
@@ -580,7 +601,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         public static ViewType actionViewType;
 
         /**
-         *
+         * runs a background task
+         * is this still needed?
          */
         @Override
         protected String doInBackground() throws Exception {

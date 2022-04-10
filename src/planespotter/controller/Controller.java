@@ -7,7 +7,6 @@ import planespotter.display.MapManager;
 import planespotter.display.TreePlantation;
 import planespotter.model.DBOut;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -20,6 +19,8 @@ import static planespotter.constants.GUIConstants.*;
  * @author  @all Lukas   jml04   Bennet
  * @version 1.1
  */
+// TODO we need a scheduled executor to update the data in background
+// TODO -> starts a background worker every (?) minutes
 public class Controller implements Runnable {
     // test-ThreadPoolExecutor
     static ThreadPoolExecutor exe = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
@@ -69,12 +70,11 @@ public class Controller implements Runnable {
         long startTime = System.nanoTime();
         System.out.println("[Controller] initialisation started!");
         gui = new GUI();
-        //gui.progressbarStart();
         exe.execute(gui);
         try {
             doThreadedTask(preloadedFlights);
             System.out.println("[Controller] " + ANSI_GREEN + "pre-loaded DB-data in " + (System.nanoTime()+-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
-
+            gui.donePreLoading();
         } catch (Exception e) {
             System.err.println("preloading-tasks interrupted by controller!");
             e.printStackTrace();
