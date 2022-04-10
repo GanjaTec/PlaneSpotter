@@ -599,14 +599,14 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     private void runBackgroundTask (ViewType type) {
         BackgroundWorker bgworker = new BackgroundWorker();
         synchronized (this) {
-            BackgroundWorker.actionViewType = type;
+            bgworker.actionViewType = type;
             bgworker.execute();
         }
     }
 
     private class BackgroundWorker extends SwingWorker<String, Void> {
 
-        public static ViewType actionViewType;
+        public ViewType actionViewType;
 
         /**
          * runs a background task

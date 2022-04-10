@@ -52,7 +52,7 @@ public class BlackBeardsNavigator extends Thread {
         Flight f = flights.get(0);
         HashMap<Integer, DataPoint> dataPoints = f.getDataPoints();
         int counter = 0;
-        Queue<Coordinate> coords = new ArrayDeque<>();
+        //Queue<Coordinate> coords = new ArrayDeque<>();
         for (long g : dataPoints.keySet()) {
             DataPoint dp = dataPoints.get(g);
             Position aPos = dp.getPos();
@@ -64,14 +64,14 @@ public class BlackBeardsNavigator extends Thread {
             }
             viewer.addMapMarker(newPlaneDot);
             counter++;
-            if (coords.isEmpty() || coords.size() == 1) {
+            /*if (coords.isEmpty() || coords.size() == 1) {
                 coords.add(new Coordinate(aPos.getLat(), aPos.getLon()));
             }
             else {
                 coords.remove();
                 viewer.addMapPolygon(new MapPolygonImpl(coords.stream().toList()));
                 coords.add(new Coordinate(aPos.getLat(), aPos.getLon()));
-            }
+            }*/
 
         }
         gui.recieveMap(viewer);
