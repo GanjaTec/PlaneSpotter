@@ -104,7 +104,7 @@ public class BlackBeardsNavigator extends Thread {
             }
             else {
                 coords.remove();
-                viewer.addMapPolygon(new MapPolygonImpl(coords.stream().toList()));
+           //     viewer.addMapPolygon(new MapPolygonImpl(coords.stream().toList()));
                 coords.add(new Coordinate(lastPos.getLat(), lastPos.getLon()));
             }
         }
