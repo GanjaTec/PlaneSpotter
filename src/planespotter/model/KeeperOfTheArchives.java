@@ -6,7 +6,7 @@ import java.util.List;
  * The Keeper of the Archives is a mysterious entity that inhabits the DB and keeps the records in order.
  * 
  * It does so by comparing the elapsed time since the last tracking point for a given Flight against a threshold value.
- * If the last tracking point was not updated in this amount of time, the Keeper will update the corresponding DB Entry with an endTime.
+ * If the last tracking point is older than that, the Keeper will update the corresponding DB Entry with an endTime.
  * 
  * @author Lukas
  *
