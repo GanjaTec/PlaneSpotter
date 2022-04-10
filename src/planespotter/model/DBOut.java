@@ -434,6 +434,7 @@ public class DBOut implements Runnable {
 		return flightIDs;
 	}
 
+
         public Flight getFlightByID(int id) {
 			Flight f = null;
 			try {
@@ -455,8 +456,7 @@ public class DBOut implements Runnable {
 				e.printStackTrace();
 			}
 			return f;
-		}
-
+	}
 	public List<Flight> getAllFlightsFromID(int id) {
 		List<Flight> flights = new ArrayList<Flight>();
 		try {
@@ -501,5 +501,4 @@ public class DBOut implements Runnable {
 		}
 		return flights;
 	}
-
 }

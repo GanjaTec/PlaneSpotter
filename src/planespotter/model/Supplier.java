@@ -22,6 +22,7 @@ public class Supplier implements Runnable{
 	private String ThreadName;
 	private String area = "54.241%2C48.576%2C-14.184%2C13.94"; //Default OG value
 	HttpClient client = HttpClient.newHttpClient();
+	DBIn dbi = new DBIn();
 	//TODO Write getters
 	
 	public int getThreadNumber() {
@@ -88,7 +89,7 @@ public class Supplier implements Runnable{
 				boolean checkPlane =  planeID > -1;
 				
 				if(!checkPlane) {
-					planeID = DBIn.insertPlane(f);
+					planeID = dbi.insertPlane(f);
 				}
 				
 				
@@ -97,12 +98,12 @@ public class Supplier implements Runnable{
 				boolean checkFlight = flightID > -1;
 				
 				if(!checkFlight) {
-					flightID = DBIn.insertFlight(f, planeID);
+					flightID = dbi.insertFlight(f, planeID);
 				}
 				
 				
 				// insert into tracking
-				DBIn.insertTracking(f, flightID);
+				dbi.insertTracking(f, flightID);
 				
 				f = null;
 			}
