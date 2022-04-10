@@ -15,6 +15,8 @@ public class KeeperOfTheArchives implements Runnable{
 	private long threshold;
 	private int threadNumber;
 	private String threadName;
+	DBOut dbo = new DBOut(999);
+	DBIn dbi = new DBIn();
 	
 	public KeeperOfTheArchives(int threadNumber, long endThreshold) {
 		this.threadNumber = threadNumber;
@@ -34,7 +36,7 @@ public class KeeperOfTheArchives implements Runnable{
 				long ts = DBOut.getLastTrackingByFlightID(id);
 				long tdiff = (System.currentTimeMillis() / 1000L) - ts; 
 				if(tdiff > this.threshold) {
-					new DBIn().updateFlightEnd(id, ts);
+					dbi.updateFlightEnd(id, ts);
 					i = i + 1;
 				}
 			}

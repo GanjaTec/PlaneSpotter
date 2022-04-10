@@ -305,6 +305,24 @@ public class DBOut extends SupperDB implements Runnable{
 		return timestamp;
 	}
 
+	public int getLastTrackingIDByFlightID(int id) {
+		int trackingid = -1;
+		String getLastTrackingIDByFlightID =  "SELECT ID FROM tracking WHERE flightid == (?) ORDER BY DESC LIMIT 1";
+		try {
+			ResultSet rs = querryDB(getLastTrackingIDByFlightID);
+
+			while (rs.next()) {
+				id = rs.getInt(1);
+			}
+			rs.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return trackingid;	
+	}
+
 	/**
 	 * This Method is used to retrieve ALL flights and their representative Data from the DB
 	 * It takes no Parameters and returns a List<Flight> containing all Flight Objects

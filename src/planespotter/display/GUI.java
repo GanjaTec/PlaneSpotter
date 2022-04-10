@@ -335,6 +335,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 pStartScreen.setVisible(false);
             }
         }
+        System.gc();
         window.revalidate();
     }
 
