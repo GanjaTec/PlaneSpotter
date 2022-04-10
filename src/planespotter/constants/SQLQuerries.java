@@ -12,7 +12,7 @@ package planespotter.constants;
  * @author Lukas
  * 
  */
-public class SQLQuerrys {
+public class SQLQuerries {
 	
 	//insert Querrys
 	public static final String planequerry = "INSERT INTO planes(icaonr, tailnr, registration, type, airline) VALUES(?,?,?,?,?)";
@@ -34,7 +34,7 @@ public class SQLQuerrys {
 	public static final String checkEndOfFlight = "SELECT ID FROM flights WHERE endTime IS NULL";
 	public static final String getLastTracking = "SELECT timestamp FROM tracking WHERE ID == () ORDER BY ID DESC LIMIT 1";
 	/** @unused */
-	public static final String getFlightsFromID = "SELECT * FROM flights WHERE ID >= () AND ID >= ()";
+	public static final String getFlightsFromID = "SELECT * FROM flights WHERE ID >= (?) AND ID >= (?)";
 	// alle flüge ab einer bestimmten id, wird direkt in DBOut gemacht, da ich nicht weiß
 	// wie die Platzhalter funktionieren
 

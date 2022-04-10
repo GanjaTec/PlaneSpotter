@@ -142,7 +142,7 @@ public class Controller implements Runnable {
                     gui.window.revalidate();
                     break;
             }
-            System.out.println( "[DBOut] " + ANSI_GREEN + "loaded " + getMaxLoadedData() + " DB-entries in " +
+            System.out.println( "[Controller] " + ANSI_GREEN + "loaded " + getMaxLoadedData() + " DB-entries in " +
                                 (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
         } catch (Exception e) {
             e.printStackTrace();

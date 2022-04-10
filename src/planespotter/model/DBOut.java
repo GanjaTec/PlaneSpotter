@@ -1,6 +1,6 @@
 package planespotter.model;
 
-import planespotter.constants.SQLQuerrys;
+import planespotter.constants.SQLQuerries;
 import planespotter.dataclasses.*;
 
 import java.sql.*;
@@ -117,7 +117,7 @@ public class DBOut implements Runnable {
 		Airline a = null;
 		try {
 			tag = stripString(tag);
-			ResultSet rs = querryDB(SQLQuerrys.getAirlineByTag + tag); // ist leer TODO fixen
+			ResultSet rs = querryDB(SQLQuerries.getAirlineByTag + tag); // ist leer TODO fixen
 			if (rs.next()) {
 				a = new Airline(rs.getInt("ID"), rs.getString("iatatag"), rs.getString("name"));
 			} else {
@@ -145,8 +145,8 @@ public class DBOut implements Runnable {
 	public List<Airport> getAirports(String srcAirport, String destAirport) {
 		List<Airport> aps = new ArrayList<Airport>();
 		try {
-			ResultSet rsSrc = querryDB(SQLQuerrys.getAirportByTag + srcAirport);
-			ResultSet rsDst = querryDB(SQLQuerrys.getAirportByTag + destAirport);
+			ResultSet rsSrc = querryDB(SQLQuerries.getAirportByTag + srcAirport);
+			ResultSet rsDst = querryDB(SQLQuerries.getAirportByTag + destAirport);
 
 			if (rsSrc.next()) {
 				Airport srcAp = new Airport(rsSrc.getInt("ID"), rsSrc.getString("iatatag"), rsSrc.getString("name"), convertCoords(rsSrc.getString("coords")));
@@ -188,7 +188,7 @@ public class DBOut implements Runnable {
 		// org.sqlite.SQLiteException: [SQLITE_ERROR] SQL error or missing database (unrecognized token: "06A1EB")
 		//icao = stripString(icao);
 		try {
-			ResultSet rs = querryDB(SQLQuerrys.getPlaneByICAO + icao);
+			ResultSet rs = querryDB(SQLQuerries.getPlaneByICAO + icao);
 
 			if (rs.next()) {
 				Airline a = getAirlineByTag(rs.getString("airline"));
@@ -214,7 +214,7 @@ public class DBOut implements Runnable {
 	public Plane getPlaneByID(int id) {
 		Plane p = null;
 		try {
-			ResultSet rs = querryDB(SQLQuerrys.getPlaneByID + id);
+			ResultSet rs = querryDB(SQLQuerries.getPlaneByID + id);
 			if (rs.next()) {
 				Airline a = new Airline(-1, "BIA", "BUFU Int. Airlines");
 				//Airline a = getAirlineByTag(rs.getString("airline"));
@@ -269,7 +269,7 @@ public class DBOut implements Runnable {
 	public HashMap<Integer, DataPoint> getTrackingByFlight(int flightID) {
 		HashMap<Integer ,DataPoint> dps = new HashMap<Integer, DataPoint>();
 		try {
-			ResultSet rs = querryDB(SQLQuerrys.getTrackingByFlight + flightID);
+			ResultSet rs = querryDB(SQLQuerries.getTrackingByFlight + flightID);
 			while (rs.next()) {
 				// TODO: IF STATEMENT
 				Position p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
@@ -324,7 +324,7 @@ public class DBOut implements Runnable {
 	public List<Flight> getAllFlights() {
 		List<Flight> flights = new ArrayList<Flight>();
 		try {
-			ResultSet rs = querryDB(SQLQuerrys.getFlights);
+			ResultSet rs = querryDB(SQLQuerries.getFlights);
 			int counter = 0;
 			while (rs.next() && counter <= maxLoadedFlights) { // counter: max flights -> to limit the incoming data (prevents a crash)
 				HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
@@ -351,7 +351,7 @@ public class DBOut implements Runnable {
 	public List<Flight> getFlightsByCallsign(String callsign) {
 		List<Flight> flights = new ArrayList<Flight>();
 		try {
-			ResultSet rs = querryDB(SQLQuerrys.getFlightByCallsign + callsign);
+			ResultSet rs = querryDB(SQLQuerries.getFlightByCallsign + callsign);
 
 			while (rs.next()) {
 				HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
@@ -375,7 +375,7 @@ public class DBOut implements Runnable {
 	 */
 	public static int getLastFlightID() {
 		try {
-			ResultSet rs = querryDB(SQLQuerrys.getLastFlightID);
+			ResultSet rs = querryDB(SQLQuerries.getLastFlightID);
 			int flightid;
 			if (rs.next() == true) {
 				flightid = rs.getInt("ID");
@@ -420,7 +420,7 @@ public class DBOut implements Runnable {
 	public static List<Integer> checkEnded() {
 		List<Integer> flightIDs = new ArrayList<Integer>();
 		try {
-			ResultSet rs = querryDB(SQLQuerrys.checkEndOfFlight);
+			ResultSet rs = querryDB(SQLQuerries.checkEndOfFlight);
 
 			while (rs.next()) {
 				flightIDs.add(rs.getInt(1));
@@ -437,7 +437,7 @@ public class DBOut implements Runnable {
         public Flight getFlightByID(int id) {
 			Flight f = null;
 			try {
-				ResultSet rs = querryDB(SQLQuerrys.getFlightByID + id);
+				ResultSet rs = querryDB(SQLQuerries.getFlightByID + id);
 
 				if (rs.next()) {
 					Object[] airports = getAirports(rs.getString("src"), rs.getString("dest")).toArray();
@@ -461,7 +461,7 @@ public class DBOut implements Runnable {
 		List<Flight> flights = new ArrayList<Flight>();
 		try {
 			// FALSCH
-			ResultSet rs = querryDB(SQLQuerrys.getFlightsFromID + id);
+			ResultSet rs = querryDB(SQLQuerries.getFlightsFromID + id);
 			int counter = 0;
 			while (rs.next() && counter <= maxLoadedFlights/4) { // counter: immer nur 100 Datensätze
 				HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));

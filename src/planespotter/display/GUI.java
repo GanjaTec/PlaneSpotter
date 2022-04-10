@@ -70,6 +70,17 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     }
 
     /**
+     * loading screen method, creates a loading screen
+     *
+     * @return loading screen JFrame
+     */
+    public JFrame loadingScreen () {
+        JFrame loadingScreen = new JFrame();
+        // label für loading gif
+        return loadingScreen;
+    }
+
+    /**
      * initialize method
      * creates new GUI window
      */
