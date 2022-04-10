@@ -28,10 +28,9 @@ public class DBOut implements Runnable {
 	/**
 	 * constructor
 	 */
-	public DBOut (int number, ThreadPoolExecutor executor) {
+	public DBOut (int number) {
 		this.threadNumber = number;
 		this.threadName = "db-out" + this.threadNumber;
-		executor.execute(this);
 	}
 
 	/**

@@ -180,10 +180,14 @@ public class Controller implements Runnable {
         int from2 = from1 + getMaxLoadedData()/4;
         int from3 = from2 + getMaxLoadedData()/4;
         if (getMaxLoadedData() <= 1000) {
-            DBOut out0 = new DBOut(0, exe);
-            DBOut out1 = new DBOut(1, exe);
-            DBOut out2 = new DBOut(2, exe);
-            DBOut out3 = new DBOut(3, exe);
+            DBOut out0 = new DBOut(0);
+            DBOut out1 = new DBOut(1);
+            DBOut out2 = new DBOut(2);
+            DBOut out3 = new DBOut(3);
+            exe.execute(out0);
+            exe.execute(out1);
+            exe.execute(out2);
+            exe.execute(out3);
             List<Flight> list0 = out0.getAllFlightsFromID(from0, from1);
             List<Flight> list1 = out1.getAllFlightsFromID(from1, from2-1);
             List<Flight> list2 = out2.getAllFlightsFromID(from2, from3-1);
@@ -197,10 +201,10 @@ public class Controller implements Runnable {
         } else {
             // "from" weiter aufteilen, kleinere Schritte, mehr Threads
             // evtl. hier PRINT output ?
-            DBOut out0 = new DBOut(0, exe);
-            DBOut out1 = new DBOut(1, exe);
-            DBOut out2 = new DBOut(2, exe);
-            DBOut out3 = new DBOut(3, exe);
+            DBOut out0 = new DBOut(0);
+            DBOut out1 = new DBOut(1);
+            DBOut out2 = new DBOut(2);
+            DBOut out3 = new DBOut(3);
             List<Flight> list0 = out0.getAllFlightsFromID(from0, from1);
             List<Flight> list1 = out1.getAllFlightsFromID(from1, from2-1);
             List<Flight> list2 = out2.getAllFlightsFromID(from2, from3-1);
