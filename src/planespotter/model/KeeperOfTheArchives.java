@@ -34,7 +34,7 @@ public class KeeperOfTheArchives implements Runnable{
 				long ts = DBOut.getLastTrackingByFlightID(id);
 				long tdiff = (System.currentTimeMillis() / 1000L) - ts; 
 				if(tdiff > this.threshold) {
-					DBIn.updateFlightEnd(id, ts);
+					new DBIn().updateFlightEnd(id, ts);
 					i = i + 1;
 				}
 			}
