@@ -1,9 +1,6 @@
 package planespotter.display;
 
-import org.openstreetmap.gui.jmapviewer.Coordinate;
-import org.openstreetmap.gui.jmapviewer.JMapViewer;
-import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
-import org.openstreetmap.gui.jmapviewer.MapPolygonImpl;
+import org.openstreetmap.gui.jmapviewer.*;
 import planespotter.constants.GUIConstants;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
@@ -25,7 +22,7 @@ import java.util.Queue;
  * map manager:
  *  manages the map data and contains methods which are executed on the mapView
  */
-public class MapManager extends Thread {
+public class BlackBeardsNavigator extends Thread {
 
     /**
      *
@@ -37,13 +34,13 @@ public class MapManager extends Thread {
      */
     @Override
     public void run () {
-        new MapManager(Controller.getGUI());
+        new BlackBeardsNavigator(Controller.getGUI());
     }
 
     /**
      *
      */
-    public MapManager (GUI gui) {
+    public BlackBeardsNavigator(GUI gui) {
         this.gui = gui;
     }
 
@@ -100,6 +97,7 @@ public class MapManager extends Thread {
             Position lastPos = lastDataPoint.getPos();
             MapMarkerDot newPlaneDot = new MapMarkerDot(lastPos.getLat(), lastPos.getLon());
             newPlaneDot.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
+            newPlaneDot.setStroke(new BasicStroke(5, 2, 1));
             viewer.addMapMarker(newPlaneDot);
 
             if (coords.isEmpty() || coords.size() == 1) {

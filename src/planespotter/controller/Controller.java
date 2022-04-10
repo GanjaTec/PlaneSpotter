@@ -3,7 +3,7 @@ package planespotter.controller;
 import planespotter.constants.ViewType;
 import planespotter.dataclasses.*;
 import planespotter.display.GUI;
-import planespotter.display.MapManager;
+import planespotter.display.BlackBeardsNavigator;
 import planespotter.display.TreePlantation;
 import planespotter.model.DBOut;
 
@@ -132,9 +132,9 @@ public class Controller implements Runnable {
                     // TODO // Dieses Threading ist besser als das alte von LIST_FLIGHT
                     // TODO // MAP_ALL braucht ca. 9s im Gegensatz zu LIST_FLIGHT mit ca. 12s (bei 2000 DB-entries)
                     if (preloadedFlights == null) {
-                        new MapManager(gui).createAllFlightsMap(listFlights);
+                        new BlackBeardsNavigator(gui).createAllFlightsMap(listFlights);
                     } else {
-                        new MapManager(gui).createAllFlightsMap(preloadedFlights);
+                        new BlackBeardsNavigator(gui).createAllFlightsMap(preloadedFlights);
                     }
                     gui.window.revalidate();
                     break;

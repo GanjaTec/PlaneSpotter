@@ -45,7 +45,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     protected JInternalFrame settings_intlFrame;
     protected JScrollPane spList;
 
-    // alternative test path: "C:\\Users\\jml04\\Desktop\\giphy.gif"
+    // alternative test path: "C:\\Users\\jml04\\Desktop\\loading.gif"
     private ImageIcon loading_gif = new ImageIcon(this.getClass().getResource("/loading.gif"));
 
 
@@ -83,13 +83,13 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      */
     public JFrame loadingScreen () {
         loadingScreen = new JFrame();
-        loadingScreen.setSize(350, 350);
+        loadingScreen.setSize(333, 243);
         loadingScreen.setLocationRelativeTo(null);
         loadingScreen.setLayout(null);
         loadingScreen.setOpacity(1f);
         loadingScreen.setUndecorated(true);
             lblLoading = new JLabel(loading_gif);
-            lblLoading.setBounds(0, 0, 350, 350);
+            lblLoading.setBounds(0, 0, 333, 243);
         loadingScreen.add(lblLoading);
         return loadingScreen;
     }
@@ -287,6 +287,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         spList.add(listView);
         spList.setViewportView(listView);
         spList.setBackground(DEFAULT_BG_COLOR);
+        spList.setForeground(DEFAULT_ACCENT_COLOR);
         spList.setBounds(pList.getBounds());
         spList.addComponentListener(this);
         spList.setBorder(LINE_BORDER);
