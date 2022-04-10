@@ -233,7 +233,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * this method is executed when pre-loading is done
      */
     public void donePreLoading () {
-        Toolkit.getDefaultToolkit().beep();
+        //Toolkit.getDefaultToolkit().beep();
+        Runnable sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(SOUND_DEFAULT);
+        if (sound2 != null) sound2.run();
         loadingScreen.setVisible(false);
         window.setVisible(true);
         window.requestFocus();
