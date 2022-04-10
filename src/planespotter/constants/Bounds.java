@@ -1,11 +1,13 @@
 package planespotter.constants;
 
+import planespotter.display.GUI;
+
 import java.awt.*;
 
 /**
  *
  */
-public class Bounds {
+public class Bounds extends GUI {
 
     public static Rectangle ALL = new Rectangle(1280, 720);
 
@@ -26,9 +28,9 @@ public class Bounds {
 
     public static Rectangle SMALL_ITEM = new Rectangle(3, 4, ALL.width-20, ALL.height-35);
 
-    public static Rectangle PLANE_ICON = new Rectangle(3, 4, ALL.width-20, ALL.height-35);
+    public static  Rectangle PLANE_ICON = new Rectangle(3, 4, ALL.width-20, ALL.height-35);
 
-    public static Rectangle TITLE_TEXT = new Rectangle(3, 4, ALL.width-20, ALL.height-35);
+    public static  Rectangle TITLE_TEXT = new Rectangle(3, 4, ALL.width-20, ALL.height-35);
 
     /**
      *

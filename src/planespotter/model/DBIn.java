@@ -1,13 +1,9 @@
 package planespotter.model;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
-
-import planespotter.constants.SqlQuerrys;
+import planespotter.constants.SQLQuerries;
 import planespotter.dataclasses.Frame;
+
+import java.sql.*;
 
 public class DBIn {
 
@@ -22,7 +18,7 @@ public class DBIn {
 		Connection conn = getDBConnection();		
 		//TODO Airline ID anfrage
 		// insert into planes
-		PreparedStatement pstmt = conn.prepareStatement(SqlQuerrys.planequerry, Statement.RETURN_GENERATED_KEYS);
+		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.planequerry, Statement.RETURN_GENERATED_KEYS);
 		pstmt.setString(1, f.getIcaoAdr());
 		pstmt.setString(2, f.getTailnr());
 		pstmt.setString(3, f.getRegistration());
@@ -42,7 +38,7 @@ public class DBIn {
 
 	public static int insertFlight(Frame f, int planeID) throws Exception {
 		Connection conn = getDBConnection();
-		PreparedStatement pstmt = conn.prepareStatement(SqlQuerrys.flightquerry, Statement.RETURN_GENERATED_KEYS);
+		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.flightquerry, Statement.RETURN_GENERATED_KEYS);
 		pstmt.setInt(1, planeID);
 		pstmt.setString(2, f.getSrcAirport());
 		pstmt.setString(3, f.getDestAirport());
@@ -65,7 +61,7 @@ public class DBIn {
 		Connection conn = getDBConnection();
 
 		// insert into tracking
-		PreparedStatement pstmt = conn.prepareStatement(SqlQuerrys.trackingquerry);
+		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.trackingquerry);
 		pstmt.setInt(1, id);
 		pstmt.setDouble(2, f.getLat());
 		pstmt.setDouble(3, f.getLon());
@@ -81,7 +77,7 @@ public class DBIn {
 	public static void updateFlightEnd(int id, long timestamp) throws Exception {
 		Connection conn = getDBConnection();
 		
-		PreparedStatement pstmt = conn.prepareStatement(SqlQuerrys.updateFlightEnd);
+		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.updateFlightEnd);
 		pstmt.setInt(2, id);
 		pstmt.setLong(1, timestamp);
 		pstmt.executeUpdate();

@@ -1,4 +1,4 @@
-package planespotter.controller;
+package planespotter.model;
 
 import planespotter.exceptions.FileAlreadyExistsException;
 

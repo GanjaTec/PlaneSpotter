@@ -1,7 +1,6 @@
 package planespotter.display;
 
 import javax.swing.*;
-
 import java.awt.*;
 
 import static planespotter.constants.GUIConstants.*;
@@ -32,12 +31,13 @@ public final class MenuModels extends GUI {
     /**
      * menubar (contains the other menu components)
      */
-    public static JMenuBar menuBar () {
+    public static JMenuBar menuBar (JPanel parent) {
         // TODO: setting up menubar
         JMenuBar menubar = new JMenuBar();
         menubar.setBackground(DEFAULT_BG_COLOR);
         menubar.setForeground(DEFAULT_FG_COLOR);
-        menubar.setBounds(0, 0, WIDTH_LEFT, 590);
+        menubar.setBounds(0, 0, parent.getWidth(), parent.getHeight());
+        menubar.setBorder(LINE_BORDER);
         menubar.setLayout(null);
 
         return menubar;
@@ -110,14 +110,14 @@ public final class MenuModels extends GUI {
     /**
      * search-filter button
      */
-    public static JButton searchFilterButton () {
+    public static JButton searchFilterButton (JMenuBar parent) {
         // TODO: setting up search-settings menu
         JButton search_settings = new JButton("Search-Filter");
         search_settings.setFont(FONT_MENU);
         search_settings.setBorder(MENU_BORDER);
         search_settings.setBackground(DEFAULT_ACCENT_COLOR);
         search_settings.setForeground(DEFAULT_FONT_COLOR);
-        search_settings.setBounds(10, 515, WIDTH_MENUITEM, 25);
+        search_settings.setBounds(10, parent.getHeight()-15, WIDTH_MENUITEM, 25);
         //search_settings.addActionListener(new Listener());
 
         return search_settings;
@@ -126,13 +126,14 @@ public final class MenuModels extends GUI {
     /**
      *
      */
-    public static JProgressBar progressBar () {
+    public static JProgressBar progressBar (JMenuBar parent) {
         // TODO: seting up progress bar
         JProgressBar progressbar = new JProgressBar(0, 100);
-        progressbar.setBorder(MENU_BORDER);
-        progressbar.setBackground(DEFAULT_BG_COLOR);
-        progressbar.setForeground(new Color(0, 255, 0));
-        progressbar.setBounds(10, 555, WIDTH_MENUITEM, 25);
+        progressbar.setBorder(LINE_BORDER);
+        progressbar.setBackground(DEFAULT_FONT_COLOR);
+        progressbar.setBorderPainted(true);
+        progressbar.setForeground(new Color(92, 214, 92));
+        progressbar.setBounds(10, 135, WIDTH_MENUITEM, 25);
         progressbar.setVisible(false);
         progressbar.setValue(0);
 
@@ -142,14 +143,14 @@ public final class MenuModels extends GUI {
     /**
      * search text field
      */
-    public static JTextField searchTextField () {
+    public static JTextField searchTextField (JMenuBar parent) {
         // TODO: setting up search text field
         JTextField search = new JTextField();
         search.setToolTipText("Search");
-        search.setBounds(10, 470, WIDTH_MENUITEM, 25);
+        search.setBounds(10, parent.getHeight()-60, WIDTH_MENUITEM, 25);
         search.setBackground(Color.WHITE);
         search.setFont(FONT_MENU);
-        search.setBorder(MENU_BORDER);
+        search.setBorder(LINE_BORDER);
         //search.addKeyListener(new Listener());
 
         return search;
@@ -158,10 +159,10 @@ public final class MenuModels extends GUI {
     /**
      * close view button
      */
-    public static JButton closeViewButton () {
+    public static JButton closeViewButton (JDesktopPane parent) {
         // TODO: setting up view close button
         JButton closeView = new JButton("Close");
-        closeView.setBounds(955, 605, 30, 20);
+        closeView.setBounds(parent.getWidth()-95, parent.getHeight()-45, 80, 30);
         closeView.setBackground(DEFAULT_BG_COLOR);
         closeView.setForeground(DEFAULT_FONT_COLOR);
         closeView.setFont(FONT_MENU);
@@ -183,5 +184,43 @@ public final class MenuModels extends GUI {
         rbFlight = new JRadioButton();
         //rbFlight.addChangeListener(new Listener());
     }
+
+    /**
+     * @return settings option pane (which pops up)
+     */
+    public static JInternalFrame settings_intlFrame (JPanel parent) {
+            JLabel maxLoadLbl = new JLabel("Max. loaded Data:");
+            maxLoadLbl.setBounds(20, 20, 180, 30);
+            maxLoadLbl.setForeground(DEFAULT_FONT_COLOR);
+            maxLoadLbl.setFont(FONT_MENU);
+        JInternalFrame settings = new JInternalFrame();
+        settings.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 500, 400);
+        settings.setLayout(null);
+        settings.setBackground(DEFAULT_BORDER_COLOR);
+        settings.setClosable(true);
+        settings.add(maxLoadLbl);
+        settings.hide();
+
+        return settings;
+    }
+
+    /**
+     * settings opt. pane max-load text field
+     */
+    public static JTextField settingsOP_maxLoadTxtField () {
+        JTextField maxLoadTxtfield = new JTextField();
+        maxLoadTxtfield.setBounds(200, 20, 50, 30);
+        maxLoadTxtfield.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR));
+        maxLoadTxtfield.setBackground(DEFAULT_BG_COLOR);
+        maxLoadTxtfield.setForeground(DEFAULT_MAP_ICON_COLOR);
+        maxLoadTxtfield.setFont(FONT_MENU);
+        return maxLoadTxtfield;
+    }
+
+    // TODO SETTINGS
+    // reload data button
+    // confirm button
+    // other settings
+    // evtl. Theme oder so -> Farbe
 
 }

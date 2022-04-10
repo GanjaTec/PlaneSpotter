@@ -1,10 +1,10 @@
 package planespotter.model;
 
+import planespotter.constants.Areas;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import planespotter.constants.*;
 
 public class Paralel {
 	private int poolsize = 1;

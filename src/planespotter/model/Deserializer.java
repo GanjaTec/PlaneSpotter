@@ -1,11 +1,11 @@
 package planespotter.model;
 
+import com.google.gson.Gson;
+import planespotter.dataclasses.Frame;
+
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
-import com.google.gson.*;
-
-import planespotter.dataclasses.*;
 
 public class Deserializer {
 	

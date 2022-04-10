@@ -1,17 +1,17 @@
 package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.*;
-
 import planespotter.constants.GUIConstants;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Position;
-import planespotter.model.DBOut;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Queue;
 
 
 /**
@@ -22,7 +22,7 @@ import java.util.List;
  * map manager:
  *  manages the map data and contains methods which are executed on the mapView
  */
-public class MapManager extends Thread {
+public class BlackBeardsNavigator extends Thread {
 
     /**
      *
@@ -34,13 +34,13 @@ public class MapManager extends Thread {
      */
     @Override
     public void run () {
-        new MapManager(Controller.getGUI());
+        new BlackBeardsNavigator(Controller.getGUI());
     }
 
     /**
      *
      */
-    public MapManager (GUI gui) {
+    public BlackBeardsNavigator(GUI gui) {
         this.gui = gui;
     }
 
@@ -75,7 +75,6 @@ public class MapManager extends Thread {
 
         }
         gui.recieveMap(viewer);
-
     }
 
     /**
@@ -89,6 +88,12 @@ public class MapManager extends Thread {
             // TODO: getting the last data point => where the plane is at the moment
             Object[] keySetArray = f.getDataPoints().keySet().toArray();
             DataPoint lastDataPoint = f.getDataPoints().get(keySetArray[keySetArray.length-1]);
+            /*DataPoint lastDp = null;
+            for (int i = 0; i < keySetArray.length; i++) {
+                if (i == keySetArray.length-1) {
+                    lastDp = f.getDataPoints().get(keySetArray[i]);
+                } // TODO: METHODE letztes element aus der hashmap // DEBUGGER
+            }*/
             Position lastPos = lastDataPoint.getPos();
             MapMarkerDot newPlaneDot = new MapMarkerDot(lastPos.getLat(), lastPos.getLon());
             newPlaneDot.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
