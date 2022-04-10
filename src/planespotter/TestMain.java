@@ -1,5 +1,7 @@
 package planespotter;
 
+import java.util.concurrent.TimeUnit;
+
 import planespotter.model.Paralel;
 
 public class TestMain {
@@ -9,7 +11,10 @@ public class TestMain {
 		Paralel p = new Paralel();
 		
 		try {
-			p.startThreads();
+			while(true) {
+			p.runThreads();
+			TimeUnit.MINUTES.sleep(5);
+			}
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -20,7 +20,9 @@ import java.util.List;
 public class Supplier implements Runnable{
 	private int threadNumber;
 	private String ThreadName;
-	private String area = "54.241%2C48.576%2C-14.184%2C13.94";
+	private String area = "54.241%2C48.576%2C-14.184%2C13.94"; //Default OG value
+	HttpClient client = HttpClient.newHttpClient();
+	DBIn dbi = new DBIn();
 	//TODO Write getters
 	
 	public int getThreadNumber() {
@@ -50,7 +52,7 @@ public class Supplier implements Runnable{
 	}
 
 	public HttpResponse<String> fr24get() throws Exception {
-		HttpClient client = HttpClient.newHttpClient();
+		//HttpClient client = HttpClient.newHttpClient();
 		// Request flightradar24 data with Firefox UserAgent
 		// URL splitted only for visibility
 		HttpRequest request = HttpRequest
@@ -73,11 +75,11 @@ public class Supplier implements Runnable{
 						+ "stats=0"))
 				// User agent to prevent Response Code 451
 				.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0").build();
-		HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+		HttpResponse<String> response = this.client.send(request, BodyHandlers.ofString());
 		return response;
 	}
 
-	public void writeToDB(List<Frame> frames) {
+	public synchronized void writeToDB(List<Frame> frames) {
 		try {
 			long ts1 = System.nanoTime();
 			for (Frame f : frames) {
@@ -87,7 +89,7 @@ public class Supplier implements Runnable{
 				boolean checkPlane =  planeID > -1;
 				
 				if(!checkPlane) {
-					planeID = DBIn.insertPlane(f);
+					planeID = dbi.insertPlane(f);
 				}
 				
 				
@@ -96,18 +98,23 @@ public class Supplier implements Runnable{
 				boolean checkFlight = flightID > -1;
 				
 				if(!checkFlight) {
-					flightID = DBIn.insertFlight(f, planeID);
+					flightID = dbi.insertFlight(f, planeID);
 				}
 				
 				
 				// insert into tracking
-				DBIn.insertTracking(f, flightID);
+				dbi.insertTracking(f, flightID);
+				
+				f = null;
 			}
-
+			
+			frames = null;	
 			long ts2 = System.nanoTime();
 			long tdiff = ts2 - ts1;
 			double tdiffSec = (double) tdiff / 1_000_000_000;
-			System.out.println("filled DB in " + tdiffSec + " seconds");
+			System.out.println(this.ThreadName + "      | filled DB in " + tdiffSec + " seconds");
+			
+			System.gc();
 		
 		} catch (Exception e) {
 			e.printStackTrace();

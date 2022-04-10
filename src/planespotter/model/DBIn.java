@@ -1,21 +1,22 @@
 package planespotter.model;
 
 import planespotter.constants.SQLQuerries;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
 import planespotter.dataclasses.Frame;
 
 import java.sql.*;
 
-public class DBIn {
+public class DBIn extends SupperDB {
 
-	private static Connection getDBConnection() throws Exception {
-		Class.forName("com.mysql.cj.jdbc.Driver");
-		String db = "jdbc:sqlite:plane.db";
-		Connection conn = DriverManager.getConnection(db);
-		return conn;
-	}
 
-	public static int insertPlane(Frame f) throws Exception {
-		Connection conn = getDBConnection();		
+
+	public int insertPlane(Frame f) throws Exception {
+		Connection conn = super.getDBConnection();		
 		//TODO Airline ID anfrage
 		// insert into planes
 		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.planequerry, Statement.RETURN_GENERATED_KEYS);
@@ -39,6 +40,7 @@ public class DBIn {
 	public static int insertFlight(Frame f, int planeID) throws Exception {
 		Connection conn = getDBConnection();
 		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.flightquerry, Statement.RETURN_GENERATED_KEYS);
+
 		pstmt.setInt(1, planeID);
 		pstmt.setString(2, f.getSrcAirport());
 		pstmt.setString(3, f.getDestAirport());
@@ -56,9 +58,9 @@ public class DBIn {
 		return id;
 	}
 
-	public static void insertTracking(Frame f, int id) throws Exception {
+	public void insertTracking(Frame f, int id) throws Exception {
 
-		Connection conn = getDBConnection();
+		Connection conn = super.getDBConnection();
 
 		// insert into tracking
 		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.trackingquerry);
@@ -74,8 +76,8 @@ public class DBIn {
 		conn.close();
 	}
 	
-	public static void updateFlightEnd(int id, long timestamp) throws Exception {
-		Connection conn = getDBConnection();
+	public void updateFlightEnd(int id, long timestamp) throws Exception {
+		Connection conn = super.getDBConnection();
 		
 		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.updateFlightEnd);
 		pstmt.setInt(2, id);

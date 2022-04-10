@@ -19,7 +19,7 @@ public class KeeperOfTheArchives implements Runnable{
 	public KeeperOfTheArchives(int threadNumber, long endThreshold) {
 		this.threadNumber = threadNumber;
 		this.threshold = endThreshold;
-		this.threadName = "KeeperOfTheArchives | Thread-" + this.threadNumber;
+		this.threadName = "KeeperOfTheArchives   |";
 	}
 	
 
