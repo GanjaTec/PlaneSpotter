@@ -17,7 +17,8 @@ import java.util.concurrent.ThreadPoolExecutor;
  * It relies heavily on planespotter.SQLQuerrys
  *
  */
-public class DBOut implements Runnable {
+
+public class DBOut extends SupperDB implements Runnable{
 
 	/**
 	 * class varisbles
@@ -433,28 +434,27 @@ public class DBOut implements Runnable {
 		return flightIDs;
 	}
 
+	public Flight getFlightByID(int id) {
+		Flight f = null;
+		try {
+			ResultSet rs = querryDB(SQLQuerries.getFlightByID + id);
 
-        public Flight getFlightByID(int id) {
-			Flight f = null;
-			try {
-				ResultSet rs = querryDB(SQLQuerries.getFlightByID + id);
-
-				if (rs.next()) {
-					Object[] airports = getAirports(rs.getString("src"), rs.getString("dest")).toArray();
-					f = new Flight(rs.getInt("ID"), (Airport) airports[0], (Airport) airports[1], rs.getString("callsign"), getPlaneByID(rs.getInt("plane")), rs.getString("flightnr"), getTrackingByFlight(rs.getInt("ID")));
-				} else {
-					Airline a = new Airline(-1, "None", "None");
-					Airport airnull = new Airport(-1, "None", "None", new Position(0d, 0d));
-					Plane p = new Plane(-1, "None", "None", "None", "None", a);
-					f = new Flight(-1, airnull, airnull, "None", p, "None", new HashMap<Integer, DataPoint>());
-				}
-				rs.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			} catch (Exception e) {
-				e.printStackTrace();
+			if (rs.next()) {
+				Object[] airports = getAirports(rs.getString("src"), rs.getString("dest")).toArray();
+				f = new Flight(rs.getInt("ID"), (Airport) airports[0], (Airport) airports[1], rs.getString("callsign"), getPlaneByID(rs.getInt("plane")), rs.getString("flightnr"), getTrackingByFlight(rs.getInt("ID")));
+			} else {
+				Airline a = new Airline(-1, "None", "None");
+				Airport airnull = new Airport(-1, "None", "None", new Position(0d, 0d));
+				Plane p = new Plane(-1, "None", "None", "None", "None", a);
+				f = new Flight(-1, airnull, airnull, "None", p, "None", new HashMap<Integer, DataPoint>());
 			}
-			return f;
+			rs.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return f;
 	}
 	public List<Flight> getAllFlightsFromID(int id) {
 		List<Flight> flights = new ArrayList<Flight>();

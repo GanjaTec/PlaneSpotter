@@ -8,12 +8,10 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import planespotter.dataclasses.Frame;
-
 import java.sql.*;
 
+
 public class DBIn extends SupperDB {
-
-
 
 	public int insertPlane(Frame f) throws Exception {
 		Connection conn = super.getDBConnection();		
@@ -75,17 +73,17 @@ public class DBIn extends SupperDB {
 		pstmt.executeUpdate();
 		conn.close();
 	}
-	
+
 	public void updateFlightEnd(int id, long timestamp) throws Exception {
 		Connection conn = super.getDBConnection();
-		
+
 		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.updateFlightEnd);
 		pstmt.setInt(2, id);
 		pstmt.setLong(1, timestamp);
 		pstmt.executeUpdate();
 		conn.close();
-		
-		
+
+
 	}
 
 }
