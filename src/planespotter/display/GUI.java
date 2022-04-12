@@ -1,10 +1,7 @@
 package planespotter.display;
 
 
-import org.openstreetmap.gui.jmapviewer.DefaultMapController;
-import org.openstreetmap.gui.jmapviewer.JMapViewer;
-import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
-import org.openstreetmap.gui.jmapviewer.MemoryTileCache;
+import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
 import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
 import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
@@ -16,6 +13,7 @@ import planespotter.exceptions.SemaphorError;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Iterator;
 
 import static planespotter.constants.GUIConstants.*;
 
@@ -25,7 +23,7 @@ import static planespotter.constants.GUIConstants.*;
  * @version 1.1
  */
 public class GUI implements ActionListener, KeyListener, JMapViewerEventListener,
-                            ComponentListener, Runnable {
+        ComponentListener, Runnable, MouseListener {
 
     /**
      * components
@@ -46,7 +44,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     protected JScrollPane spList;
 
     // alternative test path: "C:\\Users\\jml04\\Desktop\\loading.gif"
-    private ImageIcon loading_gif = new ImageIcon(this.getClass().getResource("/loading.gif"));
+    private ImageIcon   loading_gif = new ImageIcon(this.getClass().getResource("/loading.gif"));
 
 
     /**
@@ -181,6 +179,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             lblStartScreen = new JLabel(start_image);
             lblStartScreen.setBounds(pStartScreen.getBounds());
             lblStartScreen.setBorder(LINE_BORDER);
+        ImageIcon test_img = new ImageIcon(this.getClass().getResource("/ttowers.png"));
+        lblStartScreen.setIcon(test_img);
 
          // Adding to Window
                 // TODO: adding everything to menubar
@@ -377,6 +377,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         mapViewer.setBounds(pMap.getBounds());
         mapViewer.addKeyListener(this);
         mapViewer.addComponentListener(this);
+        mapViewer.addMouseListener(this);
         //mapViewer.setMinimumSize(Bounds.RIGHT.getSize());
         mapViewer.addJMVListener(this);
         // TODO: adding MapViewer to panel
@@ -594,6 +595,39 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
 
     @Override
     public void componentMoved(ComponentEvent e) {
+    }
+    // MouseListener
+    @Override
+    public void mouseClicked(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        Point point = e.getPoint();
+        Coordinate clickedCoord = new Coordinate(point.x, point.y);
+        Iterator<MapMarkerDot> it = BlackBeardsNavigator.mapMarkers.iterator();
+        while (it.hasNext()) {
+            MapMarkerDot next = it.next();
+            if (next.getCoordinate() == clickedCoord) {
+                System.out.println(ANSI_GREEN + "punkt angeklickt!" + ANSI_RESET);
+            }
+        }
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+
     }
 
     /**
