@@ -205,6 +205,10 @@ public class Controller implements Runnable {
             DBOut out1 = new DBOut(1);
             DBOut out2 = new DBOut(2);
             DBOut out3 = new DBOut(3);
+            exe.execute(out0);
+            exe.execute(out1);
+            exe.execute(out2);
+            exe.execute(out3);
             List<Flight> list0 = out0.getAllFlightsFromID(from0, from1);
             List<Flight> list1 = out1.getAllFlightsFromID(from1, from2-1);
             List<Flight> list2 = out2.getAllFlightsFromID(from2, from3-1);
