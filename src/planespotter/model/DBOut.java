@@ -307,12 +307,12 @@ public class DBOut extends SupperDB implements Runnable{
 
 	public int getLastTrackingIDByFlightID(int id) {
 		int trackingid = -1;
-		String getLastTrackingIDByFlightID =  "SELECT ID FROM tracking WHERE flightid == "+ id +" ORDER BY DESC LIMIT 1";
+		String getLastTrackingIDByFlightID =  "SELECT ID FROM tracking WHERE flightid == "+ id +" ORDER BY ID DESC LIMIT 1";
 		try {
 			ResultSet rs = querryDB(getLastTrackingIDByFlightID);
 
-			while (rs.next()) {
-				id = rs.getInt(1);
+			if (rs.next()) {
+				trackingid = rs.getInt(1);
 			}
 			rs.close();
 		} catch (SQLException e) {

@@ -6,12 +6,11 @@ import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Position;
+import planespotter.model.DBOut;
 
 import java.awt.*;
-import java.util.ArrayDeque;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Queue;
 
 
 /**
@@ -28,6 +27,8 @@ public class BlackBeardsNavigator extends Thread {
      *
      */
     private static GUI gui;
+
+    public static ArrayList<MapMarkerDot> mapMarkers = new ArrayList<>();
 
     /**
      * thread run method TODO checken
@@ -81,32 +82,30 @@ public class BlackBeardsNavigator extends Thread {
      *
      */
     public void createAllFlightsMap (List<Flight> list) {
+        mapMarkers = new ArrayList<>();
         JMapViewer viewer = gui.createMap();
         Rectangle viewSize = viewer.getVisibleRect();
-        Queue<Coordinate> coords = new ArrayDeque<>();
+        //Queue<Coordinate> coords = new ArrayDeque<>();
         for (Flight f : list) {
-            // TODO: getting the last data point => where the plane is at the moment
-            Object[] keySetArray = f.getDataPoints().keySet().toArray();
-            DataPoint lastDataPoint = f.getDataPoints().get(keySetArray[keySetArray.length-1]);
-            /*DataPoint lastDp = null;
-            for (int i = 0; i < keySetArray.length; i++) {
-                if (i == keySetArray.length-1) {
-                    lastDp = f.getDataPoints().get(keySetArray[i]);
-                } // TODO: METHODE letztes element aus der hashmap // DEBUGGER
-            }*/
+            // TODO: getting the last data point => where the plane is at the moment // BUG:
+            //Object[] keySetArray = f.getDataPoints().keySet().toArray(); // keySetArray[keySetArray.length-1]
+            //int lastID = new DBOut(9).getLastTrackingIDByFlightID(f.getID());
+            //DataPoint lastDataPoint = f.getDataPoints().get(f.getDataPoints().size()-1);
+            DataPoint lastDataPoint = (DataPoint) f.getDataPoints().values().toArray()[f.getDataPoints().size()-1];
             Position lastPos = lastDataPoint.getPos();
             MapMarkerDot newPlaneDot = new MapMarkerDot(lastPos.getLat(), lastPos.getLon());
             newPlaneDot.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
             viewer.addMapMarker(newPlaneDot);
+            mapMarkers.add(newPlaneDot);
 
-            if (coords.isEmpty() || coords.size() == 1) {
+            /*if (coords.isEmpty() || coords.size() == 1) {
                 coords.add(new Coordinate(lastPos.getLat(), lastPos.getLon()));
             }
             else {
                 coords.remove();
            //     viewer.addMapPolygon(new MapPolygonImpl(coords.stream().toList()));
                 coords.add(new Coordinate(lastPos.getLat(), lastPos.getLon()));
-            }
+            }*/
         }
         gui.recieveMap(viewer);
     }
