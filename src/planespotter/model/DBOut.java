@@ -7,7 +7,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author Lukas
@@ -18,42 +17,12 @@ import java.util.concurrent.ThreadPoolExecutor;
  *
  */
 
-public class DBOut extends SupperDB implements Runnable{
-
-	/**
-	 * class varisbles
-	 */
-	private int threadNumber;
-	private String threadName;
-
-	/**
-	 * constructor
-	 */
-	public DBOut (int number) {
-		this.threadNumber = number;
-		this.threadName = "db-out" + this.threadNumber;
-	}
-
-	/**
-	 * ? ? ? ? TODO richtig machen
-	 */
-	@Override
-	public void run () {
-		Thread.currentThread().setPriority(8);
-		System.out.println("[DBOut] thread " + this.getName() + " created!");
-	}
-
-	/**
-	 * @return name of the running threa
-	 */
-	public String getName () {
-		return threadName;
-	}
+public class DBOut extends SupperDB {
 
 	/**
 	 * test: max loaded flights
 	 */
-	public static int maxLoadedFlights = 2000;
+	public static int maxLoadedFlights = 10000;
 
 
 	/**
@@ -266,10 +235,13 @@ public class DBOut extends SupperDB implements Runnable{
 	 * @return HashMap<Integer, DataPoint> containing all Datapoints keyed with Timestamp
 	 * @throws Exception
 	 */
+	// TODO fix: HashMap lentgh was 1, but last Tracking id was about 23000
+	// TODO hier muss der Fehler sein
 	public HashMap<Integer, DataPoint> getTrackingByFlight(int flightID) {
 		HashMap<Integer ,DataPoint> dps = new HashMap<Integer, DataPoint>();
+		String flight_id = "'" + flightID + "'";
 		try {
-			ResultSet rs = querryDB(SQLQuerries.getTrackingByFlight + flightID);
+			ResultSet rs = querryDB("SELECT * FROM tracking WHERE flightid == " + flight_id);
 			while (rs.next()) {
 				// TODO: IF STATEMENT
 				Position p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
@@ -307,7 +279,7 @@ public class DBOut extends SupperDB implements Runnable{
 
 	public int getLastTrackingIDByFlightID(int id) {
 		int trackingid = -1;
-		String getLastTrackingIDByFlightID =  "SELECT ID FROM tracking WHERE flightid == "+ id +" ORDER BY ID DESC LIMIT 1";
+		String getLastTrackingIDByFlightID =  "SELECT ID FROM tracking WHERE flightid == '"+ id +"' ORDER BY ID DESC LIMIT 1";
 		try {
 			ResultSet rs = querryDB(getLastTrackingIDByFlightID);
 
@@ -474,33 +446,11 @@ public class DBOut extends SupperDB implements Runnable{
 		}
 		return f;
 	}
-	public List<Flight> getAllFlightsFromID(int id) {
-		List<Flight> flights = new ArrayList<Flight>();
-		try {
-			// FALSCH
-			ResultSet rs = querryDB(SQLQuerries.getFlightsFromID + id);
-			int counter = 0;
-			while (rs.next() && counter <= maxLoadedFlights/4) { // counter: immer nur 100 Datensätze
-				HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
-				List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
-				Plane plane = getPlaneByID(rs.getInt("plane"));
-				Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
-				flights.add(flight);
-				counter++;
-			}
-			rs.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return flights;
-	}
 
 	public List<Flight> getAllFlightsFromID(int start_id, int end_id) {
 		List<Flight> flights = new ArrayList<Flight>();
 		try {
-			ResultSet rs = querryDB("SELECT * FROM flights WHERE ID >= " + start_id + " AND ID <= " + end_id);
+			ResultSet rs = querryDB("SELECT * FROM flights WHERE ID >= " + start_id + " AND ID <= " + end_id + " AND endTime IS NULL");
 			int counter = 0;
 			while (rs.next() && counter <= end_id-start_id) { // counter: immer begrenzte Anzahl an Datensätzen
 				HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));

@@ -3,6 +3,7 @@ package planespotter.display;
 import planespotter.constants.Bounds;
 
 import javax.swing.*;
+import javax.swing.plaf.SpinnerUI;
 
 import static planespotter.constants.GUIConstants.*;
 
@@ -109,7 +110,8 @@ public final class PanelModels {
         // TODO: setting up info panel
         JPanel info = new JPanel();
         info.setBounds(0, 0, parent.getWidth(), parent.getHeight());
-        info.setBackground(DEFAULT_BG_COLOR);
+        info.setBackground(DEFAULT_ACCENT_COLOR);
+        info.setLayout(null);
 
         return info;
     }

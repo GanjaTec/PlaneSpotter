@@ -6,6 +6,7 @@ import planespotter.display.GUI;
 import planespotter.display.BlackBeardsNavigator;
 import planespotter.display.TreePlantation;
 import planespotter.model.DBOut;
+import planespotter.model.ThreadedOutputWizard;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +53,7 @@ public class Controller implements Runnable {
     /**
      * the GUI
      */
-    private static GUI gui;
+    private static volatile GUI gui;
 
     private static List<Flight> preloadedFlights = new ArrayList<>();
 
@@ -73,7 +74,7 @@ public class Controller implements Runnable {
         gui = new GUI();
         exe.execute(gui);
         try {
-            doThreadedTask(preloadedFlights);
+            loadFlightsThreaded(preloadedFlights);
             System.out.println("[Controller] " + ANSI_GREEN + "pre-loaded DB-data in " + (System.nanoTime()+-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
             gui.donePreLoading();
         } catch (Exception e) {
@@ -117,7 +118,7 @@ public class Controller implements Runnable {
             List<Flight> listFlights = new ArrayList<>();
             // TODO verschiedene Möglichkeiten (für große Datenmengen)
             if (preloadedFlights == null) {
-                doThreadedTask(listFlights);
+                loadFlightsThreaded(listFlights);
             }
             switch (type) {
                 case LIST_FLIGHT:
@@ -139,7 +140,16 @@ public class Controller implements Runnable {
                     gui.window.revalidate();
                     break;
                 case MAP_FLIGHTROUTE:   // läuft nicht // hier wird (String) data gebraucht
-                    //new MapManager(gui).createFlightRoute(mainOut.getAllFlights());
+                    try {
+                        if (data.isBlank()) {
+                            new BlackBeardsNavigator(gui).createFlightRoute(new DBOut().getTrackingByFlight(107));
+                        } else {
+                            int flightID = Integer.parseInt(data);
+                            new BlackBeardsNavigator(gui).createFlightRoute(new DBOut().getTrackingByFlight(flightID));
+                        }
+                    } catch (NumberFormatException e) {
+                        new BlackBeardsNavigator(gui).createFlightRoute(new DBOut().getTrackingByFlight(107));
+                    }
                     gui.window.revalidate();
                     break;
             }
@@ -158,7 +168,7 @@ public class Controller implements Runnable {
         long startTime = System.nanoTime();
         loading = true;
         preloadedFlights = new ArrayList<>();
-        doThreadedTask(preloadedFlights);
+        loadFlightsThreaded(preloadedFlights);
         System.out.println("[Controller] " + ANSI_GREEN + "reloaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
     }
 
@@ -174,16 +184,16 @@ public class Controller implements Runnable {
      *
      * @param toList is the list where the data will be added
      */
-    private static void doThreadedTask (List<Flight> toList) {
+    private static void loadFlightsThreaded (List<Flight> toList) {
         int from0 = 0;
         int from1 = from0 + getMaxLoadedData()/4;
         int from2 = from1 + getMaxLoadedData()/4;
         int from3 = from2 + getMaxLoadedData()/4;
         if (getMaxLoadedData() <= 1000) {
-            DBOut out0 = new DBOut(0);
-            DBOut out1 = new DBOut(1);
-            DBOut out2 = new DBOut(2);
-            DBOut out3 = new DBOut(3);
+            ThreadedOutputWizard out0 = new ThreadedOutputWizard(0);
+            ThreadedOutputWizard out1 = new ThreadedOutputWizard(1);
+            ThreadedOutputWizard out2 = new ThreadedOutputWizard(2);
+            ThreadedOutputWizard out3 = new ThreadedOutputWizard(3);
             exe.execute(out0);
             exe.execute(out1);
             exe.execute(out2);
@@ -201,10 +211,10 @@ public class Controller implements Runnable {
         } else {
             // "from" weiter aufteilen, kleinere Schritte, mehr Threads
             // evtl. hier PRINT output ?
-            DBOut out0 = new DBOut(0);
-            DBOut out1 = new DBOut(1);
-            DBOut out2 = new DBOut(2);
-            DBOut out3 = new DBOut(3);
+            ThreadedOutputWizard out0 = new ThreadedOutputWizard(0);
+            ThreadedOutputWizard out1 = new ThreadedOutputWizard(1);
+            ThreadedOutputWizard out2 = new ThreadedOutputWizard(2);
+            ThreadedOutputWizard out3 = new ThreadedOutputWizard(3);
             exe.execute(out0);
             exe.execute(out1);
             exe.execute(out2);
