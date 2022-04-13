@@ -24,8 +24,6 @@ public class DBIn extends SupperDB {
 		
 		//TODO Airline ID anfrage
 		pstmt.setInt(5, airlineID);
-		//pstmt.setString(5, f.getAirline());
-		
 		pstmt.executeUpdate();
 
 		ResultSet rs = pstmt.getGeneratedKeys();

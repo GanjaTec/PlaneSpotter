@@ -132,10 +132,13 @@ public class DBOut extends SupperDB implements Runnable{
 	public int getAirlineIDByTag(String tag) {
 		int id = 1;
 		try {
-			tag = stripString(tag);
+			Deserializer ds = new Deserializer();
+			tag = ds.stripString(tag);
+			tag = "'" + tag + "'";
 			ResultSet rs = querryDB(SQLQuerries.getAirlineIDByTag + tag);
 			if(rs.next()) {
 				id = rs.getInt(1);
+			rs.close();
 			}
 			
 		} catch(Exception e) {

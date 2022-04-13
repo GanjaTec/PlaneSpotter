@@ -25,11 +25,11 @@ public class SQLQuerries {
 	public static final String getLastFlightID = "SELECT * from flights ORDER BY ID DESC LIMIT 1";
 	public static final String getTrackingByFlight = "SELECT * FROM tracking WHERE ID == ";
 	public static final String getFlights = "SELECT * FROM flights";
-	public static final String getFlightByID = "SELECT * FROM flight WHERE ID == ";
+	public static final String getFlightByID = "SELECT * FROM flights WHERE ID == ";
 	public static final String getAirportByTag = "SELECT * FROM airports WHERE iatatag == ";
 	public static final String getPlaneByID = "SELECT * FROM planes WHERE ID == ";
 	public static final String getAirlineByTag = "SELECT * FROM airlines WHERE icaotag == ";
-	public static final String getAirlineIDByTag = "SELECT * FROM airlines WHERE icaotag == ";
+	public static final String getAirlineIDByTag = "SELECT ID FROM airlines WHERE icaotag == ";
 	public static final String getPlaneByICAO = "SELECT * FROM planes WHERE icaonr == ";
 	public static final String getFlightByCallsign = "SELECT * FROM flights WHERE callsign == ";
 	public static final String checkEndOfFlight = "SELECT ID FROM flights WHERE endTime IS NULL";
