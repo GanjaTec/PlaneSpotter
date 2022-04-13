@@ -8,12 +8,11 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import planespotter.dataclasses.Frame;
-import java.sql.*;
 
 
 public class DBIn extends SupperDB {
 
-	public int insertPlane(Frame f) throws Exception {
+	public int insertPlane(Frame f, int airlineID) throws Exception {
 		Connection conn = super.getDBConnection();		
 		//TODO Airline ID anfrage
 		// insert into planes
@@ -22,8 +21,9 @@ public class DBIn extends SupperDB {
 		pstmt.setString(2, f.getTailnr());
 		pstmt.setString(3, f.getRegistration());
 		pstmt.setString(4, f.getPlanetype());
+		
 		//TODO Airline ID anfrage
-		pstmt.setString(5, f.getAirline());
+		pstmt.setInt(5, airlineID);
 		pstmt.executeUpdate();
 
 		ResultSet rs = pstmt.getGeneratedKeys();
@@ -35,7 +35,7 @@ public class DBIn extends SupperDB {
 		return id;
 	}
 
-	public static int insertFlight(Frame f, int planeID) throws Exception {
+	public int insertFlight(Frame f, int planeID) throws Exception {
 		Connection conn = getDBConnection();
 		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.flightquerry, Statement.RETURN_GENERATED_KEYS);
 

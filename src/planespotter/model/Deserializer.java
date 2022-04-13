@@ -12,8 +12,13 @@ public class Deserializer {
 	public Deserializer() {
 	}
 	
+	
+	//Now this is an awful way to handle things... dont do this:
+	
 	public String stripString (String in) {
-		return in.replaceAll("\"", "");
+		String temp = in.replaceAll("\"", "");
+		String out = temp.replace("\n", "");
+		return out.replaceAll("\"", "");
 	}
 	
 	// Handle Response Data, this basically turns the output to CSV
