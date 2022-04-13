@@ -659,27 +659,30 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 pInfo.setVisible(true);
                 dpright.moveToFront(pInfo);
                 recieveInfoTree(new TreePlantation().createTree(TreePlantation.createOneFlightTreeNode(new Coordinate(0, 0)), this));
-                resetMapMarkersExceptOne(next);
+                synchronized (mapViewer) {
+                    mapViewer.setMapMarkerList(resetMapMarkersExceptOne(mapMarkerList, next));
+                }
                 break;
             }
         }
-        System.out.println("test");
     }
 
     /**
      * resets all map markers
      */
-    public synchronized void resetMapMarkersExceptOne(MapMarker doNotReset) {
-        List<MapMarker> markers = mapViewer.getMapMarkerList();
+    public List<MapMarker> resetMapMarkersExceptOne(List<MapMarker> markers, MapMarker doNotReset) {
         for (MapMarker  m : markers) {
             if (m != doNotReset) {
                 ICoordinate markerPos = m.getCoordinate();
-                mapViewer.removeMapMarker(m);
+                markers.remove(m);
+                //mapViewer.removeMapMarker(m);
                 MapMarkerDot newMarker = new MapMarkerDot((Coordinate) markerPos);
                 newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR);
-                mapViewer.addMapMarker(newMarker);
+                //mapViewer.addMapMarker(newMarker);
+                markers.add(newMarker);
             }
         }
+        return markers;
     }
 
     @Override
