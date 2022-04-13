@@ -13,7 +13,7 @@ public class ThreadedOutputWizard extends DBOut implements Runnable {
      */
     public ThreadedOutputWizard (int number) {
         this.threadNumber = number;
-        this.threadName = "db-out" + this.threadNumber;
+        this.threadName = "output-wizard" + this.threadNumber;
     }
 
     /**
@@ -21,7 +21,7 @@ public class ThreadedOutputWizard extends DBOut implements Runnable {
      */
     @Override
     public void run () {
-        Thread.currentThread().setPriority(8);
+        Thread.currentThread().setPriority(9);
         System.out.println("[DBOut] thread " + this.getName() + " created!");
     }
 

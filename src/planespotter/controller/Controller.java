@@ -74,7 +74,7 @@ public class Controller implements Runnable {
         gui = new GUI();
         exe.execute(gui);
         try {
-            doThreadedTask(preloadedFlights);
+            loadFlightsThreaded(preloadedFlights);
             System.out.println("[Controller] " + ANSI_GREEN + "pre-loaded DB-data in " + (System.nanoTime()+-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
             gui.donePreLoading();
         } catch (Exception e) {
@@ -118,7 +118,7 @@ public class Controller implements Runnable {
             List<Flight> listFlights = new ArrayList<>();
             // TODO verschiedene Möglichkeiten (für große Datenmengen)
             if (preloadedFlights == null) {
-                doThreadedTask(listFlights);
+                loadFlightsThreaded(listFlights);
             }
             switch (type) {
                 case LIST_FLIGHT:
@@ -140,7 +140,16 @@ public class Controller implements Runnable {
                     gui.window.revalidate();
                     break;
                 case MAP_FLIGHTROUTE:   // läuft nicht // hier wird (String) data gebraucht
-                    //new MapManager(gui).createFlightRoute(mainOut.getAllFlights());
+                    try {
+                        if (data.isBlank()) {
+                            new BlackBeardsNavigator(gui).createFlightRoute(new DBOut().getTrackingByFlight(107));
+                        } else {
+                            int flightID = Integer.parseInt(data);
+                            new BlackBeardsNavigator(gui).createFlightRoute(new DBOut().getTrackingByFlight(flightID));
+                        }
+                    } catch (NumberFormatException e) {
+                        new BlackBeardsNavigator(gui).createFlightRoute(new DBOut().getTrackingByFlight(107));
+                    }
                     gui.window.revalidate();
                     break;
             }
@@ -159,7 +168,7 @@ public class Controller implements Runnable {
         long startTime = System.nanoTime();
         loading = true;
         preloadedFlights = new ArrayList<>();
-        doThreadedTask(preloadedFlights);
+        loadFlightsThreaded(preloadedFlights);
         System.out.println("[Controller] " + ANSI_GREEN + "reloaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
     }
 
@@ -175,7 +184,7 @@ public class Controller implements Runnable {
      *
      * @param toList is the list where the data will be added
      */
-    private static void doThreadedTask (List<Flight> toList) {
+    private static void loadFlightsThreaded (List<Flight> toList) {
         int from0 = 0;
         int from1 = from0 + getMaxLoadedData()/4;
         int from2 = from1 + getMaxLoadedData()/4;

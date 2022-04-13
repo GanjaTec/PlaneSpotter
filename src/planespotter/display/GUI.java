@@ -186,8 +186,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             lblStartScreen.setBounds(pStartScreen.getBounds());
             lblStartScreen.setBorder(LINE_BORDER);
             // TODO: adding test bground image
-        ImageIcon test_img = new ImageIcon(this.getClass().getResource("/ttowers.png"));
-        //lblStartScreen.setIcon(test_img);
+            ImageIcon test_img = new ImageIcon(this.getClass().getResource("/ttowers.png"));
+            lblStartScreen.setIcon(test_img);
 
          // Adding to Window
                 // TODO: adding everything to menubar
@@ -256,7 +256,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         progressbar.setIndeterminate(true);
         progressbar.setString("Loading data...");
         progressbar.setStringPainted(true);
-        //progressbar.setFont(FONT_MENU.deriveFont(16));
     }
 
     /**
@@ -449,8 +448,13 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                     e.printStackTrace();
                 }
             } else if (text.startsWith("flightroute")) {
-                if (view_SEM.value() == 0 && !text.contains(" ")) {
-                    Controller.createDataView(ViewType.MAP_FLIGHTROUTE, text);
+                if (view_SEM.value() == 0) {
+                    String[] args = text.split(" ");
+                    if (args.length > 1) {
+                        String id = args[1];
+                        Controller.createDataView(ViewType.MAP_FLIGHTROUTE, id);
+                    }
+                    Controller.createDataView(ViewType.MAP_FLIGHTROUTE, "");
                 }
             }
         }
@@ -665,7 +669,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     /**
      * resets all map markers
      */
-    public void resetMapMarkersExceptOne(MapMarker doNotReset) {
+    public synchronized void resetMapMarkersExceptOne(MapMarker doNotReset) {
         List<MapMarker> markers = mapViewer.getMapMarkerList();
         for (MapMarker  m : markers) {
             if (m != doNotReset) {
