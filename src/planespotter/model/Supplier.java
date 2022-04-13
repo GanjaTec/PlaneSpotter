@@ -23,6 +23,7 @@ public class Supplier implements Runnable{
 	private String area = "54.241%2C48.576%2C-14.184%2C13.94"; //Default OG value
 	HttpClient client = HttpClient.newHttpClient();
 	DBIn dbi = new DBIn();
+	DBOut dbo = new DBOut(999);
 	//TODO Write getters
 	
 	public int getThreadNumber() {
@@ -85,16 +86,17 @@ public class Supplier implements Runnable{
 			for (Frame f : frames) {
 				
 				// insert into planes
-				int planeID = DBOut.checkPlaneInDB(f.getIcaoAdr());
+				int airlineID = dbo.getAirlineIDByTag(f.getAirline());
+				int planeID = dbo.checkPlaneInDB(f.getIcaoAdr());
 				boolean checkPlane =  planeID > -1;
 				
 				if(!checkPlane) {
-					planeID = dbi.insertPlane(f);
+					planeID = dbi.insertPlane(f, airlineID);
 				}
 				
 				
 				// insert into flights
-				int flightID = DBOut.checkFlightInDB(f, planeID);
+				int flightID = dbo.checkFlightInDB(f, planeID);
 				boolean checkFlight = flightID > -1;
 				
 				if(!checkFlight) {

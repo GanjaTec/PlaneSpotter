@@ -29,6 +29,7 @@ public class SQLQuerries {
 	public static final String getAirportByTag = "SELECT * FROM airports WHERE iatatag == ";
 	public static final String getPlaneByID = "SELECT * FROM planes WHERE ID == ";
 	public static final String getAirlineByTag = "SELECT * FROM airlines WHERE icaotag == ";
+	public static final String getAirlineIDByTag = "SELECT * FROM airlines WHERE icaotag == ";
 	public static final String getPlaneByICAO = "SELECT * FROM planes WHERE icaonr == ";
 	public static final String getFlightByCallsign = "SELECT * FROM flights WHERE callsign == ";
 	public static final String checkEndOfFlight = "SELECT ID FROM flights WHERE endTime IS NULL";
