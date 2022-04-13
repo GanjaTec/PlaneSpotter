@@ -15,7 +15,7 @@ public class KeeperOfTheArchives implements Runnable{
 	private long threshold;
 	private int threadNumber;
 	private String threadName;
-	DBOut dbo = new DBOut(999);
+	DBOut dbo = new DBOut();
 	DBIn dbi = new DBIn();
 	
 	public KeeperOfTheArchives(int threadNumber, long endThreshold) {

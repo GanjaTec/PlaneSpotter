@@ -28,8 +28,6 @@ public class BlackBeardsNavigator extends Thread {
      */
     private static GUI gui;
 
-    public static ArrayList<MapMarkerDot> mapMarkers = new ArrayList<>();
-
     /**
      * thread run method TODO checken
      */
@@ -82,7 +80,6 @@ public class BlackBeardsNavigator extends Thread {
      *
      */
     public void createAllFlightsMap (List<Flight> list) {
-        mapMarkers = new ArrayList<>();
         JMapViewer viewer = gui.createMap();
         Rectangle viewSize = viewer.getVisibleRect();
         //Queue<Coordinate> coords = new ArrayDeque<>();
@@ -96,7 +93,7 @@ public class BlackBeardsNavigator extends Thread {
             MapMarkerDot newPlaneDot = new MapMarkerDot(lastPos.getLat(), lastPos.getLon());
             newPlaneDot.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
             viewer.addMapMarker(newPlaneDot);
-            mapMarkers.add(newPlaneDot);
+            //mapMarkers.add(newPlaneDot);
 
             /*if (coords.isEmpty() || coords.size() == 1) {
                 coords.add(new Coordinate(lastPos.getLat(), lastPos.getLon()));

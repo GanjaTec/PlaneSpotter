@@ -6,6 +6,7 @@ import planespotter.display.GUI;
 import planespotter.display.BlackBeardsNavigator;
 import planespotter.display.TreePlantation;
 import planespotter.model.DBOut;
+import planespotter.model.ThreadedOutputWizard;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +53,7 @@ public class Controller implements Runnable {
     /**
      * the GUI
      */
-    private static GUI gui;
+    private static volatile GUI gui;
 
     private static List<Flight> preloadedFlights = new ArrayList<>();
 
@@ -180,10 +181,10 @@ public class Controller implements Runnable {
         int from2 = from1 + getMaxLoadedData()/4;
         int from3 = from2 + getMaxLoadedData()/4;
         if (getMaxLoadedData() <= 1000) {
-            DBOut out0 = new DBOut(0);
-            DBOut out1 = new DBOut(1);
-            DBOut out2 = new DBOut(2);
-            DBOut out3 = new DBOut(3);
+            ThreadedOutputWizard out0 = new ThreadedOutputWizard(0);
+            ThreadedOutputWizard out1 = new ThreadedOutputWizard(1);
+            ThreadedOutputWizard out2 = new ThreadedOutputWizard(2);
+            ThreadedOutputWizard out3 = new ThreadedOutputWizard(3);
             exe.execute(out0);
             exe.execute(out1);
             exe.execute(out2);
@@ -201,10 +202,10 @@ public class Controller implements Runnable {
         } else {
             // "from" weiter aufteilen, kleinere Schritte, mehr Threads
             // evtl. hier PRINT output ?
-            DBOut out0 = new DBOut(0);
-            DBOut out1 = new DBOut(1);
-            DBOut out2 = new DBOut(2);
-            DBOut out3 = new DBOut(3);
+            ThreadedOutputWizard out0 = new ThreadedOutputWizard(0);
+            ThreadedOutputWizard out1 = new ThreadedOutputWizard(1);
+            ThreadedOutputWizard out2 = new ThreadedOutputWizard(2);
+            ThreadedOutputWizard out3 = new ThreadedOutputWizard(3);
             exe.execute(out0);
             exe.execute(out1);
             exe.execute(out2);
