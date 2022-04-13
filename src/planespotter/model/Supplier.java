@@ -23,7 +23,7 @@ public class Supplier implements Runnable{
 	private String area = "54.241%2C48.576%2C-14.184%2C13.94"; //Default OG value
 	HttpClient client = HttpClient.newHttpClient();
 	DBIn dbi = new DBIn();
-	DBOut dbo = new DBOut(999);
+	DBOut dbo = new DBOut();
 	//TODO Write getters
 	
 	public int getThreadNumber() {
