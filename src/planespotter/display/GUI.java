@@ -3,17 +3,22 @@ package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
+import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
+import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
 import planespotter.constants.Bounds;
 import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
+import planespotter.dataclasses.DataPoint;
 import planespotter.exceptions.SemaphorError;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import static planespotter.constants.GUIConstants.*;
 
@@ -33,7 +38,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     protected JInternalFrame flist, fmap, fmenu, finfo;
     protected JPanel mainpanel, pTitle, pList, pMap, pMenu, pInfo, pStartScreen;
     protected JLabel title, bground, title_bground, lblStartScreen, lblLoading;
-    protected JTree listView;
+    protected JTree listView, flightInfo;
     protected JMapViewer mapViewer;
     protected JTextField search, settings_iFrame_maxLoad;
     protected JRadioButton rbFlight, rbAirline;
@@ -45,7 +50,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
 
     // alternative test path: "C:\\Users\\jml04\\Desktop\\loading.gif"
     private ImageIcon   loading_gif = new ImageIcon(this.getClass().getResource("/loading.gif"));
-
+    // contains all map marker coords with datapoints, if mapViewer != null
+    public HashMap<Coordinate, DataPoint> mapPoints;
 
     /**
      * view semaphor
@@ -179,8 +185,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             lblStartScreen = new JLabel(start_image);
             lblStartScreen.setBounds(pStartScreen.getBounds());
             lblStartScreen.setBorder(LINE_BORDER);
-        ImageIcon test_img = new ImageIcon(this.getClass().getResource("/ttowers.png"));
-        lblStartScreen.setIcon(test_img);
+            // TODO: adding test bground image
+            ImageIcon test_img = new ImageIcon(this.getClass().getResource("/ttowers.png"));
+            lblStartScreen.setIcon(test_img);
 
          // Adding to Window
                 // TODO: adding everything to menubar
@@ -249,11 +256,10 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         progressbar.setIndeterminate(true);
         progressbar.setString("Loading data...");
         progressbar.setStringPainted(true);
-        //progressbar.setFont(FONT_MENU.deriveFont(16));
     }
 
     /**
-     * sets the vivibility of the progressBar
+     * sets the visibility of the progressBar
      *
      * @param v is the visible-boolean
      */
@@ -273,6 +279,22 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      */
     public void progressbarPP () {
         progressbar.setValue(progressbar.getValue() + 1);
+    }
+
+    /**
+     *
+     * @param tree is the tree to set
+     */
+    public void recieveInfoTree (JTree tree) {
+        flightInfo = tree;
+        flightInfo.setBounds(pInfo.getBounds());
+        flightInfo.setMaximumSize(pInfo.getSize());
+        flightInfo.setBorder(LINE_BORDER);
+        flightInfo.setFont(FONT_MENU.deriveFont(12f));
+        pInfo.add(flightInfo);
+        dpleft.moveToFront(pInfo);
+        pInfo.setVisible(true);
+        window.revalidate();
     }
 
     /**
@@ -306,7 +328,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * if no other view is opened, nothing is done
      */
     public void disposeView () {
-        if (listView != null || mapViewer != null || pStartScreen != null) { // braucht man das
+        if (listView != null || mapViewer != null || pStartScreen != null || pInfo != null) { // braucht man das
             if (runningView == listView && listView != null) {
                 listView.setVisible(false);
                 listView = null;
@@ -321,6 +343,12 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 runningView = null;
             } else if (runningView == pStartScreen && pStartScreen != null) {
                 pStartScreen.setVisible(false);
+            } else if (pInfo != null) {
+                pInfo.setVisible(false);
+                if (flightInfo != null) {
+                    flightInfo = null;
+                }
+                pMenu.setVisible(true);
             }
 
             if (view_SEM.value() == 1) {
@@ -420,8 +448,13 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                     e.printStackTrace();
                 }
             } else if (text.startsWith("flightroute")) {
-                if (view_SEM.value() == 0 && !text.contains(" ")) {
-                    Controller.createDataView(ViewType.MAP_FLIGHTROUTE, text);
+                if (view_SEM.value() == 0) {
+                    String[] args = text.split(" ");
+                    if (args.length > 1) {
+                        String id = args[1];
+                        Controller.createDataView(ViewType.MAP_FLIGHTROUTE, id);
+                    }
+                    Controller.createDataView(ViewType.MAP_FLIGHTROUTE, "");
                 }
             }
         }
@@ -605,12 +638,46 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     @Override
     public void mousePressed(MouseEvent e) {
         Point point = e.getPoint();
-        Coordinate clickedCoord = new Coordinate(point.x, point.y);
-        Iterator<MapMarkerDot> it = BlackBeardsNavigator.mapMarkers.iterator();
+        ICoordinate clickedCoord = mapViewer.getPosition(point);
+        List<MapMarker> mapMarkerList = mapViewer.getMapMarkerList();
+        Iterator<MapMarker> it = mapMarkerList.iterator();
+        MapMarker next = null;
         while (it.hasNext()) {
-            MapMarkerDot next = it.next();
-            if (next.getCoordinate() == clickedCoord) {
-                System.out.println(ANSI_GREEN + "punkt angeklickt!" + ANSI_RESET);
+            next = it.next();
+            ICoordinate markerCoord = next.getCoordinate();
+            // Positionsabfrage mit leichter Toleranz, damit man den Punkt auch trifft
+            if (clickedCoord.getLat() < markerCoord.getLat() + 0.02 &&
+                    clickedCoord.getLat() > markerCoord.getLat() - 0.02 &&
+                    clickedCoord.getLon() < markerCoord.getLon() + 0.02 &&
+                    clickedCoord.getLon() > markerCoord.getLon() - 0.02) {
+                MapMarkerDot newMarker = new MapMarkerDot((Coordinate) markerCoord);
+                newMarker.setBackColor(Color.RED);
+                mapViewer.removeMapMarker(next);
+                mapViewer.addMapMarker(newMarker);
+                // TODO info Tree einfügen!
+                pMenu.setVisible(false);
+                pInfo.setVisible(true);
+                dpright.moveToFront(pInfo);
+                recieveInfoTree(new TreePlantation().createTree(TreePlantation.createOneFlightTreeNode(new Coordinate(0, 0)), this));
+                resetMapMarkersExceptOne(next);
+                break;
+            }
+        }
+        System.out.println("test");
+    }
+
+    /**
+     * resets all map markers
+     */
+    public synchronized void resetMapMarkersExceptOne(MapMarker doNotReset) {
+        List<MapMarker> markers = mapViewer.getMapMarkerList();
+        for (MapMarker  m : markers) {
+            if (m != doNotReset) {
+                ICoordinate markerPos = m.getCoordinate();
+                mapViewer.removeMapMarker(m);
+                MapMarkerDot newMarker = new MapMarkerDot((Coordinate) markerPos);
+                newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR);
+                mapViewer.addMapMarker(newMarker);
             }
         }
     }

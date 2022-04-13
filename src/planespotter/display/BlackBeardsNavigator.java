@@ -1,6 +1,7 @@
 package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.*;
+import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import planespotter.constants.GUIConstants;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
@@ -28,8 +29,6 @@ public class BlackBeardsNavigator extends Thread {
      */
     private static GUI gui;
 
-    public static ArrayList<MapMarkerDot> mapMarkers = new ArrayList<>();
-
     /**
      * thread run method TODO checken
      */
@@ -48,11 +47,17 @@ public class BlackBeardsNavigator extends Thread {
     /**
      *
      */
-    public void createFlightRoute (List<Flight> flights) {
+    public void createFlightRoute (HashMap<Integer, DataPoint> dps) {
         JMapViewer viewer = gui.createMap();
-        Flight f = flights.get(0);
-        HashMap<Integer, DataPoint> dataPoints = f.getDataPoints();
-        int counter = 0;
+        Set<Integer> keySet = dps.keySet();
+        for (int key : keySet) {
+            DataPoint dp = dps.get(key);
+            Position pos = dp.getPos();
+            MapMarkerDot newMarker = new MapMarkerDot(pos.getLat(), pos.getLon());
+            viewer.addMapMarker(newMarker);
+        }
+
+        /*int counter = 0;
         //Queue<Coordinate> coords = new ArrayDeque<>();
         for (long g : dataPoints.keySet()) {
             DataPoint dp = dataPoints.get(g);
@@ -64,7 +69,7 @@ public class BlackBeardsNavigator extends Thread {
                 newPlaneDot.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
             }
             viewer.addMapMarker(newPlaneDot);
-            counter++;
+            counter++;*/
             /*if (coords.isEmpty() || coords.size() == 1) {
                 coords.add(new Coordinate(aPos.getLat(), aPos.getLon()));
             }
@@ -73,8 +78,6 @@ public class BlackBeardsNavigator extends Thread {
                 viewer.addMapPolygon(new MapPolygonImpl(coords.stream().toList()));
                 coords.add(new Coordinate(aPos.getLat(), aPos.getLon()));
             }*/
-
-        }
         gui.recieveMap(viewer);
     }
 
@@ -82,30 +85,32 @@ public class BlackBeardsNavigator extends Thread {
      *
      */
     public void createAllFlightsMap (List<Flight> list) {
-        mapMarkers = new ArrayList<>();
         JMapViewer viewer = gui.createMap();
         Rectangle viewSize = viewer.getVisibleRect();
-        //Queue<Coordinate> coords = new ArrayDeque<>();
+        List<ICoordinate> coords = new ArrayList<>();
         for (Flight f : list) {
             // TODO: getting the last data point => where the plane is at the moment // BUG:
             //Object[] keySetArray = f.getDataPoints().keySet().toArray(); // keySetArray[keySetArray.length-1]
-            //int lastID = new DBOut(9).getLastTrackingIDByFlightID(f.getID());
+            int lastID = new DBOut().getLastTrackingIDByFlightID(f.getID());
+            HashMap<Integer, DataPoint> dataPoints = f.getDataPoints();
             //DataPoint lastDataPoint = f.getDataPoints().get(f.getDataPoints().size()-1);
-            DataPoint lastDataPoint = (DataPoint) f.getDataPoints().values().toArray()[f.getDataPoints().size()-1];
+            //DataPoint lastDataPoint = (DataPoint) f.getDataPoints().values().toArray()[f.getDataPoints().size()-1];
+            //length is 1 TODO fixen // NullPointerException: lastDataPoint is null
+            DataPoint lastDataPoint = (DataPoint) f.getDataPoints().get(lastID);
             Position lastPos = lastDataPoint.getPos();
             MapMarkerDot newPlaneDot = new MapMarkerDot(lastPos.getLat(), lastPos.getLon());
             newPlaneDot.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
             viewer.addMapMarker(newPlaneDot);
-            mapMarkers.add(newPlaneDot);
 
-            /*if (coords.isEmpty() || coords.size() == 1) {
+            viewer.addMapPolygon(new MapPolygonImpl());
+            if (coords.isEmpty() || coords.size() == 1) {
                 coords.add(new Coordinate(lastPos.getLat(), lastPos.getLon()));
             }
             else {
-                coords.remove();
-           //     viewer.addMapPolygon(new MapPolygonImpl(coords.stream().toList()));
                 coords.add(new Coordinate(lastPos.getLat(), lastPos.getLon()));
-            }*/
+                viewer.addMapPolygon(new MapPolygonImpl(coords));
+                coords.remove(0);
+            }
         }
         gui.recieveMap(viewer);
     }
