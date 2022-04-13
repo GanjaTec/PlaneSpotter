@@ -33,11 +33,9 @@ public class DBOut extends SupperDB {
 	 * @return ResultSet containing the querried Data
 	 */
 
-	public static ResultSet querryDB(String querry) throws Exception {
+	public ResultSet querryDB(String querry) throws Exception {
 		ResultSet rs;
-		Class.forName("com.mysql.cj.jdbc.Driver");
-		String db = "jdbc:sqlite:plane.db";
-		Connection conn = DriverManager.getConnection(db);
+		Connection conn = super.getDBConnection();
 		Statement stmt = conn.createStatement();
 		rs = stmt.executeQuery(querry);
 
@@ -99,6 +97,26 @@ public class DBOut extends SupperDB {
 			e.printStackTrace();
 		}
 		return a;
+	}
+	
+	public int getAirlineIDByTag(String tag) {
+		int id = 1;
+		try {
+			Deserializer ds = new Deserializer();
+			tag = ds.stripString(tag);
+			tag = "'" + tag + "'";
+			ResultSet rs = querryDB(SQLQuerries.getAirlineIDByTag + tag);
+			if(rs.next()) {
+				id = rs.getInt(1);
+			rs.close();
+			}
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+		return id;
 	}
 
 	/**
@@ -206,10 +224,10 @@ public class DBOut extends SupperDB {
 	 * @return
 	 * @throws Exception
 	 */
-	public static int checkPlaneInDB(String icao) {
+	public int checkPlaneInDB(String icao) {
 		String planeFilter = "SELECT ID FROM planes WHERE icaonr = '" + icao + "' LIMIT 1";
 		try {
-			ResultSet rs = querryDB(planeFilter);
+			ResultSet rs = this.querryDB(planeFilter);
 			int id;
 			if (rs.next() == true) {
 				id = rs.getInt(1);
@@ -259,11 +277,11 @@ public class DBOut extends SupperDB {
 
 	}
 
-	public static long getLastTrackingByFlightID(int id) {
+	public long getLastTrackingByFlightID(int id) {
 		long timestamp = -1;
 		String getLastTracking = "SELECT timestamp FROM tracking WHERE flightid == "+ id +" ORDER BY ID DESC LIMIT 1";
 		try {
-			ResultSet rs = querryDB(getLastTracking);
+			ResultSet rs = this.querryDB(getLastTracking);
 
 			while (rs.next()) {
 				timestamp = rs.getLong(1);
@@ -363,9 +381,9 @@ public class DBOut extends SupperDB {
 	 * @return
 	 * @throws Exception
 	 */
-	public static int getLastFlightID() {
+	public int getLastFlightID() {
 		try {
-			ResultSet rs = querryDB(SQLQuerries.getLastFlightID);
+			ResultSet rs = this.querryDB(SQLQuerries.getLastFlightID);
 			int flightid;
 			if (rs.next() == true) {
 				flightid = rs.getInt("ID");
@@ -388,9 +406,9 @@ public class DBOut extends SupperDB {
 	 * @return
 	 * @throws Exception
 	 */
-	public static int checkFlightInDB(Frame f, int planeid) {
+	public int checkFlightInDB(Frame f, int planeid) {
 		try {
-			ResultSet rs = querryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
+			ResultSet rs = this.querryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
 			int flightID;
 			if (rs.next() == true) {
 				flightID = rs.getInt("ID");
@@ -407,10 +425,10 @@ public class DBOut extends SupperDB {
 		return -9999; // weil es -1 schon gibt -> zum besseren debuggen
 	}
 
-	public static List<Integer> checkEnded() {
+	public List<Integer> checkEnded() {
 		List<Integer> flightIDs = new ArrayList<Integer>();
 		try {
-			ResultSet rs = querryDB(SQLQuerries.checkEndOfFlight);
+			ResultSet rs = this.querryDB(SQLQuerries.checkEndOfFlight);
 
 			while (rs.next()) {
 				flightIDs.add(rs.getInt(1));
