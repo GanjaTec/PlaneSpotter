@@ -8,6 +8,7 @@ import planespotter.display.TreePlantation;
 import planespotter.model.DBOut;
 import planespotter.model.ThreadedOutputWizard;
 
+import java.lang.ref.Cleaner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -93,25 +94,26 @@ public class Controller implements Runnable {
     }
 
     /**
-     * sets the MaxLoadedData variable in DBOut
+     * @set the maxLoadedFlights variable in DBOut
      */
     public static void setMaxLoadedData (int max) {
         DBOut.maxLoadedFlights = max;
     }
 
     /**
-     * @return MaxLoadedData variable from DBOut
+     * @return maxLoadedFlights variable from DBOut
      */
     public static int getMaxLoadedData () {
         return DBOut.maxLoadedFlights;
     }
 
     /**
-     * creates a GUI-view for a specific view-type
+     * @creates a GUI-view for a specific view-type
      * @param type is the ViewType, sets the content type for the
      *             created view (e.g. different List-View-Types)
      */
     public static void createDataView (ViewType type, String data) {
+        // TODO ONLY HERE: dispose GUI view(s)
         gui.disposeView();
         try {
             long startTime = System.nanoTime();
