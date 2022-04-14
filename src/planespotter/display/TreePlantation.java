@@ -142,8 +142,8 @@ public final class TreePlantation {
      * creates only ONE flight tree node
      * @return DefaultMutableTreeNode, represents a flight (as a tree)
      */
-    public static DefaultMutableTreeNode createOneFlightTreeNode (Coordinate coord) {
-        Flight f = new DBOut().getFlightByID(200);
+    public static DefaultMutableTreeNode createOneFlightTreeNode (int id) {
+        Flight f = new DBOut().getFlightByID(id);
         // root node
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("");
         String titleStr = "FNR: " + f.getFlightnr() + ", Type: " + f.getPlane().getPlanetype();

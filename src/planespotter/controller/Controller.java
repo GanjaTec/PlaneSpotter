@@ -130,8 +130,6 @@ public class Controller implements Runnable {
                     gui.window.revalidate();
                     break;
                 case MAP_ALL:
-                    // TODO // Dieses Threading ist besser als das alte von LIST_FLIGHT
-                    // TODO // MAP_ALL braucht ca. 9s im Gegensatz zu LIST_FLIGHT mit ca. 12s (bei 2000 DB-entries)
                     if (preloadedFlights == null) {
                         new BlackBeardsNavigator(gui).createAllFlightsMap(listFlights);
                     } else {
@@ -139,7 +137,7 @@ public class Controller implements Runnable {
                     }
                     gui.window.revalidate();
                     break;
-                case MAP_FLIGHTROUTE:   // läuft nicht // hier wird (String) data gebraucht
+                case MAP_FLIGHTROUTE:
                     try {
                         if (data.isBlank()) {
                             new BlackBeardsNavigator(gui).createFlightRoute(new DBOut().getTrackingByFlight(107));
@@ -181,7 +179,8 @@ public class Controller implements Runnable {
     }
 
     /**
-     *
+     * loads flights from the db into a list (threaded)
+     * doesn't look good, but works parallel
      * @param toList is the list where the data will be added
      */
     private static void loadFlightsThreaded (List<Flight> toList) {

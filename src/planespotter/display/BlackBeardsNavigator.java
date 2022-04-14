@@ -9,6 +9,7 @@ import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Position;
 import planespotter.model.DBOut;
 
+import javax.print.attribute.HashAttributeSet;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -25,9 +26,11 @@ import java.util.List;
 public class BlackBeardsNavigator extends Thread {
 
     /**
-     *
+     * class variables
      */
     private static GUI gui;
+    // may be changed to volatile in the future
+    public static HashMap<Position, Integer> shownFlights = new HashMap<Position, Integer>();
 
     /**
      * thread run method TODO checken
@@ -98,6 +101,10 @@ public class BlackBeardsNavigator extends Thread {
             //length is 1 TODO fixen // NullPointerException: lastDataPoint is null
             DataPoint lastDataPoint = (DataPoint) f.getDataPoints().get(lastID);
             Position lastPos = lastDataPoint.getPos();
+            // TODO: adding flight id and position to global HashMap
+            shownFlights = new HashMap<>();
+            shownFlights.put(lastPos, f.getID());
+            // TODO: creating new Map Marker // will be optimized
             MapMarkerDot newPlaneDot = new MapMarkerDot(lastPos.getLat(), lastPos.getLon());
             newPlaneDot.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
             viewer.addMapMarker(newPlaneDot);
