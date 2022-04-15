@@ -15,8 +15,13 @@ public class Main {
      */
     public static void main (String[] args) {
 
+        final Controller control = new Controller();
+
+        // TODO: initializing ThreadPoolExecutor
+        Controller.init();
+
         // TODO: new GUI frame
-        Controller.openWindow();
+        control.openWindow();
     }
 
 }

@@ -1,9 +1,8 @@
 package planespotter.model;
 
 public class ThreadedOutputWizard extends DBOut implements Runnable {
-
     /**
-     * class varisbles
+     * class variables
      */
     private int threadNumber;
     private String threadName;
@@ -22,7 +21,8 @@ public class ThreadedOutputWizard extends DBOut implements Runnable {
     @Override
     public void run () {
         Thread.currentThread().setPriority(9);
-        System.out.println("[DBOut] thread " + this.getName() + " created!");
+        Thread.currentThread().setName(this.threadName);
+        System.out.println("[OutputWizard] thread " + this.getName() + " created!");
     }
 
     /**

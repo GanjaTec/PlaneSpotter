@@ -133,7 +133,7 @@ public final class MenuModels extends GUI {
         progressbar.setBackground(DEFAULT_FONT_COLOR);
         progressbar.setBorderPainted(true);
         progressbar.setForeground(new Color(92, 214, 92));
-        progressbar.setBounds(10, 135, WIDTH_MENUITEM, 25);
+        progressbar.setBounds(10, 135, WIDTH_MENUITEM, 15);
         progressbar.setVisible(false);
         progressbar.setValue(0);
 
@@ -162,10 +162,10 @@ public final class MenuModels extends GUI {
     public static JButton closeViewButton (JDesktopPane parent) {
         // TODO: setting up view close button
         JButton closeView = new JButton("Close");
-        closeView.setBounds(parent.getWidth()-95, parent.getHeight()-45, 80, 30);
-        closeView.setBackground(DEFAULT_BG_COLOR);
+        closeView.setBounds(parent.getWidth()-85, 4, 80, 16);
+        closeView.setBackground(DEFAULT_BORDER_COLOR);
         closeView.setForeground(DEFAULT_FONT_COLOR);
-        closeView.setFont(FONT_MENU);
+        closeView.setFont(new Font("DialogInput", 0, 14));
         closeView.setBorder(MENU_BORDER);
         //closeView.addActionListener(new Listener());
 

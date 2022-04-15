@@ -63,12 +63,39 @@ public final class PanelModels {
     }
 
     /**
-     * list panel
+     * @return head panel for view
+     */
+    public static JPanel viewHeadPanel (JDesktopPane parent) {
+        // TODO: setting up view head panel
+        JPanel viewHead = new JPanel();
+        viewHead.setLayout(null);
+        viewHead.setBorder(LINE_BORDER);
+        viewHead.setBounds(0, 0, parent.getWidth(), 24);
+        viewHead.setBackground(DEFAULT_BG_COLOR);
+
+        return viewHead;
+    }
+
+        /**
+         * @return head label, which is part of viewHeadPanel
+         */
+        public static JLabel headLabel (JPanel parent, String text) {
+            // TODO: setting up head label
+            JLabel head = new JLabel(text + " > ");
+            head.setBounds(5, 0, 400, 24);
+            head.setFont(FONT_MENU.deriveFont(18));
+            head.setForeground(DEFAULT_FONT_COLOR);
+
+            return head;
+        }
+
+    /**
+     * @return list panel
      */
     public static JPanel listPanel (JDesktopPane parent) {
         // TODO: setting up list panel
         JPanel list = new JPanel();
-        list.setBounds(0, 0, parent.getWidth(), parent.getHeight());
+        list.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
         list.setBackground(DEFAULT_BG_COLOR);
         list.setLayout(null);
         list.setBorder(LINE_BORDER);
@@ -82,7 +109,7 @@ public final class PanelModels {
     public static JPanel mapPanel (JDesktopPane parent) {
         // TODO: setting up map panel
         JPanel map = new JPanel();
-        map.setBounds(0, 0, parent.getWidth(), parent.getHeight());
+        map.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
         map.setBackground(DEFAULT_BG_COLOR);
         map.setLayout(null);
         map.setBorder(LINE_BORDER);
@@ -122,7 +149,7 @@ public final class PanelModels {
     public static JPanel startPanel (JDesktopPane parent) {
         // TODO setting up start screen panel
         JPanel start = new JPanel();
-        start.setBounds(0, 0, parent.getWidth(), parent.getHeight());
+        start.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
         start.setBackground(DEFAULT_BG_COLOR);
         start.setLayout(null);
         start.setBorder(LINE_BORDER);

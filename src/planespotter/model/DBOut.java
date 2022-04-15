@@ -22,7 +22,7 @@ public class DBOut extends SupperDB {
 	/**
 	 * test: max loaded flights
 	 */
-	public static int maxLoadedFlights = 10000;
+	public static int maxLoadedFlights = 11500;
 
 
 	/**

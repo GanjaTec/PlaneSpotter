@@ -135,3 +135,47 @@
     }
 
      */
+
+
+
+     old disposeView() :
+
+     /*if (listView != null || mapViewer != null || pStartScreen != null || pInfo != null) { // braucht man das
+                 if (runningView == listView && listView != null) {
+                     listView.setVisible(false);
+                     listView = null;
+                     pList.setVisible(false);
+                     pStartScreen.setVisible(true);
+                     runningView = null;
+                 } else if (runningView == mapViewer && mapViewer != null) {
+                     mapViewer.setVisible(false);
+                     mapViewer = null;
+                     pMap.setVisible(false);
+                     pStartScreen.setVisible(true);
+                     runningView = null;
+                 } else if (runningView == pStartScreen && pStartScreen != null) {
+                     pStartScreen.setVisible(false);
+                 } if (pInfo != null && pInfo.isVisible()) {
+                     pInfo.setVisible(false);
+                     if (flightInfo != null) {
+                         flightInfo.setVisible(false);
+                         flightInfo = null;
+                     }
+                     dpleft.moveToFront(pMenu);
+                     pMenu.setVisible(true);
+                 }
+
+                 if (view_SEM.value() == 1) {
+                     listView = null;
+                     pList.setVisible(false);
+                     mapViewer = null;
+                     pMap.setVisible(false);
+                     pStartScreen.setVisible(true);
+
+                     view_SEM.decrease();
+                 } else {
+                     pStartScreen.setVisible(false);
+                 }
+             }
+             System.gc();
+             revalidateAll();*/
