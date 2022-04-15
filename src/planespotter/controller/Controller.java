@@ -72,9 +72,7 @@ public class Controller implements Runnable {
         long startTime = System.nanoTime();
         System.out.println("[Controller] initialisation started!");
         gui = new GUI();
-            Thread guiThread = new Thread(gui);
-            guiThread.setName("planespotter-gui0");
-        exe.execute(guiThread);
+        exe.execute(gui);
         try {
             this.loadFlightsThreaded();
             System.out.println( "[Controller] " + ANSI_GREEN + "pre-loaded DB-data!" + ANSI_ORANGE +
@@ -137,7 +135,6 @@ public class Controller implements Runnable {
                     } else {
                         gui.recieveTree(new TreePlantation().createTree(TreePlantation.createFlightTreeNode(preloadedFlights), gui));
                     }
-                    gui.window.revalidate();
                     break;
                 case MAP_ALL:
                     if (preloadedFlights == null) {
@@ -145,7 +142,6 @@ public class Controller implements Runnable {
                     } else {
                         new BlackBeardsNavigator(gui).createAllFlightsMap(preloadedFlights);
                     }
-                    gui.window.revalidate();
                     break;
                 case MAP_FLIGHTROUTE:
                     try {
@@ -158,7 +154,7 @@ public class Controller implements Runnable {
                     } catch (NumberFormatException e) {
                         new BlackBeardsNavigator(gui).createFlightRoute(new DBOut().getTrackingByFlight(107));
                     }
-                    gui.window.revalidate();
+                    gui.window.revalidate(); // @deprecated
                     break;
             }
             System.out.println( "[Controller] " + ANSI_GREEN + "loaded " + getMaxLoadedData() + " DB-entries in " +

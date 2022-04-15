@@ -81,6 +81,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      */
     @Override
     public void run() {
+        Thread.currentThread().setName("planespotter-gui");
         JFrame loading = this.loadingScreen();
         loading.setVisible(true);
         new BackgroundWorker().execute();
@@ -369,6 +370,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         viewHeadText.setText(DEFAULT_HEAD_TEXT + "Flight-List");
         // revalidate window -> making the tree visible
         revalidateAll();
+        requestComponentFocus(listView);
     }
 
     /**
@@ -434,11 +436,12 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         mapViewer = map;
         // TODO: adding MapViewer to panel
         pMap.add(mapViewer);
-        pMap.setVisible(true);
         viewHeadText.setText(DEFAULT_HEAD_TEXT + "Map-Viewer");
         // revalidating window frame to refresh everything
+        pMap.setVisible(true);
+        mapViewer.setVisible(true);
+        requestComponentFocus(mapViewer);
         revalidateAll();
-        // setting mapViewer as the running View
     }
 
     /**
@@ -683,6 +686,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         } else if (comp == pMap) {
             pMap.setBounds(0, 24, dpright.getWidth(), dpright.getHeight() - 24);
             mapViewer.setBounds(0, 0, pMap.getWidth(), pMap.getHeight());
+            pViewHead.setBounds(0, 0, dpright.getWidth(), dpright.getHeight()-24);
         }   /*else if (comp == listView) {
             pList.setBounds(0, 24, dpright.getWidth(), dpright.getHeight()-24);
             listView.setBounds(pList.getBounds());
