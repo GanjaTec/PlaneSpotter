@@ -6,16 +6,20 @@ import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
+import org.openstreetmap.gui.jmapviewer.interfaces.TileLoaderListener;
 import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import planespotter.constants.Bounds;
 import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
+import planespotter.dataclasses.Position;
 import planespotter.exceptions.SemaphorError;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -49,7 +53,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     protected JScrollPane spList;
 
     // alternative test path: "C:\\Users\\jml04\\Desktop\\loading.gif"
-    private ImageIcon   loading_gif = new ImageIcon(this.getClass().getResource("/loading.gif"));
+    private final ImageIcon loading_gif = new ImageIcon(this.getClass().getResource("/loading.gif"));
     // contains all map marker coords with datapoints, if mapViewer != null
     public HashMap<Coordinate, DataPoint> mapPoints;
 
@@ -303,12 +307,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * @param tree is the tree to set
      */
     public void recieveTree (JTree tree) {
-        disposeView();
+        //spList.add(listView);
         listView = tree;
-        listView.add(closeView);
-        // TODO: setting up list scrollpane
-        spList = new JScrollPane();
-        spList.add(listView);
+        spList = new JScrollPane(listView);
         spList.setViewportView(listView);
         spList.setBackground(DEFAULT_BG_COLOR);
         spList.setForeground(DEFAULT_ACCENT_COLOR);
@@ -343,11 +344,13 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 runningView = null;
             } else if (runningView == pStartScreen && pStartScreen != null) {
                 pStartScreen.setVisible(false);
-            } else if (pInfo != null) {
+            } if (pInfo != null && pInfo.isVisible()) {
                 pInfo.setVisible(false);
                 if (flightInfo != null) {
+                    flightInfo.setVisible(false);
                     flightInfo = null;
                 }
+                dpleft.moveToFront(pMenu);
                 pMenu.setVisible(true);
             }
 
@@ -371,9 +374,11 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * sets the JMapViewer in mapViewer
      *
      * @param map is the map to be set
+     * @throws IOException, if a map tile has not yet been loaded, but keeps working
+     *                      (therefore: no thorws statements) -> exception will be ignored
      */
     public void recieveMap (JMapViewer map) {
-        disposeView();
+        //disposeView();
         mapViewer = map;
         // TODO: adding MapViewer to panel
         pMap.add(mapViewer);
@@ -388,18 +393,21 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * @return a map prototype (JMapViewer)
      */
     public JMapViewer createMap () {
-        if (runningView != null) {
+        /*if (runningView != null) {
             disposeView();
         }
         if (view_SEM.value() == 1) {
             disposeView();
-        }
+        }*/
         mapViewer = new JMapViewer();
         // TODO: trying to set up JMapViewer
         mapViewer = new JMapViewer(new MemoryTileCache());
         //mapViewer.setBounds(Bounds.RIGHT);
         mapViewer.setBorder(LINE_BORDER);
-        new DefaultMapController(mapViewer);
+        DefaultMapController mapController = new DefaultMapController(mapViewer);
+        mapController.setMovementMouseButton(1);
+        mapViewer.setDisplayToFitMapMarkers();
+        mapViewer.setZoomControlsVisible(false);
         mapViewer.setTileSource(new BingAerialTileSource());
         mapViewer.setVisible(true);
         mapViewer.setBounds(pMap.getBounds());
@@ -447,7 +455,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
-            } else if (text.startsWith("flightroute")) {
+            } else if (text.startsWith("flightroute") || text.startsWith("fl")) {
                 if (view_SEM.value() == 0) {
                     String[] args = text.split(" ");
                     if (args.length > 1) {
@@ -456,6 +464,18 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                     }
                     Controller.createDataView(ViewType.MAP_FLIGHTROUTE, "");
                 }
+            } else if (text.startsWith("closeall")) {
+                pList.setVisible(false);
+                listView = null;
+                pMap.setVisible(false);
+                mapViewer = null;
+                flightInfo.setVisible(false);
+                flightInfo = null;
+                pInfo.setVisible(false);
+                pMenu.setVisible(true);
+                dpleft.moveToFront(pMenu);
+                pStartScreen.setVisible(true);
+                dpright.moveToFront(pStartScreen);
             }
         }
         search.setText("");
@@ -484,6 +504,11 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             listView = null;
             pMap.setVisible(false);
             mapViewer = null;
+            flightInfo.setVisible(false);
+            flightInfo = null;
+            pInfo.setVisible(false);
+            pMenu.setVisible(true);
+            dpleft.moveToFront(pMenu);
         } else if (src == settings) {
             settings_intlFrame.show();
             settings_iFrame_maxLoad.setCaretColor(Color.YELLOW);
@@ -554,7 +579,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     public void processCommand(JMVCommandEvent commandEvent) {
         if (    commandEvent.getCommand() == JMVCommandEvent.COMMAND.ZOOM
                 && commandEvent.getSource() instanceof MapMarkerDot ) {
-            System.out.println("es hat geklappt");
+            System.out.println("jmv listener!!!");
         }
     }
 
@@ -641,12 +666,12 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         ICoordinate clickedCoord = mapViewer.getPosition(point);
         List<MapMarker> mapMarkerList = mapViewer.getMapMarkerList();
         Iterator<MapMarker> it = mapMarkerList.iterator();
-        MapMarker next = null;
+        MapMarker next;
         while (it.hasNext()) {
             next = it.next();
             ICoordinate markerCoord = next.getCoordinate();
             // Positionsabfrage mit leichter Toleranz, damit man den Punkt auch trifft
-            if (clickedCoord.getLat() < markerCoord.getLat() + 0.02 &&
+            if (    clickedCoord.getLat() < markerCoord.getLat() + 0.02 &&
                     clickedCoord.getLat() > markerCoord.getLat() - 0.02 &&
                     clickedCoord.getLon() < markerCoord.getLon() + 0.02 &&
                     clickedCoord.getLon() > markerCoord.getLon() - 0.02) {
@@ -654,11 +679,15 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 newMarker.setBackColor(Color.RED);
                 mapViewer.removeMapMarker(next);
                 mapViewer.addMapMarker(newMarker);
-                // TODO info Tree einfügen!
                 pMenu.setVisible(false);
                 pInfo.setVisible(true);
                 dpright.moveToFront(pInfo);
-                recieveInfoTree(new TreePlantation().createTree(TreePlantation.createOneFlightTreeNode(new Coordinate(0, 0)), this));
+                Position flightPos = new Position(markerCoord.getLat(), markerCoord.getLon());
+                System.out.println(ANSI_ORANGE + BlackBeardsNavigator.shownFlights.size());
+                int flightID = -1;
+                try { flightID = BlackBeardsNavigator.shownFlights.get(flightPos); } catch (Exception ex) {}
+                if (flightID != -1) recieveInfoTree(new TreePlantation().createTree(TreePlantation.createOneFlightTreeNode(flightID), this));
+                else recieveInfoTree(new TreePlantation().createTree(TreePlantation.createOneFlightTreeNode(876), this));
                 synchronized (mapViewer) {
                     mapViewer.setMapMarkerList(resetMapMarkersExceptOne(mapMarkerList, next));
                 }
@@ -670,7 +699,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     /**
      * resets all map markers
      */
-    public List<MapMarker> resetMapMarkersExceptOne(List<MapMarker> markers, MapMarker doNotReset) {
+    // TODO richtig machen, ConcurrentModificationException, irgendwas läuft nichts
+    public List<MapMarker> resetMapMarkersExceptOne (List<MapMarker> markers, MapMarker doNotReset) {
         for (MapMarker  m : markers) {
             if (m != doNotReset) {
                 ICoordinate markerPos = m.getCoordinate();
@@ -763,14 +793,15 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      */
     protected class Semaphor {
         // semaphor, minimum and maximum value
-        private byte SEM, min, max;
+        private byte SEM;
+        private final byte MIN, MAX;
 
         /**
          * Semaphor constructor
          */
         public Semaphor (byte min, byte max, byte beginAt) {
-            this.min = min;
-            this.max = max;
+            this.MIN = min;
+            this.MAX = max;
             if (beginAt <= max && beginAt >= min) {
                 this.SEM = beginAt;
             } else {
@@ -783,7 +814,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
          * @throws SemaphorError
          */
         public void increase () throws SemaphorError {
-            if (SEM < max) {
+            if (SEM < MAX) {
                 SEM++;
             } else {
                 throw new SemaphorError();
@@ -792,10 +823,10 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
 
         /**
          * decreases the semaphor, if its value is 0, SemaphorError is thrown
-         * @throws SemaphorError
+         * @throws SemaphorError is thrown, if SEM is less or equals min
          */
         public void decrease () throws SemaphorError {
-            if (SEM > min) {
+            if (SEM > MIN) {
                 SEM--;
             } else {
                 throw new SemaphorError();
