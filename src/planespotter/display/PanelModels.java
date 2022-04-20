@@ -1,9 +1,6 @@
 package planespotter.display;
 
-import planespotter.constants.Bounds;
-
 import javax.swing.*;
-import javax.swing.plaf.SpinnerUI;
 
 import static planespotter.constants.GUIConstants.*;
 
@@ -160,10 +157,10 @@ public final class PanelModels {
     /**
      *
      */
-    public static JLabel backgroundLabel () {
+    public static JLabel backgroundLabel (JPanel parent) {
         // TODO: setting up background image
         JLabel bground = new JLabel(img);
-        bground.setSize(Bounds.MAINPANEL.width, Bounds.MAINPANEL.height);
+        bground.setSize(parent.getWidth(), parent.getHeight());
 
         return bground;
     }

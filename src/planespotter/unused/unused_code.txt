@@ -179,3 +179,59 @@
              }
              System.gc();
              revalidateAll();*/
+
+
+
+
+    /**
+     * private semaphor class represents a semaphor with methods
+     */
+    protected class Semaphor {
+        // semaphor, minimum and maximum value
+        private byte SEM;
+        private final byte MIN, MAX;
+
+        /**
+         * Semaphor constructor
+         */
+        public Semaphor (byte min, byte max, byte beginAt) {
+            this.MIN = min;
+            this.MAX = max;
+            if (beginAt <= max && beginAt >= min) {
+                this.SEM = beginAt;
+            } else {
+                SEM = min;
+            }
+        }
+
+        /**
+         * increases the semaphor, if its value is 1, SemaphorError is thrown
+         * @throws SemaphorError
+         */
+        public void increase () throws SemaphorError {
+            if (SEM < MAX) {
+                SEM++;
+            } else {
+                throw new SemaphorError();
+            }
+        }
+
+        /**
+         * decreases the semaphor, if its value is 0, SemaphorError is thrown
+         * @throws SemaphorError is thrown, if SEM is less or equals min
+         */
+        public void decrease () throws SemaphorError {
+            if (SEM > MIN) {
+                SEM--;
+            } else {
+                throw new SemaphorError();
+            }
+        }
+
+        /**
+         * @return SEM value
+         */
+        public int value () throws SemaphorError {
+            return SEM;
+        }
+    }

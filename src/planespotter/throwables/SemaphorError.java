@@ -1,4 +1,4 @@
-package planespotter.exceptions;
+package planespotter.throwables;
 
 /**
  * semaphor error is thrown when a semaphor is set to a

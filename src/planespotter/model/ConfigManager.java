@@ -1,6 +1,6 @@
 package planespotter.model;
 
-import planespotter.exceptions.FileAlreadyExistsException;
+import planespotter.throwables.FileAlreadyExistsException;
 
 import java.io.*;
 

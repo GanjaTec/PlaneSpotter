@@ -7,12 +7,11 @@ import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
-import planespotter.constants.Bounds;
 import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
+import planespotter.dataclasses.CustomMapMarker;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
-import planespotter.exceptions.SemaphorError;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,6 +20,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static planespotter.constants.GUIConstants.*;
 
@@ -56,7 +56,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     public HashMap<Coordinate, DataPoint> mapPoints;
 
     // controller instance
-    private Controller controller = new Controller();
+    private Controller controller = Controller.getInstance();
 
     /**
      * view semaphor
@@ -67,8 +67,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * @deprecated
      */
     protected static Component runningView = null;
-    protected Semaphor view_SEM = new Semaphor((byte) 0, (byte) 1, (byte) 0);
-
     /**
      * constructor for GUI
      */
@@ -113,7 +111,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     protected JFrame initialize () {
         // TODO: setting up window
         window = new JFrame("PlaneSpotter");
-        window.setSize(Bounds.ALL.getSize());
+        window.setSize(1280, 720);
         window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         window.setLocationRelativeTo(null);
         // TODO: initializing mainpanel
@@ -155,7 +153,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             pStartScreen = PanelModels.startPanel(dpright);
             pStartScreen.addComponentListener(this);
             // TODO: initializing background label
-            bground = PanelModels.backgroundLabel();
+            bground = PanelModels.backgroundLabel(mainpanel);
             // TODO: initializing pTitle
             menubar = MenuModels.menuBar(pMenu);
             menubar.addComponentListener(this);
@@ -210,7 +208,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         pMap.setVisible(false);
         pStartScreen.setVisible(true);
         runningView = pStartScreen;
-        System.out.println("[GUI] " + ANSI_GREEN + "initialized sucsessfully!" + ANSI_RESET);
+        System.out.println(EKlAuf + "GUI" + EKlZu + ANSI_GREEN + " initialized sucsessfully!" + ANSI_RESET);
         return window;
     }
 
@@ -421,7 +419,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         }
         viewHeadText.setText(DEFAULT_HEAD_TEXT);
         revalidateAll();
-        System.gc();
+        requestComponentFocus(search);
+        Controller.garbageCollector();
     }
 
     /**
@@ -492,18 +491,16 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         if (!text.isBlank()) {
             if (text.startsWith("exit")) {
                 Controller.exit();
-            }
-            if (text.startsWith("loadlist")) {
+            } else if (text.startsWith("loadlist")) {
                 controller.createDataView(ViewType.LIST_FLIGHT, "");
-            }
-            if (text.startsWith("loadmap")) {
+            } else if (text.startsWith("loadmap")) {
                 controller.createDataView(ViewType.MAP_ALL, "");
-            }
-            if (text.startsWith("maxload")) {
+            } else if (text.startsWith("maxload")) {
                 String[] args = text.split(" ");
                 try {
-                    if (Integer.parseInt(args[1]) <= 10000) {
-                        Controller.setMaxLoadedData(Integer.parseInt(args[1]));
+                    int max = Integer.parseInt(args[1]);
+                    if (max <= 10000) {
+                        Controller.setMaxLoadedData(max);
                         System.out.println("maxload changed to " + args[1] + " !");
                     } else {
                         System.out.println("Failed! Maximum is 10000!");
@@ -512,26 +509,17 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                     e.printStackTrace();
                 }
             } else if (text.startsWith("flightroute") || text.startsWith("fl")) {
-                if (view_SEM.value() == 0) {
-                    String[] args = text.split(" ");
-                    if (args.length > 1) {
-                        String id = args[1];
-                        controller.createDataView(ViewType.MAP_FLIGHTROUTE, id);
-                    }
+                disposeView();
+                String[] args = text.split(" ");
+                if (args.length > 1) {
+                    String id = args[1];
+                    controller.createDataView(ViewType.MAP_FLIGHTROUTE, id);
+                } else {
                     controller.createDataView(ViewType.MAP_FLIGHTROUTE, "");
                 }
-            } else if (text.startsWith("closeall")) {
-                pList.setVisible(false);
-                listView = null;
-                pMap.setVisible(false);
-                mapViewer = null;
-                flightInfo.setVisible(false);
-                flightInfo = null;
-                pInfo.setVisible(false);
-                pMenu.setVisible(true);
-                dpleft.moveToFront(pMenu);
-                pStartScreen.setVisible(true);
-                dpright.moveToFront(pStartScreen);
+            } else if (text.startsWith("closeall")) { // unsafe TODO delete
+                System.err.println("'closeall' is unsafe!, destroys the GUI in the most cases");
+                disposeView();
             }
         }
         search.setText("");
@@ -589,7 +577,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                         progressbarStart();
                         Controller.setMaxLoadedData(Integer.parseInt(settings_iFrame_maxLoad.getText()));
                         settings_iFrame_maxLoad.setText("");
-                        settings_intlFrame.dispose();
+                        settings_intlFrame.setVisible(false);
                         // work with background worker?
                         controller.reloadData();
                     }
@@ -717,33 +705,34 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     public void mousePressed(MouseEvent e) {
         Point point = e.getPoint();
         ICoordinate clickedCoord = mapViewer.getPosition(point);
-        List<MapMarker> mapMarkerList = mapViewer.getMapMarkerList();
-        Iterator<MapMarker> it = mapMarkerList.iterator();
-        MapMarker next;
+        List<? extends MapMarker> mapMarkerList = mapViewer.getMapMarkerList();
+        Iterator<? extends MapMarker> it = mapMarkerList.iterator();
+        CustomMapMarker next;
         while (it.hasNext()) {
-            next = it.next();
+            next = (CustomMapMarker) it.next();
             ICoordinate markerCoord = next.getCoordinate();
             // Positionsabfrage mit leichter Toleranz, damit man den Punkt auch trifft
             if (    clickedCoord.getLat() < markerCoord.getLat() + 0.02 &&
                     clickedCoord.getLat() > markerCoord.getLat() - 0.02 &&
                     clickedCoord.getLon() < markerCoord.getLon() + 0.02 &&
                     clickedCoord.getLon() > markerCoord.getLon() - 0.02) {
-                MapMarkerDot newMarker = new MapMarkerDot((Coordinate) markerCoord);
+                CustomMapMarker newMarker = new CustomMapMarker((Coordinate) markerCoord, next.getFlight());
                 newMarker.setBackColor(Color.RED);
-                mapViewer.removeMapMarker(next);
+                mapViewer.removeMapMarker(next); // könnte schwierig sein mit concurrency
                 mapViewer.addMapMarker(newMarker);
                 pMenu.setVisible(false);
                 pInfo.setVisible(true);
                 dpright.moveToFront(pInfo);
                 Position flightPos = new Position(markerCoord.getLat(), markerCoord.getLon());
                 System.out.println(ANSI_ORANGE + BlackBeardsNavigator.shownFlights.size());
-                int flightID = -1;
-                try { flightID = BlackBeardsNavigator.shownFlights.get(flightPos); } catch (Exception ex) {}
+                int flightID = newMarker.getFlight().getID(); // FIXME: why is getFlight == null
+                /*try { flightID = BlackBeardsNavigator.shownFlights.get(flightPos); }
+                catch (Exception ex) {ex.printStackTrace();} // short*/
                 if (flightID != -1) recieveInfoTree(new TreePlantation().createTree(TreePlantation.createOneFlightTreeNode(flightID), this));
                 else recieveInfoTree(new TreePlantation().createTree(TreePlantation.createOneFlightTreeNode(876), this));
-                synchronized (mapViewer) {
-                    mapViewer.setMapMarkerList(resetMapMarkersExceptOne(mapMarkerList, next));
-                }
+                //synchronized (mapViewer) { //
+                    mapViewer.setMapMarkerList(resetMapMarkersExceptOne((CopyOnWriteArrayList<MapMarker>) mapMarkerList, next));
+                //}
                 break;
             }
         }
@@ -753,11 +742,13 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * resets all map markers
      */
     // TODO richtig machen, ConcurrentModificationException, irgendwas läuft nichts
-    public List<MapMarker> resetMapMarkersExceptOne (List<MapMarker> markers, MapMarker doNotReset) {
-        for (MapMarker  m : markers) {
+    public List<MapMarker> resetMapMarkersExceptOne (CopyOnWriteArrayList<MapMarker> markers, MapMarker doNotReset) {
+        Iterator<MapMarker> it = markers.iterator();
+        while (it.hasNext()) {
+            MapMarker m = it.next();
             if (m != doNotReset) {
                 ICoordinate markerPos = m.getCoordinate();
-                markers.remove(m);
+                it.remove();
                 //mapViewer.removeMapMarker(m);
                 MapMarkerDot newMarker = new MapMarkerDot((Coordinate) markerPos);
                 newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR);
@@ -810,16 +801,14 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                         // TODO controller zum Thread machen der die anderen (DBOut) ausführt
                         controller.createDataView(ViewType.LIST_FLIGHT, "");
                         runningView = listView;
-                        view_SEM.increase();
-                        return "[GUI] backround tast started!";
+                        return EKlAuf + "GUI" + EKlZu + " backround tast started!";
                     case LIST_AIRPORT:
                     case LIST_AIRLINE:
                     case LIST_PLANE:
                     case MAP_ALL:
                         controller.createDataView(ViewType.MAP_ALL, "");
                         runningView = mapViewer;
-                        view_SEM.increase();
-                        return "[GUI] background task started!";
+                        return EKlAuf + "GUI" + EKlZu + " background task started!";
                     case MAP_FLIGHTROUTE:
                     default:
                         controller.reloadData();
@@ -837,60 +826,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             if (!Controller.loading) {
                 progressbar.setVisible(false);
             }
-        }
-    }
-
-
-    /**
-     * private semaphor class represents a semaphor with methods
-     */
-    protected class Semaphor {
-        // semaphor, minimum and maximum value
-        private byte SEM;
-        private final byte MIN, MAX;
-
-        /**
-         * Semaphor constructor
-         */
-        public Semaphor (byte min, byte max, byte beginAt) {
-            this.MIN = min;
-            this.MAX = max;
-            if (beginAt <= max && beginAt >= min) {
-                this.SEM = beginAt;
-            } else {
-                SEM = min;
-            }
-        }
-
-        /**
-         * increases the semaphor, if its value is 1, SemaphorError is thrown
-         * @throws SemaphorError
-         */
-        public void increase () throws SemaphorError {
-            if (SEM < MAX) {
-                SEM++;
-            } else {
-                throw new SemaphorError();
-            }
-        }
-
-        /**
-         * decreases the semaphor, if its value is 0, SemaphorError is thrown
-         * @throws SemaphorError is thrown, if SEM is less or equals min
-         */
-        public void decrease () throws SemaphorError {
-            if (SEM > MIN) {
-                SEM--;
-            } else {
-                throw new SemaphorError();
-            }
-        }
-
-        /**
-         * @return SEM value
-         */
-        public int value () throws SemaphorError {
-            return SEM;
         }
     }
 

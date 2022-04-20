@@ -10,6 +10,7 @@ import planespotter.model.ThreadedOutputWizard;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
 
 import static planespotter.constants.GUIConstants.*;
@@ -21,46 +22,46 @@ import static planespotter.constants.GUIConstants.*;
  */
 // TODO we need a scheduled executor to update the data in background
 // TODO -> starts a background worker every (?) minutes
-public class Controller implements Runnable {
+////////////////////////////////////////////////////////////////////
+// TODO eventuell flights tabelle aufteilen in: flightsNow/flightsEnded -> zwei verschiedene DB-Anfragen (?)
+// TODO -> so würde man die Zeit der DB-Anfrage deutlich verkürzen, da nicht unnötig nicht-gebrauchte felder gelesen werden müssen
+public class Controller {
     /**
      * executor services / thread pools
      */
-    // ForkJoinPool -> thread pool for parallel tasks
-    //private ForkJoinPool parallel_exe;
-    // ThreadPoolExecutor for execution of a single thread (GUI)
+    // TODO eventuell JoinForkPool einbauen, kann Aufgaben threaded rekursiv verarbeiten
+    //  (wenn Aufgabe zu groß, wird sie in weitere Teilaufgaben(Threads) aufgeteilt)
+    // ThreadPoolExecutor for thread execution in a thread pool
     private static ThreadPoolExecutor exe = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-    //
+    // boolean loading is true when something is loading
     public static boolean loading;
 
     /**
-     * constructor (bisher nicht benötigt)
+     * constructor (bisher nicht benötigt) -> private -> nur eine instanz
      */
-    public Controller () {
+    private Controller () {
+        this.init();
     }
 
-    /**
-     * Controller run method
-     */
-    @Override
-    public void run() {
-    }
-
-    /**
-     * the GUI
-     */
+    // ONLY Controller instance
+    private static final Controller mainController = new Controller();
+    // GUI
     private static volatile GUI gui;
-
-    public static volatile List<Flight> preloadedFlights = new ArrayList<>();
+    // preloadedFlights list ( should also be thread-safe )
+    public static volatile List<Flight> preloadedFlights = new CopyOnWriteArrayList<>();
+    // preloadedFlights queue ( thread-safe )
+    public static volatile Queue<List<Flight>> listQueue = new ConcurrentLinkedQueue<>();
+    public static volatile int ready = 0;
 
     /**
      * initializes the controller
      */
-    public static void init () {
-        // TODO: setting main thread name
+    public void init () {
+        // TODO: setting up controller thread
         Thread.currentThread().setName("planespotter-main");
-        exe.setKeepAliveTime(1L, TimeUnit.SECONDS);
+        Thread.currentThread().setDaemon(true);
+        exe.setKeepAliveTime(10L, TimeUnit.SECONDS);
         exe.setMaximumPoolSize(11);
-        //exe.setCorePoolSize(1);
     }
 
     /**
@@ -70,12 +71,12 @@ public class Controller implements Runnable {
     public void openWindow() {
         loading = true;
         long startTime = System.nanoTime();
-        System.out.println("[Controller] initialisation started!");
+        System.out.println(EKlAuf + "Controller" + EKlZu + " initialisation started!");
         gui = new GUI();
         exe.execute(gui);
         try {
             this.loadFlightsThreaded();
-            System.out.println( "[Controller] " + ANSI_GREEN + "pre-loaded DB-data!" + ANSI_ORANGE +
+            System.out.println( EKlAuf + "Controller" + EKlZu + ANSI_GREEN + " pre-loaded DB-data!" + ANSI_ORANGE +
                                 " -> completed: " + exe.getCompletedTaskCount() + ", active: " +
                                 exe.getActiveCount() + ", largestPoolSize: " + exe.getLargestPoolSize() + ", time: " +
                                 (System.nanoTime()+-startTime)/Math.pow(1000, 3) + " seconds" + ANSI_RESET);
@@ -89,7 +90,17 @@ public class Controller implements Runnable {
     }
 
     /**
+     *
+     * @return ONE and ONLY controller instance
+     */
+    public static final Controller getInstance() {
+        return mainController;
+    }
+
+    /**
      * returns the gui
+     *
+     * @deprecated
      */
     public static GUI getGUI () {
         return (gui != null) ? gui : null;
@@ -123,25 +134,16 @@ public class Controller implements Runnable {
         gui.disposeView();
         try {
             long startTime = System.nanoTime();
-            List<Flight> listFlights = new ArrayList<>();
             // TODO verschiedene Möglichkeiten (für große Datenmengen)
             if (preloadedFlights == null) {
                 this.loadFlightsThreaded();
             }
             switch (type) {
                 case LIST_FLIGHT:
-                    if (preloadedFlights == null) {
-                        gui.recieveTree(new TreePlantation().createTree(TreePlantation.createFlightTreeNode(listFlights), gui));
-                    } else {
-                        gui.recieveTree(new TreePlantation().createTree(TreePlantation.createFlightTreeNode(preloadedFlights), gui));
-                    }
+                    gui.recieveTree(new TreePlantation().createTree(TreePlantation.createFlightTreeNode(preloadedFlights), gui));
                     break;
                 case MAP_ALL:
-                    if (preloadedFlights == null) {
-                        new BlackBeardsNavigator(gui).createAllFlightsMap(listFlights);
-                    } else {
-                        new BlackBeardsNavigator(gui).createAllFlightsMap(preloadedFlights);
-                    }
+                    new BlackBeardsNavigator(gui).createAllFlightsMap(preloadedFlights);
                     break;
                 case MAP_FLIGHTROUTE:
                     try {
@@ -150,14 +152,14 @@ public class Controller implements Runnable {
                         } else {
                             int flightID = Integer.parseInt(data);
                             new BlackBeardsNavigator(gui).createFlightRoute(new DBOut().getTrackingByFlight(flightID));
+                            gui.recieveInfoTree(new TreePlantation().createTree(TreePlantation.createOneFlightTreeNode(flightID), gui));
                         }
                     } catch (NumberFormatException e) {
                         new BlackBeardsNavigator(gui).createFlightRoute(new DBOut().getTrackingByFlight(107));
                     }
-                    gui.window.revalidate(); // @deprecated
                     break;
             }
-            System.out.println( "[Controller] " + ANSI_GREEN + "loaded " + getMaxLoadedData() + " DB-entries in " +
+            System.out.println( EKlAuf + "Controller" + EKlZu + ANSI_GREEN + " loaded " + getMaxLoadedData() + " DB-entries in " +
                                 (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
         } catch (Exception e) {
             e.printStackTrace();
@@ -173,71 +175,52 @@ public class Controller implements Runnable {
         loading = true;
         preloadedFlights = new ArrayList<>();
         this.loadFlightsThreaded();
-        System.out.println("[Controller] " + ANSI_GREEN + "reloaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
+        System.out.println(EKlAuf + "Controller" + EKlZu + ANSI_GREEN + " reloaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
     }
 
     /**
      * this method is executed when a loading process is done
      */
     private static void done() {
+        ready = 0;
         loading = false;
         gui.progressbarVisible(false);
     }
 
     /**
-     * loads flights from the db into a list (threaded)
+     * loads flights from the db into a list
      * doesn't look good, but works parallel
+     * starts 4 threads/outputWizards which load the flights into a thread-safe queue
+     * and then into the main list ( preloadedFlights )
      */
     private void loadFlightsThreaded () {
-        int from0 = 0;
-        int from1 = from0 + getMaxLoadedData()/4;
-        int from2 = from1 + getMaxLoadedData()/4;
-        int from3 = from2 + getMaxLoadedData()/4;
-        //parallel_exe = new ForkJoinPool(1);
-        System.out.println(ForkJoinPool.getCommonPoolParallelism());
-        if (getMaxLoadedData() <= 1000) {
-            ThreadedOutputWizard out0 = new ThreadedOutputWizard(0);
-            ThreadedOutputWizard out1 = new ThreadedOutputWizard(1);
-            ThreadedOutputWizard out2 = new ThreadedOutputWizard(2);
-            ThreadedOutputWizard out3 = new ThreadedOutputWizard(3);
-            exe.execute(out0);
-            exe.execute(out1);
-            exe.execute(out2);
-            exe.execute(out3);
-            List<Flight> list0 = out0.getAllFlightsFromID(from0, from1);
-            List<Flight> list1 = out1.getAllFlightsFromID(from1, from2-1);
-            List<Flight> list2 = out2.getAllFlightsFromID(from2, from3-1);
-            List<Flight> list3 = out3.getAllFlightsFromID(from3, (from3+getMaxLoadedData()/4)-1);
-            preloadedFlights = new ArrayList<>();
-            synchronized (preloadedFlights) {     // this methods waits if preloadedFlights is modified
-                preloadedFlights.addAll(list0);
-                preloadedFlights.addAll(list1);
-                preloadedFlights.addAll(list2);
-                preloadedFlights.addAll(list3);
+        int from0 = 12000; // startet erst bei ID 12000, weil davor sowieso alles ended->sonst schlechte aufteilung auf threads
+        int plus = (getMaxLoadedData()-from0)/4;
+        int from1 = from0 + plus;
+        int from2 = from1 + plus;
+        int from3 = from2 + plus;
+        ThreadedOutputWizard out0 = new ThreadedOutputWizard(0, from0, from1);
+        ThreadedOutputWizard out1 = new ThreadedOutputWizard(1, from1, from2);
+        ThreadedOutputWizard out2 = new ThreadedOutputWizard(2, from2, from3);
+        ThreadedOutputWizard out3 = new ThreadedOutputWizard(3, from3, (from3+plus));
+        preloadedFlights = new CopyOnWriteArrayList<>();
+        exe.execute(out0);
+        exe.execute(out1);
+        exe.execute(out2);
+        exe.execute(out3);
+            while (ready < 40) { // waits until all threads are ready ( every thread does 'ready+=10' when ready )
             }
-        } else {
-            ThreadedOutputWizard out0 = new ThreadedOutputWizard(0);
-            ThreadedOutputWizard out1 = new ThreadedOutputWizard(1);
-            ThreadedOutputWizard out2 = new ThreadedOutputWizard(2);
-            ThreadedOutputWizard out3 = new ThreadedOutputWizard(3);
-            exe.execute(out0);
-            exe.execute(out1);
-            exe.execute(out2);
-            exe.execute(out3);
-            // test print // why poolsize==1 ?? and not == 4 (bei ForkJoinPool)
-            List<Flight> list0 = out0.getAllFlightsFromID(from0, from1);
-            List<Flight> list1 = out1.getAllFlightsFromID(from1, from2-1);
-            List<Flight> list2 = out2.getAllFlightsFromID(from2, from3-1);
-            List<Flight> list3 = out3.getAllFlightsFromID(from3, (from3+getMaxLoadedData()/4)-1);
-            preloadedFlights = new ArrayList<>();
-            synchronized (preloadedFlights) {     // this methods waits if preloadedFlights is modified
-                preloadedFlights.addAll(list0);
-                preloadedFlights.addAll(list1);
-                preloadedFlights.addAll(list2);
-                preloadedFlights.addAll(list3);
-            }
+        while (!listQueue.isEmpty()) { // adding all loaded lists to the main list ( listQueue is threadSafe )
+            preloadedFlights.addAll(listQueue.poll());
         }
         done();
+    }
+
+    /**
+     * tries to call the garbage collector ( System.gc() )
+     */
+    public static void garbageCollector () {
+        System.gc();
     }
 
     /**

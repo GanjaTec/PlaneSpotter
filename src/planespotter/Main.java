@@ -11,14 +11,11 @@ public class Main {
 
     /**
      * Project Main-Method
-     * @param args -> null
+     * @param args -> can be ignored
      */
     public static void main (String[] args) {
 
-        final Controller control = new Controller();
-
-        // TODO: initializing ThreadPoolExecutor
-        Controller.init();
+        final Controller control = Controller.getInstance();
 
         // TODO: new GUI frame
         control.openWindow();

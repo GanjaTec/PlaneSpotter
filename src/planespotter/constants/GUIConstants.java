@@ -47,7 +47,11 @@ public final class GUIConstants {
      */
     public static final String  ANSI_GREEN = "\u001B[92m",
                                 ANSI_ORANGE = "\u001B[33m",
-                                ANSI_RESET = "\u001B[0m";
+                                ANSI_RESET = "\u001B[0m",
+                                ANSI_YELLOW = "\u001B[33m";
+    // prepared strings which are used often
+    public static final String  EKlAuf = ANSI_ORANGE + "[" + ANSI_RESET,
+                                EKlZu = ANSI_ORANGE + "]" + ANSI_RESET;
 
     /**
      * windows sounds
@@ -69,7 +73,7 @@ public final class GUIConstants {
                             SOUND_START = "win.sound.start";
 
     /**
-     * view-head-panel default text
+     * String constalts
      */
     public static final String DEFAULT_HEAD_TEXT = "PlaneSpotter > ";
 

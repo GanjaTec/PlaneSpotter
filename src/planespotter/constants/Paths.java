@@ -7,6 +7,8 @@ package planespotter.constants;
  *
  * Contains all (absolute) paths to various ressources,
  * root directory is the project directory
+ * 
+ * FIXME: 18.04.2022 files cannot be reached with these paths
  */
 public final class Paths {
 
