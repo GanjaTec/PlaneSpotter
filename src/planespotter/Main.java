@@ -17,8 +17,8 @@ public class Main {
 
         final Controller control = Controller.getInstance();
 
-        // TODO: new GUI frame
-        control.openWindow();
+        // TODO: starting program
+        control.start();
     }
 
 }

@@ -2,8 +2,8 @@ package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
+import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import planespotter.constants.GUIConstants;
-import planespotter.controller.Controller;
 import planespotter.dataclasses.CustomMapMarker;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
@@ -31,6 +31,7 @@ public class BlackBeardsNavigator implements Runnable {
     private static GUI gui;
     // may be changed to volatile in the future, @deprecated
     public static HashMap<Position, Integer> shownFlights = new HashMap<Position, Integer>();
+    public static List<CustomMapMarker> allMapMarkers = new ArrayList<>();
 
     /**
      * thread run method TODO checken
@@ -58,11 +59,13 @@ public class BlackBeardsNavigator implements Runnable {
     public void createFlightRoute (HashMap<Integer, DataPoint> dps) {
         JMapViewer viewer = gui.createMap();
         Set<Integer> keySet = dps.keySet();
+        allMapMarkers = new ArrayList<>();
         for (int key : keySet) {
             DataPoint dp = dps.get(key);
             Position pos = dp.getPos();
             CustomMapMarker newMarker = new CustomMapMarker(new Coordinate(pos.getLat(), pos.getLon()), new DBOut().getFlightByID(dp.getFlightID()));
             viewer.addMapMarker(newMarker);
+            allMapMarkers.add(newMarker);
         }
         gui.recieveMap(viewer);
     }
@@ -76,21 +79,20 @@ public class BlackBeardsNavigator implements Runnable {
         JMapViewer viewer = gui.createMap();
         Rectangle viewSize = viewer.getVisibleRect();
         List<ICoordinate> coords = new ArrayList<>();
+        allMapMarkers = new ArrayList<>();
         for (Flight f : list) {
-            // TODO: getting the last data point => where the plane is at the moment // BUG:
-            //Object[] keySetArray = f.getDataPoints().keySet().toArray(); // keySetArray[keySetArray.length-1]
-            int lastID = new DBOut().getLastTrackingIDByFlightID(f.getID());
-            HashMap<Integer, DataPoint> dataPoints = f.getDataPoints();
+            int lastTracking = new DBOut().getLastTrackingIDByFlightID(f.getID());
             //length is 1 TODO fixen // NullPointerException: lastDataPoint is null
-            DataPoint lastDataPoint = (DataPoint) dataPoints.get(lastID);
+            DataPoint lastDataPoint = f.getDataPoints().get(lastTracking);
             Position lastPos = lastDataPoint.getPos();
             // TODO: adding flight id and position to global HashMap
-            shownFlights = new HashMap<>();
-            shownFlights.put(lastPos, f.getID());
+            /*shownFlights = new HashMap<>();
+            shownFlights.put(lastPos, f.getID());*/
             // TODO: creating new Map Marker // will be optimized
-            CustomMapMarker newPlaneDot = new CustomMapMarker(new Coordinate(lastPos.getLat(), lastPos.getLon()), f);
-            newPlaneDot.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
-            viewer.addMapMarker(newPlaneDot);
+            CustomMapMarker newMarker = new CustomMapMarker(new Coordinate(lastPos.getLat(), lastPos.getLon()), f);
+            newMarker.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
+            viewer.addMapMarker(newMarker);
+            allMapMarkers.add(newMarker);
         //@experimental
             viewer.addMapPolygon(new MapPolygonImpl());
             if (coords.isEmpty() || coords.size() == 1) {

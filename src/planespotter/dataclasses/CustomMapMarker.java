@@ -2,6 +2,7 @@ package planespotter.dataclasses;
 
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
+import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 
 /**
  * @name CustomMapMarker
@@ -10,7 +11,7 @@ import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
  *
  * class CustomMapMarker is a custom map marker which extends from a normal MapMarkerDot
  */
-public class CustomMapMarker extends MapMarkerDot {
+public class CustomMapMarker extends MapMarkerDot implements MapMarker {
 
     // flight at the marker position // one marker has one flight
     private Flight flight;

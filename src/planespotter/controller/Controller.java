@@ -5,11 +5,13 @@ import planespotter.dataclasses.*;
 import planespotter.display.GUI;
 import planespotter.display.BlackBeardsNavigator;
 import planespotter.display.TreePlantation;
+import planespotter.display.UserSettings;
 import planespotter.model.DBOut;
 import planespotter.model.ThreadedOutputWizard;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.*;
 
@@ -32,7 +34,7 @@ public class Controller {
     // TODO eventuell JoinForkPool einbauen, kann Aufgaben threaded rekursiv verarbeiten
     //  (wenn Aufgabe zu groß, wird sie in weitere Teilaufgaben(Threads) aufgeteilt)
     // ThreadPoolExecutor for thread execution in a thread pool
-    private static ThreadPoolExecutor exe = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+    private static final ThreadPoolExecutor exe = (ThreadPoolExecutor) Executors.newCachedThreadPool();
     // boolean loading is true when something is loading
     public static boolean loading;
 
@@ -40,7 +42,7 @@ public class Controller {
      * constructor (bisher nicht benötigt) -> private -> nur eine instanz
      */
     private Controller () {
-        this.init();
+        this.initController();
     }
 
     // ONLY Controller instance
@@ -54,14 +56,39 @@ public class Controller {
     public static volatile int ready = 0;
 
     /**
+     *
+     * @return ONE and ONLY controller instance
+     */
+    public static Controller getInstance() {
+        return mainController;
+    }
+
+    /**
      * initializes the controller
      */
-    public void init () {
+    public void initController () {
+        this.log("initializing controller...");
         // TODO: setting up controller thread
         Thread.currentThread().setName("planespotter-main");
-        Thread.currentThread().setDaemon(true);
         exe.setKeepAliveTime(10L, TimeUnit.SECONDS);
         exe.setMaximumPoolSize(11);
+        this.log(ANSI_GREEN + "controller initialized sucsessfully!");
+    }
+
+    /**
+     * starts the program, opens a gui and initializes the controller
+     */
+    public synchronized void start () {
+        try {
+            this.openWindow();
+            this.loadData();
+            while (loading) {
+                wait();
+            }
+            gui.donePreLoading();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -69,32 +96,51 @@ public class Controller {
      * // TODO überprüfen
      */
     public void openWindow() {
-        loading = true;
         long startTime = System.nanoTime();
-        System.out.println(EKlAuf + "Controller" + EKlZu + " initialisation started!");
-        gui = new GUI();
-        exe.execute(gui);
-        try {
-            this.loadFlightsThreaded();
-            System.out.println( EKlAuf + "Controller" + EKlZu + ANSI_GREEN + " pre-loaded DB-data!" + ANSI_ORANGE +
-                                " -> completed: " + exe.getCompletedTaskCount() + ", active: " +
-                                exe.getActiveCount() + ", largestPoolSize: " + exe.getLargestPoolSize() + ", time: " +
-                                (System.nanoTime()+-startTime)/Math.pow(1000, 3) + " seconds" + ANSI_RESET);
-            gui.donePreLoading();
-        } catch (Exception e) {
-            System.err.println("preloading-tasks interrupted by controller!");
-            e.printStackTrace();
+        loading = true;
+        this.log("initialising the GUI...");
+        if (gui == null) {
+            gui = new GUI();
+            exe.execute(gui);
         }
-        gui.progressbarVisible(false);
-        loading = false;
+        done();
     }
 
     /**
-     *
-     * @return ONE and ONLY controller instance
+     * reloads the DB-data
      */
-    public static final Controller getInstance() {
-        return mainController;
+    // not working correctly
+    public void loadData() {
+        long startTime = System.nanoTime();
+        loading = true;
+        if (gui != null) {
+            gui.progressbarStart();
+        }
+        preloadedFlights = new ArrayList<>();
+        this.loadFlightsThreaded();
+        while (loading) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        done();
+        this.log(ANSI_GREEN + "loaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3)
+                    + " seconds!" + "\n" + ANSI_ORANGE + " -> completed: " + exe.getCompletedTaskCount() +
+                    ", active: " + exe.getActiveCount() + ", largestPoolSize: " + exe.getLargestPoolSize());
+    }
+
+    /**
+     * this method is executed when a loading process is done
+     */
+    private static void done() {
+        ready = 0;
+        loading = false;
+        if (gui != null) {
+            gui.progressbarVisible(false);
+            gui.revalidateAll();
+        }
     }
 
     /**
@@ -104,24 +150,6 @@ public class Controller {
      */
     public static GUI getGUI () {
         return (gui != null) ? gui : null;
-    }
-
-    /**
-     * @set the maxLoadedFlights variable in DBOut
-     */
-    public static void setMaxLoadedData (int max) {
-        DBOut.maxLoadedFlights = max;
-    }
-
-    /**
-     * @return maxLoadedFlights variable from DBOut
-     */
-    public static int getMaxLoadedData () {
-        return DBOut.maxLoadedFlights;
-    }
-
-    public static void startGUIBackgroundWizard () {
-
     }
 
     /**
@@ -159,32 +187,13 @@ public class Controller {
                     }
                     break;
             }
-            System.out.println( EKlAuf + "Controller" + EKlZu + ANSI_GREEN + " loaded " + getMaxLoadedData() + " DB-entries in " +
-                                (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
+            this.log(ANSI_GREEN + "loaded " + UserSettings.getMaxLoadedFlights() + " DB-entries in " +
+                        (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!" + "\n" + ANSI_ORANGE +
+                        " -> completed: " + exe.getCompletedTaskCount() + ", active: " + exe.getActiveCount() +
+                        ", largestPoolSize: " + exe.getLargestPoolSize());
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    /**
-     * reloads the DB-data
-     */
-    // not working correctly
-    public void reloadData() {
-        long startTime = System.nanoTime();
-        loading = true;
-        preloadedFlights = new ArrayList<>();
-        this.loadFlightsThreaded();
-        System.out.println(EKlAuf + "Controller" + EKlZu + ANSI_GREEN + " reloaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3) + " seconds!" + ANSI_RESET);
-    }
-
-    /**
-     * this method is executed when a loading process is done
-     */
-    private static void done() {
-        ready = 0;
-        loading = false;
-        gui.progressbarVisible(false);
     }
 
     /**
@@ -195,7 +204,7 @@ public class Controller {
      */
     private void loadFlightsThreaded () {
         int from0 = 12000; // startet erst bei ID 12000, weil davor sowieso alles ended->sonst schlechte aufteilung auf threads
-        int plus = (getMaxLoadedData()-from0)/4;
+        int plus = (UserSettings.getMaxLoadedFlights()-from0)/4;
         int from1 = from0 + plus;
         int from2 = from1 + plus;
         int from3 = from2 + plus;
@@ -211,9 +220,16 @@ public class Controller {
             while (ready < 40) { // waits until all threads are ready ( every thread does 'ready+=10' when ready )
             }
         while (!listQueue.isEmpty()) { // adding all loaded lists to the main list ( listQueue is threadSafe )
-            preloadedFlights.addAll(listQueue.poll());
+            preloadedFlights.addAll(Objects.requireNonNull(listQueue.poll()));
         }
         done();
+    }
+
+    /**
+     * System.out.println, but with style
+     */
+    public void log (String txt) {
+        System.out.println( EKlAuf + this.getClass().getSimpleName() + EKlZu + " " + txt + ANSI_RESET);
     }
 
     /**
@@ -236,8 +252,8 @@ public class Controller {
      */
     public static List<Flight> testFlightList() {
         List<Flight> list = new ArrayList<>();
-        Flight flight1 = new Flight(1234, new Airport(030, "BER", "Berlin", new Position(222.22, 333.33)),
-                new Airport(040, "HH", "Hamburg", new Position(123.45, 98.76)),
+        Flight flight1 = new Flight(1234, new Airport(30, "BER", "Berlin", new Position(222.22, 333.33)),
+                new Airport(40, "HH", "Hamburg", new Position(123.45, 98.76)),
                 "HHBER",
                 new Plane(10045, "ABC111", "11", "Passagierflugzeug", "REG111", new Airline(21, "A21A", "Airline21")),
                 "BERHH1", null);

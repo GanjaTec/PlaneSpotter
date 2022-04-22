@@ -2,6 +2,7 @@ package planespotter.model;
 
 import planespotter.constants.SQLQuerries;
 import planespotter.dataclasses.*;
+import planespotter.display.UserSettings;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ public class DBOut extends SupperDB {
 	/**
 	 * test: max loaded flights
 	 */
-	public static int maxLoadedFlights = 13000;
+	public static int maxLoadedFlights = UserSettings.getMaxLoadedFlights();
 
 
 	/**
