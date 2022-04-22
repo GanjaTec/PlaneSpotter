@@ -9,7 +9,6 @@ import planespotter.model.DBOut;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.*;
 
 import static planespotter.constants.Configuration.MAX_THREADPOOL_SIZE;
@@ -47,11 +46,9 @@ public class Controller {
     private static final Controller mainController = new Controller();
 
     // only GUI instance
-    public static GUI gui;
+    static GUI gui;
     // preloadedFlights list ( should also be thread-safe )
     public static volatile List<Flight> preloadedFlights = new CopyOnWriteArrayList<>();
-    // preloadedFlights queue ( thread-safe )
-    public static volatile Queue<List<Flight>> listQueue = new ConcurrentLinkedQueue<>();
 
     /**
      * @return ONE and ONLY controller instance
@@ -70,7 +67,7 @@ public class Controller {
         Thread.currentThread().setName("planespotter-main");
         exe.setKeepAliveTime(1L, TimeUnit.SECONDS);
         exe.setMaximumPoolSize(MAX_THREADPOOL_SIZE);
-        scheduled_exe.scheduleAtFixedRate(Controller::garbageCollector, 5, 15, TimeUnit.SECONDS);
+        scheduled_exe.scheduleAtFixedRate(Controller::garbageCollector, 15, 15, TimeUnit.SECONDS);
         this.log(ANSI_GREEN + "executors initialized sucsessfully!");
     }
 
@@ -94,13 +91,13 @@ public class Controller {
      * opens a new GUI window as a thread
      */
     public void openWindow() {
-        long startTime = System.nanoTime();
         loading = true;
         this.log("initialising the GUI...");
         if (gui == null) {
             gui = new GUI();
             exe.execute(gui);
         }
+        BlackBeardsNavigator.initialize();
         this.done();
     }
 
@@ -114,7 +111,7 @@ public class Controller {
             gui.progressbarStart();
         }
         preloadedFlights = new ArrayList<>();
-        new IOWizard().loadFlightsParallel();
+        new IOMaster().loadFlightsParallel();
         this.log(ANSI_GREEN + "loaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3)
                     + " seconds!" + "\n" + ANSI_ORANGE + " -> completed: " + exe.getCompletedTaskCount() +
                     ", active: " + exe.getActiveCount() + ", largestPoolSize: " + exe.getLargestPoolSize());
@@ -140,28 +137,23 @@ public class Controller {
         // TODO ONLY HERE: dispose GUI view(s)
         gui.disposeView();
         // TODO verschiedene Möglichkeiten (für große Datenmengen)
-        BlackBeardsNavigator mapManager = new BlackBeardsNavigator(gui);
         switch (type) {
-            case LIST_FLIGHT:
-                gui.recieveTree(TreePlantation.createTree(TreePlantation.createFlightTreeNode(preloadedFlights), gui));
-                break;
-            case MAP_ALL:
-                mapManager.createAllFlightsMap(preloadedFlights);
-                break;
-            case MAP_FLIGHTROUTE:
+            case LIST_FLIGHT -> gui.recieveTree(
+                    TreePlantation.createTree(TreePlantation.allFlightsTreeNode(preloadedFlights), gui));
+            case MAP_ALL -> BlackBeardsNavigator.createAllFlightsMap(preloadedFlights);
+            case MAP_FLIGHTROUTE -> {
                 try {
                     // TODO recieve-methoden in BBNavigator, bzw. TreePlantation packen (?)
                     if (data.isBlank()) {
-                        mapManager.createFlightRoute(new DBOut().getTrackingByFlight(107));
+                        BlackBeardsNavigator.createFlightRoute(new DBOut().getTrackingByFlight(107));
                     } else {
                         int flightID = Integer.parseInt(data);
-                        mapManager.createFlightRoute(new DBOut().getTrackingByFlight(flightID));
-                        gui.recieveInfoTree(TreePlantation.createTree(TreePlantation.createOneFlightTreeNode(flightID), gui));
+                        BlackBeardsNavigator.createFlightRoute(new DBOut().getTrackingByFlight(flightID));
                     }
                 } catch (NumberFormatException e) {
-                    mapManager.createFlightRoute(new DBOut().getTrackingByFlight(107));
+                    BlackBeardsNavigator.createFlightRoute(new DBOut().getTrackingByFlight(107));
                 }
-                break;
+            }
         }
         this.done();
         this.log(ANSI_GREEN + "view loaded!");
@@ -172,6 +164,10 @@ public class Controller {
      */
     public void log (String txt) {
         System.out.println( EKlAuf + this.getClass().getSimpleName() + EKlZu + " " + txt + ANSI_RESET);
+    }
+
+    public static GUI gui () {
+        return gui;
     }
 
     /**

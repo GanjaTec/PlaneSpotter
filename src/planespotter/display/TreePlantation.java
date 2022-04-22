@@ -1,12 +1,11 @@
 package planespotter.display;
 
-import org.openstreetmap.gui.jmapviewer.Coordinate;
 import planespotter.constants.Paths;
+import planespotter.controller.IOMaster;
 import planespotter.dataclasses.Airline;
 import planespotter.dataclasses.Airport;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Plane;
-import planespotter.model.DBOut;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -33,6 +32,7 @@ public final class TreePlantation {
 
     /**
      * creates a new list component
+     *
      * @return new JList for data models
      * @param node is the root node of the given tree
      */
@@ -40,25 +40,17 @@ public final class TreePlantation {
         JTree listView;
         // initialisation new JTree
         listView = new JTree(node);
-        // Exception in thread "main" java.lang.IndexOutOfBoundsException: Index 1 out of bounds for length 1
-        // bei großen Datensaetzen? schon gefixt?
-        // setting tree attributes
         listView.setFont(FONT_MENU);
         listView.setBackground(DEFAULT_BG_COLOR);
-
         // creating tree cell renderer
         CustomCellRenderer renderer = new CustomCellRenderer();
-        //renderer.setBackgroundNonSelectionColor(DEFAULT_BG_COLOR);
-        //renderer.setBackgroundSelectionColor(DEFAULT_BORDER_COLOR);
         renderer.setBorderSelectionColor(Color.ORANGE);
         renderer.setTextNonSelectionColor(new Color(255, 255, 102));
         renderer.setTextSelectionColor(Color.ORANGE);
         renderer.setLeafIcon(PLANE_ICON);
         // TODO icons setzen
-        // adding it to the tree
         listView.setCellRenderer(renderer);
         listView.setVisible(true);
-        // return
         return listView;
     }
 
@@ -68,7 +60,7 @@ public final class TreePlantation {
      * @param list is the list of flights to be converted into a tree node
      * @return DefaultMutableTreeNode, the root node of the JTree, with all its children nodes
      */
-    public static DefaultMutableTreeNode createFlightTreeNode (List<Flight> list) {
+    public static DefaultMutableTreeNode allFlightsTreeNode (List<Flight> list) {
         Iterator<Flight> it = list.iterator();
         // root node
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("");
@@ -142,8 +134,8 @@ public final class TreePlantation {
      * creates only ONE flight tree node
      * @return DefaultMutableTreeNode, represents a flight (as a tree)
      */
-    public static DefaultMutableTreeNode createOneFlightTreeNode (int id) {
-        Flight f = new DBOut().getFlightByID(id);
+    public static DefaultMutableTreeNode oneFlightTreeNode (int id) {
+        Flight f = new IOMaster().flightByID(id);
         // root node
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("");
         String titleStr = "FNR: " + f.getFlightnr() + ", Type: " + f.getPlane().getPlanetype();
@@ -214,7 +206,7 @@ public final class TreePlantation {
      * creates a 'Tree' of
      * @return root, the root node of the tree
      */
-    public static DefaultMutableTreeNode createAirlineTreeNode (List<Airline> list) {
+    public static DefaultMutableTreeNode allAirlinesTreeNode (List<Airline> list) {
         // list iterator for going through the list
         Iterator<Airline> it = list.iterator();
         // root node
@@ -241,10 +233,15 @@ public final class TreePlantation {
         return root;
     }
 
-        private static class CustomCellRenderer extends DefaultTreeCellRenderer {
+    /**
+     * private class CustomCellRenderer is a custom tree cell renderer
+     * it modifies the style of the tree cells
+     */
+    private static class CustomCellRenderer extends DefaultTreeCellRenderer {
             @Override
             public Component getTreeCellRendererComponent(JTree tree, Object value,
-                                                          boolean sel, boolean exp, boolean leaf, int row, boolean hasFocus) {
+                                                          boolean sel, boolean exp, boolean leaf,
+                                                          int row, boolean hasFocus ) {
                 super.getTreeCellRendererComponent(tree, value, sel, exp, leaf, row, hasFocus);
                 // Assuming you have a tree of Strings
                 String node = (String) ((DefaultMutableTreeNode) value).getUserObject();

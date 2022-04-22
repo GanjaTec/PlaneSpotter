@@ -1,16 +1,24 @@
 package planespotter.controller;
 
+import planespotter.dataclasses.Flight;
 import planespotter.display.UserSettings;
+import planespotter.model.DBOut;
 import planespotter.model.OutputWizard;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static planespotter.controller.Controller.*;
 
-public class IOWizard {
+public class IOMaster {
 
     // controller instance
     private Controller controller = Controller.getInstance();
+
+    // preloadedFlights queue ( thread-safe )
+    private static volatile Queue<List<Flight>> listQueue = new ConcurrentLinkedQueue<>();
 
     /**
      * loads flights into the preloadedFlights list
@@ -41,6 +49,20 @@ public class IOWizard {
         while (!listQueue.isEmpty()) { // adding all loaded lists to the main list ( listQueue is threadSafe )
             preloadedFlights.addAll(Objects.requireNonNull(listQueue.poll()));
         }
+    }
+
+    /**
+     * adds a List of flights to the queue
+     */
+    public static void addToQueue (List<Flight> toAdd) {
+        listQueue.add(toAdd);
+    }
+
+    /**
+     *
+     */
+    public Flight flightByID (int id) {
+        return new DBOut().getFlightByID(id);
     }
 
 }

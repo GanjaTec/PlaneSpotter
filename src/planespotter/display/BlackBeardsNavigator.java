@@ -33,18 +33,22 @@ public class BlackBeardsNavigator {
     /**
      * class variables
      */
-    private static GUI gui = Controller.gui;
+    private static GUI gui;
     // may be changed to volatile in the future, @deprecated
     public static HashMap<Position, Integer> shownFlights = new HashMap<Position, Integer>();
     public static List<CustomMapMarker> allMapMarkers = new ArrayList<>();
 
     /**
-     * constructor, creates a new BlackBeardsNavigator instance with a gui
-     *
-     * @param gui is the used gui
+     * constructor, is private beacuse @unused
      */
-    public BlackBeardsNavigator(GUI gui) {
-        this.gui = gui;
+    private BlackBeardsNavigator() {
+    }
+
+    /**
+     * initializes BlackBeardsNavigator
+     */
+    public static void initialize () {
+        gui = Controller.gui();
     }
 
     /**
@@ -56,14 +60,17 @@ public class BlackBeardsNavigator {
         JMapViewer viewer = gui.mapViewer;
         Set<Integer> keySet = dps.keySet();
         allMapMarkers = new ArrayList<>();
+        int idKey = 0;
         for (int key : keySet) {
             DataPoint dp = dps.get(key);
             Position pos = dp.getPos();
             CustomMapMarker newMarker = new CustomMapMarker(new Coordinate(pos.getLat(), pos.getLon()), new DBOut().getFlightByID(dp.getFlightID()));
             viewer.addMapMarker(newMarker);
             allMapMarkers.add(newMarker);
+            idKey = key;
         }
         gui.recieveMap(viewer);
+        gui.recieveInfoTree(TreePlantation.createTree(TreePlantation.oneFlightTreeNode(dps.get(idKey).getFlightID()), gui));
     }
 
     /**

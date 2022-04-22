@@ -713,8 +713,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 ex.printStackTrace();
             } // short */
             if (flightID != -1)
-                recieveInfoTree(new TreePlantation().createTree(TreePlantation.createOneFlightTreeNode(flightID), this));
-            else recieveInfoTree(new TreePlantation().createTree(TreePlantation.createOneFlightTreeNode(876), this));
+                recieveInfoTree(new TreePlantation().createTree(TreePlantation.oneFlightTreeNode(flightID), this));
+            else recieveInfoTree(new TreePlantation().createTree(TreePlantation.oneFlightTreeNode(876), this));
             this.resetMapViewer(next);
         }
     }

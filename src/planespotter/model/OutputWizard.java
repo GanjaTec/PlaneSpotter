@@ -1,6 +1,6 @@
 package planespotter.model;
 
-import planespotter.controller.Controller;
+import planespotter.controller.IOMaster;
 import planespotter.dataclasses.Flight;
 import planespotter.throwables.ThreadOverheadError;
 
@@ -55,7 +55,7 @@ public class OutputWizard extends DBOut implements Runnable {
         int flightsToLoad = toID - fromID;
         if (flightsToLoad <= flightsPerTask) {
             List<Flight> flights = super.getAllFlightsFromID(fromID, toID);
-            Controller.listQueue.add(flights);
+            IOMaster.addToQueue(flights);
         } else {
             int newEndID = to-(flightsToLoad/2);
             OutputWizard out0 = new OutputWizard(executor, threadNumber+1, fromID, newEndID, flightsPerTask);
