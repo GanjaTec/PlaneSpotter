@@ -23,17 +23,24 @@ public class IOWizard {
         int maxFlightsPerTask = (endID-startID)/100;
         OutputWizard outputWizard;
         if (maxFlightsPerTask <= 20) {
-            outputWizard = new OutputWizard(0, startID, endID, 20);
+            outputWizard = new OutputWizard(exe, 0, startID, endID, 20);
         } else {
-            outputWizard = new OutputWizard(0, startID, endID, maxFlightsPerTask);
+            outputWizard = new OutputWizard(exe, 0, startID, endID, maxFlightsPerTask);
         }
         exe.execute(outputWizard);
-            while (exe.getActiveCount() > 0) {
-            }
+        this.waitAndLoadAll();
+        controller.done();
+    }
+
+    /**
+     * waits while data is loading and then adds all loaded data to the preloadedFlights list
+     */
+    private void waitAndLoadAll () {
+        while (exe.getActiveCount() > 0) {
+        }
         while (!listQueue.isEmpty()) { // adding all loaded lists to the main list ( listQueue is threadSafe )
             preloadedFlights.addAll(Objects.requireNonNull(listQueue.poll()));
         }
-        controller.done();
     }
 
 }

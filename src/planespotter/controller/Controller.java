@@ -31,8 +31,8 @@ public class Controller {
      */
     // TODO eventuell JoinForkPool einbauen, kann Aufgaben threaded rekursiv verarbeiten
     //  (wenn Aufgabe zu groß, wird sie in weitere Teilaufgaben(Threads) aufgeteilt)
-    // ThreadPoolExecutor for thread execution in a thread pool
-    public static final ThreadPoolExecutor exe = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+    // ThreadPoolExecutor for thread execution in a thread pool -> package-private (only usable in controller package)
+    static final ThreadPoolExecutor exe = (ThreadPoolExecutor) Executors.newCachedThreadPool();
     private static final ScheduledExecutorService scheduled_exe = Executors.newScheduledThreadPool(1); // erstmal 1, wird noch mehr
     // boolean loading is true when something is loading
     public static boolean loading;

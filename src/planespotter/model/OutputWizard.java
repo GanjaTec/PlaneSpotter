@@ -6,21 +6,23 @@ import planespotter.throwables.ThreadOverheadError;
 
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import static planespotter.constants.GUIConstants.*;
-import static planespotter.controller.Controller.exe;
 
 public class OutputWizard extends DBOut implements Runnable {
     /**
      * class variables
      */
+    private ThreadPoolExecutor executor;
     private int threadNumber, from, to, flightsPerTask;
     private String threadName;
 
     /**
      * constructor
      */
-    public OutputWizard(int tNumber, int from, int to, int flightsPerTask) {
+    public OutputWizard(ThreadPoolExecutor executor, int tNumber, int from, int to, int flightsPerTask) {
+        this.executor = executor;
         this.threadNumber = tNumber;
         this.threadName = "output-wizard" + this.threadNumber;
         this.from = from;
@@ -56,11 +58,11 @@ public class OutputWizard extends DBOut implements Runnable {
             Controller.listQueue.add(flights);
         } else {
             int newEndID = to-(flightsToLoad/2);
-            OutputWizard out0 = new OutputWizard(threadNumber+1, fromID, newEndID, flightsPerTask);
-            OutputWizard out1 = new OutputWizard(threadNumber+2, newEndID, toID, flightsPerTask);
+            OutputWizard out0 = new OutputWizard(executor, threadNumber+1, fromID, newEndID, flightsPerTask);
+            OutputWizard out1 = new OutputWizard(executor, threadNumber+2, newEndID, toID, flightsPerTask);
             try {
-                exe.execute(out0);
-                exe.execute(out1);
+                executor.execute(out0);
+                executor.execute(out1);
             } catch (RejectedExecutionException e) {
                 throw new ThreadOverheadError();
             }
