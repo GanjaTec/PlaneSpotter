@@ -46,8 +46,8 @@ public class Controller {
     // ONLY Controller instance
     private static final Controller mainController = new Controller();
 
-    // GUI
-    private static volatile GUI gui;
+    // only GUI instance
+    public static GUI gui;
     // preloadedFlights list ( should also be thread-safe )
     public static volatile List<Flight> preloadedFlights = new CopyOnWriteArrayList<>();
     // preloadedFlights queue ( thread-safe )
@@ -163,6 +163,7 @@ public class Controller {
                 }
                 break;
         }
+        this.done();
         this.log(ANSI_GREEN + "view loaded!");
     }
 

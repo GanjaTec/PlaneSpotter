@@ -3,16 +3,21 @@ package planespotter.display;
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
+import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
 import planespotter.constants.GUIConstants;
+import planespotter.controller.Controller;
 import planespotter.dataclasses.CustomMapMarker;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Position;
 import planespotter.model.DBOut;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static planespotter.constants.GUIConstants.LINE_BORDER;
 
 
 /**
@@ -23,24 +28,15 @@ import java.util.List;
  * map manager:
  *  manages the map data and contains methods which are executed on the mapView
  */
-public class BlackBeardsNavigator implements Runnable {
+public class BlackBeardsNavigator {
 
     /**
      * class variables
      */
-    private static GUI gui;
+    private static GUI gui = Controller.gui;
     // may be changed to volatile in the future, @deprecated
     public static HashMap<Position, Integer> shownFlights = new HashMap<Position, Integer>();
     public static List<CustomMapMarker> allMapMarkers = new ArrayList<>();
-
-    /**
-     * thread run method TODO checken
-     */
-    @Override
-    public void run () {
-        Thread.currentThread().setName("BlackBeards-Navigator");
-        Thread.currentThread().setPriority(8);
-    }
 
     /**
      * constructor, creates a new BlackBeardsNavigator instance with a gui
@@ -56,8 +52,8 @@ public class BlackBeardsNavigator implements Runnable {
      *
      * @param dps is the given tracking-hashmap
      */
-    public void createFlightRoute (HashMap<Integer, DataPoint> dps) {
-        JMapViewer viewer = gui.createMap();
+    public static void createFlightRoute (HashMap<Integer, DataPoint> dps) {
+        JMapViewer viewer = gui.mapViewer;
         Set<Integer> keySet = dps.keySet();
         allMapMarkers = new ArrayList<>();
         for (int key : keySet) {
@@ -75,8 +71,8 @@ public class BlackBeardsNavigator implements Runnable {
      *
      * @param list is the given flight list
      */
-    public void createAllFlightsMap (List<Flight> list) {
-        JMapViewer viewer = gui.createMap();
+    public static void createAllFlightsMap (List<Flight> list) {
+        JMapViewer viewer = gui.mapViewer;
         Rectangle viewSize = viewer.getVisibleRect();
         List<ICoordinate> coords = new ArrayList<>();
         allMapMarkers = new ArrayList<>();
@@ -107,7 +103,23 @@ public class BlackBeardsNavigator implements Runnable {
         gui.recieveMap(viewer);
     }
 
+    /**
+     * @return a map prototype (JMapViewer)
+     */
+    public static JMapViewer defaultMapViewer (JPanel parent) {
+        // TODO: trying to set up JMapViewer
+        JMapViewer viewer = new JMapViewer(new MemoryTileCache());
+        viewer.setBorder(LINE_BORDER);
+        DefaultMapController mapController = new DefaultMapController(viewer);
+        mapController.setMovementMouseButton(1);
+        viewer.setDisplayToFitMapMarkers();
+        viewer.setZoomControlsVisible(false);
+        viewer.setTileSource(new BingAerialTileSource());
+        viewer.setVisible(true);
+        viewer.setBounds(parent.getBounds());
 
+        return viewer;
+    }
 
 
 

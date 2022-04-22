@@ -304,3 +304,64 @@
                         list.add(flight2);
                         return list;
                     }
+
+
+
+                    /**
+                         * runs background task
+                         */
+                        private void runBackgroundTask(ViewType type) {
+                            BackgroundWorker bgworker = new BackgroundWorker();
+                            synchronized (this) {
+                                bgworker.actionViewType = type;
+                                bgworker.execute();
+                            }
+                        }
+
+                        /**
+                         * gui intern background worker class
+                         */
+                        class BackgroundWorker extends SwingWorker<String, Void> {
+
+                            public ViewType actionViewType;
+
+                            /**
+                             * runs a background task
+                             * is this still needed?
+                             */
+                            @Override
+                            protected String doInBackground() throws Exception {
+                                if (!Controller.loading) {
+                                    switch (actionViewType) {
+                                        case LIST_FLIGHT:
+                                            // TODO controller zum Thread machen der die anderen (DBOut) ausführt
+                                            controller.createDataView(LIST_FLIGHT, "");
+                                            runningView = listView;
+                                            return EKlAuf + "GUI" + EKlZu + " backround tast started!";
+                                        case LIST_AIRPORT:
+                                        case LIST_AIRLINE:
+                                        case LIST_PLANE:
+                                        case MAP_ALL:
+                                            controller.createDataView(MAP_ALL, "");
+                                            runningView = mapViewer;
+                                            return EKlAuf + "GUI" + EKlZu + " background task started!";
+                                        case MAP_FLIGHTROUTE:
+                                        default:
+                                            controller.loadData();
+                                    }
+                                }
+                                return "";
+                            }
+
+                            /**
+                             * background worker done method
+                             * is executed when a background task is done
+                             */
+                            @Override
+                            protected void done () {
+                                if (!Controller.loading) {
+                                    progressbar.setVisible(false);
+                                    super.cancel(true);
+                                }
+                            }
+                        }

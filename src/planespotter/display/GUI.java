@@ -6,7 +6,6 @@ import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
-import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
 import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.CustomMapMarker;
@@ -82,7 +81,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         Thread.currentThread().setName("planespotter-gui");
         JFrame loading = this.loadingScreen();
         loading.setVisible(true);
-        new BackgroundWorker().execute();
 
     }
 
@@ -135,14 +133,20 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             pTitle = PanelModels.titlePanel(this.mainpanel);
             pTitle.addComponentListener(this);
             // TODO: initializing view head panel
-            pViewHead = PanelModels.viewHeadPanel(this.dpright);
-            pViewHead.addComponentListener(this);
+            this.pViewHead = PanelModels.viewHeadPanel(this.dpright);
+            this.pViewHead.addComponentListener(this);
             // TODO: initializing list panel
             this.pList = PanelModels.listPanel(this.dpright);
             this.pList.addComponentListener(this);
             // TODO: initializing map panel
             this.pMap = PanelModels.mapPanel(this.dpright);
             this.pMap.addComponentListener(this);
+                // TODO: initializing map viewer
+                this.mapViewer = BlackBeardsNavigator.defaultMapViewer(pMap);
+                mapViewer.addKeyListener(this);
+                mapViewer.addComponentListener(this);
+                mapViewer.addMouseListener(this);
+                mapViewer.addJMVListener(this);
             // TODO: initializing menu panel
             this.pMenu = PanelModels.menuPanel(dpleft);
             this.pMenu.addComponentListener(this);
@@ -150,8 +154,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             this.pInfo = PanelModels.infoPanel(dpleft);
             this.pInfo.addComponentListener(this);
             // TODO: initializing start screen panel
-            pStartScreen = PanelModels.startPanel(this.dpright);
-            pStartScreen.addComponentListener(this);
+            this.pStartScreen = PanelModels.startPanel(this.dpright);
+            this.pStartScreen.addComponentListener(this);
                 // TODO: initializing search panel components
                 searchFor_cmbBox = MenuModels.searchFor_cmbBox();
                 searchFor_cmbBox.addActionListener(this);     // TODO evtl Enum EventType, dann event klasse für even
@@ -162,8 +166,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             // TODO: initializing background label
             bground = PanelModels.backgroundLabel(this.mainpanel);
             // TODO: initializing pTitle
-            menubar = MenuModels.menuBar(this.pMenu);
-            menubar.addComponentListener(this);
+            this.menubar = MenuModels.menuBar(this.pMenu);
+            this.menubar.addComponentListener(this);
                 // TODO: initializing buttons
                 datei = MenuModels.fileButton();
                 datei.addActionListener(this);
@@ -173,20 +177,20 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 btMap.addActionListener(this);
                 settings = MenuModels.settingsButton();
                 settings.addActionListener(this);
-                tfSearch = MenuModels.searchTextField(menubar);
+                tfSearch = MenuModels.searchTextField(this.menubar);
                 tfSearch.addKeyListener(this);
-                search_settings = MenuModels.searchFilterButton(menubar);
+                search_settings = MenuModels.searchFilterButton(this.menubar);
                 search_settings.addActionListener(this);
                 search_settings.addComponentListener(this);
-                progressbar = MenuModels.progressBar(menubar);
+                progressbar = MenuModels.progressBar(this.menubar);
                 progressbar.addComponentListener(this);
-                settings_intlFrame = MenuModels.settings_intlFrame(this.mainpanel);
-                settings_intlFrame.addComponentListener(this);
-                settings_iFrame_maxLoad = MenuModels.settingsOP_maxLoadTxtField();
-                settings_iFrame_maxLoad.addComponentListener(this);
-                settings_iFrame_maxLoad.addKeyListener(this);
+                this.settings_intlFrame = MenuModels.settings_intlFrame(this.mainpanel);
+                this.settings_intlFrame.addComponentListener(this);
+                this.settings_iFrame_maxLoad = MenuModels.settingsOP_maxLoadTxtField();
+                this.settings_iFrame_maxLoad.addComponentListener(this);
+                this.settings_iFrame_maxLoad.addKeyListener(this);
             // TODO: initializing view head text label
-            viewHeadText = PanelModels.headLabel(pViewHead, "PlaneSpotter");
+            viewHeadText = PanelModels.headLabel(this.pViewHead, "PlaneSpotter");
             // TODO: initializing close view button
             closeView = MenuModels.closeViewButton(this.dpright);
             closeView.addActionListener(this);
@@ -201,7 +205,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             // TODO: setting up start screen
             ImageIcon start_image = new ImageIcon(this.getClass().getResource("/start_image.png"));
             lblStartScreen = new JLabel(start_image);
-            lblStartScreen.setBounds(0, 0, pStartScreen.getWidth(), pStartScreen.getHeight());
+            lblStartScreen.setBounds(0, 0, this.pStartScreen.getWidth(), this.pStartScreen.getHeight());
             lblStartScreen.setBorder(LINE_BORDER);
             // TODO: adding test bground image
             ImageIcon test_img = new ImageIcon(this.getClass().getResource("/ttowers.png"));
@@ -213,9 +217,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         // TODO: setting list and map panel invisible, start screen visible
         this.pList.setVisible(false);
         this.pMap.setVisible(false);
-        pStartScreen.setVisible(true);
-        runningView = pStartScreen;
-        controller.log(ANSI_GREEN + "GUI initialized sucsessfully!" + ANSI_RESET);
+        this.pStartScreen.setVisible(true);
+        runningView = this.pStartScreen;
+        this.controller.log(ANSI_GREEN + "GUI initialized sucsessfully!" + ANSI_RESET);
         return this.window;
     }
 
@@ -226,25 +230,27 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     private void addAllToWinow() {
         // Adding to Window
         // TODO: adding everything to menubar
-        menubar.add(datei);
-        menubar.add(btList);
-        menubar.add(btMap);
-        menubar.add(settings);
-        menubar.add(tfSearch);
-        menubar.add(search_settings);
-        menubar.add(progressbar);
+        this.menubar.add(datei);
+        this.menubar.add(btList);
+        this.menubar.add(btMap);
+        this.menubar.add(settings);
+        this.menubar.add(tfSearch);
+        this.menubar.add(search_settings);
+        this.menubar.add(progressbar);
         // TODO: adding menubar to menu panel
-        this.pMenu.add(menubar);
+        this.pMenu.add(this.menubar);
+        // TODO: adding mapViewer to map panel
+        this.pMap.add(this.mapViewer);
         // TODO: adding label to start screen panel
-        pStartScreen.add(lblStartScreen);
+        this.pStartScreen.add(lblStartScreen);
         // TODO: adding everything to pViewHead
-        pViewHead.add(viewHeadText);
-        pViewHead.add(closeView);
+        this.pViewHead.add(viewHeadText);
+        this.pViewHead.add(closeView);
         // TODO: adding everything to right desktop pane
-        this.dpright.add(pViewHead);
+        this.dpright.add(this.pViewHead);
         this.dpright.add(this.pList);
         this.dpright.add(this.pMap);
-        this.dpright.add(pStartScreen);
+        this.dpright.add(this.pStartScreen);
         // TODO: adding everything to left desktop pane
         dpleft.add(this.pMenu);
         dpleft.add(this.pInfo);
@@ -252,12 +258,12 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         pTitle.add(PanelModels.titleTxtLabel(pTitle));
         pTitle.add(title_bground);
         // TODO: adding textfield to internal settings frame
-        settings_iFrame_maxLoad.setText(UserSettings.getMaxLoadedFlights() + "");
-        settings_intlFrame.add(settings_iFrame_maxLoad);
+        this.settings_iFrame_maxLoad.setText(UserSettings.getMaxLoadedFlights() + "");
+        this.settings_intlFrame.add(this.settings_iFrame_maxLoad);
         // TODO: adding title panel to frame
         this.mainpanel.add(pTitle);
         // TODO: adding settings internal frame to mainpanel
-        this.mainpanel.add(settings_intlFrame);
+        this.mainpanel.add(this.settings_intlFrame);
         // TODO: moving flist and fmenu to front
         this.dpright.setVisible(true);
         dpleft.setVisible(true);
@@ -366,9 +372,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      */
     public void recieveTree (JTree tree) {
         listView = tree;
-        spList = listScrollPane(listView);
+        this.spList = listScrollPane(listView);
         // TODO: adding list scrollpane to list pane
-        this.pList.add(spList);
+        this.pList.add(this.spList);
         this.dpright.moveToFront(this.pList);
         this.pList.setVisible(true);
         viewHeadText.setText(DEFAULT_HEAD_TEXT + "Flight-List");
@@ -403,8 +409,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * if no other view is opened, nothing is done
      */
     public void disposeView () {
-        if (pStartScreen != null) {
-            pStartScreen.setVisible(false);
+        if (this.pStartScreen != null) {
+            this.pStartScreen.setVisible(false);
         } if (listView != null) {
             this.pList.remove(listView);
             listView.setVisible(false);
@@ -413,7 +419,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         } if (this.mapViewer != null) {
             this.pMap.remove(this.mapViewer);
             this.mapViewer.setVisible(false);
-            this.mapViewer = null;
             this.pMap.setVisible(false);
         } if (flightInfo != null) {
             flightInfo.setVisible(false);
@@ -447,32 +452,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         revalidateAll();
     }
 
-    /**
-     * @return a map prototype (JMapViewer)
-     */
-    public JMapViewer createMap () {
-        // TODO: trying to set up JMapViewer
-        this.mapViewer = new JMapViewer(new MemoryTileCache());
-        this.mapViewer.setBorder(LINE_BORDER);
-        DefaultMapController mapController = new DefaultMapController(this.mapViewer);
-        mapController.setMovementMouseButton(1);
-        this.mapViewer.setDisplayToFitMapMarkers();
-        this.mapViewer.setZoomControlsVisible(false);
-        this.mapViewer.setTileSource(new BingAerialTileSource());
-        this.mapViewer.setVisible(true);
-        this.mapViewer.setBounds(this.pMap.getBounds());
-        this.mapViewer.addKeyListener(this);
-        this.mapViewer.addComponentListener(this);
-        this.mapViewer.addMouseListener(this);
-        this.mapViewer.addJMVListener(this);
-        // TODO: adding MapViewer to panel
-        this.pMap.add(this.mapViewer);
-        this.pMap.setVisible(true);
-        // revalidating window frame to refresh everything
-        revalidateAll();
 
-        return this.mapViewer;
-    }
 
     /**
      * enters the text in the textfield (use for key listener)
@@ -483,18 +463,18 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             if (text.startsWith("exit")) {
                 Controller.exit();
             } else if (text.startsWith("loadlist")) {
-                controller.createDataView(LIST_FLIGHT, "");
+                this.controller.createDataView(LIST_FLIGHT, "");
             } else if (text.startsWith("loadmap")) {
-                controller.createDataView(MAP_ALL, "");
+                this.controller.createDataView(MAP_ALL, "");
             } else if (text.startsWith("maxload")) {
                 String[] args = text.split(" ");
                 try {
                     int max = Integer.parseInt(args[1]);
                     if (max <= 10000) {
                         UserSettings.setMaxLoadedFlights(max);
-                        controller.log("maxload changed to " + args[1] + " !");
+                        this.controller.log("maxload changed to " + args[1] + " !");
                     } else {
-                        controller.log("Failed! Maximum is 10000!");
+                        this.controller.log("Failed! Maximum is 10000!");
                     }
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
@@ -504,9 +484,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 String[] args = text.split(" ");
                 if (args.length > 1) {
                     String id = args[1];
-                    controller.createDataView(MAP_FLIGHTROUTE, id);
+                    this.controller.createDataView(MAP_FLIGHTROUTE, id);
                 } else {
-                    controller.createDataView(MAP_FLIGHTROUTE, "");
+                    this.controller.createDataView(MAP_FLIGHTROUTE, "");
                 }
             } else if (text.startsWith("closeall")) { // unsafe TODO delete
                 System.err.println("'closeall' is unsafe!, destroys the GUI in the most cases");
@@ -530,19 +510,19 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
 
         } else if (src == btList) {
             progressbarStart();
-            runBackgroundTask(LIST_FLIGHT);
+            this.controller.createDataView(LIST_FLIGHT, "");
         } else if (src == btMap) {
             progressbarStart();
-            runBackgroundTask(MAP_ALL);
+            this.controller.createDataView(MAP_ALL, "");
         } else if (src == closeView) {
             disposeView();
-            pStartScreen.setVisible(true);
-            dpright.moveToFront(pStartScreen);
+            this.pStartScreen.setVisible(true);
+            dpright.moveToFront(this.pStartScreen);
         } else if (src == settings) {
-            settings_intlFrame.show();
-            settings_iFrame_maxLoad.setCaretColor(Color.YELLOW);
-            settings_iFrame_maxLoad.setCaretPosition(settings_iFrame_maxLoad.getText().length());
-            settings_iFrame_maxLoad.grabFocus();
+            this.settings_intlFrame.show();
+            this.settings_iFrame_maxLoad.setCaretColor(Color.YELLOW);
+            this.settings_iFrame_maxLoad.setCaretPosition(this.settings_iFrame_maxLoad.getText().length());
+            this.settings_iFrame_maxLoad.grabFocus();
         }
     }
 
@@ -560,20 +540,20 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 if (tfSearch.hasFocus())
                     enterText();
             }
-        } else if (src == settings_iFrame_maxLoad) {
+        } else if (src == this.settings_iFrame_maxLoad) {
             if (key == KeyEvent.VK_ENTER) {
                 try {
                     // TODO fixen: settings fenster schließt erst nach loading
-                    if (Integer.parseInt(settings_iFrame_maxLoad.getText()) >= 4) {
+                    if (Integer.parseInt(this.settings_iFrame_maxLoad.getText()) >= 4) {
                         progressbarStart();
-                        UserSettings.setMaxLoadedFlights(Integer.parseInt(settings_iFrame_maxLoad.getText()));
-                        settings_iFrame_maxLoad.setText("");
-                        settings_intlFrame.setVisible(false);
+                        UserSettings.setMaxLoadedFlights(Integer.parseInt(this.settings_iFrame_maxLoad.getText()));
+                        this.settings_iFrame_maxLoad.setText("");
+                        this.settings_intlFrame.setVisible(false);
                         // work with background worker?
-                        controller.loadData();
+                        this.controller.loadData();
                     }
                 } catch (NumberFormatException ex) {
-                    settings_iFrame_maxLoad.setText("Error");
+                    this.settings_iFrame_maxLoad.setText("Error");
                 }
 
             }
@@ -628,23 +608,23 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             this.pMenu.setBounds(0, 0, dpleft.getWidth(), dpleft.getHeight());
             this.pInfo.setBounds(0, 0, dpleft.getWidth(), dpleft.getHeight());
         } else if (comp == this.dpright) {
-            pViewHead.setBounds(0, 0, this.dpright.getWidth(), this.dpright.getHeight()-24);
+            this.pViewHead.setBounds(0, 0, this.dpright.getWidth(), this.dpright.getHeight()-24);
             this.pList.setBounds(0, 24, this.dpright.getWidth(), this.dpright.getHeight()-24);
             this.pMap.setBounds(0, 24, this.dpright.getWidth(), this.dpright.getHeight()-24);
-            pStartScreen.setBounds(0, 24, this.dpright.getWidth(), this.dpright.getHeight()-24);
+            this.pStartScreen.setBounds(0, 24, this.dpright.getWidth(), this.dpright.getHeight()-24);
         } else if (comp == pTitle) {
             title_bground.setBounds(pTitle.getBounds());
             title.setBounds(pTitle.getWidth()/2-200, 0, 400, 70);
-        } else if (comp == pViewHead) {
-            closeView.setBounds(pViewHead.getWidth()-85, 4, 80, 16);
-        } else if (comp == pStartScreen) {
-            lblStartScreen.setBounds(0, 0, pStartScreen.getWidth(), pStartScreen.getHeight());
-        } else if (comp == menubar) {
-            tfSearch.setBounds(10, menubar.getHeight()-80, 255, 25);
-            search_settings.setBounds(10, menubar.getHeight()-40, 255, 25);
+        } else if (comp == this.pViewHead) {
+            closeView.setBounds(this.pViewHead.getWidth()-85, 4, 80, 16);
+        } else if (comp == this.pStartScreen) {
+            lblStartScreen.setBounds(0, 0, this.pStartScreen.getWidth(), this.pStartScreen.getHeight());
+        } else if (comp == this.menubar) {
+            tfSearch.setBounds(10, this.menubar.getHeight()-80, 255, 25);
+            search_settings.setBounds(10, this.menubar.getHeight()-40, 255, 25);
         } else if (comp == this.pList) {
-            if (spList != null && listView != null) {
-                spList.setBounds(0, 0, this.pList.getWidth(), this.pList.getHeight());
+            if (this.spList != null && listView != null) {
+                this.spList.setBounds(0, 0, this.pList.getWidth(), this.pList.getHeight());
                 listView.setBounds(0, 0, this.pList.getWidth(), this.pList.getHeight());
             }
         } else if (comp == this.pMap) {
@@ -652,7 +632,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 this.mapViewer.setBounds(0, 0, this.pMap.getWidth(), this.pMap.getHeight());
             }
         } else if (comp == this.pMenu) {
-            menubar.setBounds(this.pMenu.getBounds());
+            this.menubar.setBounds(this.pMenu.getBounds());
         } else if (comp == this.pInfo) {
         }
         revalidateAll();
@@ -664,13 +644,13 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         if (comp == this.pList) {
             this.pList.setBounds(0, 24, this.dpright.getWidth(), this.dpright.getHeight()-24);
             listView.setBounds(0, 0, this.pList.getWidth(), this.pList.getHeight());
-            spList.setBounds(0, 0, this.pList.getWidth(), this.pList.getHeight());
+            this.spList.setBounds(0, 0, this.pList.getWidth(), this.pList.getHeight());
         } else if (comp == this.pMap) {
             this.pMap.setBounds(0, 24, this.dpright.getWidth(), this.dpright.getHeight() - 24);
             this.mapViewer.setBounds(0, 0, this.pMap.getWidth(), this.pMap.getHeight());
-            pViewHead.setBounds(0, 0, this.dpright.getWidth(), this.dpright.getHeight()-24);
-        } else if (comp == settings_iFrame_maxLoad) {
-            settings_iFrame_maxLoad.setText(UserSettings.getMaxLoadedFlights() + "");
+            this.pViewHead.setBounds(0, 0, this.dpright.getWidth(), this.dpright.getHeight()-24);
+        } else if (comp == this.settings_iFrame_maxLoad) {
+            this.settings_iFrame_maxLoad.setText(UserSettings.getMaxLoadedFlights() + "");
         }
         revalidateAll();
     }
@@ -775,63 +755,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     public void mouseExited(MouseEvent e) {
     }
 
-    /**
-     * runs background task
-     */
-    private void runBackgroundTask(ViewType type) {
-        BackgroundWorker bgworker = new BackgroundWorker();
-        synchronized (this) {
-            bgworker.actionViewType = type;
-            bgworker.execute();
-        }
-    }
 
-    /**
-     * gui intern background worker class
-     */
-    class BackgroundWorker extends SwingWorker<String, Void> {
-
-        public ViewType actionViewType;
-
-        /**
-         * runs a background task
-         * is this still needed?
-         */
-        @Override
-        protected String doInBackground() throws Exception {
-            if (!Controller.loading) {
-                switch (actionViewType) {
-                    case LIST_FLIGHT:
-                        // TODO controller zum Thread machen der die anderen (DBOut) ausführt
-                        controller.createDataView(LIST_FLIGHT, "");
-                        runningView = listView;
-                        return EKlAuf + "GUI" + EKlZu + " backround tast started!";
-                    case LIST_AIRPORT:
-                    case LIST_AIRLINE:
-                    case LIST_PLANE:
-                    case MAP_ALL:
-                        controller.createDataView(MAP_ALL, "");
-                        runningView = mapViewer;
-                        return EKlAuf + "GUI" + EKlZu + " background task started!";
-                    case MAP_FLIGHTROUTE:
-                    default:
-                        controller.loadData();
-                }
-            }
-            return "";
-        }
-
-        /**
-         * background worker done method
-         * is executed when a background task is done
-         */
-        @Override
-        protected void done () {
-            if (!Controller.loading) {
-                progressbar.setVisible(false);
-                super.cancel(true);
-            }
-        }
-    }
 
 }
