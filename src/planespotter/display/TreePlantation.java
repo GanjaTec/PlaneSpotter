@@ -36,7 +36,7 @@ public final class TreePlantation {
      * @return new JList for data models
      * @param node is the root node of the given tree
      */
-    public JTree createTree(DefaultMutableTreeNode node, GUI gui) {
+    public static JTree createTree(DefaultMutableTreeNode node, GUI gui) {
         JTree listView;
         // initialisation new JTree
         listView = new JTree(node);

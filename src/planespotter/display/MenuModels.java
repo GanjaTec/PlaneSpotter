@@ -172,19 +172,6 @@ public final class MenuModels extends GUI {
         return closeView;
     }
 
-
-
-    public void allesAndere () {
-
-        // TODO: setting up radio button: "search for airline"
-        rbAirline = new JRadioButton();
-        //rbAirline.addChangeListener(new Listener());
-
-        // TODO: setting up radio button: "search for flight"
-        rbFlight = new JRadioButton();
-        //rbFlight.addChangeListener(new Listener());
-    }
-
     /**
      * @return settings option pane (which pops up)
      */
@@ -215,6 +202,28 @@ public final class MenuModels extends GUI {
         maxLoadTxtfield.setForeground(DEFAULT_MAP_ICON_COLOR);
         maxLoadTxtfield.setFont(FONT_MENU);
         return maxLoadTxtfield;
+    }
+
+    /**
+     * radio buttons
+     */
+    public static JComboBox<JMenuItem> searchFor_cmbBox () {
+        // TODO: setting up "search for" combo box
+        JComboBox<JMenuItem> searchFor = new JComboBox<>(MenuModels.searchBoxItems());
+        searchFor.setBounds(10, WIDTH_MENUITEM, 55, 25);
+        searchFor.setBackground(DEFAULT_BORDER_COLOR);
+        searchFor.setForeground(DEFAULT_FONT_COLOR);
+
+        return searchFor;
+    }
+
+    /**
+     *
+     */
+    private static JMenuItem[] searchBoxItems () {
+        JMenuItem[] items = new JMenuItem[2];
+
+        return items;
     }
 
     // TODO SETTINGS

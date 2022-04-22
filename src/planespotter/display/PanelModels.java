@@ -141,7 +141,22 @@ public final class PanelModels {
     }
 
     /**
-     *
+     * search panel // TODO radioButtons, TxtField, 2 Buttons, JLabels -> aber extern
+     */
+    public static JPanel searchPanel (JPanel parent, GUI gui) {
+        // TODO: setting up search panel
+        JPanel search = new JPanel();
+        search.setBounds(0, 0, parent.getWidth(), parent.getHeight());
+        search.setBackground(DEFAULT_BG_COLOR);
+        search.setBorder(LINE_BORDER);
+        search.setLayout(null);
+        search.addComponentListener(gui);
+
+        return search;
+    }
+
+    /**
+     * start panel
      */
     public static JPanel startPanel (JDesktopPane parent) {
         // TODO setting up start screen panel
@@ -155,7 +170,7 @@ public final class PanelModels {
     }
 
     /**
-     *
+     * background label
      */
     public static JLabel backgroundLabel (JPanel parent) {
         // TODO: setting up background image

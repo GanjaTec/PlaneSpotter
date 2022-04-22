@@ -2,31 +2,35 @@ package planespotter.model;
 
 import planespotter.controller.Controller;
 import planespotter.dataclasses.Flight;
+import planespotter.throwables.ThreadOverheadError;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
 
 import static planespotter.constants.GUIConstants.*;
+import static planespotter.controller.Controller.exe;
 
-public class ThreadedOutputWizard extends DBOut implements Runnable {
+public class OutputWizard extends DBOut implements Runnable {
     /**
      * class variables
      */
-    private int threadNumber, from, to;
+    private int threadNumber, from, to, flightsPerTask;
     private String threadName;
 
     /**
      * constructor
      */
-    public ThreadedOutputWizard (int tNumber, int from, int to) {
+    public OutputWizard(int tNumber, int from, int to, int flightsPerTask) {
         this.threadNumber = tNumber;
         this.threadName = "output-wizard" + this.threadNumber;
         this.from = from;
         this.to = to-1;
+        this.flightsPerTask = flightsPerTask;
     }
 
     /**
-     * ? ? ? ? TODO richtig machen
+     * ThreadedOutputWizard run method is executed when an
+     * output wizard thread is executed by the threadPoolExecutor
      */
     @Override
     public void run () {
@@ -34,7 +38,7 @@ public class ThreadedOutputWizard extends DBOut implements Runnable {
         Thread.currentThread().setPriority(9);
         Thread.currentThread().setName(this.threadName);
         System.out.println(EKlAuf + "OutputWizard" + EKlZu + " thread " + ANSI_ORANGE + this.getName() + ANSI_RESET + " created!");
-        loadFlights(from, to);
+        this.loadFlights(from, to);
         System.out.println( EKlAuf +  this.getName() + ANSI_ORANGE + "@" + ANSI_RESET + Thread.currentThread().getId() +
                             EKlZu + " loaded data in " + ANSI_YELLOW + (System.nanoTime()-start)/Math.pow(1000, 3) +
                             ANSI_RESET + " seconds!");
@@ -46,16 +50,28 @@ public class ThreadedOutputWizard extends DBOut implements Runnable {
      * @param toID is the (exclusive) end-id
      */
     public void loadFlights (int fromID, int toID) {
-        List<Flight> flights = super.getAllFlightsFromID(fromID, toID);
+        int flightsToLoad = toID - fromID;
+        if (flightsToLoad <= flightsPerTask) {
+            List<Flight> flights = super.getAllFlightsFromID(fromID, toID);
             Controller.listQueue.add(flights);
-            Controller.ready += 10;
+        } else {
+            int newEndID = to-(flightsToLoad/2);
+            OutputWizard out0 = new OutputWizard(threadNumber+1, fromID, newEndID, flightsPerTask);
+            OutputWizard out1 = new OutputWizard(threadNumber+2, newEndID, toID, flightsPerTask);
+            try {
+                exe.execute(out0);
+                exe.execute(out1);
+            } catch (RejectedExecutionException e) {
+                throw new ThreadOverheadError();
+            }
+        }
     }
 
     /**
      * @return name of the running threa
      */
     public String getName () {
-        return threadName;
+        return this.threadName;
     }
 
 }

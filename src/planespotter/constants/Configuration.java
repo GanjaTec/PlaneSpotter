@@ -19,6 +19,6 @@ public final class Configuration {
     }
 
     // max thread pool size
-    public static final int MAX_THREADPOOL_SIZE = 11;
+    public static final int MAX_THREADPOOL_SIZE = 100;
 
 }
