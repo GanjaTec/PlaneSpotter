@@ -97,6 +97,7 @@ public class Controller {
             gui = new GUI();
             exe.execute(gui);
         }
+        TreePlantation.initialize();
         BlackBeardsNavigator.initialize();
         this.done();
     }
@@ -138,20 +139,16 @@ public class Controller {
         gui.disposeView();
         // TODO verschiedene Möglichkeiten (für große Datenmengen)
         switch (type) {
-            case LIST_FLIGHT -> gui.recieveTree(
-                    TreePlantation.createTree(TreePlantation.allFlightsTreeNode(preloadedFlights), gui));
+            case LIST_FLIGHT -> TreePlantation.createTree(TreePlantation.allFlightsTreeNode(preloadedFlights));
             case MAP_ALL -> BlackBeardsNavigator.createAllFlightsMap(preloadedFlights);
             case MAP_FLIGHTROUTE -> {
                 try {
                     // TODO recieve-methoden in BBNavigator, bzw. TreePlantation packen (?)
-                    if (data.isBlank()) {
-                        BlackBeardsNavigator.createFlightRoute(new DBOut().getTrackingByFlight(107));
-                    } else {
-                        int flightID = Integer.parseInt(data);
-                        BlackBeardsNavigator.createFlightRoute(new DBOut().getTrackingByFlight(flightID));
-                    }
+                    int flightID = Integer.parseInt(data);
+                    BlackBeardsNavigator.createFlightRoute(new DBOut().getTrackingByFlight(flightID));
                 } catch (NumberFormatException e) {
                     BlackBeardsNavigator.createFlightRoute(new DBOut().getTrackingByFlight(107));
+                    this.log(ANSI_YELLOW + "NumberFormatException while trying to parse the ID-String!");
                 }
             }
         }
@@ -164,6 +161,13 @@ public class Controller {
      */
     public void log (String txt) {
         System.out.println( EKlAuf + this.getClass().getSimpleName() + EKlZu + " " + txt + ANSI_RESET);
+    }
+
+    /**
+     * System.err.println, but with style
+     */
+    public void errorLog (String txt) {
+        System.err.println( EKlAuf + this.getClass().getSimpleName() + EKlZu + ANSI_RED + " " + txt + ANSI_RESET);
     }
 
     public static GUI gui () {

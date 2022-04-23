@@ -2,15 +2,14 @@ package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
-import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
 import planespotter.constants.GUIConstants;
 import planespotter.controller.Controller;
+import planespotter.controller.IOMaster;
 import planespotter.dataclasses.CustomMapMarker;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Position;
-import planespotter.model.DBOut;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,18 +27,15 @@ import static planespotter.constants.GUIConstants.LINE_BORDER;
  * map manager:
  *  manages the map data and contains methods which are executed on the mapView
  */
-public class BlackBeardsNavigator {
+public final class BlackBeardsNavigator {
 
-    /**
-     * class variables
-     */
+    // static gui instance
     private static GUI gui;
-    // may be changed to volatile in the future, @deprecated
-    public static HashMap<Position, Integer> shownFlights = new HashMap<Position, Integer>();
-    public static List<CustomMapMarker> allMapMarkers = new ArrayList<>();
+    // list for all map markers
+    static List<CustomMapMarker> allMapMarkers = new ArrayList<>();
 
     /**
-     * constructor, is private beacuse @unused
+     * constructor, is private because @unused
      */
     private BlackBeardsNavigator() {
     }
@@ -47,12 +43,12 @@ public class BlackBeardsNavigator {
     /**
      * initializes BlackBeardsNavigator
      */
-    public static void initialize () {
+    public static void initialize() {
         gui = Controller.gui();
     }
 
     /**
-     * creates a map with a fliht route from a specific flight
+     * creates a map with a flight route from a specific flight
      *
      * @param dps is the given tracking-hashmap
      */
@@ -64,13 +60,13 @@ public class BlackBeardsNavigator {
         for (int key : keySet) {
             DataPoint dp = dps.get(key);
             Position pos = dp.getPos();
-            CustomMapMarker newMarker = new CustomMapMarker(new Coordinate(pos.getLat(), pos.getLon()), new DBOut().getFlightByID(dp.getFlightID()));
+            CustomMapMarker newMarker = new CustomMapMarker(new Coordinate(pos.getLat(), pos.getLon()), new IOMaster().flightByID(dp.getFlightID()));
             viewer.addMapMarker(newMarker);
             allMapMarkers.add(newMarker);
             idKey = key;
         }
         gui.recieveMap(viewer);
-        gui.recieveInfoTree(TreePlantation.createTree(TreePlantation.oneFlightTreeNode(dps.get(idKey).getFlightID()), gui));
+        TreePlantation.createInfoTree(dps.get(idKey).getFlightID());
     }
 
     /**
@@ -80,17 +76,14 @@ public class BlackBeardsNavigator {
      */
     public static void createAllFlightsMap (List<Flight> list) {
         JMapViewer viewer = gui.mapViewer;
-        Rectangle viewSize = viewer.getVisibleRect();
+        Rectangle viewSize = viewer.getVisibleRect(); // may be used in the future
         List<ICoordinate> coords = new ArrayList<>();
         allMapMarkers = new ArrayList<>();
         for (Flight f : list) {
-            int lastTracking = new DBOut().getLastTrackingIDByFlightID(f.getID());
-            //length is 1 TODO fixen // NullPointerException: lastDataPoint is null
-            DataPoint lastDataPoint = f.getDataPoints().get(lastTracking);
+            int lastTrackingID = new IOMaster().lastTrackingID(f.getID());
+            //length is 1 TODO fix // NullPointerException: lastDataPoint is null
+            DataPoint lastDataPoint = f.getDataPoints().get(lastTrackingID);
             Position lastPos = lastDataPoint.getPos();
-            // TODO: adding flight id and position to global HashMap
-            /*shownFlights = new HashMap<>();
-            shownFlights.put(lastPos, f.getID());*/
             // TODO: creating new Map Marker // will be optimized
             CustomMapMarker newMarker = new CustomMapMarker(new Coordinate(lastPos.getLat(), lastPos.getLon()), f);
             newMarker.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
@@ -113,7 +106,7 @@ public class BlackBeardsNavigator {
     /**
      * @return a map prototype (JMapViewer)
      */
-    public static JMapViewer defaultMapViewer (JPanel parent) {
+    static JMapViewer defaultMapViewer (JPanel parent) {
         // TODO: trying to set up JMapViewer
         JMapViewer viewer = new JMapViewer(new MemoryTileCache());
         viewer.setBorder(LINE_BORDER);
@@ -128,6 +121,11 @@ public class BlackBeardsNavigator {
         return viewer;
     }
 
-
+    /**
+     * is executed when a map marker is clicked
+     */
+    void mapMarkerClicked () {
+        // needed?
+    }
 
 }

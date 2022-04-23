@@ -48,6 +48,10 @@ public final class GUIConstants {
     public static final String  ANSI_GREEN = "\u001B[92m",
                                 ANSI_ORANGE = "\u001B[33m",
                                 ANSI_RESET = "\u001B[0m",
+                                ANSI_RED = "\u001B[31m",
+                                ANSI_BLUE = "\u001B[34m",
+                                ANSI_PURPLE = "\u001B[35m",
+                                ANSI_CYAN = "\u001B[36m",
                                 ANSI_YELLOW = "\u001B[33m";
     // prepared strings which are used often
     public static final String  EKlAuf = ANSI_ORANGE + "[" + ANSI_RESET,

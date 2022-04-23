@@ -1,6 +1,7 @@
 package planespotter.display;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 
 import static planespotter.constants.GUIConstants.*;
 
@@ -11,7 +12,7 @@ import static planespotter.constants.GUIConstants.*;
  *
  * contains panel models for GUI
  */
-public final class PanelModels {
+final class PanelModels {
 
     //default desktop width
     static int WIDTH_RIGHT = 1259-280;
@@ -22,7 +23,7 @@ public final class PanelModels {
     /**
      * main-panel
      */
-    public static JPanel mainPanel (JFrame parent) {
+    static JPanel mainPanel (JFrame parent) {
         // TODO: setting up mainpanel
         JPanel mainpanel = new JPanel();
         mainpanel.setBounds(0, 0, parent.getWidth(), parent.getHeight()); // mainpanel width: 1260
@@ -34,7 +35,7 @@ public final class PanelModels {
     /**
      * title panel with bground and title
      */
-    public static JPanel titlePanel (JPanel parent) {
+    static JPanel titlePanel (JPanel parent) {
         // TODO: setting up title panel
         JPanel title = new JPanel();
         title.setBounds(0, 0, parent.getWidth(), 70);
@@ -48,7 +49,7 @@ public final class PanelModels {
     /**
      * title text label
      */
-    public static JLabel titleTxtLabel (JPanel parent) {
+    static JLabel titleTxtLabel (JPanel parent) {
         // TODO: setting up title label
         JLabel title_text = new JLabel("P l a n e S p o t t e r");
         title_text.setFont(TITLE_FONT);
@@ -62,7 +63,7 @@ public final class PanelModels {
     /**
      * @return head panel for view
      */
-    public static JPanel viewHeadPanel (JDesktopPane parent) {
+    static JPanel viewHeadPanel (JDesktopPane parent) {
         // TODO: setting up view head panel
         JPanel viewHead = new JPanel();
         viewHead.setLayout(null);
@@ -76,7 +77,7 @@ public final class PanelModels {
         /**
          * @return head label, which is part of viewHeadPanel
          */
-        public static JLabel headLabel (JPanel parent, String text) {
+        static JLabel headLabel (JPanel parent, String text) {
             // TODO: setting up head label
             JLabel head = new JLabel(text + " > ");
             head.setBounds(5, 0, 400, 24);
@@ -89,7 +90,7 @@ public final class PanelModels {
     /**
      * @return list panel
      */
-    public static JPanel listPanel (JDesktopPane parent) {
+    static JPanel listPanel (JDesktopPane parent) {
         // TODO: setting up list panel
         JPanel list = new JPanel();
         list.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
@@ -103,7 +104,7 @@ public final class PanelModels {
     /**
      * map panel
      */
-    public static JPanel mapPanel (JDesktopPane parent) {
+    static JPanel mapPanel (JDesktopPane parent) {
         // TODO: setting up map panel
         JPanel map = new JPanel();
         map.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
@@ -117,7 +118,7 @@ public final class PanelModels {
     /**
      * menu panel
      */
-    public static JPanel menuPanel (JDesktopPane parent) {
+    static JPanel menuPanel (JDesktopPane parent) {
         // TODO: setting up menu panel
         JPanel menu = new JPanel();
         menu.setBounds(0, 0, parent.getWidth(), parent.getHeight());
@@ -130,7 +131,7 @@ public final class PanelModels {
     /**
      * info panel
      */
-    public static JPanel infoPanel (JDesktopPane parent) {
+    static JPanel infoPanel (JDesktopPane parent) {
         // TODO: setting up info panel
         JPanel info = new JPanel();
         info.setBounds(0, 0, parent.getWidth(), parent.getHeight());
@@ -143,14 +144,14 @@ public final class PanelModels {
     /**
      * search panel // TODO radioButtons, TxtField, 2 Buttons, JLabels -> aber extern
      */
-    public static JPanel searchPanel (JPanel parent, GUI gui) {
+    static JPanel searchPanel (JPanel parent, GUI gui) {
         // TODO: setting up search panel
         JPanel search = new JPanel();
-        search.setBounds(0, 0, parent.getWidth(), parent.getHeight());
+        search.setBounds(10, 150, parent.getWidth()-20, parent.getHeight()-225);
         search.setBackground(DEFAULT_BG_COLOR);
         search.setBorder(LINE_BORDER);
         search.setLayout(null);
-        search.addComponentListener(gui);
+        search.setVisible(false);
 
         return search;
     }
@@ -158,7 +159,7 @@ public final class PanelModels {
     /**
      * start panel
      */
-    public static JPanel startPanel (JDesktopPane parent) {
+    static JPanel startPanel (JDesktopPane parent) {
         // TODO setting up start screen panel
         JPanel start = new JPanel();
         start.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
@@ -172,7 +173,7 @@ public final class PanelModels {
     /**
      * background label
      */
-    public static JLabel backgroundLabel (JPanel parent) {
+    static JLabel backgroundLabel (JPanel parent) {
         // TODO: setting up background image
         JLabel bground = new JLabel(img);
         bground.setSize(parent.getWidth(), parent.getHeight());

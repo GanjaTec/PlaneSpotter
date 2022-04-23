@@ -14,9 +14,9 @@ public class OutputWizard extends DBOut implements Runnable {
     /**
      * class variables
      */
-    private ThreadPoolExecutor executor;
-    private int threadNumber, from, to, flightsPerTask;
-    private String threadName;
+    private final ThreadPoolExecutor executor;
+    private final int threadNumber, from, to, flightsPerTask;
+    private final String threadName;
 
     /**
      * constructor
@@ -70,7 +70,7 @@ public class OutputWizard extends DBOut implements Runnable {
     }
 
     /**
-     * @return name of the running threa
+     * @return name of the running thread
      */
     public String getName () {
         return this.threadName;

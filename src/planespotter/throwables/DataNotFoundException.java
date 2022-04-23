@@ -1,11 +1,11 @@
 package planespotter.throwables;
 
-public class DataMissingException extends Exception {
+public class DataNotFoundException extends Exception {
 
     /**
      * constructor, is called when this exception is thrown
      */
-    public DataMissingException () {
+    public DataNotFoundException() {
         super("db-data couldn't be found!");
     }
 }

@@ -3,6 +3,7 @@ package planespotter.model;
 import planespotter.constants.SQLQuerries;
 import planespotter.dataclasses.*;
 import planespotter.display.UserSettings;
+import planespotter.throwables.DataNotFoundException;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ public class DBOut extends SupperDB {
 
 	public ResultSet querryDB(String querry) throws Exception {
 		ResultSet rs;
-		Connection conn = super.getDBConnection();
+		Connection conn = SupperDB.getDBConnection();
 		Statement stmt = conn.createStatement();
 		rs = stmt.executeQuery(querry);
 
@@ -53,7 +54,7 @@ public class DBOut extends SupperDB {
 	 */
 	private Position convertCoords(String coords) {
 		String[] splitCoords = coords.split(",");
-		List<Double> processedCoords = new ArrayList<Double>();
+		List<Double> processedCoords = new ArrayList<>();
 
 		for(String s : splitCoords) {
 			processedCoords.add(Double.parseDouble(s));
@@ -64,8 +65,8 @@ public class DBOut extends SupperDB {
 	}
 
 	/**
-	 * @param in
-	 * @return
+	 * @param in is the string to strip
+	 * @return input-string, but without ' \" '
 	 */
 	private String stripString (String in) {
 		return in.replaceAll("\"", "");
@@ -79,9 +80,8 @@ public class DBOut extends SupperDB {
 	 *
 	 * @param tag the ICAO-Tag used in the Querry
 	 * @return Airline Object
-	 * @throws Exception
 	 */
-	public Airline getAirlineByTag(String tag) {
+	public Airline getAirlineByTag (String tag) {
 		Airline a = null;
 		try {
 			tag = stripString(tag);
@@ -100,7 +100,7 @@ public class DBOut extends SupperDB {
 		return a;
 	}
 	
-	public int getAirlineIDByTag(String tag) {
+	public int getAirlineIDByTag (String tag) {
 		int id = 1;
 		try {
 			Deserializer ds = new Deserializer();
@@ -127,11 +127,10 @@ public class DBOut extends SupperDB {
 	 * @param srcAirport String containing the Departure Airports IATA Tag
 	 * @param destAirport String containing the Arrival Airports IATA Tag
 	 * @return List<Airport> the list containing the Airport Objects
-	 * @throws Exception
 	 */
 
-	public List<Airport> getAirports(String srcAirport, String destAirport) {
-		List<Airport> aps = new ArrayList<Airport>();
+	public List<Airport> getAirports (String srcAirport, String destAirport) {
+		List<Airport> aps = new ArrayList<>();
 		try {
 			ResultSet rsSrc = querryDB(SQLQuerries.getAirportByTag + srcAirport);
 			ResultSet rsDst = querryDB(SQLQuerries.getAirportByTag + destAirport);
@@ -168,9 +167,8 @@ public class DBOut extends SupperDB {
 	 *
 	 * @param icao Strin containing the ICAO Tag
 	 * @return Plane the Object containing all Information about the Plane
-	 * @throws Exception
 	 */
-	public Plane getPlaneByICAO(String icao) {
+	public Plane getPlaneByICAO (String icao) {
 		Plane p = null;
 		// TODO: Bug fixen
 		// org.sqlite.SQLiteException: [SQLITE_ERROR] SQL error or missing database (unrecognized token: "06A1EB")
@@ -195,11 +193,10 @@ public class DBOut extends SupperDB {
 	}
 
 	/**
-	 * @param id
-	 * @return
-	 * @throws Exception
+	 * @param id is the plane id
+	 * @return plane with the given id
 	 */
-	public Plane getPlaneByID(int id) {
+	public Plane getPlaneByID (int id) {
 		Plane p = null;
 		try {
 			ResultSet rs = querryDB(SQLQuerries.getPlaneByID + id);
@@ -225,7 +222,7 @@ public class DBOut extends SupperDB {
 	 * @return
 	 * @throws Exception
 	 */
-	public int checkPlaneInDB(String icao) {
+	public int checkPlaneInDB (String icao) {
 		String planeFilter = "SELECT ID FROM planes WHERE icaonr = '" + icao + "' LIMIT 1";
 		try {
 			ResultSet rs = this.querryDB(planeFilter);
@@ -256,7 +253,7 @@ public class DBOut extends SupperDB {
 	 */
 	// TODO fix: HashMap lentgh was 1, but last Tracking id was about 23000
 	// TODO hier muss der Fehler sein
-	public HashMap<Integer, DataPoint> getTrackingByFlight(int flightID) {
+	public HashMap<Integer, DataPoint> getTrackingByFlight (int flightID) {
 		HashMap<Integer ,DataPoint> dps = new HashMap<Integer, DataPoint>();
 		String flight_id = "'" + flightID + "'";
 		try {
@@ -278,7 +275,7 @@ public class DBOut extends SupperDB {
 
 	}
 
-	public long getLastTrackingByFlightID(int id) {
+	public long getLastTrackingByFlightID (int id) {
 		long timestamp = -1;
 		String getLastTracking = "SELECT timestamp FROM tracking WHERE flightid == "+ id +" ORDER BY ID DESC LIMIT 1";
 		try {
@@ -296,7 +293,8 @@ public class DBOut extends SupperDB {
 		return timestamp;
 	}
 
-	public int getLastTrackingIDByFlightID(int id) {
+	public int getLastTrackingIDByFlightID (int id)
+			throws DataNotFoundException {
 		int trackingid = -1;
 		String getLastTrackingIDByFlightID =  "SELECT ID FROM tracking WHERE flightid == '"+ id +"' ORDER BY ID DESC LIMIT 1";
 		try {
@@ -304,6 +302,8 @@ public class DBOut extends SupperDB {
 
 			if (rs.next()) {
 				trackingid = rs.getInt(1);
+			} else {
+				throw new DataNotFoundException();
 			}
 			rs.close();
 		} catch (SQLException e) {
@@ -330,7 +330,7 @@ public class DBOut extends SupperDB {
 	 * @return List<Flight> containing all Flight Objects
 	 * @throws Exception
 	 */
-	public List<Flight> getAllFlights() {
+	public List<Flight> getAllFlights () {
 		List<Flight> flights = new ArrayList<Flight>();
 		try {
 			ResultSet rs = querryDB(SQLQuerries.getFlights);
@@ -357,7 +357,7 @@ public class DBOut extends SupperDB {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<Flight> getFlightsByCallsign(String callsign) {
+	public List<Flight> getFlightsByCallsign (String callsign) {
 		List<Flight> flights = new ArrayList<Flight>();
 		try {
 			ResultSet rs = querryDB(SQLQuerries.getFlightByCallsign + callsign);
@@ -382,7 +382,7 @@ public class DBOut extends SupperDB {
 	 * @return
 	 * @throws Exception
 	 */
-	public int getLastFlightID() {
+	public int getLastFlightID () {
 		try {
 			ResultSet rs = this.querryDB(SQLQuerries.getLastFlightID);
 			int flightid;
@@ -407,7 +407,7 @@ public class DBOut extends SupperDB {
 	 * @return
 	 * @throws Exception
 	 */
-	public int checkFlightInDB(Frame f, int planeid) {
+	public int checkFlightInDB (Frame f, int planeid) {
 		try {
 			ResultSet rs = this.querryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
 			int flightID;
@@ -426,7 +426,7 @@ public class DBOut extends SupperDB {
 		return -9999; // weil es -1 schon gibt -> zum besseren debuggen
 	}
 
-	public List<Integer> checkEnded() {
+	public List<Integer> checkEnded () {
 		List<Integer> flightIDs = new ArrayList<Integer>();
 		try {
 			ResultSet rs = this.querryDB(SQLQuerries.checkEndOfFlight);
@@ -443,7 +443,8 @@ public class DBOut extends SupperDB {
 		return flightIDs;
 	}
 
-	public Flight getFlightByID(int id) {
+	public Flight getFlightByID (int id)
+			throws DataNotFoundException {
 		Flight f = null;
 		try {
 			ResultSet rs = querryDB(SQLQuerries.getFlightByID + id);
@@ -456,6 +457,8 @@ public class DBOut extends SupperDB {
 				Airport airnull = new Airport(-1, "None", "None", new Position(0d, 0d));
 				Plane p = new Plane(-1, "None", "None", "None", "None", a);
 				f = new Flight(-1, airnull, airnull, "None", p, "None", new HashMap<Integer, DataPoint>());
+				// throws DataNotFoundException, to signal that there were no data found
+				throw new DataNotFoundException();
 			}
 			rs.close();
 		} catch (SQLException e) {
@@ -466,7 +469,7 @@ public class DBOut extends SupperDB {
 		return f;
 	}
 
-	public List<Flight> getAllFlightsFromID(int start_id, int end_id) {
+	public List<Flight> getAllFlightsFromID (int start_id, int end_id) {
 		List<Flight> flights = new ArrayList<Flight>();
 		try {
 			ResultSet rs = querryDB("SELECT * FROM flights WHERE ID >= " + start_id + " AND ID <= " + end_id + " AND endTime IS NULL");

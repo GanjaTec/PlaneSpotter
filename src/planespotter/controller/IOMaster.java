@@ -4,6 +4,7 @@ import planespotter.dataclasses.Flight;
 import planespotter.display.UserSettings;
 import planespotter.model.DBOut;
 import planespotter.model.OutputWizard;
+import planespotter.throwables.DataNotFoundException;
 
 import java.util.List;
 import java.util.Objects;
@@ -15,10 +16,10 @@ import static planespotter.controller.Controller.*;
 public class IOMaster {
 
     // controller instance
-    private Controller controller = Controller.getInstance();
+    private final Controller controller = Controller.getInstance();
 
     // preloadedFlights queue ( thread-safe )
-    private static volatile Queue<List<Flight>> listQueue = new ConcurrentLinkedQueue<>();
+    private static final Queue<List<Flight>> listQueue = new ConcurrentLinkedQueue<>();
 
     /**
      * loads flights into the preloadedFlights list
@@ -44,8 +45,8 @@ public class IOMaster {
      * waits while data is loading and then adds all loaded data to the preloadedFlights list
      */
     private void waitAndLoadAll () {
-        while (exe.getActiveCount() > 0) {
-        }
+        // waits until there is no running thread, then breaks
+        while (true) if (exe.getActiveCount() == 0) break;
         while (!listQueue.isEmpty()) { // adding all loaded lists to the main list ( listQueue is threadSafe )
             preloadedFlights.addAll(Objects.requireNonNull(listQueue.poll()));
         }
@@ -59,10 +60,30 @@ public class IOMaster {
     }
 
     /**
-     *
+     * @param id is the flight id to search for
+     * @return a flight
      */
     public Flight flightByID (int id) {
-        return new DBOut().getFlightByID(id);
+        try {
+            return new DBOut().getFlightByID(id);
+        } catch (DataNotFoundException e) {
+            controller.errorLog("flight with the ID " + id + " doesn't exist!");
+        } return null;
     }
+
+    /**
+     * @param flightID is the flight id where the tracking is from
+     * @return last tracking id from a certain flight
+     */
+    public int lastTrackingID (int flightID) {
+        try {
+            return new DBOut().getLastTrackingIDByFlightID(flightID);
+        } catch (DataNotFoundException e) {
+            controller.errorLog("flight doesn't exist or doesn't have last tracking!");
+        } return -1;
+    }
+
+    //TODO allWithPlanetype(type)
+    // weitere
 
 }

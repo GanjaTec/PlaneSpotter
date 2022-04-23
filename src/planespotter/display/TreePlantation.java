@@ -1,6 +1,7 @@
 package planespotter.display;
 
 import planespotter.constants.Paths;
+import planespotter.controller.Controller;
 import planespotter.controller.IOMaster;
 import planespotter.dataclasses.Airline;
 import planespotter.dataclasses.Airport;
@@ -26,22 +27,58 @@ import static planespotter.constants.GUIConstants.*;
 public final class TreePlantation {
 
     /**
+     * only GUI instance
+     */
+    private static GUI gui;
+    /**
      * default plane icon in the JTree
      */
     private static final Icon PLANE_ICON = new ImageIcon(Paths.SRC_PATH + "tree_plane_icon.png");
 
     /**
+     * private constructor
+     */
+    private TreePlantation () {
+    }
+
+    /**
+     * initializes TreePlantation
+     */
+    public static void initialize () {
+        gui = Controller.gui();
+    }
+
+    /**
      * creates a new list component
      *
-     * @return new JList for data models
-     * @param node is the root node of the given tree
+     * @param treeNode is the root node of the given tree
      */
-    public static JTree createTree(DefaultMutableTreeNode node, GUI gui) {
-        JTree listView;
+    public static void createTree(DefaultMutableTreeNode treeNode) {
         // initialisation new JTree
-        listView = new JTree(node);
-        listView.setFont(FONT_MENU);
-        listView.setBackground(DEFAULT_BG_COLOR);
+        JTree tree = TreePlantation.defaultTree(treeNode);
+        tree.setVisible(true);
+        gui.recieveTree(tree);
+    }
+
+    /**
+     * creates an info tree for a certain flight
+     *
+     * @param id is the flight id from the flight to show
+     */
+    static void createInfoTree(int id) {
+        JTree tree = TreePlantation.defaultTree(TreePlantation.oneFlightTreeNode(id));
+        tree.setVisible(true);
+        gui.recieveInfoTree(tree);
+    }
+
+    /**
+     * @param treeNode is the root tree node
+     * @return default JTree
+     */
+    private static JTree defaultTree (DefaultMutableTreeNode treeNode) {
+        JTree tree = new JTree(treeNode);
+        tree.setFont(FONT_MENU);
+        tree.setBackground(DEFAULT_BG_COLOR);
         // creating tree cell renderer
         CustomCellRenderer renderer = new CustomCellRenderer();
         renderer.setBorderSelectionColor(Color.ORANGE);
@@ -49,11 +86,10 @@ public final class TreePlantation {
         renderer.setTextSelectionColor(Color.ORANGE);
         renderer.setLeafIcon(PLANE_ICON);
         // TODO icons setzen
-        listView.setCellRenderer(renderer);
-        listView.setVisible(true);
-        return listView;
-    }
+        tree.setCellRenderer(renderer);
 
+        return tree;
+    }
 
     /**
      *
@@ -243,12 +279,10 @@ public final class TreePlantation {
                                                           boolean sel, boolean exp, boolean leaf,
                                                           int row, boolean hasFocus ) {
                 super.getTreeCellRendererComponent(tree, value, sel, exp, leaf, row, hasFocus);
-                // Assuming you have a tree of Strings
-                String node = (String) ((DefaultMutableTreeNode) value).getUserObject();
                 if (row % 2 == 0) {
                     setBackgroundNonSelectionColor(DEFAULT_BG_COLOR);
                 } else {
-                    setBackgroundNonSelectionColor(new Color(140, 140, 140));
+                    setBackgroundNonSelectionColor(new Color(150, 150, 150));
                 }
                 setBackgroundSelectionColor(DEFAULT_BORDER_COLOR);
 
