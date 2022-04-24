@@ -2,6 +2,8 @@ package planespotter.display;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static planespotter.constants.GUIConstants.*;
 
@@ -12,7 +14,7 @@ import static planespotter.constants.GUIConstants.*;
  *
  * MenuModels class contains different menu component models
  */
-final class MenuModels extends GUI {
+final class MenuModels {
 
     // TODO AUSWAHL: selectAll, selectByID, selectByICAO, selectByName, selectByIATA, selectByPlaneType; //...
 
@@ -229,7 +231,7 @@ final class MenuModels extends GUI {
                                 "Flight",
                                 "Airline",
                                 "Airport",
-                                "Areas"};
+                                "Area"};
             return items;
         }
 
@@ -240,7 +242,7 @@ final class MenuModels extends GUI {
         // TODO: setting up exact search panel
         JSeparator seperator = new JSeparator(JSeparator.HORIZONTAL);
         seperator.setBounds(10, 43, parent.getWidth()-20, 2);
-        seperator.setBackground(DEFAULT_MAP_ICON_COLOR);
+        seperator.setBackground(DEFAULT_BORDER_COLOR);
 
         return seperator;
     }
@@ -249,10 +251,10 @@ final class MenuModels extends GUI {
      * @param parent is the parent panel where the message label is shown in
      * @return
      */
-    static JTextArea searchHeadMessage (JPanel parent) {
+    static JTextArea searchMessage(JPanel parent) {
         String message = "Es muss mindestens eins der Felder ausgefüllt sein!";
         JTextArea headMessage = new JTextArea(message);
-        headMessage.setBounds(10, 55, parent.getWidth()-20, 35);
+        headMessage.setBounds(10, parent.getHeight()-80, parent.getWidth()-20, 35);
         headMessage.setBackground(DEFAULT_BG_COLOR);
         headMessage.setForeground(DEFAULT_FONT_COLOR);
         headMessage.setBorder(null);
@@ -263,6 +265,48 @@ final class MenuModels extends GUI {
         headMessage.setFont(font);
 
         return headMessage;
+    }
+
+    /**
+     * @param parent is the parent panel component
+     * @return list of JLabels (the search field names)
+     */
+    static List<JComponent> flightSearch(JPanel parent) {
+        List<JComponent> components = new ArrayList<>();
+            components.add(new JLabel("ID:"));
+            components.add(new JTextField());
+            components.add(new JLabel("Flight-Nr.:"));
+            components.add(new JTextField());
+            components.add(new JButton("Load List"));
+            components.add(new JButton("Load Map"));
+        int width = (parent.getWidth()-20)/2;
+        int y = 55;
+        for (JComponent c : components) {
+            if (c instanceof JLabel) {
+                c.setBounds(10, y, width, 25);
+                c.setBackground(DEFAULT_BG_COLOR);
+                c.setForeground(DEFAULT_MAP_ICON_COLOR);
+            } else if (c instanceof JTextField) {
+                c.setBounds(parent.getWidth()/2, y, width, 25);
+                c.setBackground(DEFAULT_FONT_COLOR);
+                c.setForeground(DEFAULT_FG_COLOR);
+                c.setBorder(LINE_BORDER);
+                y += 35;
+            } else if (c instanceof JButton) {
+                String buttonText = ((JButton) c).getText();
+                if (buttonText.equals("Load List")) {
+                    c.setBounds(10, parent.getHeight()-35, width-5, 25);
+                } else if (buttonText.equals("Load Map")) {
+                    c.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
+                }
+                c.setBackground(DEFAULT_ACCENT_COLOR);
+                c.setForeground(DEFAULT_FONT_COLOR);
+                c.setBorder(MENU_BORDER);
+            }
+            c.setFont(FONT_MENU);
+            c.setVisible(false);
+        }
+        return components;
     }
 
     // TODO SETTINGS

@@ -65,7 +65,7 @@ public final class BlackBeardsNavigator {
             allMapMarkers.add(newMarker);
             idKey = key;
         }
-        gui.recieveMap(viewer);
+        GUISlave.recieveMap(viewer);
         TreePlantation.createInfoTree(dps.get(idKey).getFlightID());
     }
 
@@ -100,7 +100,7 @@ public final class BlackBeardsNavigator {
                 coords.remove(0);
             }
         }
-        gui.recieveMap(viewer);
+        GUISlave.recieveMap(viewer);
     }
 
     /**

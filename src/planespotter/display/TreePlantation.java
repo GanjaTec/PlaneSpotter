@@ -11,6 +11,7 @@ import planespotter.dataclasses.Plane;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
@@ -57,7 +58,7 @@ public final class TreePlantation {
         // initialisation new JTree
         JTree tree = TreePlantation.defaultTree(treeNode);
         tree.setVisible(true);
-        gui.recieveTree(tree);
+        GUISlave.recieveTree(tree);
     }
 
     /**
@@ -66,9 +67,10 @@ public final class TreePlantation {
      * @param id is the flight id from the flight to show
      */
     static void createInfoTree(int id) {
-        JTree tree = TreePlantation.defaultTree(TreePlantation.oneFlightTreeNode(id));
+        JTree tree = TreePlantation.defaultTree(TreePlantation.infoFlightTreeNode(id));
         tree.setVisible(true);
-        gui.recieveInfoTree(tree);
+        //tree.expandPath(tree.getPathForRow(0));
+        GUISlave.recieveInfoTree(tree);
     }
 
     /**
@@ -167,72 +169,68 @@ public final class TreePlantation {
     }
 
     /**
+     * // FIXME: 24.04.2022 flightNr, planeType, ICAO, registration und tailNr haben noch "s (aktuell muss hier stripString angewandt werden)
      * creates only ONE flight tree node
      * @return DefaultMutableTreeNode, represents a flight (as a tree)
      */
-    public static DefaultMutableTreeNode oneFlightTreeNode (int id) {
+    public static DefaultMutableTreeNode infoFlightTreeNode (int id) {
+        String strToStrip;
         Flight f = new IOMaster().flightByID(id);
+            Plane p = f.getPlane();
+                Airline airline = p.getAirline();
         // root node
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("");
-        String titleStr = "FNR: " + f.getFlightnr() + ", Type: " + f.getPlane().getPlanetype();
-        // Title Object
-        DefaultMutableTreeNode flight = new DefaultMutableTreeNode(titleStr);
         // Attributes
-        DefaultMutableTreeNode flight_id = new DefaultMutableTreeNode("ID: " + f.getID());
-        DefaultMutableTreeNode flight_nr = new DefaultMutableTreeNode("FlightNr: " + f.getFlightnr());
+        DefaultMutableTreeNode flight_id = new DefaultMutableTreeNode("Flight-ID: " + f.getID());
+        strToStrip = "Flight-Nr.: " + f.getFlightnr();
+        DefaultMutableTreeNode flight_nr = new DefaultMutableTreeNode(Controller.stripString(strToStrip));
+        DefaultMutableTreeNode plane_id = new DefaultMutableTreeNode("Plane-ID: " + p.getID());
+        strToStrip = "Plane-Type: " + p.getPlanetype();
+        DefaultMutableTreeNode plane_type = new DefaultMutableTreeNode(Controller.stripString(strToStrip));
+        strToStrip = "Plane-ICAO: " + p.getIcao();
+        DefaultMutableTreeNode plane_icao = new DefaultMutableTreeNode(Controller.stripString(strToStrip));
+        strToStrip = "Plane-Registration: " + p.getRegistration();
+        DefaultMutableTreeNode plane_reg = new DefaultMutableTreeNode(Controller.stripString(strToStrip));
+        strToStrip = "Plane-Tailnr.: " + p.getTailnr();
+        DefaultMutableTreeNode plane_tnr = new DefaultMutableTreeNode(Controller.stripString(strToStrip));
+        DefaultMutableTreeNode p_airline_id = new DefaultMutableTreeNode("Airline-ID: " + airline.getID());
+        DefaultMutableTreeNode p_airline_tag = new DefaultMutableTreeNode("Airline-Tag: " + airline.getTag());
+        DefaultMutableTreeNode p_airline_name = new DefaultMutableTreeNode("Airline-Name: " + airline.getName());
         // start airport
         Airport startAirport = f.getStart();
-        DefaultMutableTreeNode start = new DefaultMutableTreeNode("Startflughafen: " + startAirport.getName());
+        DefaultMutableTreeNode start = new DefaultMutableTreeNode("Start-Airport");
         DefaultMutableTreeNode start_id = new DefaultMutableTreeNode("ID: " + startAirport.getID());
         DefaultMutableTreeNode start_tag = new DefaultMutableTreeNode("Tag: " + startAirport.getTag());
         DefaultMutableTreeNode start_name = new DefaultMutableTreeNode("Name: " + startAirport.getName());
         // dest airport
         Airport destAirport = f.getDest();
-        DefaultMutableTreeNode dest = new DefaultMutableTreeNode("Zielflughafen: " + destAirport.getName());
+        DefaultMutableTreeNode dest = new DefaultMutableTreeNode("Destination-Airport");
         DefaultMutableTreeNode dest_id = new DefaultMutableTreeNode("ID: " + destAirport.getID());
         DefaultMutableTreeNode dest_tag = new DefaultMutableTreeNode("Tag: " + destAirport.getTag());
         DefaultMutableTreeNode dest_name = new DefaultMutableTreeNode("Name: " + destAirport.getName());
-        // plane and airline
-        Plane p = f.getPlane();
-        Airline airline = p.getAirline();
-        DefaultMutableTreeNode plane = new DefaultMutableTreeNode("Plane: " + p.getPlanetype() + " von: " + airline.getName());
-        DefaultMutableTreeNode plane_id = new DefaultMutableTreeNode("ID: " + p.getID());
-        DefaultMutableTreeNode plane_icao = new DefaultMutableTreeNode("ICAO: " + p.getIcao());
-        DefaultMutableTreeNode plane_reg = new DefaultMutableTreeNode("Registration: " + p.getRegistration());
-        DefaultMutableTreeNode plane_tnr = new DefaultMutableTreeNode("Tailnumber: " + p.getTailnr());
-        DefaultMutableTreeNode plane_type = new DefaultMutableTreeNode("Type: " + p.getPlanetype());
-        DefaultMutableTreeNode p_airline = new DefaultMutableTreeNode("Airline: " + airline.getName());
-        DefaultMutableTreeNode p_airline_id = new DefaultMutableTreeNode("ID: " + airline.getID());
-        DefaultMutableTreeNode p_airline_tag = new DefaultMutableTreeNode("Tag: " + airline.getTag());
-        DefaultMutableTreeNode p_airline_name = new DefaultMutableTreeNode("Name: " + airline.getName());
 
-        // TODO: completing the airline node
-        p_airline.add(p_airline_id);
-        p_airline.add(p_airline_tag);
-        p_airline.add(p_airline_name);
-        // TODO: completing plane node
-        plane.add(plane_id);
-        plane.add(plane_icao);
-        plane.add(plane_reg);
-        plane.add(plane_tnr);
-        plane.add(plane_type);
-        plane.add(p_airline);
-        // TODO: completing dest node
-        dest.add(dest_id);
-        dest.add(dest_tag);
-        dest.add(dest_name);
-        // TODO: completing start node
-        start.add(start_id);
-        start.add(start_tag);
-        start.add(start_name);
+            // TODO: completing dest node
+            dest.add(dest_id);
+            dest.add(dest_tag);
+            dest.add(dest_name);
+            // TODO: completing start node
+            start.add(start_id);
+            start.add(start_tag);
+            start.add(start_name);
         // TODO: completing flight node
-        flight.add(flight_id);
-        flight.add(flight_nr);
-        flight.add(start);
-        flight.add(dest);
-        flight.add(plane);
+        root.add(flight_id);
+        root.add(flight_nr);
+        root.add(plane_id);
+        root.add(plane_type);
+        root.add(plane_icao);
+        root.add(plane_reg);
+        root.add(plane_tnr);
+        root.add(p_airline_id);
+        root.add(p_airline_tag);
+        root.add(p_airline_name);
+        root.add(start);
+        root.add(dest);
         // TODO: adding flight node to root node
-        root.add(flight);
 
         return root;
     }

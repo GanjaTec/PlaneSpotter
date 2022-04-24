@@ -4,6 +4,7 @@ import planespotter.constants.ViewType;
 import planespotter.dataclasses.*;
 import planespotter.display.GUI;
 import planespotter.display.BlackBeardsNavigator;
+import planespotter.display.GUISlave;
 import planespotter.display.TreePlantation;
 import planespotter.model.DBOut;
 
@@ -61,7 +62,7 @@ public class Controller {
      * initializes the controller
      * :: -> method reference
      */
-    public void initExecutors () {
+    private void initExecutors() {
         this.log("initializing executors...");
         // TODO: setting up controller thread
         Thread.currentThread().setName("planespotter-main");
@@ -74,14 +75,14 @@ public class Controller {
     /**
      * starts the program, opens a gui and initializes the controller
      */
-    public synchronized void start () {
+    public synchronized void start() {
         try {
             this.openWindow();
             this.loadData();
             while (loading) {
                 wait();
             }
-            gui.donePreLoading();
+            GUISlave.donePreLoading();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -90,13 +91,14 @@ public class Controller {
     /**
      * opens a new GUI window as a thread
      */
-    public void openWindow() {
+    private void openWindow() {
         loading = true;
         this.log("initialising the GUI...");
         if (gui == null) {
             gui = new GUI();
             exe.execute(gui);
         }
+        GUISlave.initialize();
         TreePlantation.initialize();
         BlackBeardsNavigator.initialize();
         this.done();
@@ -109,7 +111,7 @@ public class Controller {
         long startTime = System.nanoTime();
         loading = true;
         if (gui != null) {
-            gui.progressbarStart();
+            GUISlave.progressbarStart();
         }
         preloadedFlights = new ArrayList<>();
         new IOMaster().loadFlightsParallel();
@@ -124,8 +126,8 @@ public class Controller {
     void done() {
         loading = false;
         if (gui != null) {
-            gui.progressbarVisible(false);
-            gui.revalidateAll();
+            GUISlave.progressbarVisible(false);
+            GUISlave.revalidateAll();
         }
     }
 
@@ -154,6 +156,15 @@ public class Controller {
         }
         this.done();
         this.log(ANSI_GREEN + "view loaded!");
+    }
+
+    /**
+     * FIXME should only be used in DBOut! - but some strings need to be stripped while loading them into the gui
+     * @param in is the string to strip
+     * @return input-string, but without the "s
+     */
+    public static String stripString (String in) {
+        return in.replaceAll("\"", "");
     }
 
     /**

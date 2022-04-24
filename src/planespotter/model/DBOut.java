@@ -1,7 +1,9 @@
 package planespotter.model;
 
 import planespotter.constants.SQLQuerries;
+import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
+import planespotter.dataclasses.Frame;
 import planespotter.display.UserSettings;
 import planespotter.throwables.DataNotFoundException;
 
@@ -65,14 +67,6 @@ public class DBOut extends SupperDB {
 	}
 
 	/**
-	 * @param in is the string to strip
-	 * @return input-string, but without ' \" '
-	 */
-	private String stripString (String in) {
-		return in.replaceAll("\"", "");
-	}
-
-	/**
 	 * This method is used to Querry the DB for Airline by its assigned ICAO Tag
 	 * It takes a String containing the ICAO Tag and returns
 	 * an Airline Object
@@ -84,7 +78,7 @@ public class DBOut extends SupperDB {
 	public Airline getAirlineByTag (String tag) {
 		Airline a = null;
 		try {
-			tag = stripString(tag);
+			tag = Controller.stripString(tag);
 			ResultSet rs = querryDB(SQLQuerries.getAirlineByTag + tag); // ist leer TODO fixen
 			if (rs.next()) {
 				a = new Airline(rs.getInt("ID"), rs.getString("iatatag"), rs.getString("name"));
