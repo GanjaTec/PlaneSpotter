@@ -29,13 +29,9 @@ public class IOMaster {
     void loadFlightsParallel () {
         int startID = 12000;
         int endID = UserSettings.getMaxLoadedFlights();
-        int maxFlightsPerTask = (endID-startID)/100;
+        int flightsPerTask = (endID-startID)/100;
         OutputWizard outputWizard;
-        if (maxFlightsPerTask <= 20) {
-            outputWizard = new OutputWizard(exe, 0, startID, endID, 20);
-        } else {
-            outputWizard = new OutputWizard(exe, 0, startID, endID, maxFlightsPerTask);
-        }
+        outputWizard = new OutputWizard(exe, 0, startID, endID, flightsPerTask);
         exe.execute(outputWizard);
         this.waitAndLoadAll();
         controller.done();

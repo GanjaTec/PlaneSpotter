@@ -12,13 +12,14 @@ package planespotter.constants;
 public final class Configuration {
 
     /**
-     *
+     * private constructor
      */
-    public Configuration () {
-
+    private Configuration () {
     }
 
     // max thread pool size
-    public static final int MAX_THREADPOOL_SIZE = 100;
+    public static final int MAX_THREADPOOL_SIZE = 200;
+    // thread keep-alive-time
+    public static final long KEEP_ALIVE_TIME = 6L;
 
 }

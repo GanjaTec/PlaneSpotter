@@ -6,13 +6,14 @@ import planespotter.display.GUI;
 import planespotter.display.BlackBeardsNavigator;
 import planespotter.display.GUISlave;
 import planespotter.display.TreePlantation;
+import planespotter.model.FileWizard;
 import planespotter.model.DBOut;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static planespotter.constants.Configuration.MAX_THREADPOOL_SIZE;
+import static planespotter.constants.Configuration.*;
 import static planespotter.constants.GUIConstants.*;
 
 /**
@@ -75,9 +76,11 @@ public class Controller {
      */
     private void initExecutors() {
         this.log("initializing executors...");
-        exe.setKeepAliveTime(1L, TimeUnit.SECONDS);
+        var sec = TimeUnit.SECONDS;
+        exe.setKeepAliveTime(KEEP_ALIVE_TIME, sec);
         exe.setMaximumPoolSize(MAX_THREADPOOL_SIZE);
-        scheduled_exe.scheduleAtFixedRate(Controller::garbageCollector, 15, 15, TimeUnit.SECONDS); // functional
+        scheduled_exe.scheduleAtFixedRate(FileWizard::saveConfig, 60, 300, sec);
+        scheduled_exe.scheduleAtFixedRate(Controller::garbageCollector, 20, 20, sec);
         this.sucsessLog("executors initialized sucsessfully!");
     }
 

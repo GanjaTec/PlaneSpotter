@@ -9,7 +9,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static planespotter.constants.ComponentType.*;
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.GUIConstants.FONT_MENU;
 
@@ -185,6 +184,10 @@ public final class GUISlave {
     static void windowResized (ComponentType type) {
         switch (type) {
             case WINDOW -> gui.mainpanel.setBounds(gui.window.getBounds());
+            case MAP_PANEL -> gui.mapViewer.setBounds(gui.pMap.getBounds());
+            case MENU_PANEL -> gui.menubar.setBounds(gui.pMenu.getBounds());
+            case VIEW_HEAD -> gui.closeView.setBounds(gui.pViewHead.getWidth() - 85, 4, 80, 16);
+            case START_SCREEN -> gui.lblStartScreen.setBounds(gui.pStartScreen.getBounds());
             case MAINPANEL -> {
                 gui.pTitle.setBounds(0, 0, gui.mainpanel.getWidth(), 70);
                 gui.dpright.setBounds(280, 70, gui.mainpanel.getWidth() - 280, gui.mainpanel.getHeight() - 70);
@@ -204,8 +207,6 @@ public final class GUISlave {
                 gui.title_bground.setBounds(gui.pTitle.getBounds());
                 gui.title.setBounds(gui.pTitle.getWidth() / 2 - 200, 0, 400, 70);
             }
-            case VIEW_HEAD -> gui.closeView.setBounds(gui.pViewHead.getWidth() - 85, 4, 80, 16);
-            case START_SCREEN -> gui.lblStartScreen.setBounds(gui.pStartScreen.getBounds());
             case MENUBAR -> {
                 gui.tfSearch.setBounds(10, gui.menubar.getHeight() - 80, 255, 25);
                 gui.searchFilter.setBounds(10, gui.menubar.getHeight() - 40, 255, 25);
@@ -216,8 +217,6 @@ public final class GUISlave {
                     gui.listView.setBounds(gui.pList.getBounds());
                 }
             }
-            case MAP_PANEL -> gui.mapViewer.setBounds(gui.pMap.getBounds());
-            case MENU_PANEL -> gui.menubar.setBounds(gui.pMenu.getBounds());
             case INFO_PANEL -> {
                 if (gui.flightInfo != null) {
                     gui.flightInfo.setBounds(gui.pInfo.getBounds());

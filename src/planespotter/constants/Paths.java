@@ -16,13 +16,13 @@ public final class Paths {
      * src-path
      * contains all project sources
      */
-    public static final String SRC_PATH = "/src/";
+    public static final String SRC_PATH = "src\\";
 
     /**
      * img-path
      * contains all used images
      */
-    public static final String IMG_PATH = "/src/planespotter/";
+    public static final String IMG_PATH = "src\\planespotter\\";
 
 
 }
