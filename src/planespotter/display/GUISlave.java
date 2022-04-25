@@ -1,6 +1,7 @@
 package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.JMapViewer;
+import planespotter.constants.ComponentType;
 import planespotter.controller.Controller;
 
 import javax.swing.*;
@@ -8,6 +9,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static planespotter.constants.ComponentType.*;
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.GUIConstants.FONT_MENU;
 
@@ -52,7 +54,7 @@ public final class GUISlave {
      *              TODO move to EventWizard
      */
     private static void playSound (String sound) {
-        Runnable sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(sound);
+        var sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(sound);
         if (sound2 != null) sound2.run();
     }
 
@@ -88,7 +90,7 @@ public final class GUISlave {
         gui.viewHeadText.setText(DEFAULT_HEAD_TEXT + "Flight-List");
         // revalidate window -> making the tree visible
         GUISlave.revalidateAll();
-        requestComponentFocus(gui.listView);
+        GUISlave.requestComponentFocus(gui.listView);
     }
 
     /**
@@ -111,7 +113,7 @@ public final class GUISlave {
      * starts a indeterminate progressBar
      */
     public static void progressbarStart () {
-        progressbarVisible(true);
+        GUISlave.progressbarVisible(true);
         gui.progressbar.setIndeterminate(true);
         gui.progressbar.setString("Loading data...");
         gui.progressbar.setStringPainted(true);
@@ -164,13 +166,13 @@ public final class GUISlave {
      * @param search is the given list of search components
      */
     private static void showSearch (List<JComponent> search) {
-        List<List<JComponent>> allSearchComps = new ArrayList<>();
+        var allSearchComps = new ArrayList<List<JComponent>>();
         allSearchComps.add(gui.flightSearch);
         allSearchComps.add(gui.planeSearch);
         allSearchComps.add(gui.airlineSearch);
         allSearchComps.add(gui.airportSearch);
         allSearchComps.add(gui.areaSearch);
-        for (List<JComponent> comps : allSearchComps) {
+        for (var comps : allSearchComps) {
             var equals = (comps == search);
             if (comps != null) {
                 for (JComponent c : comps) {
@@ -178,6 +180,51 @@ public final class GUISlave {
                 }
             }
         }
+    }
+
+    static void windowResized (ComponentType type) {
+        switch (type) {
+            case WINDOW -> gui.mainpanel.setBounds(gui.window.getBounds());
+            case MAINPANEL -> {
+                gui.pTitle.setBounds(0, 0, gui.mainpanel.getWidth(), 70);
+                gui.dpright.setBounds(280, 70, gui.mainpanel.getWidth() - 280, gui.mainpanel.getHeight() - 70);
+                gui.dpleft.setBounds(0, 70, 280, gui.mainpanel.getHeight() - 70);
+            }
+            case DPLEFT -> {
+                gui.pMenu.setBounds(0, 0, gui.dpleft.getWidth(), gui.dpleft.getHeight());
+                gui.pInfo.setBounds(0, 0, gui.dpleft.getWidth(), gui.dpleft.getHeight());
+            }
+            case DPRIGHT -> {
+                gui.pViewHead.setBounds(0, 0, gui.dpright.getWidth(), 24);
+                gui.pList.setBounds(0, 24, gui.dpright.getWidth(), gui.dpright.getHeight() - 24);
+                gui.pMap.setBounds(0, 24, gui.dpright.getWidth(), gui.dpright.getHeight() - 24);
+                gui.pStartScreen.setBounds(0, 24, gui.dpright.getWidth(), gui.dpright.getHeight() - 24);
+            }
+            case TITLE_PANEL -> {
+                gui.title_bground.setBounds(gui.pTitle.getBounds());
+                gui.title.setBounds(gui.pTitle.getWidth() / 2 - 200, 0, 400, 70);
+            }
+            case VIEW_HEAD -> gui.closeView.setBounds(gui.pViewHead.getWidth() - 85, 4, 80, 16);
+            case START_SCREEN -> gui.lblStartScreen.setBounds(gui.pStartScreen.getBounds());
+            case MENUBAR -> {
+                gui.tfSearch.setBounds(10, gui.menubar.getHeight() - 80, 255, 25);
+                gui.searchFilter.setBounds(10, gui.menubar.getHeight() - 40, 255, 25);
+            }
+            case LIST_PANEL -> {
+                if (gui.spList != null && gui.listView != null) {
+                    gui.spList.setBounds(gui.pList.getBounds());
+                    gui.listView.setBounds(gui.pList.getBounds());
+                }
+            }
+            case MAP_PANEL -> gui.mapViewer.setBounds(gui.pMap.getBounds());
+            case MENU_PANEL -> gui.menubar.setBounds(gui.pMenu.getBounds());
+            case INFO_PANEL -> {
+                if (gui.flightInfo != null) {
+                    gui.flightInfo.setBounds(gui.pInfo.getBounds());
+                }
+            }
+        }
+        GUISlave.revalidateAll();
     }
 
 }

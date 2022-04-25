@@ -1,10 +1,9 @@
 package planespotter.model;
 
+import planespotter.controller.Controller;
 import planespotter.controller.IOMaster;
-import planespotter.dataclasses.Flight;
 import planespotter.throwables.ThreadOverheadError;
 
-import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -17,6 +16,8 @@ public class OutputWizard extends DBOut implements Runnable {
     private final ThreadPoolExecutor executor;
     private final int threadNumber, from, to, flightsPerTask;
     private final String threadName;
+    // controller instance
+    private final Controller controller;
 
     /**
      * constructor
@@ -28,6 +29,7 @@ public class OutputWizard extends DBOut implements Runnable {
         this.from = from;
         this.to = to-1;
         this.flightsPerTask = flightsPerTask;
+        this.controller = Controller.getInstance();
     }
 
     /**
@@ -39,10 +41,10 @@ public class OutputWizard extends DBOut implements Runnable {
         long start = System.nanoTime();
         Thread.currentThread().setPriority(9);
         Thread.currentThread().setName(this.threadName);
-        System.out.println(EKlAuf + "OutputWizard" + EKlZu + " thread " + ANSI_ORANGE + this.getName() + ANSI_RESET + " created!");
+        this.controller.log("thread " + ANSI_ORANGE + this.getName() + ANSI_RESET + " created!");
         this.loadFlights(from, to);
-        System.out.println( EKlAuf +  this.getName() + ANSI_ORANGE + "@" + ANSI_RESET + Thread.currentThread().getId() +
-                            EKlZu + " loaded data in " + ANSI_YELLOW + (System.nanoTime()-start)/Math.pow(1000, 3) +
+        this.controller.log( this.getName() + ANSI_ORANGE + "@" + ANSI_RESET + Thread.currentThread().getId() +
+                            ": loaded data in " + ANSI_YELLOW + (System.nanoTime()-start)/Math.pow(1000, 3) +
                             ANSI_RESET + " seconds!");
     }
 
@@ -54,12 +56,12 @@ public class OutputWizard extends DBOut implements Runnable {
     public void loadFlights (int fromID, int toID) {
         int flightsToLoad = toID - fromID;
         if (flightsToLoad <= flightsPerTask) {
-            List<Flight> flights = super.getAllFlightsFromID(fromID, toID);
+            var flights = super.getAllFlightsFromID(fromID, toID);
             IOMaster.addToQueue(flights);
         } else {
             int newEndID = to-(flightsToLoad/2);
-            OutputWizard out0 = new OutputWizard(executor, threadNumber+1, fromID, newEndID, flightsPerTask);
-            OutputWizard out1 = new OutputWizard(executor, threadNumber+2, newEndID, toID, flightsPerTask);
+            var out0 = new OutputWizard(executor, threadNumber+1, fromID, newEndID, flightsPerTask);
+            var out1 = new OutputWizard(executor, threadNumber+2, newEndID, toID, flightsPerTask);
             try {
                 executor.execute(out0);
                 executor.execute(out1);

@@ -14,18 +14,12 @@ import static planespotter.constants.GUIConstants.*;
  */
 final class PanelModels {
 
-    //default desktop width
-    static int WIDTH_RIGHT = 1259-280;
-    static int WIDTH_LEFT = 1259-WIDTH_RIGHT; // unnötig (=279)
-    // large menu item width
-    static int WIDTH_MENUITEM = WIDTH_LEFT-25;
-
     /**
      * main-panel
      */
     static JPanel mainPanel (JFrame parent) {
         // TODO: setting up mainpanel
-        JPanel mainpanel = new JPanel();
+        var mainpanel = new JPanel();
         mainpanel.setBounds(0, 0, parent.getWidth(), parent.getHeight()); // mainpanel width: 1260
         mainpanel.setLayout(null);
         mainpanel.setBackground(DEFAULT_BG_COLOR);
@@ -37,7 +31,7 @@ final class PanelModels {
      */
     static JPanel titlePanel (JPanel parent) {
         // TODO: setting up title panel
-        JPanel title = new JPanel();
+        var title = new JPanel();
         title.setBounds(0, 0, parent.getWidth(), 70);
         title.setOpaque(true);
         title.setBackground(DEFAULT_ACCENT_COLOR);
@@ -51,7 +45,7 @@ final class PanelModels {
      */
     static JLabel titleTxtLabel (JPanel parent) {
         // TODO: setting up title label
-        JLabel title_text = new JLabel("P l a n e S p o t t e r");
+        var title_text = new JLabel("P l a n e S p o t t e r");
         title_text.setFont(TITLE_FONT);
         title_text.setForeground(DEFAULT_FG_COLOR);
         title_text.setFocusable(false);
@@ -65,10 +59,11 @@ final class PanelModels {
      */
     static JPanel viewHeadPanel (JDesktopPane parent) {
         // TODO: setting up view head panel
-        JPanel viewHead = new JPanel();
-        viewHead.setLayout(null);
-        viewHead.setBorder(LINE_BORDER);
+        var viewHead = new JPanel();
         viewHead.setBounds(0, 0, parent.getWidth(), 24);
+        viewHead.setLayout(null);
+        var border = BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR);
+        viewHead.setBorder(border);
         viewHead.setBackground(DEFAULT_BG_COLOR);
 
         return viewHead;
@@ -77,9 +72,9 @@ final class PanelModels {
         /**
          * @return head label, which is part of viewHeadPanel
          */
-        static JLabel headLabel (JPanel parent, String text) {
+        static JLabel headLabel (String text) {
             // TODO: setting up head label
-            JLabel head = new JLabel(text + " > ");
+            var head = new JLabel(text + " > ");
             head.setBounds(5, 0, 400, 24);
             head.setFont(FONT_MENU.deriveFont(18));
             head.setForeground(DEFAULT_FONT_COLOR);
@@ -92,7 +87,7 @@ final class PanelModels {
      */
     static JPanel listPanel (JDesktopPane parent) {
         // TODO: setting up list panel
-        JPanel list = new JPanel();
+        var list = new JPanel();
         list.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
         list.setBackground(DEFAULT_BG_COLOR);
         list.setLayout(null);
@@ -106,7 +101,7 @@ final class PanelModels {
      */
     static JPanel mapPanel (JDesktopPane parent) {
         // TODO: setting up map panel
-        JPanel map = new JPanel();
+        var map = new JPanel();
         map.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
         map.setBackground(DEFAULT_BG_COLOR);
         map.setLayout(null);
@@ -120,7 +115,7 @@ final class PanelModels {
      */
     static JPanel menuPanel (JDesktopPane parent) {
         // TODO: setting up menu panel
-        JPanel menu = new JPanel();
+        var menu = new JPanel();
         menu.setBounds(0, 0, parent.getWidth(), parent.getHeight());
         menu.setBackground(DEFAULT_BG_COLOR);
         menu.setLayout(null);
@@ -133,7 +128,7 @@ final class PanelModels {
      */
     static JPanel infoPanel (JDesktopPane parent) {
         // TODO: setting up info panel
-        JPanel info = new JPanel();
+        var info = new JPanel();
         info.setBounds(0, 0, parent.getWidth(), parent.getHeight());
         info.setBackground(DEFAULT_ACCENT_COLOR);
         info.setLayout(null);
@@ -146,7 +141,7 @@ final class PanelModels {
      */
     static JPanel searchPanel (JPanel parent, GUI gui) {
         // TODO: setting up search panel
-        JPanel search = new JPanel();
+        var search = new JPanel();
         search.setBounds(10, 150, parent.getWidth()-20, parent.getHeight()-225);
         search.setBackground(DEFAULT_BG_COLOR);
         search.setBorder(LINE_BORDER);
@@ -161,7 +156,7 @@ final class PanelModels {
      */
     static JPanel startPanel (JDesktopPane parent) {
         // TODO setting up start screen panel
-        JPanel start = new JPanel();
+        var start = new JPanel();
         start.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
         start.setBackground(DEFAULT_BG_COLOR);
         start.setLayout(null);
@@ -175,7 +170,7 @@ final class PanelModels {
      */
     static JLabel backgroundLabel (JPanel parent) {
         // TODO: setting up background image
-        JLabel bground = new JLabel(img);
+        var bground = new JLabel(img);
         bground.setSize(parent.getWidth(), parent.getHeight());
 
         return bground;

@@ -23,7 +23,7 @@ final class MenuModels {
      */
     static JMenuBar menuBar (JPanel parent) {
         // TODO: setting up menubar
-        JMenuBar menubar = new JMenuBar();
+        var menubar = new JMenuBar();
         menubar.setBackground(DEFAULT_BG_COLOR);
         menubar.setForeground(DEFAULT_FG_COLOR);
         menubar.setBounds(0, 0, parent.getWidth(), parent.getHeight());
@@ -38,7 +38,7 @@ final class MenuModels {
      */
     static JButton fileButton (JMenuBar parent) {
         // TODO: setting up file button
-        JButton file = new JButton("File");
+        var file = new JButton("File");
         file.setFont(FONT_MENU);
         file.setBorder(MENU_BORDER);
         file.setBackground(DEFAULT_ACCENT_COLOR);
@@ -54,7 +54,7 @@ final class MenuModels {
      */
     static JButton listButton (JMenuBar parent) {
         // TODO setting up list button
-        JButton list = new JButton("List-View");
+        var list = new JButton("List-View");
         list.setBackground(DEFAULT_ACCENT_COLOR);
         list.setForeground(DEFAULT_FONT_COLOR);
         list.setBorder(MENU_BORDER);
@@ -70,7 +70,7 @@ final class MenuModels {
      */
     static JButton mapButton (JMenuBar parent) {
         // TODO setting up list button
-        JButton map = new JButton("Live-Map");
+        var map = new JButton("Live-Map");
         map.setBackground(DEFAULT_ACCENT_COLOR);
         map.setForeground(DEFAULT_FONT_COLOR);
         map.setBorder(MENU_BORDER);
@@ -86,7 +86,7 @@ final class MenuModels {
      */
     static JButton settingsButton (JMenuBar parent) {
         // TODO: setting up settings menu
-        JButton settings = new JButton("Settings");
+        var settings = new JButton("Settings");
         settings.setFont(FONT_MENU);
         settings.setBorder(MENU_BORDER);
         settings.setBackground(DEFAULT_ACCENT_COLOR);
@@ -102,7 +102,7 @@ final class MenuModels {
      */
     static JButton searchButton (JMenuBar parent) {
         // TODO: setting up search-settings menu
-        JButton search_settings = new JButton("Search");
+        var search_settings = new JButton("Search");
         search_settings.setFont(FONT_MENU);
         search_settings.setBorder(MENU_BORDER);
         search_settings.setBackground(DEFAULT_ACCENT_COLOR);
@@ -118,7 +118,7 @@ final class MenuModels {
      */
     static JProgressBar progressBar (JMenuBar parent) {
         // TODO: seting up progress bar
-        JProgressBar progressbar = new JProgressBar(0, 100);
+        var progressbar = new JProgressBar(0, 100);
         progressbar.setBorder(LINE_BORDER);
         progressbar.setBackground(DEFAULT_FONT_COLOR);
         progressbar.setBorderPainted(true);
@@ -135,7 +135,7 @@ final class MenuModels {
      */
     static JTextField searchTextField (JMenuBar parent) {
         // TODO: setting up search text field
-        JTextField search = new JTextField();
+        var search = new JTextField();
         search.setToolTipText("Search");
         search.setBounds(10, parent.getHeight()-60, parent.getWidth()-20, 25);
         search.setBackground(Color.WHITE);
@@ -151,7 +151,7 @@ final class MenuModels {
      */
     static JButton closeViewButton (JDesktopPane parent) {
         // TODO: setting up view close button
-        JButton closeView = new JButton("Close");
+        var closeView = new JButton("Close");
         closeView.setBounds(parent.getWidth()-85, 4, 80, 16);
         closeView.setBackground(DEFAULT_BORDER_COLOR);
         closeView.setForeground(DEFAULT_FONT_COLOR);
@@ -166,11 +166,11 @@ final class MenuModels {
      * @return settings option pane (which pops up)
      */
     static JInternalFrame settings_intlFrame (JPanel parent) {
-            JLabel maxLoadLbl = new JLabel("Max. loaded Data:");
+            var maxLoadLbl = new JLabel("Max. loaded Data:");
             maxLoadLbl.setBounds(20, 20, 180, 30);
             maxLoadLbl.setForeground(DEFAULT_FONT_COLOR);
             maxLoadLbl.setFont(FONT_MENU);
-        JInternalFrame settings = new JInternalFrame();
+        var settings = new JInternalFrame();
         settings.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 500, 400);
         settings.setLayout(null);
         settings.setBackground(DEFAULT_BORDER_COLOR);
@@ -187,7 +187,7 @@ final class MenuModels {
      * settings opt. pane max-load text field
      */
     static JTextField settingsOP_maxLoadTxtField () {
-        JTextField maxLoadTxtfield = new JTextField();
+        var maxLoadTxtfield = new JTextField();
         maxLoadTxtfield.setBounds(200, 20, 50, 30);
         maxLoadTxtfield.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR));
         maxLoadTxtfield.setBackground(DEFAULT_BG_COLOR);
@@ -215,7 +215,7 @@ final class MenuModels {
      * @return menu combobox-text-label
      */
      static JLabel cmbBoxLabel (JPanel parent) {
-        JLabel boxLabel = new JLabel("Search for:");
+        var boxLabel = new JLabel("Search for:");
         boxLabel.setBounds(10, 10, (parent.getWidth()-20)/2, 25);
         boxLabel.setBackground(DEFAULT_BG_COLOR);
         boxLabel.setForeground(DEFAULT_MAP_ICON_COLOR);
@@ -240,7 +240,7 @@ final class MenuModels {
      */
     static JSeparator searchSeperator (JPanel parent) {
         // TODO: setting up exact search panel
-        JSeparator seperator = new JSeparator(JSeparator.HORIZONTAL);
+        var seperator = new JSeparator(JSeparator.HORIZONTAL);
         seperator.setBounds(10, 43, parent.getWidth()-20, 2);
         seperator.setBackground(DEFAULT_BORDER_COLOR);
 
@@ -252,8 +252,8 @@ final class MenuModels {
      * @return
      */
     static JTextArea searchMessage(JPanel parent) {
-        String message = "Es muss mindestens eins der Felder ausgefüllt sein!";
-        JTextArea headMessage = new JTextArea(message);
+        var message = "Es muss mindestens eins der Felder ausgefüllt sein!";
+        var headMessage = new JTextArea(message);
         headMessage.setBounds(10, parent.getHeight()-80, parent.getWidth()-20, 35);
         headMessage.setBackground(DEFAULT_BG_COLOR);
         headMessage.setForeground(DEFAULT_FONT_COLOR);
@@ -261,7 +261,7 @@ final class MenuModels {
         headMessage.setEditable(false);
         headMessage.setLineWrap(true);
         headMessage.setWrapStyleWord(true);
-        Font font = new Font(FONT_MENU.getFontName(), Font.PLAIN, 12);
+        var font = new Font(FONT_MENU.getFontName(), Font.PLAIN, 12);
         headMessage.setFont(font);
 
         return headMessage;
@@ -293,7 +293,7 @@ final class MenuModels {
                 c.setBorder(LINE_BORDER);
                 y += 35;
             } else if (c instanceof JButton) {
-                String buttonText = ((JButton) c).getText();
+                var buttonText = ((JButton) c).getText();
                 if (buttonText.equals("Load List")) {
                     c.setBounds(10, parent.getHeight()-35, width-5, 25);
                 } else if (buttonText.equals("Load Map")) {
@@ -315,4 +315,5 @@ final class MenuModels {
     // other settings
     // evtl. Theme oder so -> Farbe
 
+    //TODO evtl. methode getAllAsList()
 }

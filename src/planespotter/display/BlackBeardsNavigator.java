@@ -53,14 +53,14 @@ public final class BlackBeardsNavigator {
      * @param dps is the given tracking-hashmap
      */
     public static void createFlightRoute (HashMap<Integer, DataPoint> dps) {
-        JMapViewer viewer = gui.mapViewer;
-        Set<Integer> keySet = dps.keySet();
+        var viewer = gui.mapViewer;
+        var keySet = dps.keySet();
         allMapMarkers = new ArrayList<>();
         int idKey = 0;
         for (int key : keySet) {
-            DataPoint dp = dps.get(key);
-            Position pos = dp.getPos();
-            CustomMapMarker newMarker = new CustomMapMarker(new Coordinate(pos.getLat(), pos.getLon()), new IOMaster().flightByID(dp.getFlightID()));
+            var dp = dps.get(key);
+            var pos = dp.getPos();
+            var newMarker = new CustomMapMarker(new Coordinate(pos.getLat(), pos.getLon()), new IOMaster().flightByID(dp.getFlightID()));
             viewer.addMapMarker(newMarker);
             allMapMarkers.add(newMarker);
             idKey = key;
@@ -75,17 +75,17 @@ public final class BlackBeardsNavigator {
      * @param list is the given flight list
      */
     public static void createAllFlightsMap (List<Flight> list) {
-        JMapViewer viewer = gui.mapViewer;
-        Rectangle viewSize = viewer.getVisibleRect(); // may be used in the future
-        List<ICoordinate> coords = new ArrayList<>();
+        var viewer = gui.mapViewer;
+        var viewSize = viewer.getVisibleRect(); // may be used in the future
+        var coords = new ArrayList<ICoordinate>();
         allMapMarkers = new ArrayList<>();
         for (Flight f : list) {
             int lastTrackingID = new IOMaster().lastTrackingID(f.getID());
             //length is 1 TODO fix // NullPointerException: lastDataPoint is null
-            DataPoint lastDataPoint = f.getDataPoints().get(lastTrackingID);
-            Position lastPos = lastDataPoint.getPos();
+            var lastDataPoint = f.getDataPoints().get(lastTrackingID);
+            var lastPos = lastDataPoint.getPos();
             // TODO: creating new Map Marker // will be optimized
-            CustomMapMarker newMarker = new CustomMapMarker(new Coordinate(lastPos.getLat(), lastPos.getLon()), f);
+            var newMarker = new CustomMapMarker(new Coordinate(lastPos.getLat(), lastPos.getLon()), f);
             newMarker.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
             viewer.addMapMarker(newMarker);
             allMapMarkers.add(newMarker);
@@ -108,9 +108,9 @@ public final class BlackBeardsNavigator {
      */
     static JMapViewer defaultMapViewer (JPanel parent) {
         // TODO: trying to set up JMapViewer
-        JMapViewer viewer = new JMapViewer(new MemoryTileCache());
+        var viewer = new JMapViewer(new MemoryTileCache());
         viewer.setBorder(LINE_BORDER);
-        DefaultMapController mapController = new DefaultMapController(viewer);
+        var mapController = new DefaultMapController(viewer);
         mapController.setMovementMouseButton(1);
         viewer.setDisplayToFitMapMarkers();
         viewer.setZoomControlsVisible(false);

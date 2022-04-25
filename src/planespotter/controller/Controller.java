@@ -41,7 +41,7 @@ public class Controller {
      * constructor - private -> only ONE instance ( getter: Controller.getInstance() )
      */
     private Controller () {
-        this.initExecutors();
+        this.initialize();
     }
     // ONLY Controller instance
     private static final Controller mainController = new Controller();
@@ -49,7 +49,7 @@ public class Controller {
     // only GUI instance
     static GUI gui;
     // preloadedFlights list ( should also be thread-safe )
-    public static volatile List<Flight> preloadedFlights = new CopyOnWriteArrayList<>();
+    public static volatile List<Flight> preloadedFlights;
 
     /**
      * @return ONE and ONLY controller instance
@@ -60,16 +60,25 @@ public class Controller {
 
     /**
      * initializes the controller
+     */
+    private void initialize () {
+        this.log("initializing controller...");
+        this.initExecutors();
+        preloadedFlights = new CopyOnWriteArrayList<>();
+        Thread.currentThread().setName("planespotter-main");
+        this.sucsessLog("executors initialized sucsessfully!");
+    }
+
+    /**
+     * initializes all executors
      * :: -> method reference
      */
     private void initExecutors() {
         this.log("initializing executors...");
-        // TODO: setting up controller thread
-        Thread.currentThread().setName("planespotter-main");
         exe.setKeepAliveTime(1L, TimeUnit.SECONDS);
         exe.setMaximumPoolSize(MAX_THREADPOOL_SIZE);
-        scheduled_exe.scheduleAtFixedRate(Controller::garbageCollector, 15, 15, TimeUnit.SECONDS);
-        this.log(ANSI_GREEN + "executors initialized sucsessfully!");
+        scheduled_exe.scheduleAtFixedRate(Controller::garbageCollector, 15, 15, TimeUnit.SECONDS); // functional
+        this.sucsessLog("executors initialized sucsessfully!");
     }
 
     /**
@@ -80,7 +89,7 @@ public class Controller {
             this.openWindow();
             this.loadData();
             while (loading) {
-                wait();
+                this.wait();
             }
             GUISlave.donePreLoading();
         } catch (InterruptedException e) {
@@ -115,8 +124,8 @@ public class Controller {
         }
         preloadedFlights = new ArrayList<>();
         new IOMaster().loadFlightsParallel();
-        this.log(ANSI_GREEN + "loaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3)
-                    + " seconds!" + "\n" + ANSI_ORANGE + " -> completed: " + exe.getCompletedTaskCount() +
+        this.sucsessLog("loaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3) +
+                    " seconds!" + "\n" + ANSI_ORANGE + " -> completed: " + exe.getCompletedTaskCount() +
                     ", active: " + exe.getActiveCount() + ", largestPoolSize: " + exe.getLargestPoolSize());
     }
 
@@ -155,7 +164,7 @@ public class Controller {
             }
         }
         this.done();
-        this.log(ANSI_GREEN + "view loaded!");
+        this.sucsessLog("view loaded!");
     }
 
     /**
@@ -175,13 +184,20 @@ public class Controller {
     }
 
     /**
-     * System.err.println, but with style
+     * uses this.log to make a 'sucsess' log
      */
-    public void errorLog (String txt) {
-        System.err.println( EKlAuf + this.getClass().getSimpleName() + EKlZu + ANSI_RED + " " + txt + ANSI_RESET);
+    public void sucsessLog (String txt) {
+        this.log(ANSI_GREEN + txt);
     }
 
-    public static GUI gui () {
+    /**
+     * uses this.log to make an 'error' log
+     */
+    public void errorLog (String txt) {
+        this.log(ANSI_RED + txt);
+    }
+
+    public static GUI gui() {
         return gui;
     }
 

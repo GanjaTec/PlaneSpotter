@@ -46,7 +46,9 @@ public class IOMaster {
      */
     private void waitAndLoadAll () {
         // waits until there is no running thread, then breaks
-        while (true) if (exe.getActiveCount() == 0) break;
+        while (true) {
+            if (exe.getActiveCount() == 0) break;
+        }
         while (!listQueue.isEmpty()) { // adding all loaded lists to the main list ( listQueue is threadSafe )
             preloadedFlights.addAll(Objects.requireNonNull(listQueue.poll()));
         }
@@ -63,11 +65,11 @@ public class IOMaster {
      * @param id is the flight id to search for
      * @return a flight
      */
-    public Flight flightByID (int id) {
+    public Flight flightByID (final int id) {
         try {
             return new DBOut().getFlightByID(id);
         } catch (DataNotFoundException e) {
-            controller.errorLog("flight with the ID " + id + " doesn't exist!");
+            this.controller.errorLog("flight with the ID " + id + " doesn't exist!");
         } return null;
     }
 
@@ -75,11 +77,11 @@ public class IOMaster {
      * @param flightID is the flight id where the tracking is from
      * @return last tracking id from a certain flight
      */
-    public int lastTrackingID (int flightID) {
+    public int lastTrackingID (final int flightID) {
         try {
             return new DBOut().getLastTrackingIDByFlightID(flightID);
         } catch (DataNotFoundException e) {
-            controller.errorLog("flight doesn't exist or doesn't have last tracking!");
+            this.controller.errorLog("flight doesn't exist or doesn't have last tracking!");
         } return -1;
     }
 

@@ -15,7 +15,7 @@ public class Main {
      */
     public static void main (String[] args) {
 
-        final Controller control = Controller.getInstance();
+        final var control = Controller.getInstance();
 
         // TODO: starting program
         control.start();
