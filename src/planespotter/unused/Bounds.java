@@ -1,4 +1,4 @@
-package planespotter.constants;
+package planespotter.unused;
 
 import planespotter.display.GUI;
 

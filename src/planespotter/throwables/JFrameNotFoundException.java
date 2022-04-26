@@ -1,4 +1,4 @@
-package planespotter.exceptions;
+package planespotter.throwables;
 
 public class JFrameNotFoundException extends Exception {
 

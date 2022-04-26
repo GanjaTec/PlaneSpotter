@@ -1,76 +1,79 @@
 package planespotter.display;
 
-
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
-import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
-import org.openstreetmap.gui.jmapviewer.interfaces.TileLoaderListener;
-import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
-import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
-import planespotter.constants.Bounds;
-import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
-import planespotter.dataclasses.DataPoint;
-import planespotter.dataclasses.Position;
-import planespotter.exceptions.SemaphorError;
+import planespotter.dataclasses.CustomMapMarker;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
+import static java.awt.event.KeyEvent.*;
+import static planespotter.constants.ComponentType.*;
 import static planespotter.constants.GUIConstants.*;
+import static planespotter.constants.ViewType.*;
 
 /**
  * @name GUI
  * @author jml04
  * @version 1.1
+ *
+ * GUI class is the main gui class, it implements all the listeners
+ * and has all components -> it contains window one sees
  */
 public class GUI implements ActionListener, KeyListener, JMapViewerEventListener,
-        ComponentListener, Runnable, MouseListener {
+        ComponentListener, Runnable, MouseListener, ItemListener {
 
     /**
-     * components
+     * components // unsorted TODO sort
      */
-    public JFrame window, loadingScreen;
-    protected JDesktopPane dpleft, dpright;
-    protected JInternalFrame flist, fmap, fmenu, finfo;
-    protected JPanel mainpanel, pTitle, pList, pMap, pMenu, pInfo, pStartScreen;
-    protected JLabel title, bground, title_bground, lblStartScreen, lblLoading;
-    protected JTree listView, flightInfo;
-    protected JMapViewer mapViewer;
-    protected JTextField search, settings_iFrame_maxLoad;
-    protected JRadioButton rbFlight, rbAirline;
-    protected JProgressBar progressbar;
-    protected JMenuBar menubar;
-    protected JButton datei, settings, search_settings, btList, btMap, closeView;
+    protected JFrame        window, loadingScreen;
+    protected JDesktopPane  dpleft, dpright;
+    protected JPanel        mainpanel, pTitle, pViewHead, pList, pMap, pMenu, pInfo, pStartScreen, pSearch;
+    protected JLabel        title, bground, title_bground, lblStartScreen, lblLoading,
+                            viewHeadText, searchForLabel;
+    protected List<JComponent> flightSearch, planeSearch, airlineSearch, airportSearch, areaSearch;
+    protected JTextArea     searchMessage;
+    protected JTextField    tfSearch, settings_iFrame_maxLoad;
+    protected JRadioButton  rbFlight, rbAirline;
+    protected JProgressBar  progressbar;
+    protected JMenuBar      menubar;
+    protected JButton btFile, settings, searchFilter, btList, btMap, closeView;
     protected JInternalFrame settings_intlFrame;
-    protected JScrollPane spList;
+    protected JScrollPane   spList;
+    protected JComboBox<String> searchFor_cmbBox;
+    protected JSeparator    searchSeperator;
+
+    protected volatile JTree listView, flightInfo;
+    // TODO fix ConcurrentModificationException on mapViewer
+    protected volatile JMapViewer mapViewer;
 
     // alternative test path: "C:\\Users\\jml04\\Desktop\\loading.gif"
-    private final ImageIcon loading_gif = new ImageIcon(this.getClass().getResource("/loading.gif"));
-    // contains all map marker coords with datapoints, if mapViewer != null
-    public HashMap<Coordinate, DataPoint> mapPoints;
+    private final ImageIcon loading_gif = new ImageIcon(Objects.requireNonNull(this.getClass().getResource("/loading.gif")));
+
+    // controller instance
+    private final Controller controller = Controller.getInstance();
 
     /**
      * view semaphor
      * can be:
      *  null -> no view opened
      *  not null -> view opened
+     *
+     * @deprecated -> should be deleted to prevent conflicts
      */
     protected static Component runningView = null;
-    protected Semaphor view_SEM = new Semaphor((byte) 0, (byte) 1, (byte) 0);
 
     /**
      * constructor for GUI
      */
     public GUI() {
-        JFrame window = this.initialize();
+        window = this.initialize();
     }
 
     /**
@@ -78,9 +81,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      */
     @Override
     public void run() {
-        JFrame loading = this.loadingScreen();
+        Thread.currentThread().setName("planespotter-gui");
+        var loading = this.loadingScreen();
         loading.setVisible(true);
-        new BackgroundWorker().execute();
 
     }
 
@@ -89,17 +92,17 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      *
      * @return loading screen JFrame
      */
-    public JFrame loadingScreen () {
-        loadingScreen = new JFrame();
-        loadingScreen.setSize(333, 243);
-        loadingScreen.setLocationRelativeTo(null);
-        loadingScreen.setLayout(null);
-        loadingScreen.setOpacity(1f);
-        loadingScreen.setUndecorated(true);
-            lblLoading = new JLabel(loading_gif);
-            lblLoading.setBounds(0, 0, 333, 243);
-        loadingScreen.add(lblLoading);
-        return loadingScreen;
+    private JFrame loadingScreen () {
+        this.loadingScreen = new JFrame();
+        this.loadingScreen.setSize(333, 243);
+        this.loadingScreen.setLocationRelativeTo(null);
+        this.loadingScreen.setLayout(null);
+        this.loadingScreen.setOpacity(1f);
+        this.loadingScreen.setUndecorated(true);
+            this.lblLoading = new JLabel(this.loading_gif);
+            this.lblLoading.setBounds(0, 0, 333, 243);
+        this.loadingScreen.add(this.lblLoading);
+        return this.loadingScreen;
     }
 
     /**
@@ -108,377 +111,273 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      */
     protected JFrame initialize () {
         // TODO: setting up window
-        window = new JFrame("PlaneSpotter");
-        window.setSize(Bounds.ALL.getSize());
-        window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        window.setLocationRelativeTo(null);
+        this.window = new JFrame("PlaneSpotter");
+        this.window.setSize(1280, 720);
+        this.window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        this.window.setLocationRelativeTo(null);
         // TODO: initializing mainpanel
-        mainpanel = PanelModels.mainPanel(window);
-        mainpanel.addComponentListener(this);
+        this.mainpanel = PanelModels.mainPanel(this.window);
+        this.mainpanel.addComponentListener(this);
         // TODO: setting up right desktop pane
-        dpright = new JDesktopPane();
-        dpright.setBorder(LINE_BORDER);
-        dpright.setBackground(DEFAULT_BG_COLOR);
-        dpright.setDesktopManager(new DefaultDesktopManager());
-        dpright.setBounds(280, 70, mainpanel.getWidth()-280, mainpanel.getHeight()-135);
-        dpright.addComponentListener(this);
+        this.dpright = new JDesktopPane();
+        this.dpright.setBorder(LINE_BORDER);
+        this.dpright.setBackground(DEFAULT_BG_COLOR);
+        this.dpright.setDesktopManager(new DefaultDesktopManager());
+        this.dpright.setBounds(280, 70, this.mainpanel.getWidth()-280, this.mainpanel.getHeight()-135);
+        this.dpright.addComponentListener(this);
         // TODO: setting up left desktop pane
-        dpleft = new JDesktopPane();
-        dpleft.setBorder(LINE_BORDER);
-        dpleft.setBackground(DEFAULT_BG_COLOR);
-        dpleft.setDesktopManager(new DefaultDesktopManager());
-        dpleft.setBounds(0, 70, 280, mainpanel.getHeight()-135);
-        dpleft.addComponentListener(this);
+        this.dpleft = new JDesktopPane();
+        this.dpleft.setBorder(LINE_BORDER);
+        this.dpleft.setBackground(DEFAULT_BG_COLOR);
+        this.dpleft.setDesktopManager(new DefaultDesktopManager());
+        this.dpleft.setBounds(0, 70, 280, this.mainpanel.getHeight()-135);
+        this.dpleft.addComponentListener(this);
             // TODO: initializing title panel
-            pTitle = PanelModels.titlePanel(mainpanel);
-            pTitle.addComponentListener(this);
+            this.pTitle = PanelModels.titlePanel(this.mainpanel);
+            this.pTitle.addComponentListener(this);
+            // TODO: initializing view head panel
+            this.pViewHead = PanelModels.viewHeadPanel(this.dpright);
+            this.pViewHead.addComponentListener(this);
             // TODO: initializing list panel
-            pList = PanelModels.listPanel(dpright);
-            pList.addComponentListener(this);
+            this.pList = PanelModels.listPanel(this.dpright);
+            this.pList.addComponentListener(this);
             // TODO: initializing map panel
-            pMap = PanelModels.mapPanel(dpright);
-            pMap.addComponentListener(this);
+            this.pMap = PanelModels.mapPanel(this.dpright);
+            this.pMap.addComponentListener(this);
+                // TODO: initializing map viewer
+                this.mapViewer = BlackBeardsNavigator.defaultMapViewer(this.pMap);
+                this.mapViewer.addKeyListener(this);
+                this.mapViewer.addComponentListener(this);
+                this.mapViewer.addMouseListener(this);
+                this.mapViewer.addJMVListener(this);
             // TODO: initializing menu panel
-            pMenu = PanelModels.menuPanel(dpleft);
-            pMenu.addComponentListener(this);
+            this.pMenu = PanelModels.menuPanel(this.dpleft);
+            this.pMenu.addComponentListener(this);
             // TODO: initializing info panel
-            pInfo = PanelModels.infoPanel(dpleft);
-            pInfo.addComponentListener(this);
+            this.pInfo = PanelModels.infoPanel(this.dpleft);
+            this.pInfo.addComponentListener(this);
             // TODO: initializing start screen panel
-            pStartScreen = PanelModels.startPanel(dpright);
-            pStartScreen.addComponentListener(this);
+            this.pStartScreen = PanelModels.startPanel(this.dpright);
+            this.pStartScreen.addComponentListener(this);
+            // TODO: initializing search panel
+            this.pSearch = PanelModels.searchPanel(this.pMenu, this);
+            this.pSearch.addComponentListener(this);
+                // TODO: initializing search panel components
+                this.searchForLabel = MenuModels.cmbBoxLabel(this.pSearch);
+                this.searchFor_cmbBox = MenuModels.searchFor_cmbBox(this.pSearch);
+                this.searchFor_cmbBox.addItemListener(this);
+                this.searchSeperator = MenuModels.searchSeperator(this.pSearch);
+                this.searchMessage = MenuModels.searchMessage(this.pSearch);
+                this.flightSearch = MenuModels.flightSearch(pSearch);
             // TODO: initializing background label
-            bground = PanelModels.backgroundLabel();
+            this.bground = PanelModels.backgroundLabel(this.mainpanel);
             // TODO: initializing pTitle
-            menubar = MenuModels.menuBar(pMenu);
-            menubar.addComponentListener(this);
+            this.menubar = MenuModels.menuBar(this.pMenu);
+            this.menubar.addComponentListener(this);
                 // TODO: initializing buttons
-                datei = MenuModels.fileButton();
-                datei.addActionListener(this);
-                btList = MenuModels.listButton();
-                btList.addActionListener(this);
-                btMap = MenuModels.mapButton();
-                btMap.addActionListener(this);
-                settings = MenuModels.settingsButton();
-                settings.addActionListener(this);
-                search = MenuModels.searchTextField(menubar);
-                search.addKeyListener(this);
-                search_settings = MenuModels.searchFilterButton(menubar);
-                search_settings.addActionListener(this);
-                search_settings.addComponentListener(this);
-                progressbar = MenuModels.progressBar(menubar);
-                progressbar.addComponentListener(this);
-                settings_intlFrame = MenuModels.settings_intlFrame(mainpanel);
-                settings_intlFrame.addComponentListener(this);
-                settings_iFrame_maxLoad = MenuModels.settingsOP_maxLoadTxtField();
-                settings_iFrame_maxLoad.addComponentListener(this);
-                settings_iFrame_maxLoad.addKeyListener(this);
+                this.btFile = MenuModels.fileButton(menubar);
+                this.btFile.addActionListener(this);
+                this.btList = MenuModels.listButton(menubar);
+                this.btList.addActionListener(this);
+                this.btMap = MenuModels.mapButton(menubar);
+                this.btMap.addActionListener(this);
+                this.settings = MenuModels.settingsButton(menubar);
+                this.settings.addActionListener(this);
+                this.tfSearch = MenuModels.searchTextField(this.menubar);
+                this.tfSearch.addKeyListener(this);
+                this.searchFilter = MenuModels.searchButton(this.menubar);
+                this.searchFilter.addActionListener(this);
+                this.searchFilter.addComponentListener(this);
+                this.progressbar = MenuModels.progressBar(this.menubar);
+                this.progressbar.addComponentListener(this);
+                this.settings_intlFrame = MenuModels.settings_intlFrame(this.mainpanel);
+                this.settings_intlFrame.addComponentListener(this);
+                this.settings_iFrame_maxLoad = MenuModels.settingsOP_maxLoadTxtField();
+                this.settings_iFrame_maxLoad.addComponentListener(this);
+                this.settings_iFrame_maxLoad.addKeyListener(this);
+            // TODO: initializing view head text label
+            this.viewHeadText = PanelModels.headLabel("PlaneSpotter");
             // TODO: initializing close view button
-            closeView = MenuModels.closeViewButton(dpright);
-            closeView.addActionListener(this);
+            this.closeView = MenuModels.closeViewButton(this.dpright);
+            this.closeView.addActionListener(this);
             // TODO: setting up title backround img
             // ich bekomme nur mit der getRessource methode ein Bild zurückgeliefert
-            ImageIcon img = new ImageIcon(this.getClass().getResource("/title_background.jpg"));
-            title_bground = new JLabel(img);
-            title_bground.setBounds(pTitle.getBounds());
-            title_bground.setBorder(LINE_BORDER);
+            var img = new ImageIcon(Objects.requireNonNull(
+                    this.getClass().getResource("/title_background.jpg")));
+            this.title_bground = new JLabel(img);
+            this.title_bground.setBounds(this.pTitle.getBounds());
+            this.title_bground.setBorder(LINE_BORDER);
             // title text (might be replaced through one image)
-            title = PanelModels.titleTxtLabel(pTitle);
+            this.title = PanelModels.titleTxtLabel(this.pTitle);
             // TODO: setting up start screen
-            ImageIcon start_image = new ImageIcon(this.getClass().getResource("/start_image.png"));
-            lblStartScreen = new JLabel(start_image);
-            lblStartScreen.setBounds(pStartScreen.getBounds());
-            lblStartScreen.setBorder(LINE_BORDER);
+            var start_image = new ImageIcon(Objects.requireNonNull(
+                    this.getClass().getResource("/start_image.png")));
+            this.lblStartScreen = new JLabel(start_image);
+            this.lblStartScreen.setBounds(0, 0, this.pStartScreen.getWidth(), this.pStartScreen.getHeight());
+            this.lblStartScreen.setBorder(LINE_BORDER);
             // TODO: adding test bground image
-            ImageIcon test_img = new ImageIcon(this.getClass().getResource("/ttowers.png"));
-            lblStartScreen.setIcon(test_img);
+            var test_img = new ImageIcon(Objects.requireNonNull(
+                    this.getClass().getResource("/ttowers.png")));
+            this.lblStartScreen.setIcon(test_img);
 
-         // Adding to Window
-                // TODO: adding everything to menubar
-                menubar.add(datei);
-                menubar.add(btList);
-                menubar.add(btMap);
-                menubar.add(settings);
-                menubar.add(search);
-                menubar.add(search_settings);
-                menubar.add(progressbar);
-            // TODO: adding menubar to menu panel
-            pMenu.add(menubar);
-            // TODO: adding label to start screen panel
-            pStartScreen.add(lblStartScreen);
-            // TODO: adding everything to right desktop pane
-            dpright.add(pList);
-            dpright.add(pMap);
-            dpright.add(pStartScreen);
-            // TODO: adding everything to left desktop pane
-            dpleft.add(pMenu);
-            dpleft.add(pInfo);
-                // TODO: adding to pTitle
-                pTitle.add(PanelModels.titleTxtLabel(pTitle));
-                pTitle.add(title_bground);
-                // TODO: adding textfield to internal settings frame
-                settings_iFrame_maxLoad.setText(Controller.getMaxLoadedData() + "");
-                settings_intlFrame.add(settings_iFrame_maxLoad);
-        // TODO: adding title panel to frame
-        mainpanel.add(pTitle);
-        // TODO: adding settings internal frame to mainpanel
-        mainpanel.add(settings_intlFrame);
-        // TODO: moving flist and fmenu to front
-        dpright.setVisible(true);
-        dpleft.setVisible(true);
-        // TODO: adding desktop panes to frame
-        mainpanel.add(dpright);
-        mainpanel.add(dpleft);
-        // TODO: adding mainpanel to frame
-        window.add(mainpanel);
+        // TODO: adding all generated components to window
+        this.addAllToWinow();
+
         // TODO: setting list and map panel invisible, start screen visible
-        pList.setVisible(false);
-        pMap.setVisible(false);
-        pStartScreen.setVisible(true);
-        runningView = pStartScreen;
-        System.out.println("[GUI] " + ANSI_GREEN + "initialized sucsessfully!" + ANSI_RESET);
-        return window;
+        this.pList.setVisible(false);
+        this.pMap.setVisible(false);
+        this.pStartScreen.setVisible(true);
+        runningView = this.pStartScreen;
+        this.controller.log(ANSI_GREEN + "GUI initialized sucsessfully!" + ANSI_RESET);
+        return this.window;
     }
 
     /**
-     * this method is executed when pre-loading is done
+     * adds all components to the window frame
+     * -> called by initialize()
      */
-    public void donePreLoading () {
-        //Toolkit.getDefaultToolkit().beep();
-        Runnable sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(SOUND_DEFAULT);
-        if (sound2 != null) sound2.run();
-        loadingScreen.setVisible(false);
-        window.setVisible(true);
-        window.requestFocus();
+    private void addAllToWinow() {
+        // Adding to Window
+        // TODO: adding everything to menubar
+        this.menubar.add(this.btFile);
+        this.menubar.add(this.btList);
+        this.menubar.add(this.btMap);
+        this.menubar.add(this.settings);
+        this.menubar.add(this.tfSearch);
+        this.menubar.add(this.searchFilter);
+        this.menubar.add(this.progressbar);
+        // TODO: adding everything to search panel
+        this.pSearch.add(this.searchForLabel);
+        this.pSearch.add(this.searchFor_cmbBox);
+        this.pSearch.add(this.searchSeperator);
+        this.pSearch.add(this.searchMessage);
+        for (var c : this.flightSearch) {
+            if (c instanceof JButton) {
+                ((JButton) c).addActionListener(this);
+            }
+            this.pSearch.add(c);
+        }
+        // TODO: adding menubar to menu panel
+        this.pMenu.add(this.pSearch);
+        this.pMenu.add(this.menubar);
+        // TODO: adding mapViewer to map panel
+        this.pMap.add(this.mapViewer);
+        // TODO: adding label to start screen panel
+        this.pStartScreen.add(this.lblStartScreen);
+        // TODO: adding everything to pViewHead
+        this.pViewHead.add(this.viewHeadText);
+        this.pViewHead.add(this.closeView);
+        // TODO: adding everything to right desktop pane
+        this.dpright.add(this.pViewHead);
+        this.dpright.add(this.pList);
+        this.dpright.add(this.pMap);
+        this.dpright.add(this.pStartScreen);
+        // TODO: adding everything to left desktop pane
+        this.dpleft.add(this.pMenu);
+        this.dpleft.add(this.pInfo);
+        // TODO: adding to pTitle
+        this.pTitle.add(PanelModels.titleTxtLabel(this.pTitle));
+        this.pTitle.add(this.title_bground);
+        // TODO: adding textfield to internal settings frame
+        this.settings_iFrame_maxLoad.setText(UserSettings.getMaxLoadedFlights() + "");
+        this.settings_intlFrame.add(this.settings_iFrame_maxLoad);
+        // TODO: adding title panel to frame
+        this.mainpanel.add(this.pTitle);
+        // TODO: adding settings internal frame to mainpanel
+        this.mainpanel.add(this.settings_intlFrame);
+        // TODO: moving flist and fmenu to front
+        this.dpright.setVisible(true);
+        this.dpleft.setVisible(true);
+        // TODO: adding desktop panes to frame
+        this.mainpanel.add(this.dpright);
+        this.mainpanel.add(this.dpleft);
+        // TODO: adding mainpanel to frame
+        this.window.add(this.mainpanel);
     }
 
     /**
-     * starts a indeterminate progressBar
+     * creates a JScrollPane with the given Component and a specific layout
+     * @param inside is the JTree or whatever, which is displayed in the JScrollPane
+     * @return sp, the JScrollPane
      */
-    public void progressbarStart () {
-        progressbarVisible(true);
-        progressbar.setIndeterminate(true);
-        progressbar.setString("Loading data...");
-        progressbar.setStringPainted(true);
-    }
-
-    /**
-     * sets the visibility of the progressBar
-     *
-     * @param v is the visible-boolean
-     */
-    public void progressbarVisible (boolean v) {
-        progressbar.setVisible(v);
-        window.revalidate();
-    }
-    /**
-     * @return progressBar value
-     */
-    public int progressbarValue () {
-        return progressbar.getValue();
-    }
-    /**
-     * progressbar-plus-plus
-     * progressbar value goes +1
-     */
-    public void progressbarPP () {
-        progressbar.setValue(progressbar.getValue() + 1);
-    }
-
-    /**
-     *
-     * @param tree is the tree to set
-     */
-    public void recieveInfoTree (JTree tree) {
-        flightInfo = tree;
-        flightInfo.setBounds(pInfo.getBounds());
-        flightInfo.setMaximumSize(pInfo.getSize());
-        flightInfo.setBorder(LINE_BORDER);
-        flightInfo.setFont(FONT_MENU.deriveFont(12f));
-        pInfo.add(flightInfo);
-        dpleft.moveToFront(pInfo);
-        pInfo.setVisible(true);
-        window.revalidate();
-    }
-
-    /**
-     * sets the JTree in listView and makes it visible
-     *
-     * @param tree is the tree to set
-     */
-    public void recieveTree (JTree tree) {
-        //spList.add(listView);
-        listView = tree;
-        spList = new JScrollPane(listView);
-        spList.setViewportView(listView);
-        spList.setBackground(DEFAULT_BG_COLOR);
-        spList.setForeground(DEFAULT_ACCENT_COLOR);
-        spList.setBounds(pList.getBounds());
-        spList.addComponentListener(this);
-        spList.setBorder(LINE_BORDER);
-        // TODO: adding list scrollpane to list pane
-        pList.add(spList);
-        dpright.moveToFront(pList);
-        pList.setVisible(true);
-        // revalidate window -> making the tree visible
-        window.revalidate();
+    JScrollPane listScrollPane(JTree inside) {
+        var sp = new JScrollPane(inside);
+        sp.setViewportView(inside);
+        sp.setBackground(DEFAULT_BG_COLOR);
+        sp.setForeground(DEFAULT_BORDER_COLOR);
+        sp.setBounds(this.pList.getBounds());
+        sp.addComponentListener(this);
+        sp.setBorder(LINE_BORDER);
+        var verticalScrollBar = sp.getVerticalScrollBar();
+        verticalScrollBar.setBackground(DEFAULT_BG_COLOR);
+        verticalScrollBar.setForeground(DEFAULT_ACCENT_COLOR);
+        verticalScrollBar.setBorder(BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR));
+        sp.setVerticalScrollBar(verticalScrollBar);
+        return sp;
     }
 
     /**
      * disposes all views (and opens the start screen)
      * if no other view is opened, nothing is done
      */
-    public void disposeView () {
-        if (listView != null || mapViewer != null || pStartScreen != null || pInfo != null) { // braucht man das
-            if (runningView == listView && listView != null) {
-                listView.setVisible(false);
-                listView = null;
-                pList.setVisible(false);
-                pStartScreen.setVisible(true);
-                runningView = null;
-            } else if (runningView == mapViewer && mapViewer != null) {
-                mapViewer.setVisible(false);
-                mapViewer = null;
-                pMap.setVisible(false);
-                pStartScreen.setVisible(true);
-                runningView = null;
-            } else if (runningView == pStartScreen && pStartScreen != null) {
-                pStartScreen.setVisible(false);
-            } if (pInfo != null && pInfo.isVisible()) {
-                pInfo.setVisible(false);
-                if (flightInfo != null) {
-                    flightInfo.setVisible(false);
-                    flightInfo = null;
-                }
-                dpleft.moveToFront(pMenu);
-                pMenu.setVisible(true);
-            }
-
-            if (view_SEM.value() == 1) {
-                listView = null;
-                pList.setVisible(false);
-                mapViewer = null;
-                pMap.setVisible(false);
-                pStartScreen.setVisible(true);
-
-                view_SEM.decrease();
-            } else {
-                pStartScreen.setVisible(false);
-            }
+    public void disposeView() {
+        if (this.pStartScreen != null) {
+            this.pStartScreen.setVisible(false);
+        } if (this.listView != null) {
+            this.pList.remove(this.listView);
+            this.listView.setVisible(false);
+            this.listView = null;
+            this.pList.setVisible(false);
+        } if (this.mapViewer != null) {
+            this.pMap.remove(this.mapViewer);
+            this.mapViewer.setVisible(false);
+            this.pMap.setVisible(false);
+        } if (this.flightInfo != null) {
+            this.flightInfo.setVisible(false);
+            this.flightInfo = null;
+            this.pInfo.setVisible(false);
         }
-        System.gc();
-        window.revalidate();
-    }
-
-    /**
-     * sets the JMapViewer in mapViewer
-     *
-     * @param map is the map to be set
-     * @throws IOException, if a map tile has not yet been loaded, but keeps working
-     *                      (therefore: no thorws statements) -> exception will be ignored
-     */
-    public void recieveMap (JMapViewer map) {
-        //disposeView();
-        mapViewer = map;
-        // TODO: adding MapViewer to panel
-        pMap.add(mapViewer);
-        pMap.setVisible(true);
-        //fmap.show();
-        // revalidating window frame to refresh everything
-        window.revalidate();
-        // setting mapViewer as the running View
-    }
-
-    /**
-     * @return a map prototype (JMapViewer)
-     */
-    public JMapViewer createMap () {
-        /*if (runningView != null) {
-            disposeView();
-        }
-        if (view_SEM.value() == 1) {
-            disposeView();
-        }*/
-        mapViewer = new JMapViewer();
-        // TODO: trying to set up JMapViewer
-        mapViewer = new JMapViewer(new MemoryTileCache());
-        //mapViewer.setBounds(Bounds.RIGHT);
-        mapViewer.setBorder(LINE_BORDER);
-        DefaultMapController mapController = new DefaultMapController(mapViewer);
-        mapController.setMovementMouseButton(1);
-        mapViewer.setDisplayToFitMapMarkers();
-        mapViewer.setZoomControlsVisible(false);
-        mapViewer.setTileSource(new BingAerialTileSource());
-        mapViewer.setVisible(true);
-        mapViewer.setBounds(pMap.getBounds());
-        mapViewer.addKeyListener(this);
-        mapViewer.addComponentListener(this);
-        mapViewer.addMouseListener(this);
-        //mapViewer.setMinimumSize(Bounds.RIGHT.getSize());
-        mapViewer.addJMVListener(this);
-        // TODO: adding MapViewer to panel
-        pMap.add(mapViewer);
-        pMap.setVisible(true);
-        mapViewer.add(closeView);
-        // revalidating window frame to refresh everything
-        window.revalidate();
-        // setting mapViewer as the running View
-        //runningView = mapViewer;
-
-        return mapViewer;
+        this.pMenu.setVisible(true);
+        this.dpleft.moveToFront(this.pMenu);
+        this.viewHeadText.setText(DEFAULT_HEAD_TEXT);
+        GUISlave.revalidateAll();
+        GUISlave.requestComponentFocus(this.tfSearch);
     }
 
     /**
      * enters the text in the textfield (use for key listener)
      */
     protected void enterText () {
-        String text = search.getText().toLowerCase();
+        var text = this.tfSearch.getText().toLowerCase();
         if (!text.isBlank()) {
             if (text.startsWith("exit")) {
                 Controller.exit();
-            }
-            if (text.startsWith("loadlist")) {
-                Controller.createDataView(ViewType.LIST_FLIGHT, "");
-            }
-            if (text.startsWith("loadmap")) {
-                Controller.createDataView(ViewType.MAP_ALL, "");
-            }
-            if (text.startsWith("maxload")) {
-                String[] args = text.split(" ");
+            } else if (text.startsWith("loadlist")) {
+                this.controller.createDataView(LIST_FLIGHT, "");
+            } else if (text.startsWith("loadmap")) {
+                this.controller.createDataView(MAP_ALL, "");
+            } else if (text.startsWith("maxload")) {
+                var args = text.split(" ");
                 try {
-                    if (Integer.parseInt(args[1]) <= 10000) {
-                        Controller.setMaxLoadedData(Integer.parseInt(args[1]));
-                        System.out.println("maxload changed to " + args[1] + " !");
+                    int max = Integer.parseInt(args[1]);
+                    if (max <= 10000) {
+                        UserSettings.setMaxLoadedFlights(max);
+                        this.controller.log("maxload changed to " + args[1] + " !");
                     } else {
-                        System.out.println("Failed! Maximum is 10000!");
+                        this.controller.log("Failed! Maximum is 10000!");
                     }
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
             } else if (text.startsWith("flightroute") || text.startsWith("fl")) {
-                if (view_SEM.value() == 0) {
-                    String[] args = text.split(" ");
-                    if (args.length > 1) {
-                        String id = args[1];
-                        Controller.createDataView(ViewType.MAP_FLIGHTROUTE, id);
-                    }
-                    Controller.createDataView(ViewType.MAP_FLIGHTROUTE, "");
+                var args = text.split(" ");
+                if (args.length > 1) {
+                    var id = args[1];
+                    this.controller.createDataView(MAP_FLIGHTROUTE, id);
                 }
-            } else if (text.startsWith("closeall")) {
-                pList.setVisible(false);
-                listView = null;
-                pMap.setVisible(false);
-                mapViewer = null;
-                flightInfo.setVisible(false);
-                flightInfo = null;
-                pInfo.setVisible(false);
-                pMenu.setVisible(true);
-                dpleft.moveToFront(pMenu);
-                pStartScreen.setVisible(true);
-                dpright.moveToFront(pStartScreen);
             }
         }
-        search.setText("");
+        this.tfSearch.setText("");
     }
 
     /********************************************
@@ -490,30 +389,26 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Object src = e.getSource();
-        if (src == datei) {
-
-        } else if (src == btList) {
-            progressbarStart();
-            runBackgroundTask(ViewType.LIST_FLIGHT);
-        } else if (src == btMap) {
-            progressbarStart();
-            runBackgroundTask(ViewType.MAP_ALL);
-        } else if (src == closeView) {
-            pList.setVisible(false);
-            listView = null;
-            pMap.setVisible(false);
-            mapViewer = null;
-            flightInfo.setVisible(false);
-            flightInfo = null;
-            pInfo.setVisible(false);
-            pMenu.setVisible(true);
-            dpleft.moveToFront(pMenu);
-        } else if (src == settings) {
-            settings_intlFrame.show();
-            settings_iFrame_maxLoad.setCaretColor(Color.YELLOW);
-            settings_iFrame_maxLoad.setCaretPosition(settings_iFrame_maxLoad.getText().length());
-            settings_iFrame_maxLoad.grabFocus();
+        var src = e.getSource();
+        if (src == this.btFile) {
+            // gonna be filled
+        } else if (src == this.btList) {
+            GUISlave.progressbarStart();
+            this.controller.createDataView(LIST_FLIGHT, "");
+        } else if (src == this.btMap) {
+            GUISlave.progressbarStart();
+            this.controller.createDataView(MAP_ALL, "");
+        } else if (src == this.closeView) {
+            this.disposeView();
+            this.pStartScreen.setVisible(true);
+            dpright.moveToFront(this.pStartScreen);
+        } else if (src == this.settings) {
+            this.settings_intlFrame.show();
+            this.settings_iFrame_maxLoad.setCaretColor(Color.YELLOW);
+            this.settings_iFrame_maxLoad.setCaretPosition(this.settings_iFrame_maxLoad.getText().length());
+            this.settings_iFrame_maxLoad.grabFocus();
+        } else if (src == this.searchFilter) {
+            this.pSearch.setVisible(!this.pSearch.isVisible());
         }
     }
 
@@ -524,50 +419,38 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
 
     @Override
     public void keyPressed(KeyEvent e) {
-        Object src = e.getSource();
+        var src = e.getSource();
         int key = e.getKeyCode();
-        if (src == search) {
+        if (src == this.tfSearch) {
             if (key == KeyEvent.VK_ENTER) {
-                if (search.hasFocus())
-                    enterText();
+                if (this.tfSearch.hasFocus())
+                    this.enterText();
             }
-        } else if (src == settings_iFrame_maxLoad) {
+        } else if (src == this.settings_iFrame_maxLoad) {
             if (key == KeyEvent.VK_ENTER) {
                 try {
                     // TODO fixen: settings fenster schließt erst nach loading
-                    if (Integer.parseInt(settings_iFrame_maxLoad.getText()) >= 4) {
-                        progressbarStart();
-                        Controller.setMaxLoadedData(Integer.parseInt(settings_iFrame_maxLoad.getText()));
-                        settings_iFrame_maxLoad.setText("");
-                        settings_intlFrame.dispose();
+                    if (Integer.parseInt(this.settings_iFrame_maxLoad.getText()) >= 4) {
+                        GUISlave.progressbarStart();
+                        UserSettings.setMaxLoadedFlights(Integer.parseInt(this.settings_iFrame_maxLoad.getText()));
+                        this.settings_iFrame_maxLoad.setText("");
+                        this.settings_intlFrame.setVisible(false);
                         // work with background worker?
-                        Controller.reloadData();
+                        this.controller.loadData();
                     }
                 } catch (NumberFormatException ex) {
-                    settings_iFrame_maxLoad.setText("Error");
+                    this.settings_iFrame_maxLoad.setText("Error");
                 }
 
             }
-        } else if (src == mapViewer) {
+        } else if (src == this.mapViewer) {
             switch (key) {
-                case KeyEvent.VK_PAGE_UP:
-                    mapViewer.moveMap(0, 2);
-                    window.revalidate();
-                    break;
-                case KeyEvent.VK_HOME:
-                    mapViewer.moveMap(-2, 0);
-                    window.revalidate();
-                    break;
-                case KeyEvent.VK_END:
-                    mapViewer.moveMap(2, 0);
-                    window.revalidate();
-                    break;
-                case KeyEvent.VK_PAGE_DOWN:
-                    mapViewer.moveMap(0, -2);
-                    window.revalidate();
-                    break;
-                default:
+                case VK_PAGE_UP -> this.mapViewer.moveMap(0, 2);
+                case VK_HOME -> this.mapViewer.moveMap(-2, 0);
+                case VK_END -> this.mapViewer.moveMap(2, 0);
+                case VK_PAGE_DOWN -> this.mapViewer.moveMap(0, -2);
             }
+            GUISlave.revalidateAll();
         }
     }
 
@@ -579,72 +462,44 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     public void processCommand(JMVCommandEvent commandEvent) {
         if (    commandEvent.getCommand() == JMVCommandEvent.COMMAND.ZOOM
                 && commandEvent.getSource() instanceof MapMarkerDot ) {
-            System.out.println("jmv listener!!!");
+            System.out.println("jmv listener!!! test"); // test
         }
     }
 
+    /**
+     * component listener: fits the component sizes if the window is resized
+     */
     @Override
     public void componentResized(ComponentEvent e) {
-        Component comp = e.getComponent();
-        if (comp == window) {
-            mainpanel.setBounds(window.getBounds());
-        } else if (comp == mainpanel) {
-            pTitle.setBounds(mainpanel.getX(), mainpanel.getY(), mainpanel.getWidth(), 70);
-            dpright.setBounds(280, 70, mainpanel.getWidth()-280, mainpanel.getHeight()-70);
-            dpleft.setBounds(0, 70, 280, mainpanel.getHeight()-70);
-        } else if (comp == dpleft) {
-            pMenu.setBounds(0, 0, dpleft.getWidth(), dpleft.getHeight());
-            pInfo.setBounds(0, 0, dpleft.getWidth(), dpleft.getHeight());
-        } else if (comp == dpright) {
-            pList.setBounds(0, 0, dpright.getWidth(), dpright.getHeight());
-            pMap.setBounds(0, 0, dpright.getWidth(), dpright.getHeight());
-            pStartScreen.setBounds(0, 0, dpright.getWidth(), dpright.getHeight());
-            closeView.setBounds(dpright.getWidth() - 95, dpright.getHeight() - 45, 80, 30);
-        } else if (comp == pTitle) {
-            title_bground.setBounds(pTitle.getBounds());
-            title.setBounds(pTitle.getWidth()/2-200, 0, 400, 70);
-        } else if (comp == pStartScreen) {
-            lblStartScreen.setBounds(pStartScreen.getBounds());
-        } else if (comp == menubar) {
-            search.setBounds(10, menubar.getHeight()-80, 255, 25);
-            search_settings.setBounds(10, menubar.getHeight()-40, 255, 25);
-        } else {
-            try {
-                if (comp == pList) {
-                    spList.setBounds(pList.getBounds());
-                    listView.setBounds(pList.getBounds());
-                } else if (comp == pMap) {
-                    mapViewer.setBounds(pMap.getBounds());
-                } else if (comp == pMenu) {
-                    menubar.setBounds(pMenu.getBounds());
-                } else if (comp == pInfo) {
-                }
-            } catch (Exception ex) {
-            }
+        var comp = e.getComponent();
+             if (comp == this.window) GUISlave.windowResized(WINDOW);
+        else if (comp == this.mainpanel) GUISlave.windowResized(MAINPANEL);
+        else if (comp == this.dpleft) GUISlave.windowResized(DPLEFT);
+        else if (comp == this.dpright)GUISlave.windowResized(DPRIGHT);
+        else if (comp == this.pTitle) GUISlave.windowResized(TITLE_PANEL);
+        else if (comp == this.pViewHead) GUISlave.windowResized(VIEW_HEAD);
+        else if (comp == this.pStartScreen) GUISlave.windowResized(START_SCREEN);
+        else if (comp == this.menubar) GUISlave.windowResized(MENUBAR);
+        else if (comp == this.pMap) GUISlave.windowResized(MAP_PANEL);
+        else if (comp == this.pMenu) GUISlave.windowResized(MENU_PANEL);
+        else if ( comp == this.pList && this.spList != null && this.listView != null) {
+            GUISlave.windowResized(LIST_PANEL);
+        } else if (comp == this.pInfo && this.flightInfo != null) {
+            GUISlave.windowResized(INFO_PANEL);
         }
-        window.revalidate();
+
+        GUISlave.revalidateAll();
     }
 
     @Override
     public void componentShown(ComponentEvent e) {
-        Component comp = e.getComponent();
-        if (comp == pList) {
-            pList.setBounds(0, 0, dpright.getWidth(), dpright.getHeight());
-            listView.setBounds(pList.getBounds());
-            spList.setBounds(pList.getBounds());
-        } else if (comp == pMap) {
-            pMap.setBounds(0, 0, dpright.getWidth(), dpright.getHeight());
-            mapViewer.setBounds(pMap.getBounds());
-        } else if (comp == listView) {
-            pList.setBounds(0, 0, dpright.getWidth(), dpright.getHeight());
-            listView.setBounds(pList.getBounds());
-        } else if (comp == mapViewer) {
-            pMap.setBounds(0, 0, dpright.getWidth(), dpright.getHeight());
-            mapViewer.setBounds(pMap.getBounds());
-        } else if (comp == spList) {
-            pList.setBounds(0, 0, dpright.getWidth(), dpright.getHeight());
-            spList.setBounds(pList.getBounds());
+        var comp = e.getComponent();
+        if (comp == this.pList) GUISlave.windowResized(LIST_PANEL);
+        else if (comp == this.pMap) GUISlave.windowResized(MAP_PANEL);
+        else if (comp == this.settings_iFrame_maxLoad) {
+            this.settings_iFrame_maxLoad.setText(UserSettings.getMaxLoadedFlights() + "");
         }
+        GUISlave.revalidateAll();
     }
 
     @Override
@@ -657,188 +512,103 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     // MouseListener
     @Override
     public void mouseClicked(MouseEvent e) {
-
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
-        Point point = e.getPoint();
-        ICoordinate clickedCoord = mapViewer.getPosition(point);
-        List<MapMarker> mapMarkerList = mapViewer.getMapMarkerList();
-        Iterator<MapMarker> it = mapMarkerList.iterator();
-        MapMarker next;
+        var point = e.getPoint();
+        var clickedCoord = this.mapViewer.getPosition(point);
+        var mapMarkerList = this.mapViewer.getMapMarkerList();
+        var it = mapMarkerList.iterator(); //FIXME setting map marker list while going through it
+        var newMarkerList = new ArrayList<MapMarker>();
+        CustomMapMarker next, newMarker;
+        Coordinate markerCoord;
+        int counter = 0; // still needed?
+        int zoom = this.mapViewer.getZoom();
         while (it.hasNext()) {
-            next = it.next();
-            ICoordinate markerCoord = next.getCoordinate();
+            next = (CustomMapMarker) it.next();
+            markerCoord = next.getCoordinate();
+            newMarker = new CustomMapMarker(markerCoord, next.getFlight());
             // Positionsabfrage mit leichter Toleranz, damit man den Punkt auch trifft
-            if (    clickedCoord.getLat() < markerCoord.getLat() + 0.02 &&
-                    clickedCoord.getLat() > markerCoord.getLat() - 0.02 &&
-                    clickedCoord.getLon() < markerCoord.getLon() + 0.02 &&
-                    clickedCoord.getLon() > markerCoord.getLon() - 0.02) {
-                MapMarkerDot newMarker = new MapMarkerDot((Coordinate) markerCoord);
+            double tolerance = 0.1/zoom; // // FIXME: 23.04.2022 falsche formel (exponential?)
+            if (    clickedCoord.getLat() < markerCoord.getLat() + tolerance &&
+                    clickedCoord.getLat() > markerCoord.getLat() - tolerance &&
+                    clickedCoord.getLon() < markerCoord.getLon() + tolerance &&
+                    clickedCoord.getLon() > markerCoord.getLon() - tolerance) {
                 newMarker.setBackColor(Color.RED);
-                mapViewer.removeMapMarker(next);
-                mapViewer.addMapMarker(newMarker);
-                pMenu.setVisible(false);
-                pInfo.setVisible(true);
-                dpright.moveToFront(pInfo);
-                Position flightPos = new Position(markerCoord.getLat(), markerCoord.getLon());
-                System.out.println(ANSI_ORANGE + BlackBeardsNavigator.shownFlights.size());
-                int flightID = -1;
-                try { flightID = BlackBeardsNavigator.shownFlights.get(flightPos); } catch (Exception ex) {}
-                if (flightID != -1) recieveInfoTree(new TreePlantation().createTree(TreePlantation.createOneFlightTreeNode(flightID), this));
-                else recieveInfoTree(new TreePlantation().createTree(TreePlantation.createOneFlightTreeNode(876), this));
-                synchronized (mapViewer) {
-                    mapViewer.setMapMarkerList(resetMapMarkersExceptOne(mapMarkerList, next));
-                }
-                break;
+            } else {
+                newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR);
             }
-        }
+            newMarkerList.add(newMarker);
+            counter++;
+        } // TODO alles nach WHILE schleife
+        //if (next != null) {
+            // TODO alle anderen auch removen/color ändern/problem gelöst?
+            //this.mapViewer.addMapMarker(newMarker);
+        this.mapViewer.setMapMarkerList(newMarkerList);
+            this.pMenu.setVisible(false);
+            this.pInfo.setVisible(true);
+            this.dpleft.moveToFront(this.pInfo);
+            /*Position flightPos = new Position(markerCoord.getLat(), markerCoord.getLon());
+            //FIXME test: next.getFlight is null
+            try {
+                System.out.println("nextFlightID " + next.getFlight().getID());
+            } catch (Exception etest) {
+            }
+            int flightID = -1;// = newMarker.getFlight().getID(); // FIXME: why is getFlight == null
+            try {
+                flightID = BlackBeardsNavigator.allMapMarkers.get(counter).getFlight().getID();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            if (flightID != -1) {
+                recieveInfoTree(TreePlantation.createTree(TreePlantation.oneFlightTreeNode(flightID), this));
+            } else {
+                recieveInfoTree(TreePlantation.createTree(TreePlantation.oneFlightTreeNode(876), this));
+            }
+            this.resetMapViewer(next);*/
+        //}
     }
 
     /**
      * resets all map markers
      */
     // TODO richtig machen, ConcurrentModificationException, irgendwas läuft nichts
-    public List<MapMarker> resetMapMarkersExceptOne (List<MapMarker> markers, MapMarker doNotReset) {
-        for (MapMarker  m : markers) {
+    public void resetMapViewer (MapMarker doNotReset) {
+        var viewer = this.mapViewer;
+        this.mapViewer = null;
+        var markersIn = viewer.getMapMarkerList();
+        viewer.removeAllMapMarkers();
+        var markersOut = new ArrayList<MapMarker>();
+        for (MapMarker m : markersIn) {
             if (m != doNotReset) {
-                ICoordinate markerPos = m.getCoordinate();
-                markers.remove(m);
-                //mapViewer.removeMapMarker(m);
-                MapMarkerDot newMarker = new MapMarkerDot((Coordinate) markerPos);
+                var markerPos = m.getCoordinate();
+                var newMarker = new CustomMapMarker(markerPos, null);
                 newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR);
-                //mapViewer.addMapMarker(newMarker);
-                markers.add(newMarker);
+                markersOut.add(newMarker);
+            } else {
+                markersOut.add(m);
             }
         }
-        return markers;
+        viewer.setMapMarkerList(markersOut);
+        GUISlave.revalidateAll();
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-
     }
 
     @Override
     public void mouseEntered(MouseEvent e) {
-
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
-
     }
-
-    /**
-     * runs background task
-     */
-    private void runBackgroundTask (ViewType type) {
-        BackgroundWorker bgworker = new BackgroundWorker();
-        synchronized (this) {
-            bgworker.actionViewType = type;
-            bgworker.execute();
-        }
+    // item listener (combo-box)
+    @Override
+    public void itemStateChanged(ItemEvent e) {
+        var item = e.getItem();
+        GUISlave.loadSearch((String) item);
     }
-
-    private class BackgroundWorker extends SwingWorker<String, Void> {
-
-        public ViewType actionViewType;
-
-        /**
-         * runs a background task
-         * is this still needed?
-         */
-        @Override
-        protected String doInBackground() throws Exception {
-            if (!Controller.loading) {
-                switch (actionViewType) {
-                    case LIST_FLIGHT:
-                        // TODO controller zum Thread machen der die anderen (DBOut) ausführt
-                        Controller.createDataView(ViewType.LIST_FLIGHT, "");
-                        runningView = listView;
-                        view_SEM.increase();
-                        return "[GUI] backround tast started!";
-                    case LIST_AIRPORT:
-                    case LIST_AIRLINE:
-                    case LIST_PLANE:
-                    case MAP_ALL:
-                        Controller.createDataView(ViewType.MAP_ALL, "");
-                        runningView = mapViewer;
-                        view_SEM.increase();
-                        return "[GUI] background task started!";
-                    case MAP_FLIGHTROUTE:
-                    default:
-                        Controller.reloadData();
-                }
-            }
-            return "";
-        }
-
-        /**
-         * background worker done method
-         * is executed when a background task is done
-         */
-        @Override
-        protected void done () {
-            if (!Controller.loading) {
-                progressbar.setVisible(false);
-            }
-        }
-    }
-
-
-    /**
-     * private semaphor class represents a semaphor with methods
-     */
-    protected class Semaphor {
-        // semaphor, minimum and maximum value
-        private byte SEM;
-        private final byte MIN, MAX;
-
-        /**
-         * Semaphor constructor
-         */
-        public Semaphor (byte min, byte max, byte beginAt) {
-            this.MIN = min;
-            this.MAX = max;
-            if (beginAt <= max && beginAt >= min) {
-                this.SEM = beginAt;
-            } else {
-                SEM = min;
-            }
-        }
-
-        /**
-         * increases the semaphor, if its value is 1, SemaphorError is thrown
-         * @throws SemaphorError
-         */
-        public void increase () throws SemaphorError {
-            if (SEM < MAX) {
-                SEM++;
-            } else {
-                throw new SemaphorError();
-            }
-        }
-
-        /**
-         * decreases the semaphor, if its value is 0, SemaphorError is thrown
-         * @throws SemaphorError is thrown, if SEM is less or equals min
-         */
-        public void decrease () throws SemaphorError {
-            if (SEM > MIN) {
-                SEM--;
-            } else {
-                throw new SemaphorError();
-            }
-        }
-
-        /**
-         * @return SEM value
-         */
-        public int value () throws SemaphorError {
-            return SEM;
-        }
-    }
-
 }

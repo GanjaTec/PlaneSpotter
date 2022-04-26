@@ -2,6 +2,8 @@ package planespotter.display;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static planespotter.constants.GUIConstants.*;
 
@@ -12,28 +14,16 @@ import static planespotter.constants.GUIConstants.*;
  *
  * MenuModels class contains different menu component models
  */
-public final class MenuModels extends GUI {
+final class MenuModels {
 
-    /**
-     *
-     */
-    // evtl. falsche reihenfolge
-    public static JRadioButton rb_flights, rb_airlines, rb_airports, rb_planes;
-    public static JMenuItem selectAll, selectByID, selectByICAO, selectByName, selectByIATA, selectByPlaneType; //...
-    public static JRadioButton rbAirline, rbFlight;
-
-    //default desktop width
-    static int WIDTH_RIGHT = 1259-280;
-    static int WIDTH_LEFT = 1259-WIDTH_RIGHT; // unnötig (=279)
-    // large menu item width
-    static int WIDTH_MENUITEM = WIDTH_LEFT-25;
+    // TODO AUSWAHL: selectAll, selectByID, selectByICAO, selectByName, selectByIATA, selectByPlaneType; //...
 
     /**
      * menubar (contains the other menu components)
      */
-    public static JMenuBar menuBar (JPanel parent) {
+    static JMenuBar menuBar (JPanel parent) {
         // TODO: setting up menubar
-        JMenuBar menubar = new JMenuBar();
+        var menubar = new JMenuBar();
         menubar.setBackground(DEFAULT_BG_COLOR);
         menubar.setForeground(DEFAULT_FG_COLOR);
         menubar.setBounds(0, 0, parent.getWidth(), parent.getHeight());
@@ -46,14 +36,14 @@ public final class MenuModels extends GUI {
     /**
      *
      */
-    public static JButton fileButton () {
+    static JButton fileButton (JMenuBar parent) {
         // TODO: setting up file button
-        JButton file = new JButton("File");
+        var file = new JButton("File");
         file.setFont(FONT_MENU);
         file.setBorder(MENU_BORDER);
         file.setBackground(DEFAULT_ACCENT_COLOR);
         file.setForeground(DEFAULT_FONT_COLOR);
-        file.setBounds(10, 15, WIDTH_MENUITEM, 25);
+        file.setBounds(10, 15, parent.getWidth()-20, 25);
         //file.addActionListener(new Listener());
 
         return file;
@@ -62,13 +52,13 @@ public final class MenuModels extends GUI {
     /**
      * list button
      */
-    public static JButton listButton () {
+    static JButton listButton (JMenuBar parent) {
         // TODO setting up list button
-        JButton list = new JButton("List-View");
+        var list = new JButton("List-View");
         list.setBackground(DEFAULT_ACCENT_COLOR);
         list.setForeground(DEFAULT_FONT_COLOR);
         list.setBorder(MENU_BORDER);
-        list.setBounds(10, 55, 120, 25);
+        list.setBounds(10, 55, ((parent.getWidth()-20)/2)-5, 25);
         list.setFont(FONT_MENU);
         //list.addActionListener(new Listener());
 
@@ -78,13 +68,13 @@ public final class MenuModels extends GUI {
     /**
      * map button
      */
-    public static JButton mapButton () {
+    static JButton mapButton (JMenuBar parent) {
         // TODO setting up list button
-        JButton map = new JButton("Map-View");
+        var map = new JButton("Live-Map");
         map.setBackground(DEFAULT_ACCENT_COLOR);
         map.setForeground(DEFAULT_FONT_COLOR);
         map.setBorder(MENU_BORDER);
-        map.setBounds(145, 55, 120, 25);
+        map.setBounds(145, 55, ((parent.getWidth()-20)/2)-5, 25);
         map.setFont(FONT_MENU);
         //map.addActionListener(new Listener());
 
@@ -94,14 +84,14 @@ public final class MenuModels extends GUI {
     /**
      * settings button
      */
-    public static JButton settingsButton () {
+    static JButton settingsButton (JMenuBar parent) {
         // TODO: setting up settings menu
-        JButton settings = new JButton("Settings");
+        var settings = new JButton("Settings");
         settings.setFont(FONT_MENU);
         settings.setBorder(MENU_BORDER);
         settings.setBackground(DEFAULT_ACCENT_COLOR);
         settings.setForeground(DEFAULT_FONT_COLOR);
-        settings.setBounds(10, 95, WIDTH_MENUITEM, 25);
+        settings.setBounds(10, 95, parent.getWidth()-20, 25);
         //settings.addActionListener(new Listener());
 
         return settings;
@@ -110,14 +100,14 @@ public final class MenuModels extends GUI {
     /**
      * search-filter button
      */
-    public static JButton searchFilterButton (JMenuBar parent) {
+    static JButton searchButton (JMenuBar parent) {
         // TODO: setting up search-settings menu
-        JButton search_settings = new JButton("Search-Filter");
+        var search_settings = new JButton("Search");
         search_settings.setFont(FONT_MENU);
         search_settings.setBorder(MENU_BORDER);
         search_settings.setBackground(DEFAULT_ACCENT_COLOR);
         search_settings.setForeground(DEFAULT_FONT_COLOR);
-        search_settings.setBounds(10, parent.getHeight()-15, WIDTH_MENUITEM, 25);
+        search_settings.setBounds(10, parent.getHeight()-15, parent.getWidth()-20, 25);
         //search_settings.addActionListener(new Listener());
 
         return search_settings;
@@ -126,14 +116,14 @@ public final class MenuModels extends GUI {
     /**
      *
      */
-    public static JProgressBar progressBar (JMenuBar parent) {
+    static JProgressBar progressBar (JMenuBar parent) {
         // TODO: seting up progress bar
-        JProgressBar progressbar = new JProgressBar(0, 100);
+        var progressbar = new JProgressBar(0, 100);
         progressbar.setBorder(LINE_BORDER);
         progressbar.setBackground(DEFAULT_FONT_COLOR);
         progressbar.setBorderPainted(true);
         progressbar.setForeground(new Color(92, 214, 92));
-        progressbar.setBounds(10, 135, WIDTH_MENUITEM, 25);
+        progressbar.setBounds(10, 135, parent.getWidth()-20, 15);
         progressbar.setVisible(false);
         progressbar.setValue(0);
 
@@ -143,11 +133,11 @@ public final class MenuModels extends GUI {
     /**
      * search text field
      */
-    public static JTextField searchTextField (JMenuBar parent) {
+    static JTextField searchTextField (JMenuBar parent) {
         // TODO: setting up search text field
-        JTextField search = new JTextField();
+        var search = new JTextField();
         search.setToolTipText("Search");
-        search.setBounds(10, parent.getHeight()-60, WIDTH_MENUITEM, 25);
+        search.setBounds(10, parent.getHeight()-60, parent.getWidth()-20, 25);
         search.setBackground(Color.WHITE);
         search.setFont(FONT_MENU);
         search.setBorder(LINE_BORDER);
@@ -159,45 +149,34 @@ public final class MenuModels extends GUI {
     /**
      * close view button
      */
-    public static JButton closeViewButton (JDesktopPane parent) {
+    static JButton closeViewButton (JDesktopPane parent) {
         // TODO: setting up view close button
-        JButton closeView = new JButton("Close");
-        closeView.setBounds(parent.getWidth()-95, parent.getHeight()-45, 80, 30);
-        closeView.setBackground(DEFAULT_BG_COLOR);
+        var closeView = new JButton("Close");
+        closeView.setBounds(parent.getWidth()-85, 4, 80, 16);
+        closeView.setBackground(DEFAULT_BORDER_COLOR);
         closeView.setForeground(DEFAULT_FONT_COLOR);
-        closeView.setFont(FONT_MENU);
+        closeView.setFont(new Font("DialogInput", 0, 14));
         closeView.setBorder(MENU_BORDER);
         //closeView.addActionListener(new Listener());
 
         return closeView;
     }
 
-
-
-    public void allesAndere () {
-
-        // TODO: setting up radio button: "search for airline"
-        rbAirline = new JRadioButton();
-        //rbAirline.addChangeListener(new Listener());
-
-        // TODO: setting up radio button: "search for flight"
-        rbFlight = new JRadioButton();
-        //rbFlight.addChangeListener(new Listener());
-    }
-
     /**
      * @return settings option pane (which pops up)
      */
-    public static JInternalFrame settings_intlFrame (JPanel parent) {
-            JLabel maxLoadLbl = new JLabel("Max. loaded Data:");
+    static JInternalFrame settings_intlFrame (JPanel parent) {
+            var maxLoadLbl = new JLabel("Max. loaded Data:");
             maxLoadLbl.setBounds(20, 20, 180, 30);
             maxLoadLbl.setForeground(DEFAULT_FONT_COLOR);
             maxLoadLbl.setFont(FONT_MENU);
-        JInternalFrame settings = new JInternalFrame();
+        var settings = new JInternalFrame();
         settings.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 500, 400);
         settings.setLayout(null);
         settings.setBackground(DEFAULT_BORDER_COLOR);
         settings.setClosable(true);
+        settings.setResizable(false);
+        settings.setFocusable(false);
         settings.add(maxLoadLbl);
         settings.hide();
 
@@ -207,8 +186,8 @@ public final class MenuModels extends GUI {
     /**
      * settings opt. pane max-load text field
      */
-    public static JTextField settingsOP_maxLoadTxtField () {
-        JTextField maxLoadTxtfield = new JTextField();
+    static JTextField settingsOP_maxLoadTxtField () {
+        var maxLoadTxtfield = new JTextField();
         maxLoadTxtfield.setBounds(200, 20, 50, 30);
         maxLoadTxtfield.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR));
         maxLoadTxtfield.setBackground(DEFAULT_BG_COLOR);
@@ -217,10 +196,124 @@ public final class MenuModels extends GUI {
         return maxLoadTxtfield;
     }
 
+    /**
+     * radio buttons
+     */
+    static JComboBox<String> searchFor_cmbBox (JPanel parent) {
+        // TODO: setting up "search for" combo box
+        JComboBox<String> searchFor = new JComboBox(MenuModels.searchBoxItems());
+        searchFor.setBounds(parent.getWidth()/2, 10, (parent.getWidth()-20)/2, 25);
+        searchFor.setBackground(DEFAULT_BORDER_COLOR);
+        searchFor.setForeground(DEFAULT_MAP_ICON_COLOR);
+        searchFor.setFont(FONT_MENU);
+
+        return searchFor;
+    }
+
+    /**
+     * @param parent is the panel where the combo-box is in
+     * @return menu combobox-text-label
+     */
+     static JLabel cmbBoxLabel (JPanel parent) {
+        var boxLabel = new JLabel("Search for:");
+        boxLabel.setBounds(10, 10, (parent.getWidth()-20)/2, 25);
+        boxLabel.setBackground(DEFAULT_BG_COLOR);
+        boxLabel.setForeground(DEFAULT_MAP_ICON_COLOR);
+        boxLabel.setFont(FONT_MENU);
+
+        return boxLabel;
+    }
+        /**
+         * @return search combo-box items (array of Strings)
+         */
+        private static String[] searchBoxItems () {
+            String[] items = {  "Plane",
+                                "Flight",
+                                "Airline",
+                                "Airport",
+                                "Area"};
+            return items;
+        }
+
+    /**
+     * @return panel for exact search settings
+     */
+    static JSeparator searchSeperator (JPanel parent) {
+        // TODO: setting up exact search panel
+        var seperator = new JSeparator(JSeparator.HORIZONTAL);
+        seperator.setBounds(10, 43, parent.getWidth()-20, 2);
+        seperator.setBackground(DEFAULT_BORDER_COLOR);
+
+        return seperator;
+    }
+
+    /**
+     * @param parent is the parent panel where the message label is shown in
+     * @return
+     */
+    static JTextArea searchMessage(JPanel parent) {
+        var message = "Es muss mindestens eins der Felder ausgefüllt sein!";
+        var headMessage = new JTextArea(message);
+        headMessage.setBounds(10, parent.getHeight()-80, parent.getWidth()-20, 35);
+        headMessage.setBackground(DEFAULT_BG_COLOR);
+        headMessage.setForeground(DEFAULT_FONT_COLOR);
+        headMessage.setBorder(null);
+        headMessage.setEditable(false);
+        headMessage.setLineWrap(true);
+        headMessage.setWrapStyleWord(true);
+        var font = new Font(FONT_MENU.getFontName(), Font.PLAIN, 12);
+        headMessage.setFont(font);
+
+        return headMessage;
+    }
+
+    /**
+     * @param parent is the parent panel component
+     * @return list of JLabels (the search field names)
+     */
+    static List<JComponent> flightSearch(JPanel parent) {
+        List<JComponent> components = new ArrayList<>();
+            components.add(new JLabel("ID:"));
+            components.add(new JTextField());
+            components.add(new JLabel("Flight-Nr.:"));
+            components.add(new JTextField());
+            components.add(new JButton("Load List"));
+            components.add(new JButton("Load Map"));
+        int width = (parent.getWidth()-20)/2;
+        int y = 55;
+        for (JComponent c : components) {
+            if (c instanceof JLabel) {
+                c.setBounds(10, y, width, 25);
+                c.setBackground(DEFAULT_BG_COLOR);
+                c.setForeground(DEFAULT_MAP_ICON_COLOR);
+            } else if (c instanceof JTextField) {
+                c.setBounds(parent.getWidth()/2, y, width, 25);
+                c.setBackground(DEFAULT_FONT_COLOR);
+                c.setForeground(DEFAULT_FG_COLOR);
+                c.setBorder(LINE_BORDER);
+                y += 35;
+            } else if (c instanceof JButton) {
+                var buttonText = ((JButton) c).getText();
+                if (buttonText.equals("Load List")) {
+                    c.setBounds(10, parent.getHeight()-35, width-5, 25);
+                } else if (buttonText.equals("Load Map")) {
+                    c.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
+                }
+                c.setBackground(DEFAULT_ACCENT_COLOR);
+                c.setForeground(DEFAULT_FONT_COLOR);
+                c.setBorder(MENU_BORDER);
+            }
+            c.setFont(FONT_MENU);
+            c.setVisible(false);
+        }
+        return components;
+    }
+
     // TODO SETTINGS
     // reload data button
     // confirm button
     // other settings
     // evtl. Theme oder so -> Farbe
 
+    //TODO evtl. methode getAllAsList()
 }

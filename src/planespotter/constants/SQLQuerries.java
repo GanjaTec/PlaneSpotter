@@ -12,7 +12,7 @@ package planespotter.constants;
  * @author Lukas
  * 
  */
-public class SQLQuerries {
+public final class SQLQuerries {
 	
 	//insert Querrys
 	public static final String planequerry = "INSERT INTO planes(icaonr, tailnr, registration, type, airline) VALUES(?,?,?,?,?)";
