@@ -1,0 +1,36 @@
+#
+# A fatal error has been detected by the Java Runtime Environment:
+#
+#  EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x00007ffe7dca13f3, pid=3848, tid=22600
+#
+# JRE version: OpenJDK Runtime Environment (15.0.2+7) (build 15.0.2+7-27)
+# Java VM: OpenJDK 64-Bit Server VM (15.0.2+7-27, mixed mode, tiered, compressed oops, g1 gc, windows-amd64)
+# Problematic frame:
+# V  [jvm.dll+0x3513f3]
+#
+# No core dump will be written. Minidumps are not enabled by default on client versions of Windows
+#
+# If you would like to submit a bug report, please visit:
+#   https://bugreport.java.com/bugreport/crash.jsp
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: -Xms512m -Xmx4096m -Dfile.encoding=UTF-8 --module-path=C:\Users\Lukas\git\PlaneSpotter\src\libs\gson-2.8.6.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\JMapViewer.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\mysql-connector-java-8.0.28.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\sqlite-jdbc-3.34.0.jar -XX:+ShowCodeDetailsInExceptionMessages planespotter.TestMain
+
+Host: AMD Ryzen 7 3800X 8-Core Processor             , 16 cores, 31G,  Windows 10 , 64 bit Build 19041 (10.0.19041.1202)
+Time: Thu Apr 14 15:30:46 2022 Mitteleuropäische Sommerzeit elapsed time: 2418.819374 seconds (0d 0h 40m 18s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x000002970cb230d0):  JavaThread "HttpClient-198-Worker-1" daemon [_thread_in_vm, id=22600, stack(0x000000a55d300000,0x000000a55d400000)]
+
+Stack: [0x000000a55d300000,0x000000a55d400000],  sp=0x000000a55d3ff0d0,  free space=1020k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [jvm.dll+0x3513f3]
+V  [jvm.dll+0x62adc2]
+V  [jvm.dll+0x351ed1]
+V  [jvm.dll+0x352167]
+V  [jvm.dll+0x3da791]
+V  [jvm.dll+0x74495d]
+V  [jvm.dll+0x73d75a]
