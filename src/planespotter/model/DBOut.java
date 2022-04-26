@@ -1,7 +1,11 @@
 package planespotter.model;
 
 import planespotter.constants.SQLQuerries;
+import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
+import planespotter.dataclasses.Frame;
+import planespotter.display.UserSettings;
+import planespotter.throwables.DataNotFoundException;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -22,7 +26,7 @@ public class DBOut extends SupperDB {
 	/**
 	 * test: max loaded flights
 	 */
-	public static int maxLoadedFlights = 10000;
+	public static int maxLoadedFlights = UserSettings.getMaxLoadedFlights();
 
 
 	/**
@@ -35,8 +39,8 @@ public class DBOut extends SupperDB {
 
 	public ResultSet querryDB(String querry) throws Exception {
 		ResultSet rs;
-		Connection conn = super.getDBConnection();
-		Statement stmt = conn.createStatement();
+		var conn = SupperDB.getDBConnection();
+		var stmt = conn.createStatement();
 		rs = stmt.executeQuery(querry);
 
 		return rs;
@@ -51,23 +55,15 @@ public class DBOut extends SupperDB {
 	 * @return Position containing Latitude and Longitude
 	 */
 	private Position convertCoords(String coords) {
-		String[] splitCoords = coords.split(",");
-		List<Double> processedCoords = new ArrayList<Double>();
+		var splitCoords = coords.split(",");
+		var processedCoords = new ArrayList<Double>();
 
 		for(String s : splitCoords) {
 			processedCoords.add(Double.parseDouble(s));
 		}
 
-		Position p = new Position(processedCoords.get(0), processedCoords.get(1));
+		var p = new Position(processedCoords.get(0), processedCoords.get(1));
 		return p;
-	}
-
-	/**
-	 * @param in
-	 * @return
-	 */
-	private String stripString (String in) {
-		return in.replaceAll("\"", "");
 	}
 
 	/**
@@ -78,13 +74,12 @@ public class DBOut extends SupperDB {
 	 *
 	 * @param tag the ICAO-Tag used in the Querry
 	 * @return Airline Object
-	 * @throws Exception
 	 */
-	public Airline getAirlineByTag(String tag) {
+	public Airline getAirlineByTag (String tag) {
 		Airline a = null;
 		try {
-			tag = stripString(tag);
-			ResultSet rs = querryDB(SQLQuerries.getAirlineByTag + tag); // ist leer TODO fixen
+			tag = Controller.stripString(tag);
+			var rs = querryDB(SQLQuerries.getAirlineByTag + tag); // ist leer TODO fixen
 			if (rs.next()) {
 				a = new Airline(rs.getInt("ID"), rs.getString("iatatag"), rs.getString("name"));
 			} else {
@@ -99,18 +94,18 @@ public class DBOut extends SupperDB {
 		return a;
 	}
 	
-	public int getAirlineIDByTag(String tag) {
+	public int getAirlineIDByTag (String tag) {
 		int id = 1;
 		try {
-			Deserializer ds = new Deserializer();
+			var ds = new Deserializer();
 			tag = ds.stripString(tag);
 			tag = "'" + tag + "'";
-			ResultSet rs = querryDB(SQLQuerries.getAirlineIDByTag + tag);
+			var rs = querryDB(SQLQuerries.getAirlineIDByTag + tag);
 			if(rs.next()) {
 				id = rs.getInt(1);
 			rs.close();
 			}
-			
+
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -126,29 +121,28 @@ public class DBOut extends SupperDB {
 	 * @param srcAirport String containing the Departure Airports IATA Tag
 	 * @param destAirport String containing the Arrival Airports IATA Tag
 	 * @return List<Airport> the list containing the Airport Objects
-	 * @throws Exception
 	 */
 
-	public List<Airport> getAirports(String srcAirport, String destAirport) {
-		List<Airport> aps = new ArrayList<Airport>();
+	public List<Airport> getAirports (String srcAirport, String destAirport) {
+		var aps = new ArrayList<Airport>();
 		try {
-			ResultSet rsSrc = querryDB(SQLQuerries.getAirportByTag + srcAirport);
-			ResultSet rsDst = querryDB(SQLQuerries.getAirportByTag + destAirport);
+			var rsSrc = querryDB(SQLQuerries.getAirportByTag + srcAirport);
+			var rsDst = querryDB(SQLQuerries.getAirportByTag + destAirport);
 
 			if (rsSrc.next()) {
-				Airport srcAp = new Airport(rsSrc.getInt("ID"), rsSrc.getString("iatatag"), rsSrc.getString("name"), convertCoords(rsSrc.getString("coords")));
+				var srcAp = new Airport(rsSrc.getInt("ID"), rsSrc.getString("iatatag"), rsSrc.getString("name"), convertCoords(rsSrc.getString("coords")));
 				aps.add(srcAp);
 
 			} else {
-				Airport srcAp = new Airport(0, "None", "None", new Position(0.0f, 0.0f));
+				var srcAp = new Airport(0, "None", "None", new Position(0.0f, 0.0f));
 				aps.add(srcAp);
 			}
 
 			if (rsDst.next()) {
-				Airport dstAp = new Airport(rsDst.getInt("ID"), rsDst.getString("iatatag"), rsDst.getString("name"), convertCoords(rsDst.getString("coords")));
+				var dstAp = new Airport(rsDst.getInt("ID"), rsDst.getString("iatatag"), rsDst.getString("name"), convertCoords(rsDst.getString("coords")));
 				aps.add(dstAp);
 			} else {
-				Airport dstAp = new Airport(0, "None", "None", new Position(0.0f, 0.0f));
+				var dstAp = new Airport(0, "None", "None", new Position(0.0f, 0.0f));
 				aps.add(dstAp);
 			}
 			rsSrc.close();
@@ -167,21 +161,20 @@ public class DBOut extends SupperDB {
 	 *
 	 * @param icao Strin containing the ICAO Tag
 	 * @return Plane the Object containing all Information about the Plane
-	 * @throws Exception
 	 */
-	public Plane getPlaneByICAO(String icao) {
+	public Plane getPlaneByICAO (String icao) {
 		Plane p = null;
 		// TODO: Bug fixen
 		// org.sqlite.SQLiteException: [SQLITE_ERROR] SQL error or missing database (unrecognized token: "06A1EB")
 		//icao = stripString(icao);
 		try {
-			ResultSet rs = querryDB(SQLQuerries.getPlaneByICAO + icao);
+			var rs = querryDB(SQLQuerries.getPlaneByICAO + icao);
 
 			if (rs.next()) {
-				Airline a = getAirlineByTag(rs.getString("airline"));
+				var a = getAirlineByTag(rs.getString("airline"));
 				p = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailnr"), rs.getString("type"), rs.getString("registration"), a);
 			} else {
-				Airline a = new Airline(-1, "None", "None");
+				var a = new Airline(-1, "None", "None");
 				p = new Plane(-1, "None", "None", "None", "None", a);
 			}
 			rs.close();
@@ -194,20 +187,19 @@ public class DBOut extends SupperDB {
 	}
 
 	/**
-	 * @param id
-	 * @return
-	 * @throws Exception
+	 * @param id is the plane id
+	 * @return plane with the given id
 	 */
-	public Plane getPlaneByID(int id) {
+	public Plane getPlaneByID (int id) {
 		Plane p = null;
 		try {
-			ResultSet rs = querryDB(SQLQuerries.getPlaneByID + id);
+			var rs = querryDB(SQLQuerries.getPlaneByID + id);
 			if (rs.next()) {
-				Airline a = new Airline(-1, "BIA", "BUFU Int. Airlines");
+				var a = new Airline(-1, "BIA", "BUFU Int. Airlines");
 				//Airline a = getAirlineByTag(rs.getString("airline"));
 				p = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailnr"), rs.getString("type"), rs.getString("registration"), a);
 			} else {
-				Airline a = new Airline(-1, "None", "None");
+				var a = new Airline(-1, "None", "None");
 				p = new Plane(-1, "None", "None", "None", "None", a);
 			}
 			rs.close();
@@ -224,10 +216,10 @@ public class DBOut extends SupperDB {
 	 * @return
 	 * @throws Exception
 	 */
-	public int checkPlaneInDB(String icao) {
-		String planeFilter = "SELECT ID FROM planes WHERE icaonr = '" + icao + "' LIMIT 1";
+	public int checkPlaneInDB (String icao) {
+		var planeFilter = "SELECT ID FROM planes WHERE icaonr = '" + icao + "' LIMIT 1";
 		try {
-			ResultSet rs = this.querryDB(planeFilter);
+			var rs = this.querryDB(planeFilter);
 			int id;
 			if (rs.next() == true) {
 				id = rs.getInt(1);
@@ -255,15 +247,15 @@ public class DBOut extends SupperDB {
 	 */
 	// TODO fix: HashMap lentgh was 1, but last Tracking id was about 23000
 	// TODO hier muss der Fehler sein
-	public HashMap<Integer, DataPoint> getTrackingByFlight(int flightID) {
-		HashMap<Integer ,DataPoint> dps = new HashMap<Integer, DataPoint>();
-		String flight_id = "'" + flightID + "'";
+	public HashMap<Integer, DataPoint> getTrackingByFlight (int flightID) {
+		var dps = new HashMap<Integer, DataPoint>();
+		var flight_id = "'" + flightID + "'";
 		try {
-			ResultSet rs = querryDB("SELECT * FROM tracking WHERE flightid == " + flight_id);
+			var rs = querryDB("SELECT * FROM tracking WHERE flightid == " + flight_id);
 			while (rs.next()) {
 				// TODO: IF STATEMENT
-				Position p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
-				DataPoint dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"), p, rs.getInt("timestamp"),
+				var p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
+				var dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"), p, rs.getInt("timestamp"),
 						rs.getInt("squawk"), rs.getInt("groundspeed"), rs.getInt("heading"), rs.getInt("altitude"));
 				dps.put(rs.getInt("ID"), dp);
 			}
@@ -277,11 +269,11 @@ public class DBOut extends SupperDB {
 
 	}
 
-	public long getLastTrackingByFlightID(int id) {
+	public long getLastTrackingByFlightID (int id) {
 		long timestamp = -1;
-		String getLastTracking = "SELECT timestamp FROM tracking WHERE flightid == "+ id +" ORDER BY ID DESC LIMIT 1";
+		var getLastTracking = "SELECT timestamp FROM tracking WHERE flightid == "+ id +" ORDER BY ID DESC LIMIT 1";
 		try {
-			ResultSet rs = this.querryDB(getLastTracking);
+			var rs = this.querryDB(getLastTracking);
 
 			while (rs.next()) {
 				timestamp = rs.getLong(1);
@@ -295,14 +287,17 @@ public class DBOut extends SupperDB {
 		return timestamp;
 	}
 
-	public int getLastTrackingIDByFlightID(int id) {
+	public int getLastTrackingIDByFlightID (int id)
+			throws DataNotFoundException {
 		int trackingid = -1;
-		String getLastTrackingIDByFlightID =  "SELECT ID FROM tracking WHERE flightid == '"+ id +"' ORDER BY ID DESC LIMIT 1";
+		var getLastTrackingIDByFlightID =  "SELECT ID FROM tracking WHERE flightid == '"+ id +"' ORDER BY ID DESC LIMIT 1";
 		try {
-			ResultSet rs = querryDB(getLastTrackingIDByFlightID);
+			var rs = querryDB(getLastTrackingIDByFlightID);
 
 			if (rs.next()) {
 				trackingid = rs.getInt(1);
+			} else {
+				throw new DataNotFoundException();
 			}
 			rs.close();
 		} catch (SQLException e) {
@@ -329,16 +324,16 @@ public class DBOut extends SupperDB {
 	 * @return List<Flight> containing all Flight Objects
 	 * @throws Exception
 	 */
-	public List<Flight> getAllFlights() {
-		List<Flight> flights = new ArrayList<Flight>();
+	public List<Flight> getAllFlights () {
+		var flights = new ArrayList<Flight>();
 		try {
-			ResultSet rs = querryDB(SQLQuerries.getFlights);
+			var rs = querryDB(SQLQuerries.getFlights);
 			int counter = 0;
 			while (rs.next() && counter <= maxLoadedFlights) { // counter: max flights -> to limit the incoming data (prevents a crash)
-				HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
-				List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
-				Plane plane = getPlaneByID(rs.getInt("plane"));
-				Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
+				var dps = getTrackingByFlight(rs.getInt("ID"));
+				var aps = getAirports(rs.getString("src"), rs.getString("dest"));
+				var plane = getPlaneByID(rs.getInt("plane"));
+				var flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
 				flights.add(flight);
 				counter++;
 			}
@@ -356,16 +351,16 @@ public class DBOut extends SupperDB {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<Flight> getFlightsByCallsign(String callsign) {
-		List<Flight> flights = new ArrayList<Flight>();
+	public List<Flight> getFlightsByCallsign (String callsign) {
+		var flights = new ArrayList<Flight>();
 		try {
-			ResultSet rs = querryDB(SQLQuerries.getFlightByCallsign + callsign);
+			var rs = querryDB(SQLQuerries.getFlightByCallsign + callsign);
 
 			while (rs.next()) {
-				HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
-				List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
-				Plane plane = getPlaneByID(rs.getInt("plane"));
-				Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
+				var dps = getTrackingByFlight(rs.getInt("ID"));
+				var aps = getAirports(rs.getString("src"), rs.getString("dest"));
+				var plane = getPlaneByID(rs.getInt("plane"));
+				var flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
 				flights.add(flight);
 			}
 			rs.close();
@@ -381,9 +376,9 @@ public class DBOut extends SupperDB {
 	 * @return
 	 * @throws Exception
 	 */
-	public int getLastFlightID() {
+	public int getLastFlightID () {
 		try {
-			ResultSet rs = this.querryDB(SQLQuerries.getLastFlightID);
+			var rs = this.querryDB(SQLQuerries.getLastFlightID);
 			int flightid;
 			if (rs.next() == true) {
 				flightid = rs.getInt("ID");
@@ -406,9 +401,9 @@ public class DBOut extends SupperDB {
 	 * @return
 	 * @throws Exception
 	 */
-	public int checkFlightInDB(Frame f, int planeid) {
+	public int checkFlightInDB (Frame f, int planeid) {
 		try {
-			ResultSet rs = this.querryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
+			var rs = this.querryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
 			int flightID;
 			if (rs.next() == true) {
 				flightID = rs.getInt("ID");
@@ -425,10 +420,10 @@ public class DBOut extends SupperDB {
 		return -9999; // weil es -1 schon gibt -> zum besseren debuggen
 	}
 
-	public List<Integer> checkEnded() {
-		List<Integer> flightIDs = new ArrayList<Integer>();
+	public List<Integer> checkEnded () {
+		var flightIDs = new ArrayList<Integer>();
 		try {
-			ResultSet rs = this.querryDB(SQLQuerries.checkEndOfFlight);
+			var rs = this.querryDB(SQLQuerries.checkEndOfFlight);
 
 			while (rs.next()) {
 				flightIDs.add(rs.getInt(1));
@@ -442,19 +437,22 @@ public class DBOut extends SupperDB {
 		return flightIDs;
 	}
 
-	public Flight getFlightByID(int id) {
+	public Flight getFlightByID (int id)
+			throws DataNotFoundException {
 		Flight f = null;
 		try {
 			ResultSet rs = querryDB(SQLQuerries.getFlightByID + id);
 
 			if (rs.next()) {
-				Object[] airports = getAirports(rs.getString("src"), rs.getString("dest")).toArray();
+				var airports = getAirports(rs.getString("src"), rs.getString("dest")).toArray();
 				f = new Flight(rs.getInt("ID"), (Airport) airports[0], (Airport) airports[1], rs.getString("callsign"), getPlaneByID(rs.getInt("plane")), rs.getString("flightnr"), getTrackingByFlight(rs.getInt("ID")));
 			} else {
-				Airline a = new Airline(-1, "None", "None");
-				Airport airnull = new Airport(-1, "None", "None", new Position(0d, 0d));
-				Plane p = new Plane(-1, "None", "None", "None", "None", a);
-				f = new Flight(-1, airnull, airnull, "None", p, "None", new HashMap<Integer, DataPoint>());
+				var nullAirline = new Airline(-1, "None", "None");
+				var nullAirport = new Airport(-1, "None", "None", new Position(0d, 0d));
+				var nullPlane = new Plane(-1, "None", "None", "None", "None", nullAirline);
+				f = new Flight(-1, nullAirport, nullAirport, "None", nullPlane, "None", new HashMap<Integer, DataPoint>());
+				// throws DataNotFoundException, to signal that there were no data found
+				throw new DataNotFoundException();
 			}
 			rs.close();
 		} catch (SQLException e) {
@@ -465,16 +463,16 @@ public class DBOut extends SupperDB {
 		return f;
 	}
 
-	public List<Flight> getAllFlightsFromID(int start_id, int end_id) {
-		List<Flight> flights = new ArrayList<Flight>();
+	public List<Flight> getAllFlightsFromID (int start_id, int end_id) {
+		var flights = new ArrayList<Flight>();
 		try {
-			ResultSet rs = querryDB("SELECT * FROM flights WHERE ID >= " + start_id + " AND ID <= " + end_id + " AND endTime IS NULL");
+			var rs = querryDB("SELECT * FROM flights WHERE ID >= " + start_id + " AND ID <= " + end_id + " AND endTime IS NULL");
 			int counter = 0;
 			while (rs.next() && counter <= end_id-start_id) { // counter: immer begrenzte Anzahl an Datensätzen
-				HashMap<Integer, DataPoint> dps = getTrackingByFlight(rs.getInt("ID"));
-				List<Airport> aps = getAirports(rs.getString("src"), rs.getString("dest"));
-				Plane plane = getPlaneByID(rs.getInt("plane"));
-				Flight flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
+				var dps = getTrackingByFlight(rs.getInt("ID"));
+				var aps = getAirports(rs.getString("src"), rs.getString("dest"));
+				var plane = getPlaneByID(rs.getInt("plane"));
+				var flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
 				flights.add(flight);
 				counter++;
 			}

@@ -7,6 +7,8 @@ package planespotter.constants;
  *
  * Contains all (absolute) paths to various ressources,
  * root directory is the project directory
+ * 
+ * FIXME: 18.04.2022 files cannot be reached with these paths
  */
 public final class Paths {
 
@@ -14,13 +16,13 @@ public final class Paths {
      * src-path
      * contains all project sources
      */
-    public static final String SRC_PATH = "/src/";
+    public static final String SRC_PATH = "src\\";
 
     /**
      * img-path
      * contains all used images
      */
-    public static final String IMG_PATH = "/src/planespotter/";
+    public static final String IMG_PATH = "src\\planespotter\\";
 
 
 }

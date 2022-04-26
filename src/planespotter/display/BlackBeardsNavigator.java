@@ -2,16 +2,21 @@ package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
+import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
 import planespotter.constants.GUIConstants;
 import planespotter.controller.Controller;
+import planespotter.controller.IOMaster;
+import planespotter.dataclasses.CustomMapMarker;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Position;
-import planespotter.model.DBOut;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static planespotter.constants.GUIConstants.LINE_BORDER;
 
 
 /**
@@ -22,86 +27,69 @@ import java.util.List;
  * map manager:
  *  manages the map data and contains methods which are executed on the mapView
  */
-public class BlackBeardsNavigator extends Thread {
+public final class BlackBeardsNavigator {
 
-    /**
-     *
-     */
+    // static gui instance
     private static GUI gui;
+    // list for all map markers
+    static List<CustomMapMarker> allMapMarkers = new ArrayList<>();
 
     /**
-     * thread run method TODO checken
+     * constructor, is private because @unused
      */
-    @Override
-    public void run () {
-        new BlackBeardsNavigator(Controller.getGUI());
+    private BlackBeardsNavigator() {
     }
 
     /**
-     *
+     * initializes BlackBeardsNavigator
      */
-    public BlackBeardsNavigator(GUI gui) {
-        this.gui = gui;
+    public static void initialize() {
+        gui = Controller.gui();
     }
 
     /**
+     * creates a map with a flight route from a specific flight
      *
+     * @param dps is the given tracking-hashmap
      */
-    public void createFlightRoute (HashMap<Integer, DataPoint> dps) {
-        JMapViewer viewer = gui.createMap();
-        Set<Integer> keySet = dps.keySet();
+    public static void createFlightRoute (HashMap<Integer, DataPoint> dps) {
+        var viewer = gui.mapViewer;
+        var keySet = dps.keySet();
+        allMapMarkers = new ArrayList<>();
+        int idKey = 0;
         for (int key : keySet) {
-            DataPoint dp = dps.get(key);
-            Position pos = dp.getPos();
-            MapMarkerDot newMarker = new MapMarkerDot(pos.getLat(), pos.getLon());
+            var dp = dps.get(key);
+            var pos = dp.getPos();
+            var newMarker = new CustomMapMarker(new Coordinate(pos.getLat(), pos.getLon()), new IOMaster().flightByID(dp.getFlightID()));
             viewer.addMapMarker(newMarker);
+            allMapMarkers.add(newMarker);
+            idKey = key;
         }
-
-        /*int counter = 0;
-        //Queue<Coordinate> coords = new ArrayDeque<>();
-        for (long g : dataPoints.keySet()) {
-            DataPoint dp = dataPoints.get(g);
-            Position aPos = dp.getPos();
-            MapMarkerDot newPlaneDot = new MapMarkerDot(aPos.getLat(), aPos.getLon());
-            if (counter < dataPoints.keySet().size()-1) {
-                newPlaneDot.setBackColor(Color.GREEN);
-            } else {
-                newPlaneDot.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
-            }
-            viewer.addMapMarker(newPlaneDot);
-            counter++;*/
-            /*if (coords.isEmpty() || coords.size() == 1) {
-                coords.add(new Coordinate(aPos.getLat(), aPos.getLon()));
-            }
-            else {
-                coords.remove();
-                viewer.addMapPolygon(new MapPolygonImpl(coords.stream().toList()));
-                coords.add(new Coordinate(aPos.getLat(), aPos.getLon()));
-            }*/
-        gui.recieveMap(viewer);
+        GUISlave.recieveMap(viewer);
+        TreePlantation.createInfoTree(dps.get(idKey).getFlightID());
     }
 
     /**
+     * creates a map with all flights from the given list
      *
+     * @param list is the given flight list
      */
-    public void createAllFlightsMap (List<Flight> list) {
-        JMapViewer viewer = gui.createMap();
-        Rectangle viewSize = viewer.getVisibleRect();
-        List<ICoordinate> coords = new ArrayList<>();
+    public static void createAllFlightsMap (List<Flight> list) {
+        var viewer = gui.mapViewer;
+        var viewSize = viewer.getVisibleRect(); // may be used in the future
+        var coords = new ArrayList<ICoordinate>();
+        allMapMarkers = new ArrayList<>();
         for (Flight f : list) {
-            // TODO: getting the last data point => where the plane is at the moment // BUG:
-            //Object[] keySetArray = f.getDataPoints().keySet().toArray(); // keySetArray[keySetArray.length-1]
-            int lastID = new DBOut().getLastTrackingIDByFlightID(f.getID());
-            HashMap<Integer, DataPoint> dataPoints = f.getDataPoints();
-            //DataPoint lastDataPoint = f.getDataPoints().get(f.getDataPoints().size()-1);
-            //DataPoint lastDataPoint = (DataPoint) f.getDataPoints().values().toArray()[f.getDataPoints().size()-1];
-            //length is 1 TODO fixen // NullPointerException: lastDataPoint is null
-            DataPoint lastDataPoint = (DataPoint) f.getDataPoints().get(lastID);
-            Position lastPos = lastDataPoint.getPos();
-            MapMarkerDot newPlaneDot = new MapMarkerDot(lastPos.getLat(), lastPos.getLon());
-            newPlaneDot.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
-            viewer.addMapMarker(newPlaneDot);
-
+            int lastTrackingID = new IOMaster().lastTrackingID(f.getID());
+            //length is 1 TODO fix // NullPointerException: lastDataPoint is null
+            var lastDataPoint = f.getDataPoints().get(lastTrackingID);
+            var lastPos = lastDataPoint.getPos();
+            // TODO: creating new Map Marker // will be optimized
+            var newMarker = new CustomMapMarker(new Coordinate(lastPos.getLat(), lastPos.getLon()), f);
+            newMarker.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
+            viewer.addMapMarker(newMarker);
+            allMapMarkers.add(newMarker);
+        //@experimental
             viewer.addMapPolygon(new MapPolygonImpl());
             if (coords.isEmpty() || coords.size() == 1) {
                 coords.add(new Coordinate(lastPos.getLat(), lastPos.getLon()));
@@ -112,11 +100,32 @@ public class BlackBeardsNavigator extends Thread {
                 coords.remove(0);
             }
         }
-        gui.recieveMap(viewer);
+        GUISlave.recieveMap(viewer);
     }
 
+    /**
+     * @return a map prototype (JMapViewer)
+     */
+    static JMapViewer defaultMapViewer (JPanel parent) {
+        // TODO: trying to set up JMapViewer
+        var viewer = new JMapViewer(new MemoryTileCache());
+        viewer.setBorder(LINE_BORDER);
+        var mapController = new DefaultMapController(viewer);
+        mapController.setMovementMouseButton(1);
+        viewer.setDisplayToFitMapMarkers();
+        viewer.setZoomControlsVisible(false);
+        viewer.setTileSource(new BingAerialTileSource());
+        viewer.setVisible(true);
+        viewer.setBounds(parent.getBounds());
 
+        return viewer;
+    }
 
-
+    /**
+     * is executed when a map marker is clicked
+     */
+    void mapMarkerClicked () {
+        // needed?
+    }
 
 }

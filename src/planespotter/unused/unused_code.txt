@@ -135,3 +135,233 @@
     }
 
      */
+
+
+
+     old disposeView() :
+
+     /*if (listView != null || mapViewer != null || pStartScreen != null || pInfo != null) { // braucht man das
+                 if (runningView == listView && listView != null) {
+                     listView.setVisible(false);
+                     listView = null;
+                     pList.setVisible(false);
+                     pStartScreen.setVisible(true);
+                     runningView = null;
+                 } else if (runningView == mapViewer && mapViewer != null) {
+                     mapViewer.setVisible(false);
+                     mapViewer = null;
+                     pMap.setVisible(false);
+                     pStartScreen.setVisible(true);
+                     runningView = null;
+                 } else if (runningView == pStartScreen && pStartScreen != null) {
+                     pStartScreen.setVisible(false);
+                 } if (pInfo != null && pInfo.isVisible()) {
+                     pInfo.setVisible(false);
+                     if (flightInfo != null) {
+                         flightInfo.setVisible(false);
+                         flightInfo = null;
+                     }
+                     dpleft.moveToFront(pMenu);
+                     pMenu.setVisible(true);
+                 }
+
+                 if (view_SEM.value() == 1) {
+                     listView = null;
+                     pList.setVisible(false);
+                     mapViewer = null;
+                     pMap.setVisible(false);
+                     pStartScreen.setVisible(true);
+
+                     view_SEM.decrease();
+                 } else {
+                     pStartScreen.setVisible(false);
+                 }
+             }
+             System.gc();
+             revalidateAll();*/
+
+
+
+
+    /**
+     * private semaphor class represents a semaphor with methods
+     */
+    protected class Semaphor {
+        // semaphor, minimum and maximum value
+        private byte SEM;
+        private final byte MIN, MAX;
+
+        /**
+         * Semaphor constructor
+         */
+        public Semaphor (byte min, byte max, byte beginAt) {
+            this.MIN = min;
+            this.MAX = max;
+            if (beginAt <= max && beginAt >= min) {
+                this.SEM = beginAt;
+            } else {
+                SEM = min;
+            }
+        }
+
+        /**
+         * increases the semaphor, if its value is 1, SemaphorError is thrown
+         * @throws SemaphorError
+         */
+        public void increase () throws SemaphorError {
+            if (SEM < MAX) {
+                SEM++;
+            } else {
+                throw new SemaphorError();
+            }
+        }
+
+        /**
+         * decreases the semaphor, if its value is 0, SemaphorError is thrown
+         * @throws SemaphorError is thrown, if SEM is less or equals min
+         */
+        public void decrease () throws SemaphorError {
+            if (SEM > MIN) {
+                SEM--;
+            } else {
+                throw new SemaphorError();
+            }
+        }
+
+        /**
+         * @return SEM value
+         */
+        public int value () throws SemaphorError {
+            return SEM;
+        }
+    }
+
+
+    // loadFlightsParallel method
+
+    //preloadedFlights.addAll(new DBOut().getAllFlights().parallelStream().toList());
+            Task newTask = new Task(12000, UserSettings.getMaxLoadedFlights(), 0);
+            forkJoinPool.execute(newTask);
+            while (forkJoinPool.getPoolSize() > 0) {
+            }
+            preloadedFlights = new ArrayList<>();
+            while (!listQueue.isEmpty()) { // adding all loaded lists to the main list ( listQueue is threadSafe )
+                preloadedFlights.addAll(Objects.requireNonNull(listQueue.poll()));
+            }
+            forkJoinPool.shutdown();
+            controller.done();
+
+
+            /**
+                 * loads flights from the db into a list
+                 * doesn't look good, but works parallel
+                 * starts 4 threads/outputWizards which load the flights into a thread-safe queue
+                 * and then into the main list ( preloadedFlights )
+                 *
+                 * @deprecated
+                 */
+                void loadFlightsThreaded() {
+                    int from0 = 12000; // startet erst bei ID 12000, weil davor sowieso alles ended->sonst schlechte aufteilung auf threads
+                    int plus = (UserSettings.getMaxLoadedFlights()-from0)/4;
+                    int from1 = from0 + plus;
+                    int from2 = from1 + plus;
+                    int from3 = from2 + plus;
+                    ThreadedOutputWizard out0 = new ThreadedOutputWizard(0, from0, from1);
+                    ThreadedOutputWizard out1 = new ThreadedOutputWizard(1, from1, from2);
+                    ThreadedOutputWizard out2 = new ThreadedOutputWizard(2, from2, from3);
+                    ThreadedOutputWizard out3 = new ThreadedOutputWizard(3, from3, (from3+plus));
+                    preloadedFlights = new CopyOnWriteArrayList<>();
+                    exe.execute(out0);
+                    exe.execute(out1);
+                    exe.execute(out2);
+                    exe.execute(out3);
+                    while (ready < 40) { // waits until all threads are ready ( every thread does 'ready+=10' when ready )
+                    }
+                    while (!listQueue.isEmpty()) { // adding all loaded lists to the main list ( listQueue is threadSafe )
+                        preloadedFlights.addAll(Objects.requireNonNull(listQueue.poll()));
+                    }
+                    controller.done();
+                }
+
+
+                /** // nur test
+                     * TestObjekt:
+                     * @return Test-List-Object
+                     */
+                    public static List<Flight> testFlightList() {
+                        List<Flight> list = new ArrayList<>();
+                        Flight flight1 = new Flight(1234, new Airport(30, "BER", "Berlin", new Position(222.22, 333.33)),
+                                new Airport(40, "HH", "Hamburg", new Position(123.45, 98.76)),
+                                "HHBER",
+                                new Plane(10045, "ABC111", "11", "Passagierflugzeug", "REG111", new Airline(21, "A21A", "Airline21")),
+                                "BERHH1", null);
+                        Flight flight2 = new Flight(6543, new Airport(324, "MI", "Minden", new Position(37.26237, 325.563)),
+                                new Airport(367, "BEV", "Beverungen", new Position(52553.45, 58.5576)),
+                                "MIBEV",
+                                new Plane(10045, "ABC111", "11", "Passagierflugzeug", "REG111", new Airline(21, "A21A", "Airline21")),
+                                "MIBEV1", null);
+                        list.add(flight1);
+                        list.add(flight2);
+                        return list;
+                    }
+
+
+
+                    /**
+                         * runs background task
+                         */
+                        private void runBackgroundTask(ViewType type) {
+                            BackgroundWorker bgworker = new BackgroundWorker();
+                            synchronized (this) {
+                                bgworker.actionViewType = type;
+                                bgworker.execute();
+                            }
+                        }
+
+                        /**
+                         * gui intern background worker class
+                         */
+                        class BackgroundWorker extends SwingWorker<String, Void> {
+
+                            public ViewType actionViewType;
+
+                            /**
+                             * runs a background task
+                             * is this still needed?
+                             */
+                            @Override
+                            protected String doInBackground() throws Exception {
+                                if (!Controller.loading) {
+                                    switch (actionViewType) {
+                                        case LIST_FLIGHT:
+                                            // TODO controller zum Thread machen der die anderen (DBOut) ausführt
+                                            controller.createDataView(LIST_FLIGHT, "");
+                                            runningView = listView;
+                                            return EKlAuf + "GUI" + EKlZu + " backround tast started!";
+                                        case LIST_AIRPORT:
+                                        case LIST_AIRLINE:
+                                        case LIST_PLANE:
+                                        case MAP_ALL:
+                                            controller.createDataView(MAP_ALL, "");
+                                            runningView = mapViewer;
+                                            return EKlAuf + "GUI" + EKlZu + " background task started!";
+                                        case MAP_FLIGHTROUTE:
+                                        default:
+                                            controller.loadData();
+                                    }
+                                }
+                                return "";
+                            }
+
+                            /**
+                             * background worker done method
+                             * is executed when a background task is done
+                             */
+                            @Override
+                            protected void done () {
+                                if (!Controller.loading) {
+                                    progressbar.setVisible(false);
+                                    super.cancel(true);
+                                }
+                            }
+                        }

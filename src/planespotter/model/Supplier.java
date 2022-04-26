@@ -80,6 +80,16 @@ public class Supplier implements Runnable{
 		return response;
 	}
 
+	/***********************************************************************************
+	 * WICHTIG:
+	 *
+	 * "Setting an object in an array to null or to another objects makes it eligible for garbage collection,
+	 *  ASSUMING that there are no references to the same object stored anywhere."
+	 *
+	 *  -> es müssen irgendwo noch Referenzen sein
+	 *  TODO finalize einbauen
+	 ***********************************************************************************/
+
 	public synchronized void writeToDB(List<Frame> frames) {
 		try {
 			long ts1 = System.nanoTime();

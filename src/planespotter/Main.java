@@ -11,12 +11,14 @@ public class Main {
 
     /**
      * Project Main-Method
-     * @param args -> null
+     * @param args -> can be ignored
      */
     public static void main (String[] args) {
 
-        // TODO: new GUI frame
-        Controller.openWindow();
+        final var control = Controller.getInstance();
+
+        // TODO: starting program
+        control.start();
     }
 
 }
