@@ -75,7 +75,7 @@ final class PanelModels {
         static JLabel headLabel (String text) {
             // TODO: setting up head label
             var head = new JLabel(text + " > ");
-            head.setBounds(5, 0, 400, 24);
+            head.setBounds(5, 0, 400, 20);
             head.setFont(FONT_MENU.deriveFont(18));
             head.setForeground(DEFAULT_FONT_COLOR);
 

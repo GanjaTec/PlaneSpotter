@@ -214,7 +214,7 @@ public class Controller {
     /**
      * program exit method
      */
-    public static void exit () {
+    public static synchronized void exit () {
         System.exit(0);
     }
 
