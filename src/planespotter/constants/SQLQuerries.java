@@ -35,11 +35,11 @@ public final class SQLQuerries {
 	public static final String checkEndOfFlight = "SELECT ID FROM flights WHERE endTime IS NULL";
 	public static final String getLastTracking = "SELECT timestamp FROM tracking WHERE ID == (?) ORDER BY ID DESC LIMIT 1";
 	public static final String getLastTrackingByFlightID = "SELECT ID FROM tracking WHERE flightid == (?) ORDER BY DESC LIMIT 1";
+	
 	/** @unused */
 	public static final String getFlightsFromID = "SELECT * FROM flights WHERE ID >= (?) AND ID > (?)";
 	// alle flüge ab einer bestimmten id, wird direkt in DBOut gemacht, da ich nicht weiß
 	// wie die Platzhalter funktionieren
-
 
 	//update Querries
 	public static final String updateFlightEnd = "UPDATE flights SET endTime = (?) WHERE ID == (?)";
