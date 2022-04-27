@@ -1,7 +1,7 @@
 package planespotter.model;
 
 import planespotter.controller.Controller;
-import planespotter.controller.IOMaster;
+import planespotter.controller.DataMaster;
 import planespotter.throwables.ThreadOverheadError;
 
 import java.util.concurrent.RejectedExecutionException;
@@ -9,20 +9,39 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import static planespotter.constants.GUIConstants.*;
 
-public class OutputWizard extends DBOut implements Runnable {
-    /**
-     * class variables
-     */
+public class ParallelOutputWizard extends DBOut implements Runnable {
+    // thread pool executor instance
     private final ThreadPoolExecutor executor;
+    // ints: thread number, start-/end-id, max flights per one task
     private final int threadNumber, from, to, flightsPerTask;
+    // thread name
     private final String threadName;
     // controller instance
     private final Controller controller;
 
     /**
-     * constructor
+     * constructor without params, but sets all vars
      */
-    public OutputWizard(ThreadPoolExecutor executor, int tNumber, int from, int to, int flightsPerTask) {
+    public ParallelOutputWizard() {
+        this.executor = null;
+        this.threadNumber = -1;
+        this.threadName = "no thread";
+        this.from = -1;
+        this.to = -1;
+        this.flightsPerTask = -1;
+        this.controller = Controller.getInstance();
+    }
+
+    /**
+     * constructor
+     *
+     * @param executor is the ThreadPoolExecutor, which executes the OutputWizards
+     * @param tNumber is the thread number
+     * @param from is the start id
+     * @param to is the end id
+     * @param flightsPerTask is the max. number of loaded flights by one OutputWizard
+     */
+    public ParallelOutputWizard(ThreadPoolExecutor executor, int tNumber, int from, int to, int flightsPerTask) {
         this.executor = executor;
         this.threadNumber = tNumber;
         this.threadName = "output-wizard" + this.threadNumber;
@@ -57,11 +76,11 @@ public class OutputWizard extends DBOut implements Runnable {
         int flightsToLoad = toID - fromID;
         if (flightsToLoad <= flightsPerTask) {
             var flights = super.getAllFlightsFromID(fromID, toID);
-            IOMaster.addToQueue(flights);
+            DataMaster.addToQueue(flights);
         } else {
             int newEndID = to-(flightsToLoad/2);
-            var out0 = new OutputWizard(executor, threadNumber+1, fromID, newEndID, flightsPerTask);
-            var out1 = new OutputWizard(executor, threadNumber+2, newEndID, toID, flightsPerTask);
+            var out0 = new ParallelOutputWizard(executor, threadNumber+1, fromID, newEndID, flightsPerTask);
+            var out1 = new ParallelOutputWizard(executor, threadNumber+2, newEndID, toID, flightsPerTask);
             try {
                 executor.execute(out0);
                 executor.execute(out1);
@@ -70,6 +89,9 @@ public class OutputWizard extends DBOut implements Runnable {
             }
         }
     }
+
+    //TODO allWithPlanetype(type)
+    // weitere
 
     /**
      * @return name of the running thread

@@ -112,7 +112,7 @@ public class Controller {
         }
         GUISlave.initialize();
         TreePlantation.initialize();
-        BlackBeardsNavigator.initialize();
+        BlackBeardsNavigator.initialize(); // TODO hier MapViewer zuweisen! dann nicht mehr
         this.done();
     }
 
@@ -126,7 +126,7 @@ public class Controller {
             GUISlave.progressbarStart();
         }
         preloadedFlights = new ArrayList<>();
-        new IOMaster().loadFlightsParallel();
+        new DataMaster().loadFlightsParallel();
         this.sucsessLog("loaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3) +
                     " seconds!" + "\n" + ANSI_ORANGE + " -> completed: " + exe.getCompletedTaskCount() +
                     ", active: " + exe.getActiveCount() + ", largestPoolSize: " + exe.getLargestPoolSize());
@@ -150,7 +150,7 @@ public class Controller {
      */
     public void createDataView(ViewType type, String data) {
         // TODO ONLY HERE: dispose GUI view(s)
-        gui.disposeView();
+        GUISlave.disposeView();
         // TODO verschiedene Möglichkeiten (für große Datenmengen)
         switch (type) {
             case LIST_FLIGHT -> TreePlantation.createTree(TreePlantation.allFlightsTreeNode(preloadedFlights));

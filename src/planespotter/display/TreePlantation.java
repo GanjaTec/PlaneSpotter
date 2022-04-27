@@ -2,7 +2,7 @@ package planespotter.display;
 
 import planespotter.constants.Paths;
 import planespotter.controller.Controller;
-import planespotter.controller.IOMaster;
+import planespotter.controller.DataMaster;
 import planespotter.dataclasses.Airline;
 import planespotter.dataclasses.Airport;
 import planespotter.dataclasses.Flight;
@@ -11,11 +11,11 @@ import planespotter.dataclasses.Plane;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
 
+import static planespotter.constants.DefaultObject.DEFAULT_FLIGHT;
 import static planespotter.constants.GUIConstants.*;
 
 /**
@@ -175,23 +175,28 @@ public final class TreePlantation {
      */
     public static DefaultMutableTreeNode infoFlightTreeNode (int id) {
         String strToStrip;
-        var f = new IOMaster().flightByID(id);
-            var p = f.getPlane();
-                var airline = p.getAirline();
+        Flight f;
+        if (id == -1) {
+            f = DEFAULT_FLIGHT;
+        } else {
+            f = new DataMaster().flightByID(id);
+        }   // plane and airline
+            var plane = f.getPlane();
+            var airline = plane.getAirline();
         // root node
         var root = new DefaultMutableTreeNode("");
         // Attributes
         var flight_id = new DefaultMutableTreeNode("Flight-ID: " + f.getID());
         strToStrip = "Flight-Nr.: " + f.getFlightnr();
         var flight_nr = new DefaultMutableTreeNode(Controller.stripString(strToStrip));
-        var plane_id = new DefaultMutableTreeNode("Plane-ID: " + p.getID());
-        strToStrip = "Plane-Type: " + p.getPlanetype();
+        var plane_id = new DefaultMutableTreeNode("Plane-ID: " + plane.getID());
+        strToStrip = "Plane-Type: " + plane.getPlanetype();
         var plane_type = new DefaultMutableTreeNode(Controller.stripString(strToStrip));
-        strToStrip = "Plane-ICAO: " + p.getIcao();
+        strToStrip = "Plane-ICAO: " + plane.getIcao();
         var plane_icao = new DefaultMutableTreeNode(Controller.stripString(strToStrip));
-        strToStrip = "Plane-Registration: " + p.getRegistration();
+        strToStrip = "Plane-Registration: " + plane.getRegistration();
         var plane_reg = new DefaultMutableTreeNode(Controller.stripString(strToStrip));
-        strToStrip = "Plane-Tailnr.: " + p.getTailnr();
+        strToStrip = "Plane-Tailnr.: " + plane.getTailnr();
         var plane_tnr = new DefaultMutableTreeNode(Controller.stripString(strToStrip));
         var p_airline_id = new DefaultMutableTreeNode("Airline-ID: " + airline.getID());
         var p_airline_tag = new DefaultMutableTreeNode("Airline-Tag: " + airline.getTag());

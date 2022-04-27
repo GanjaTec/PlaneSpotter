@@ -184,10 +184,10 @@ public final class GUISlave {
     static void windowResized (ComponentType type) {
         switch (type) {
             case WINDOW -> gui.mainpanel.setBounds(gui.window.getBounds());
-            case MAP_PANEL -> gui.mapViewer.setBounds(gui.pMap.getBounds());
+            case MAP_PANEL -> gui.mapViewer.setBounds(0, 0, gui.pMap.getWidth(), gui.pMap.getHeight());
             case MENU_PANEL -> gui.menubar.setBounds(gui.pMenu.getBounds());
             case VIEW_HEAD -> gui.closeView.setBounds(gui.pViewHead.getWidth() - 85, 4, 80, 16);
-            case START_SCREEN -> gui.lblStartScreen.setBounds(gui.pStartScreen.getBounds());
+            case START_SCREEN -> gui.lblStartScreen.setBounds(0, 0, gui.pStartScreen.getWidth(), gui.pStartScreen.getHeight());
             case MAINPANEL -> {
                 gui.pTitle.setBounds(0, 0, gui.mainpanel.getWidth(), 70);
                 gui.dpright.setBounds(280, 70, gui.mainpanel.getWidth() - 280, gui.mainpanel.getHeight() - 70);
@@ -213,8 +213,8 @@ public final class GUISlave {
             }
             case LIST_PANEL -> {
                 if (gui.spList != null && gui.listView != null) {
-                    gui.spList.setBounds(gui.pList.getBounds());
-                    gui.listView.setBounds(gui.pList.getBounds());
+                    gui.spList.setBounds(0, 0, gui.pList.getWidth(), gui.pList.getHeight());
+                    gui.listView.setBounds(gui.spList.getBounds());
                 }
             }
             case INFO_PANEL -> {
@@ -224,6 +224,35 @@ public final class GUISlave {
             }
         }
         GUISlave.revalidateAll();
+    }
+
+    /**
+     * disposes all views (and opens the start screen)
+     * if no other view is opened, nothing is done
+     */
+    public static void disposeView() {
+        if (gui.pStartScreen != null) {
+            gui.pStartScreen.setVisible(false);
+        } if (gui.listView != null) {
+            gui.pList.remove(gui.listView);
+            gui.listView.setVisible(false);
+            gui.listView = null;
+            gui.pList.setVisible(false);
+        } if (gui.mapViewer != null) {
+            gui.pMap.remove(gui.mapViewer);
+            gui.mapViewer.setVisible(false);
+            gui.pMap.setVisible(false);
+            gui.mapViewer.removeAllMapMarkers();
+        } if (gui.flightInfo != null) {
+            gui.flightInfo.setVisible(false);
+            gui.flightInfo = null;
+            gui.pInfo.setVisible(false);
+        }
+        gui.pMenu.setVisible(true);
+        gui.dpleft.moveToFront(gui.pMenu);
+        gui.viewHeadText.setText(DEFAULT_HEAD_TEXT);
+        GUISlave.revalidateAll();
+        GUISlave.requestComponentFocus(gui.tfSearch);
     }
 
 }

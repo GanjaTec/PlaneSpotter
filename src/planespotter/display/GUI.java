@@ -317,34 +317,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     }
 
     /**
-     * disposes all views (and opens the start screen)
-     * if no other view is opened, nothing is done
-     */
-    public void disposeView() {
-        if (this.pStartScreen != null) {
-            this.pStartScreen.setVisible(false);
-        } if (this.listView != null) {
-            this.pList.remove(this.listView);
-            this.listView.setVisible(false);
-            this.listView = null;
-            this.pList.setVisible(false);
-        } if (this.mapViewer != null) {
-            this.pMap.remove(this.mapViewer);
-            this.mapViewer.setVisible(false);
-            this.pMap.setVisible(false);
-        } if (this.flightInfo != null) {
-            this.flightInfo.setVisible(false);
-            this.flightInfo = null;
-            this.pInfo.setVisible(false);
-        }
-        this.pMenu.setVisible(true);
-        this.dpleft.moveToFront(this.pMenu);
-        this.viewHeadText.setText(DEFAULT_HEAD_TEXT);
-        GUISlave.revalidateAll();
-        GUISlave.requestComponentFocus(this.tfSearch);
-    }
-
-    /**
      * enters the text in the textfield (use for key listener)
      */
     protected void enterText () {
@@ -399,7 +371,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             GUISlave.progressbarStart();
             this.controller.createDataView(MAP_ALL, "");
         } else if (src == this.closeView) {
-            this.disposeView();
+            GUISlave.disposeView();
             this.pStartScreen.setVisible(true);
             dpright.moveToFront(this.pStartScreen);
         } else if (src == this.settings) {
@@ -576,7 +548,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     // TODO richtig machen, ConcurrentModificationException, irgendwas läuft nichts
     public void resetMapViewer (MapMarker doNotReset) {
         var viewer = this.mapViewer;
-        this.mapViewer = null;
         var markersIn = viewer.getMapMarkerList();
         viewer.removeAllMapMarkers();
         var markersOut = new ArrayList<MapMarker>();

@@ -1,18 +1,15 @@
 package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.*;
-import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
 import planespotter.constants.GUIConstants;
 import planespotter.controller.Controller;
-import planespotter.controller.IOMaster;
+import planespotter.controller.DataMaster;
 import planespotter.dataclasses.CustomMapMarker;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
-import planespotter.dataclasses.Position;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -60,7 +57,7 @@ public final class BlackBeardsNavigator {
         for (int key : keySet) {
             var dp = dps.get(key);
             var pos = dp.getPos();
-            var newMarker = new CustomMapMarker(new Coordinate(pos.getLat(), pos.getLon()), new IOMaster().flightByID(dp.getFlightID()));
+            var newMarker = new CustomMapMarker(new Coordinate(pos.getLat(), pos.getLon()), new DataMaster().flightByID(dp.getFlightID()));
             viewer.addMapMarker(newMarker);
             allMapMarkers.add(newMarker);
             idKey = key;
@@ -73,14 +70,15 @@ public final class BlackBeardsNavigator {
      * creates a map with all flights from the given list
      *
      * @param list is the given flight list
+     *
+     *             // FIXME: 27.04.2022 Methode aufteilen!!
      */
     public static void createAllFlightsMap (List<Flight> list) {
         var viewer = gui.mapViewer;
         var viewSize = viewer.getVisibleRect(); // may be used in the future
-        var coords = new ArrayList<ICoordinate>();
         allMapMarkers = new ArrayList<>();
         for (Flight f : list) {
-            int lastTrackingID = new IOMaster().lastTrackingID(f.getID());
+            int lastTrackingID = new DataMaster().lastTrackingID(f.getID());
             //length is 1 TODO fix // NullPointerException: lastDataPoint is null
             var lastDataPoint = f.getDataPoints().get(lastTrackingID);
             var lastPos = lastDataPoint.getPos();
@@ -89,16 +87,6 @@ public final class BlackBeardsNavigator {
             newMarker.setBackColor(GUIConstants.DEFAULT_MAP_ICON_COLOR);
             viewer.addMapMarker(newMarker);
             allMapMarkers.add(newMarker);
-        //@experimental
-            viewer.addMapPolygon(new MapPolygonImpl());
-            if (coords.isEmpty() || coords.size() == 1) {
-                coords.add(new Coordinate(lastPos.getLat(), lastPos.getLon()));
-            }
-            else {
-                coords.add(new Coordinate(lastPos.getLat(), lastPos.getLon()));
-                viewer.addMapPolygon(new MapPolygonImpl(coords));
-                coords.remove(0);
-            }
         }
         GUISlave.recieveMap(viewer);
     }

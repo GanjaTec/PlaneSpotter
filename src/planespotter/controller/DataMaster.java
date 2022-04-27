@@ -3,7 +3,7 @@ package planespotter.controller;
 import planespotter.dataclasses.Flight;
 import planespotter.display.UserSettings;
 import planespotter.model.DBOut;
-import planespotter.model.OutputWizard;
+import planespotter.model.ParallelOutputWizard;
 import planespotter.throwables.DataNotFoundException;
 
 import java.util.List;
@@ -13,12 +13,15 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static planespotter.controller.Controller.*;
 
-public class IOMaster {
+public class DataMaster {
 
     // controller instance
     private final Controller controller = Controller.getInstance();
 
-    // preloadedFlights queue ( thread-safe )
+    /**
+     * preloadedFlights queue ( thread-safe )
+     * the data waits here until added to preloadedFlights
+     */
     private static final Queue<List<Flight>> listQueue = new ConcurrentLinkedQueue<>();
 
     /**
@@ -27,11 +30,11 @@ public class IOMaster {
      * when a there are more than 50 flights to load, new ThreadedOutputWizards are created recursively
      */
     void loadFlightsParallel () {
-        int startID = 12000;
+        int startID = 14000;
         int endID = UserSettings.getMaxLoadedFlights();
         int flightsPerTask = (endID-startID)/100;
-        OutputWizard outputWizard;
-        outputWizard = new OutputWizard(exe, 0, startID, endID, flightsPerTask);
+        ParallelOutputWizard outputWizard;
+        outputWizard = new ParallelOutputWizard(exe, 0, startID, endID, flightsPerTask);
         exe.execute(outputWizard);
         this.waitAndLoadAll();
         controller.done();
@@ -80,8 +83,5 @@ public class IOMaster {
             this.controller.errorLog("flight doesn't exist or doesn't have last tracking!");
         } return -1;
     }
-
-    //TODO allWithPlanetype(type)
-    // weitere
 
 }
