@@ -23,7 +23,7 @@ public final class SQLQuerries {
 	
 	//select Querrys
 	public static final String getLastFlightID = "SELECT * from flights ORDER BY ID DESC LIMIT 1";
-	public static final String getTrackingByFlight = "SELECT * FROM tracking WHERE ID == ";
+	public static final String getTrackingByFlight = "SELECT * FROM tracking WHERE ID == "; // FIXME sollte das nicht flightid sein=
 	public static final String getFlights = "SELECT * FROM flights";
 	public static final String getFlightByID = "SELECT * FROM flights WHERE ID == ";
 	public static final String getAirportByTag = "SELECT * FROM airports WHERE iatatag == ";

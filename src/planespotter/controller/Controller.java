@@ -1,13 +1,15 @@
 package planespotter.controller;
 
+import planespotter.constants.SearchType;
 import planespotter.constants.ViewType;
 import planespotter.dataclasses.*;
-import planespotter.display.GUI;
 import planespotter.display.BlackBeardsNavigator;
+import planespotter.display.GUI;
 import planespotter.display.GUISlave;
 import planespotter.display.TreePlantation;
-import planespotter.model.FileWizard;
-import planespotter.model.DBOut;
+import planespotter.model.FileMaster;
+import planespotter.model.Search;
+import planespotter.throwables.DataNotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +52,7 @@ public class Controller {
     // only GUI instance
     static GUI gui;
     // preloadedFlights list ( should also be thread-safe )
-    public static volatile List<Flight> preloadedFlights;
+    public static List<Flight> preloadedFlights;
 
     /**
      * @return ONE and ONLY controller instance
@@ -74,26 +76,28 @@ public class Controller {
      * initializes all executors
      * :: -> method reference
      */
-    private void initExecutors() {
+    private void initExecutors () {
         this.log("initializing executors...");
         var sec = TimeUnit.SECONDS;
         exe.setKeepAliveTime(KEEP_ALIVE_TIME, sec);
         exe.setMaximumPoolSize(MAX_THREADPOOL_SIZE);
-        scheduled_exe.scheduleAtFixedRate(FileWizard::saveConfig, 60, 300, sec);
-        scheduled_exe.scheduleAtFixedRate(Controller::garbageCollector, 20, 20, sec);
+        scheduled_exe.scheduleAtFixedRate(FileMaster::saveConfig, 60, 300, sec);
+        scheduled_exe.scheduleAtFixedRate(System::gc, 20, 20, sec);
+        //scheduled_exe.scheduleAtFixedRate(Controller::reloadData, 60, 60, sec); // -> live data
         this.sucsessLog("executors initialized sucsessfully!");
     }
 
     /**
      * starts the program, opens a gui and initializes the controller
      */
-    public synchronized void start() {
+    public synchronized void start () {
         try {
             this.openWindow();
             this.loadData();
             while (loading) {
                 this.wait();
             }
+            this.notify();
             GUISlave.donePreLoading();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -103,7 +107,7 @@ public class Controller {
     /**
      * opens a new GUI window as a thread
      */
-    private void openWindow() {
+    private void openWindow () {
         loading = true;
         this.log("initialising the GUI...");
         if (gui == null) {
@@ -119,7 +123,7 @@ public class Controller {
     /**
      * loads the DB-data
      */
-    public void loadData() {
+    public void loadData () {
         long startTime = System.nanoTime();
         loading = true;
         if (gui != null) {
@@ -127,15 +131,27 @@ public class Controller {
         }
         preloadedFlights = new ArrayList<>();
         new DataMaster().loadFlightsParallel();
+        this.done();
         this.sucsessLog("loaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3) +
                     " seconds!" + "\n" + ANSI_ORANGE + " -> completed: " + exe.getCompletedTaskCount() +
                     ", active: " + exe.getActiveCount() + ", largestPoolSize: " + exe.getLargestPoolSize());
     }
 
     /**
+     * reloads the data ( static -> able to executed by scheduled_exe )
+     * used for live map
+     */
+    private static void reloadData () {
+        loading = true;
+        preloadedFlights = new ArrayList<>();
+        new DataMaster().loadFlightsParallel();
+        loading = false;
+    }
+
+    /**
      * this method is executed when a loading process is done
      */
-    void done() {
+    void done () {
         loading = false;
         if (gui != null) {
             GUISlave.progressbarVisible(false);
@@ -148,26 +164,64 @@ public class Controller {
      * @param type is the ViewType, sets the content type for the
      *             created view (e.g. different List-View-Types)
      */
-    public void createDataView(ViewType type, String data) {
+    public synchronized void createDataView (ViewType type, String data) {
         // TODO ONLY HERE: dispose GUI view(s)
         GUISlave.disposeView();
         // TODO verschiedene Möglichkeiten (für große Datenmengen)
         switch (type) {
-            case LIST_FLIGHT -> TreePlantation.createTree(TreePlantation.allFlightsTreeNode(preloadedFlights));
-            case MAP_ALL -> BlackBeardsNavigator.createAllFlightsMap(preloadedFlights);
-            case MAP_FLIGHTROUTE -> {
+            case LIST_FLIGHT -> {
+                TreePlantation.createTree(TreePlantation.allFlightsTreeNode(preloadedFlights));
+            }
+            case MAP_ALL -> {
+                BlackBeardsNavigator.createAllFlightsMap(preloadedFlights);
+                BlackBeardsNavigator.currentViewType = ViewType.MAP_ALL;
+            }
+            case MAP_TRACKING -> {
                 try {
                     // TODO recieve-methoden in BBNavigator, bzw. TreePlantation packen (?)
                     int flightID = Integer.parseInt(data);
-                    BlackBeardsNavigator.createFlightRoute(new DBOut().getTrackingByFlight(flightID));
+                    var dataMaster = new DataMaster(); // progressbar?
+                    var dps = dataMaster.loadTracking(flightID);
+                    var flight = new DataMaster().flightByID(flightID);
+                    //dataMaster.waitForFinish(); // // FIXME: 29.04.2022 wartet nicht, dps ist null
+                    BlackBeardsNavigator.createFlightRoute(dps, flight); // dps is null
+                    BlackBeardsNavigator.currentViewType = ViewType.MAP_TRACKING;
                 } catch (NumberFormatException e) {
-                    BlackBeardsNavigator.createFlightRoute(new DBOut().getTrackingByFlight(107));
-                    this.log(ANSI_YELLOW + "NumberFormatException while trying to parse the ID-String!");
+                    this.log(ANSI_YELLOW + "NumberFormatException while trying to parse the ID-String! Must be an int!");
+                } catch (DataNotFoundException e) {
+                    this.errorLog(e.getMessage());
                 }
             }
         }
         this.done();
         this.sucsessLog("view loaded!");
+    }
+
+    /**
+     * search method for the GUI-search
+     */
+    public void search (SearchType type, String[] inputs) { // TODO button abfragen??
+        try {
+            var search = new Search();
+            switch (type) {
+                case AIRLINE -> {
+                }
+                case AIRPORT -> {
+                }
+                case FLIGHT -> {
+                    var flight = search.verifyFlight(inputs);
+                    this.createDataView(ViewType.MAP_TRACKING, flight.getID() + "");
+                }
+                // weitere cases
+                case PLANE -> {
+                    //var plane = search.
+                }
+                case AREA -> {
+                }
+            }
+        } catch (DataNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -200,15 +254,8 @@ public class Controller {
         this.log(ANSI_RED + txt);
     }
 
-    public static GUI gui() {
+    public static GUI gui () {
         return gui;
-    }
-
-    /**
-     * tries to call the garbage collector ( System.gc() )
-     */
-    public static void garbageCollector () {
-        System.gc();
     }
 
     /**

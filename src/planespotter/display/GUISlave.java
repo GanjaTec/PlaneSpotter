@@ -1,16 +1,22 @@
 package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.JMapViewer;
-import planespotter.constants.ComponentType;
 import planespotter.controller.Controller;
+import planespotter.model.Utilities;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.awt.event.KeyEvent.*;
+import static java.awt.event.KeyEvent.VK_PAGE_DOWN;
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.GUIConstants.FONT_MENU;
+import static planespotter.constants.SearchType.FLIGHT;
+import static planespotter.constants.ViewType.LIST_FLIGHT;
+import static planespotter.constants.ViewType.MAP_ALL;
 
 /**
  * @name GUIWorker
@@ -41,20 +47,10 @@ public final class GUISlave {
      * this method is executed when pre-loading is done
      */
     public static void donePreLoading () {
-        GUISlave.playSound(SOUND_DEFAULT);
+        Utilities.playSound(SOUND_DEFAULT);
         gui.loadingScreen.setVisible(false);
         gui.window.setVisible(true);
         gui.window.requestFocus();
-    }
-
-    /**
-     * plays a sound from the default toolkit
-     * @param sound is the sound to be played (see: GUIConstants)
-     *              TODO move to EventWizard
-     */
-    private static void playSound (String sound) {
-        var sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(sound);
-        if (sound2 != null) sound2.run();
     }
 
     /**
@@ -62,7 +58,7 @@ public final class GUISlave {
      *
      * @param map is the map to be set
      */
-    static void recieveMap (JMapViewer map) {
+    public static void recieveMap (JMapViewer map) {
         gui.mapViewer = map;
         // TODO: adding MapViewer to panel
         gui.pMap.add(gui.mapViewer);
@@ -79,9 +75,11 @@ public final class GUISlave {
      *
      * @param tree is the tree to set
      */
-    static void recieveTree (JTree tree) {
+    public static void recieveTree (JTree tree) {
+        tree.setBounds(0, 0, gui.pList.getWidth(), gui.pList.getHeight());
         gui.listView = tree;
         gui.spList = gui.listScrollPane(gui.listView);
+        gui.spList.setOpaque(false);
         // TODO: adding list scrollpane to list pane
         gui.pList.add(gui.spList);
         gui.dpright.moveToFront(gui.pList);
@@ -96,7 +94,8 @@ public final class GUISlave {
      *
      * @param tree is the tree to set
      */
-    static void recieveInfoTree(JTree tree) {
+    public static void recieveInfoTree(JTree tree) {
+        gui.pMenu.setVisible(false);
         gui.flightInfo = tree;
         gui.flightInfo.setBounds(gui.pInfo.getBounds());
         gui.flightInfo.setMaximumSize(gui.pInfo.getSize());
@@ -181,51 +180,6 @@ public final class GUISlave {
         }
     }
 
-    static void windowResized (ComponentType type) {
-        switch (type) {
-            case WINDOW -> gui.mainpanel.setBounds(gui.window.getBounds());
-            case MAP_PANEL -> gui.mapViewer.setBounds(0, 0, gui.pMap.getWidth(), gui.pMap.getHeight());
-            case MENU_PANEL -> gui.menubar.setBounds(gui.pMenu.getBounds());
-            case VIEW_HEAD -> gui.closeView.setBounds(gui.pViewHead.getWidth() - 85, 4, 80, 16);
-            case START_SCREEN -> gui.lblStartScreen.setBounds(0, 0, gui.pStartScreen.getWidth(), gui.pStartScreen.getHeight());
-            case MAINPANEL -> {
-                gui.pTitle.setBounds(0, 0, gui.mainpanel.getWidth(), 70);
-                gui.dpright.setBounds(280, 70, gui.mainpanel.getWidth() - 280, gui.mainpanel.getHeight() - 70);
-                gui.dpleft.setBounds(0, 70, 280, gui.mainpanel.getHeight() - 70);
-            }
-            case DPLEFT -> {
-                gui.pMenu.setBounds(0, 0, gui.dpleft.getWidth(), gui.dpleft.getHeight());
-                gui.pInfo.setBounds(0, 0, gui.dpleft.getWidth(), gui.dpleft.getHeight());
-            }
-            case DPRIGHT -> {
-                gui.pViewHead.setBounds(0, 0, gui.dpright.getWidth(), 24);
-                gui.pList.setBounds(0, 24, gui.dpright.getWidth(), gui.dpright.getHeight() - 24);
-                gui.pMap.setBounds(0, 24, gui.dpright.getWidth(), gui.dpright.getHeight() - 24);
-                gui.pStartScreen.setBounds(0, 24, gui.dpright.getWidth(), gui.dpright.getHeight() - 24);
-            }
-            case TITLE_PANEL -> {
-                gui.title_bground.setBounds(gui.pTitle.getBounds());
-                gui.title.setBounds(gui.pTitle.getWidth() / 2 - 200, 0, 400, 70);
-            }
-            case MENUBAR -> {
-                gui.tfSearch.setBounds(10, gui.menubar.getHeight() - 80, 255, 25);
-                gui.searchFilter.setBounds(10, gui.menubar.getHeight() - 40, 255, 25);
-            }
-            case LIST_PANEL -> {
-                if (gui.spList != null && gui.listView != null) {
-                    gui.spList.setBounds(0, 0, gui.pList.getWidth(), gui.pList.getHeight());
-                    gui.listView.setBounds(gui.spList.getBounds());
-                }
-            }
-            case INFO_PANEL -> {
-                if (gui.flightInfo != null) {
-                    gui.flightInfo.setBounds(gui.pInfo.getBounds());
-                }
-            }
-        }
-        GUISlave.revalidateAll();
-    }
-
     /**
      * disposes all views (and opens the start screen)
      * if no other view is opened, nothing is done
@@ -251,8 +205,125 @@ public final class GUISlave {
         gui.pMenu.setVisible(true);
         gui.dpleft.moveToFront(gui.pMenu);
         gui.viewHeadText.setText(DEFAULT_HEAD_TEXT);
+        BlackBeardsNavigator.currentViewType = null;
         GUISlave.revalidateAll();
         GUISlave.requestComponentFocus(gui.tfSearch);
+    }
+
+    static void windowResized () {
+        gui.mainpanel.setBounds(0, 0, gui.window.getWidth()-14, gui.window.getHeight()-37);
+        gui.pTitle.setBounds(0, 0, gui.mainpanel.getWidth(), 70);
+
+        gui.dpright.setBounds(280, 70, gui.mainpanel.getWidth() - 280, gui.mainpanel.getHeight() - 70);
+        gui.dpleft.setBounds(0, 70, 280, gui.mainpanel.getHeight() - 70);
+
+        gui.pViewHead.setBounds(0, 0, gui.dpright.getWidth(), 24);
+        gui.pStartScreen.setBounds(0, 24, gui.dpright.getWidth(), gui.dpright.getHeight() - 24);
+        gui.pList.setBounds(0, 24, gui.dpright.getWidth(), gui.dpright.getHeight() - 24);
+        gui.pMap.setBounds(0, 24, gui.dpright.getWidth(), gui.dpright.getHeight() - 24);
+        gui.pMenu.setBounds(0, 0, gui.dpleft.getWidth(), gui.dpleft.getHeight());
+        gui.pInfo.setBounds(0, 0, gui.dpleft.getWidth(), gui.dpleft.getHeight());
+
+        gui.bground.setBounds(0, 0, gui.dpright.getWidth(), gui.dpright.getHeight());
+        gui.menu_bground.setBounds(0, 0, gui.dpleft.getWidth(), gui.dpleft.getHeight());
+
+        gui.title_bground.setBounds(gui.pTitle.getBounds());
+        gui.title.setBounds(gui.pTitle.getWidth() / 2 - 200, 0, 400, 70);
+        gui.closeView.setBounds(gui.pViewHead.getWidth() - 85, 4, 80, 16);
+        gui.lblStartScreen.setBounds(0, 0, gui.pStartScreen.getWidth(), gui.pStartScreen.getHeight());
+        gui.mapViewer.setBounds(0, 0, gui.pMap.getWidth(), gui.pMap.getHeight());
+        gui.menubar.setBounds(gui.pMenu.getBounds());
+        gui.tfSearch.setBounds(10, gui.menubar.getHeight() - 80, 255, 25);
+        gui.searchButton.setBounds(10, gui.menubar.getHeight() - 40, 255, 25);
+        if (gui.spList != null && gui.listView != null) {
+            gui.spList.setBounds(0, 0, gui.pList.getWidth(), gui.pList.getHeight());
+            gui.listView.setBounds(gui.spList.getBounds());
+        }
+        if (gui.flightInfo != null) {
+            gui.flightInfo.setBounds(gui.pInfo.getBounds());
+        }
+    }
+
+    /**
+     * executed when a button is clicked
+     * 
+     * @param button is the clicked button
+     */
+    public static void buttonClicked (JButton button) {
+        if (button == gui.btFile) {
+            // gonna be filled
+        } else if (button == gui.btList) {
+            GUISlave.progressbarStart();
+            gui.controller.createDataView(LIST_FLIGHT, "");
+        } else if (button == gui.btMap) {
+            GUISlave.progressbarStart();
+            gui.controller.createDataView(MAP_ALL, "");
+        } else if (button == gui.closeView) {
+            GUISlave.disposeView();
+            gui.pStartScreen.setVisible(true);
+            gui.dpright.moveToFront(gui.pStartScreen);
+        } else if (button == gui.settings) {
+            gui.settings_intlFrame.show();
+            gui.settings_iFrame_maxLoad.setCaretColor(Color.YELLOW);
+            gui.settings_iFrame_maxLoad.setCaretPosition(gui.settings_iFrame_maxLoad.getText().length());
+            gui.settings_iFrame_maxLoad.grabFocus();
+        } else if (button == gui.searchButton) {
+            gui.pSearch.setVisible(!gui.pSearch.isVisible());
+            gui.tfSearch.setVisible(!gui.pSearch.isVisible());
+        } else if (button.getName().equals("loadList")) {
+            // future
+        } else if (button.getName().equals("loadMap")) {
+            // TODO search type abfragen, bzw. ComboBox SelectedItem
+            String[] inputs = {
+                    gui.search_flightID.getText(),
+                    gui.search_callsign.getText()
+            };
+            gui.controller.search(FLIGHT, inputs);
+        }
+    }
+
+    /**
+     * executed when a key is pressed
+     */
+    static void keyPressed (KeyEvent e) {
+        var src = e.getSource();
+        int key = e.getKeyCode();
+        try {
+            if (src == gui.tfSearch) {
+                if (key == KeyEvent.VK_ENTER) {
+                    if (gui.tfSearch.hasFocus())
+                        gui.enterText();
+                }
+            } else if (src == gui.settings_iFrame_maxLoad) {
+                if (key == KeyEvent.VK_ENTER) {
+                    // TODO fixen: settings fenster schließt erst nach loading
+                    if (Integer.parseInt(gui.settings_iFrame_maxLoad.getText()) >= 4) {
+                        GUISlave.progressbarStart();
+                        UserSettings.setMaxLoadedFlights(Integer.parseInt(gui.settings_iFrame_maxLoad.getText()));
+                        gui.settings_iFrame_maxLoad.setText("");
+                        gui.settings_intlFrame.setVisible(false);
+                        // work with background worker?
+                        gui.controller.loadData();
+                    }
+                }
+            } else if (src == gui.mapViewer) {
+                switch (key) {
+                    case VK_PAGE_UP -> gui.mapViewer.moveMap(0, 2);
+                    case VK_HOME -> gui.mapViewer.moveMap(-2, 0);
+                    case VK_END -> gui.mapViewer.moveMap(2, 0);
+                    case VK_PAGE_DOWN -> gui.mapViewer.moveMap(0, -2);
+                }
+                GUISlave.revalidateAll();
+            }
+        } catch (NumberFormatException ex) {
+                    gui.settings_iFrame_maxLoad.setText("Error");
+        } catch (Exception ex){
+            ex.printStackTrace();
+        }
+    }
+
+    public static JMapViewer mapViewer () {
+        return gui.mapViewer;
     }
 
 }

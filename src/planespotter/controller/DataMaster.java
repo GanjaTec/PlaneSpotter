@@ -1,11 +1,16 @@
 package planespotter.controller;
 
+import planespotter.constants.ViewType;
+import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
+import planespotter.dataclasses.SuperData;
 import planespotter.display.UserSettings;
 import planespotter.model.DBOut;
-import planespotter.model.ParallelOutputWizard;
+import planespotter.model.OutputWizard;
 import planespotter.throwables.DataNotFoundException;
 
+import javax.swing.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
@@ -21,8 +26,17 @@ public class DataMaster {
     /**
      * preloadedFlights queue ( thread-safe )
      * the data waits here until added to preloadedFlights
+     * // TODO test {@link java.util.concurrent.ConcurrentLinkedDeque}
      */
-    private static final Queue<List<Flight>> listQueue = new ConcurrentLinkedQueue<>();
+    private static final Queue<List<? extends SuperData>> listQueue = new ConcurrentLinkedQueue<>();
+
+    /**
+     * @return tracking for a specific flight
+     * @param flightID is the flight id
+     */
+    HashMap<Integer, DataPoint> loadTracking (int flightID) {
+        return new DBOut().getTrackingByFlight(flightID);
+    }
 
     /**
      * loads flights into the preloadedFlights list
@@ -30,33 +44,42 @@ public class DataMaster {
      * when a there are more than 50 flights to load, new ThreadedOutputWizards are created recursively
      */
     void loadFlightsParallel () {
+        Controller.loading = true;
         int startID = 14000;
         int endID = UserSettings.getMaxLoadedFlights();
         int flightsPerTask = (endID-startID)/100;
-        ParallelOutputWizard outputWizard;
-        outputWizard = new ParallelOutputWizard(exe, 0, startID, endID, flightsPerTask);
+        var outputWizard = new OutputWizard(ViewType.MAP_ALL, exe, 0, startID, endID, flightsPerTask);
         exe.execute(outputWizard);
-        this.waitAndLoadAll();
+        this.waitForFinish();
+        this.addAllToFlights();
         controller.done();
     }
 
     /**
      * waits while data is loading and then adds all loaded data to the preloadedFlights list
+     * // active waiting
      */
-    private void waitAndLoadAll () {
+    synchronized void waitForFinish () {
         // waits until there is no running thread, then breaks
         while (true) {
             if (exe.getActiveCount() == 0) break;
         }
-        while (!listQueue.isEmpty()) { // adding all loaded lists to the main list ( listQueue is threadSafe )
-            preloadedFlights.addAll(Objects.requireNonNull(listQueue.poll()));
+    }
+
+    /**
+     * adds a data from the queue preloadedFlights
+     */
+    private void addAllToFlights () {
+       while (!listQueue.isEmpty()) { // adding all loaded lists to the main list ( listQueue is threadSafe )
+            var list = (List<Flight>) listQueue.poll();
+            preloadedFlights.addAll(Objects.requireNonNull(list));
         }
     }
 
     /**
-     * adds a List of flights to the queue
+     * adds a List of SuperData subclasses to the queue
      */
-    public static void addToQueue (List<Flight> toAdd) {
+    public static void addToListQueue (List<? extends SuperData> toAdd) {
         listQueue.add(toAdd);
     }
 
@@ -85,3 +108,4 @@ public class DataMaster {
     }
 
 }
+

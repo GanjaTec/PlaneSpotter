@@ -3,10 +3,8 @@ package planespotter.display;
 import planespotter.constants.Paths;
 import planespotter.controller.Controller;
 import planespotter.controller.DataMaster;
-import planespotter.dataclasses.Airline;
-import planespotter.dataclasses.Airport;
-import planespotter.dataclasses.Flight;
-import planespotter.dataclasses.Plane;
+import planespotter.dataclasses.*;
+import planespotter.model.Utilities;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -34,7 +32,7 @@ public final class TreePlantation {
     /**
      * default plane icon in the JTree
      */
-    private static final Icon PLANE_ICON = new ImageIcon(Paths.SRC_PATH + "tree_plane_icon.png");
+    private static final Icon PLANE_ICON = new ImageIcon(Paths.SRC_PATH + "planespotter/images/tree_plane_icon.png");
 
     /**
      * private constructor
@@ -64,14 +62,26 @@ public final class TreePlantation {
     /**
      * creates an info tree for a certain flight
      *
-     * @param id is the flight id from the flight to show
+     * @param flight is the flight to show
      */
-    static void createInfoTree(int id) {
-        JTree tree = TreePlantation.defaultTree(TreePlantation.infoFlightTreeNode(id));
+    static void createFlightInfo (Flight flight) {
+        JTree tree = TreePlantation.defaultTree(TreePlantation.flightInfoTreeNode(flight));
         tree.setVisible(true);
-        //tree.expandPath(tree.getPathForRow(0));
         GUISlave.recieveInfoTree(tree);
     }
+
+    /**
+     * creates an info tree for a certain flight
+     *
+     * @param dp is the data point to show
+     */
+    static void createDataPointInfo (DataPoint dp) {
+        JTree tree = TreePlantation.defaultTree(TreePlantation.dataPointInfoTreeNode(dp));
+        tree.setVisible(true);
+        GUISlave.recieveInfoTree(tree);
+    }
+
+
 
     /**
      * @param treeNode is the root tree node
@@ -81,12 +91,14 @@ public final class TreePlantation {
         var tree = new JTree(treeNode);
         tree.setFont(FONT_MENU);
         tree.setBackground(DEFAULT_BG_COLOR);
+        tree.setOpaque(false);
         // creating tree cell renderer
         var renderer = new CustomCellRenderer();
         renderer.setBorderSelectionColor(Color.ORANGE);
         renderer.setTextNonSelectionColor(new Color(255, 255, 102));
         renderer.setTextSelectionColor(Color.ORANGE);
         renderer.setLeafIcon(PLANE_ICON);
+        renderer.setOpaque(false);
         // TODO icons setzen
         tree.setCellRenderer(renderer);
 
@@ -173,14 +185,14 @@ public final class TreePlantation {
      * creates only ONE flight tree node
      * @return DefaultMutableTreeNode, represents a flight (as a tree)
      */
-    public static DefaultMutableTreeNode infoFlightTreeNode (int id) {
+    public static DefaultMutableTreeNode flightInfoTreeNode (Flight f) {
         String strToStrip;
-        Flight f;
-        if (id == -1) {
+        //Flight f;
+        /*if (id == -1) {
             f = DEFAULT_FLIGHT;
         } else {
             f = new DataMaster().flightByID(id);
-        }   // plane and airline
+        }*/   // plane and airline
             var plane = f.getPlane();
             var airline = plane.getAirline();
         // root node
@@ -189,6 +201,8 @@ public final class TreePlantation {
         var flight_id = new DefaultMutableTreeNode("Flight-ID: " + f.getID());
         strToStrip = "Flight-Nr.: " + f.getFlightnr();
         var flight_nr = new DefaultMutableTreeNode(Controller.stripString(strToStrip));
+        strToStrip = "Callsign: " + f.getCallsign();
+        var flight_callsign = new DefaultMutableTreeNode(Controller.stripString(strToStrip));
         var plane_id = new DefaultMutableTreeNode("Plane-ID: " + plane.getID());
         strToStrip = "Plane-Type: " + plane.getPlanetype();
         var plane_type = new DefaultMutableTreeNode(Controller.stripString(strToStrip));
@@ -225,6 +239,7 @@ public final class TreePlantation {
         // TODO: completing flight node
         root.add(flight_id);
         root.add(flight_nr);
+        root.add(flight_callsign);
         root.add(plane_id);
         root.add(plane_type);
         root.add(plane_icao);
@@ -236,6 +251,33 @@ public final class TreePlantation {
         root.add(start);
         root.add(dest);
         // TODO: adding flight node to root node
+
+        return root;
+    }
+
+    /**
+     *
+     */
+    private static DefaultMutableTreeNode dataPointInfoTreeNode (DataPoint dp) {
+        int id = dp.getID(),
+            flightID = dp.getFlightID(),
+            speed = dp.getSpeed(),
+            height = Utilities.feetToMeters(dp.getAltitude()),
+            heading = dp.getHeading(),
+            sqawk = dp.getSqawk();
+        double  lat = dp.getPos().getLat(),
+                lon = dp.getPos().getLon();
+        long timestamp = dp.getTimestemp();
+
+        var root = new DefaultMutableTreeNode("");
+        root.add(new DefaultMutableTreeNode("ID: " + id));
+        root.add(new DefaultMutableTreeNode("Flight-ID: " + flightID));
+        root.add(new DefaultMutableTreeNode("Speed: " + speed));
+        root.add(new DefaultMutableTreeNode("Height: " + height));
+        root.add(new DefaultMutableTreeNode("Heading: " + heading));
+        root.add(new DefaultMutableTreeNode("Sqawk-Code: " + sqawk));
+        root.add(new DefaultMutableTreeNode("Position: " + lat + ", "+ lon));
+        root.add(new DefaultMutableTreeNode("Timestamp: " + timestamp));
 
         return root;
     }
@@ -255,7 +297,6 @@ public final class TreePlantation {
             // title object
             Airline airline = it.next();
             var title = new DefaultMutableTreeNode("Airline: " + airline.getName());
-
             var airline_id = new DefaultMutableTreeNode("ID: " + airline.getID());
             var airline_tag = new DefaultMutableTreeNode("IATA-Tag: " + airline.getTag());
             var airline_name = new DefaultMutableTreeNode("Name: " + airline.getName());

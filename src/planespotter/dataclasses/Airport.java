@@ -6,7 +6,7 @@ package planespotter.dataclasses;
  *
  * Data Structure used to represent a DB entry from the 'Airports'-Table
  */
-public class Airport {
+public class Airport extends SuperData {
     private int id;
     private String iatatag;
     private String name;

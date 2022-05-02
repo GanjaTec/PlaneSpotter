@@ -1,12 +1,14 @@
 package planespotter.dataclasses;
 
+import org.openstreetmap.gui.jmapviewer.Coordinate;
+
 /**
  * @author Janne Matti
  * @author Lukas
  *
  * This Class is used to represent a set of Coordinates
  */
-public class Position {
+public class Position extends SuperData {
 	private double lat;
 	private double lon;
 
@@ -34,6 +36,14 @@ public class Position {
 	 */
 	public double getLon() {
 		return this.lon;
+	}
+
+	/**
+	 * @param coord is the Coordinate to parse
+	 * @return Position, parsed from Coordinate
+	 */
+	public static Position parsePosition(Coordinate coord) {
+		return new Position(coord.getLat(), coord.getLon());
 	}
 
 }

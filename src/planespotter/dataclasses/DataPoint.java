@@ -6,7 +6,7 @@ package planespotter.dataclasses;
  *
  * This Class is used to represent a single DB Entry from the 'Tracking'-Table
  */
-public class DataPoint {
+public class DataPoint extends SuperData {
 	private int id;
 	private int flightid;
 	private Position pos;

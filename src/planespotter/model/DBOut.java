@@ -484,4 +484,20 @@ public class DBOut extends SupperDB {
 		}
 		return flights;
 	}
+
+	/**
+	 * @return length of a certain database table
+	 * @param table is the table name
+	 */
+	public int getEntriesByFlightID (String table, int flightID) {
+		try {
+			var lengthRS = super.querryDB("SELECT count(*) FROM " + table + " WHERE flightid == " + flightID);
+			int length = lengthRS.getInt(1);
+			return length; // no rs.close needed
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return -9999;
+	}
+
 }
