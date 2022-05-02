@@ -41,8 +41,7 @@ public class FileMaster {
             }
             var writer = new FileWriter(config);
             writer.write("maxThreadPoolSize: " + MAX_THREADPOOL_SIZE + "\n");
-            writer.write("maxLoadedFlights: " + UserSettings.getMaxLoadedFlights());
-            writer.write("");
+            writer.write("maxLoadedFlights: " + UserSettings.getMaxLoadedFlights() + "\n");
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();

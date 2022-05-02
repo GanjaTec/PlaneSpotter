@@ -96,12 +96,12 @@ public final class GUISlave {
      */
     public static void recieveInfoTree(JTree tree) {
         gui.pMenu.setVisible(false);
-        gui.flightInfo = tree;
-        gui.flightInfo.setBounds(gui.pInfo.getBounds());
-        gui.flightInfo.setMaximumSize(gui.pInfo.getSize());
-        gui.flightInfo.setBorder(LINE_BORDER);
-        gui.flightInfo.setFont(FONT_MENU.deriveFont(12f));
-        gui.pInfo.add(gui.flightInfo);
+        gui.infoTree = tree;
+        gui.infoTree.setBounds(gui.pInfo.getBounds());
+        gui.infoTree.setMaximumSize(gui.pInfo.getSize());
+        gui.infoTree.setBorder(LINE_BORDER);
+        gui.infoTree.setFont(FONT_MENU.deriveFont(12f));
+        gui.pInfo.add(gui.infoTree);
         gui.dpleft.moveToFront(gui.pInfo);
         gui.pInfo.setVisible(true);
         GUISlave.revalidateAll();
@@ -197,9 +197,9 @@ public final class GUISlave {
             gui.mapViewer.setVisible(false);
             gui.pMap.setVisible(false);
             gui.mapViewer.removeAllMapMarkers();
-        } if (gui.flightInfo != null) {
-            gui.flightInfo.setVisible(false);
-            gui.flightInfo = null;
+        } if (gui.infoTree != null) {
+            gui.infoTree.setVisible(false);
+            gui.infoTree = null;
             gui.pInfo.setVisible(false);
         }
         gui.pMenu.setVisible(true);
@@ -239,8 +239,8 @@ public final class GUISlave {
             gui.spList.setBounds(0, 0, gui.pList.getWidth(), gui.pList.getHeight());
             gui.listView.setBounds(gui.spList.getBounds());
         }
-        if (gui.flightInfo != null) {
-            gui.flightInfo.setBounds(gui.pInfo.getBounds());
+        if (gui.infoTree != null) {
+            gui.infoTree.setBounds(gui.pInfo.getBounds());
         }
     }
 

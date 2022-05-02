@@ -6,7 +6,6 @@ import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.CustomMapMarker;
-import planespotter.dataclasses.Position;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,7 +50,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     // image labels
     protected JLabel bground, menu_bground;
 
-    protected volatile JTree listView, flightInfo;
+    protected volatile JTree listView, infoTree;
     // TODO fix ConcurrentModificationException on mapViewer
     protected volatile JMapViewer mapViewer;
 

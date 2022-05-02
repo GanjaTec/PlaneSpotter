@@ -159,8 +159,11 @@ public final class BlackBeardsNavigator {
 
     /**
      * is executed when a map marker is clicked
+     *
+     * @param point is the clicked map point (no coordinate)
      */
-    static void markerClicked(Point point) {
+    static void markerClicked (Point point) {
+        gui.pInfo.removeAll();
         var clicked = gui.mapViewer.getPosition(point);
         switch (BlackBeardsNavigator.currentViewType) {
             case MAP_ALL -> BlackBeardsNavigator.onClick_all(clicked);
