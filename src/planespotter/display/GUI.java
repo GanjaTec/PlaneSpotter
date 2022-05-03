@@ -48,7 +48,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     // image labels
     protected JLabel bground, menu_bground;
 
-    protected volatile JTree listView, infoTree;
+    protected volatile JTree listView, infoTree, dpInfoTree;
     // TODO fix ConcurrentModificationException on mapViewer
     protected volatile JMapViewer mapViewer;
 

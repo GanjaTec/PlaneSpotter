@@ -1,6 +1,10 @@
 package planespotter.display;
 
+import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
+import planespotter.dataclasses.DataPoint;
+import planespotter.model.FileMaster;
+import planespotter.throwables.DataNotFoundException;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -11,6 +15,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.Paths.SRC_PATH;
@@ -211,17 +216,29 @@ final class MenuModels {
         var home = FileSystemView.getFileSystemView().getHomeDirectory();
         var fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.setFileFilter(new FileNameExtensionFilter("nur .psp-Dateien", "psp"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("nur .pls-Dateien", "pls"));
         fileChooser.showSaveDialog(parent);
-        File file = fileChooser.getSelectedFile();
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        new FileMaster().savePlsFile(fileChooser);
+        return fileChooser;
+    }
+
+    /**
+     * @return file chooser for file dialog
+     */
+    static JFileChooser fileLoader (JFrame parent) {
+        var home = FileSystemView.getFileSystemView().getHomeDirectory();
+        var fileChooser = new JFileChooser(home);
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.setFileFilter(new FileNameExtensionFilter("nur .pls-Dateien", "pls"));
+        fileChooser.showOpenDialog(parent);
+        HashMap<Integer, DataPoint> route = null;
+        try {
+            route = new FileMaster().loadPlsFile(fileChooser);
+        } catch (DataNotFoundException e) {
+            e.printStackTrace();
         }
-        //fileChooser.setVisible(true);
+        int flightID = route.get(0).getFlightID();
+        Controller.getInstance().createDataView(ViewType.MAP_TRACKING, flightID + "");
         return fileChooser;
     }
 

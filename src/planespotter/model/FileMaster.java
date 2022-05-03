@@ -4,11 +4,10 @@ import planespotter.constants.Paths;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
 import planespotter.display.UserSettings;
+import planespotter.throwables.DataNotFoundException;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 
 import static planespotter.constants.Configuration.*;
@@ -26,22 +25,8 @@ public class FileMaster {
     /**
      * constructor
      */
-    private FileMaster() {
+    public FileMaster() {
 
-    }
-
-    /**
-     *
-     */
-    public void savePspFile (JFileChooser chooser) {
-        try {
-            var file = chooser.getSelectedFile();
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -69,14 +54,63 @@ public class FileMaster {
     }
 
     /**
+     * saves a flight route in a .psp (.planespotter) file
+     * @return
+     */
+    public HashMap<Integer, DataPoint> loadPlsFile (JFileChooser chooser) throws DataNotFoundException {
+        var file = chooser.getSelectedFile();
+        if (file.exists()) {
+            try {
+                return this.readFlightRoute(file);
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        throw new DataNotFoundException("file couldn't be found!");
+    }
+
+    /**
+     * saves a flight route in a .psp (.planespotter) file
+     */
+    public void savePlsFile (JFileChooser chooser) {
+        try {
+            var file = chooser.getSelectedFile();
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            if (!Controller.allMapData.isEmpty()) {
+                this.writeFlightRoute(file, Controller.allMapData);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * @param file is the file to read from
+     * @return the flight route hash map
+     */
+    private HashMap<Integer, DataPoint> readFlightRoute(File file)
+            throws ClassCastException, IOException, ClassNotFoundException {
+        var fis = new FileInputStream(file);
+        var ois = new ObjectInputStream(fis);
+        HashMap<Integer, DataPoint> route = (HashMap<Integer, DataPoint>) ois.readObject();
+        ois.close();
+        return route;
+    }
+
+    /**
      *
      */
     private void writeFlightRoute (File toWrite, HashMap<Integer, DataPoint> route)
             throws IOException {
         // TODO how to write Hashmap to File?
         //  Serializable? new Class? Gson? (must not be readable, just loadable)
-        var writer = new FileWriter(toWrite);
-        //writer.write(route);
+        var fos = new FileOutputStream(toWrite);
+        var oos = new ObjectOutputStream(fos);
+        oos.writeObject(route);
+        oos.close();
+        fos.close();
     }
 
 }

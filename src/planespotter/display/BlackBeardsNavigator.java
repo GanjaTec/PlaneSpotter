@@ -32,8 +32,6 @@ public final class BlackBeardsNavigator {
 
     // static gui instance
     private static GUI gui;
-    // hash map for all map markers
-    private static HashMap<Integer, DataPoint> allMapData = new HashMap<>();
     // current view type ( in action )
     public static ViewType currentViewType;
 
@@ -58,7 +56,7 @@ public final class BlackBeardsNavigator {
     public static void createFlightRoute (HashMap<Integer, DataPoint> dps, Flight flight) throws DataNotFoundException {
         var viewer = gui.mapViewer;
         var keySet = dps.keySet();
-        allMapData = new HashMap<>();
+        Controller.allMapData = new HashMap<>();
         int counter = 0;
         for (int key : keySet) {
             var dp = dps.get(key);
@@ -69,7 +67,7 @@ public final class BlackBeardsNavigator {
             var color = BlackBeardsNavigator.colorByAltitude(altitude);
             newMarker.setBackColor(color);
             viewer.addMapMarker(newMarker);
-            allMapData.put(counter, dp);
+            Controller.allMapData.put(counter, dp);
             counter++;
         }
 
@@ -89,7 +87,7 @@ public final class BlackBeardsNavigator {
     public static void createAllFlightsMap (List<Flight> list) {
         var viewer = gui.mapViewer;
         var viewSize = viewer.getVisibleRect(); // may be used in the future
-        allMapData = new HashMap<>();
+        Controller.allMapData = new HashMap<>();
         int counter = 0;
         for (Flight f : list) {
             int lastTrackingID = new DataMaster().lastTrackingID(f.getID());
@@ -100,7 +98,7 @@ public final class BlackBeardsNavigator {
             var newMarker = new CustomMapMarker(new Coordinate(lastPos.getLat(), lastPos.getLon()), f);
             newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR);
             viewer.addMapMarker(newMarker);
-            allMapData.put(counter, lastDataPoint);
+            Controller.allMapData.put(counter, lastDataPoint);
             counter++;
         }
         GUISlave.recieveMap(viewer);
@@ -163,7 +161,6 @@ public final class BlackBeardsNavigator {
      * @param point is the clicked map point (no coordinate)
      */
     static void markerClicked (Point point) {
-        gui.pInfo.removeAll();
         var clicked = gui.mapViewer.getPosition(point);
         switch (BlackBeardsNavigator.currentViewType) {
             case MAP_ALL -> BlackBeardsNavigator.onClick_all(clicked);
@@ -191,9 +188,9 @@ public final class BlackBeardsNavigator {
                     clickedCoord.getLon() > markerCoord.getLon() - tolerance) {
                 newMarker.setBackColor(Color.RED);
                 gui.pMenu.setVisible(false);
-                gui.pInfo.setVisible(true);
+                gui.pInfo.removeAll();
                 gui.dpleft.moveToFront(gui.pInfo);
-                int flightID = allMapData.get(counter).getFlightID();
+                int flightID = Controller.allMapData.get(counter).getFlightID();
                 var flight = new DataMaster().flightByID(flightID);
                 TreePlantation.createFlightInfo(flight);
             } else {
@@ -222,7 +219,10 @@ public final class BlackBeardsNavigator {
                     clickedCoord.getLat() > markerCoord.getLat() - tolerance &&
                     clickedCoord.getLon() < markerCoord.getLon() + tolerance &&
                     clickedCoord.getLon() > markerCoord.getLon() - tolerance) {
-                TreePlantation.createDataPointInfo(BlackBeardsNavigator.allMapData.get(counter));
+                gui.pInfo.removeAll();
+                var dp = Controller.allMapData.get(counter);
+                var flight = new DataMaster().flightByID(dp.getFlightID()); // TODO woanders!!!
+                TreePlantation.createDataPointInfo(flight, dp);
             }
             counter++;
         }

@@ -1,5 +1,6 @@
 package planespotter.display;
 
+import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.JMapViewer;
 import planespotter.controller.Controller;
 import planespotter.model.Utilities;
@@ -29,7 +30,6 @@ public final class GUISlave {
 
     // only gui instance
     private static GUI gui;
-    private static int currentFileChooser;
 
     /**
      * empty constructor
@@ -93,16 +93,26 @@ public final class GUISlave {
 
     /**
      *
-     * @param tree is the tree to set
+     * @param flightTree is the flight tree to set
+     * @param dpInfoTree is the @Nullable data point info tree
      */
-    public static void recieveInfoTree(JTree tree) {
+    public static void recieveInfoTree(JTree flightTree, @Nullable JTree dpInfoTree) {
+        int width = gui.pInfo.getWidth();
+        int height = (gui.pInfo.getHeight() / 2);
         gui.pMenu.setVisible(false);
-        gui.infoTree = tree;
-        gui.infoTree.setBounds(gui.pInfo.getBounds());
+        gui.infoTree = flightTree;
+        gui.infoTree.setBounds(0, 0, width, height + 50);
         gui.infoTree.setMaximumSize(gui.pInfo.getSize());
         gui.infoTree.setBorder(LINE_BORDER);
         gui.infoTree.setFont(FONT_MENU.deriveFont(12f));
         gui.pInfo.add(gui.infoTree);
+        if (dpInfoTree != null) {
+            gui.dpInfoTree = dpInfoTree;
+            gui.dpInfoTree.setBounds(0, height + 50, width, height - 50);
+            gui.dpInfoTree.setBorder(LINE_BORDER);
+            gui.dpInfoTree.setFont(FONT_MENU.deriveFont(12f));
+            gui.pInfo.add(gui.dpInfoTree);
+        }
         gui.dpleft.moveToFront(gui.pInfo);
         gui.pInfo.setVisible(true);
         GUISlave.revalidateAll();
@@ -252,8 +262,8 @@ public final class GUISlave {
      */
     public static void buttonClicked (JButton button) {
         if (button == gui.btFile) {
-            MenuModels.fileSaver(gui.window);
-            GUISlave.currentFileChooser++;
+            //MenuModels.fileSaver(gui.window);
+            MenuModels.fileLoader(gui.window);
         } else if (button == gui.btList) {
             GUISlave.progressbarStart();
             gui.controller.createDataView(LIST_FLIGHT, "");

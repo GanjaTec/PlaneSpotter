@@ -54,7 +54,7 @@ public final class TreePlantation {
     static void createFlightInfo (Flight flight) {
         JTree tree = TreePlantation.defaultTree(TreePlantation.flightInfoTreeNode(flight));
         tree.setVisible(true);
-        GUISlave.recieveInfoTree(tree);
+        GUISlave.recieveInfoTree(tree, null);
     }
 
     /**
@@ -62,10 +62,11 @@ public final class TreePlantation {
      *
      * @param dp is the data point to show
      */
-    static void createDataPointInfo (DataPoint dp) {
-        JTree tree = TreePlantation.defaultTree(TreePlantation.dataPointInfoTreeNode(dp));
-        tree.setVisible(true);
-        GUISlave.recieveInfoTree(tree);
+    static void createDataPointInfo (Flight flight, DataPoint dp) {
+        var flightInfo = TreePlantation.defaultTree(TreePlantation.flightInfoTreeNode(flight));
+        var dpInfo = TreePlantation.defaultTree(TreePlantation.dataPointInfoTreeNode(dp));
+        GUISlave.recieveInfoTree(flightInfo, dpInfo);
+        dpInfo.setVisible(true);
     }
 
 

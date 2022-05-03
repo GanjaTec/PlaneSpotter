@@ -2,13 +2,15 @@ package planespotter.dataclasses;
 
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 
+import java.io.Serializable;
+
 /**
  * @author Janne Matti
  * @author Lukas
  *
  * This Class is used to represent a set of Coordinates
  */
-public class Position extends SuperData {
+public class Position extends SuperData implements Serializable {
 	private double lat;
 	private double lon;
 

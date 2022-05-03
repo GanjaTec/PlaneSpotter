@@ -17,7 +17,9 @@ public class Utilities {
      */
     public static void playSound(String sound) {
         var sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(sound);
-        if (sound2 != null) sound2.run();
+        if (sound2 != null) {
+            sound2.run();
+        }
     }
 
     /**
@@ -33,7 +35,8 @@ public class Utilities {
      * @return
      */
     public static int mphToKmh (int mph) {
-        return (int) (mph * 1.61);
+        long kmh = Math.round(mph * 1.61);
+        return (int) kmh;
     }
 
 }

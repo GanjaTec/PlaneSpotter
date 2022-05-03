@@ -12,6 +12,7 @@ import planespotter.model.Search;
 import planespotter.throwables.DataNotFoundException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -53,6 +54,8 @@ public class Controller {
     static GUI gui;
     // preloadedFlights list ( should also be thread-safe )
     public static List<Flight> preloadedFlights;
+    // hash map for all map markers
+    public static HashMap<Integer, DataPoint> allMapData = new HashMap<>();
 
     /**
      * @return ONE and ONLY controller instance
