@@ -21,10 +21,19 @@ public class Utilities {
     }
 
     /**
-     *
+     * @param feet is the plane height, in feet
+     * @return a feet value in meters
      */
     public static int feetToMeters (int feet) {
         return (int) (feet/3.2808);
+    }
+
+    /**
+     * @param mph is the plane speed, in miles/hour
+     * @return
+     */
+    public static int mphToKmh (int mph) {
+        return (int) (mph * 1.61);
     }
 
 }

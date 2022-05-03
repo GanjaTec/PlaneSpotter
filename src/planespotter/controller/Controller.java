@@ -115,7 +115,6 @@ public class Controller {
             exe.execute(gui);
         }
         GUISlave.initialize();
-        TreePlantation.initialize();
         BlackBeardsNavigator.initialize(); // TODO hier MapViewer zuweisen! dann nicht mehr
         this.done();
     }

@@ -40,13 +40,13 @@ public final class BlackBeardsNavigator {
     /**
      * constructor, is private because @unused
      */
-    private BlackBeardsNavigator() {
+    private BlackBeardsNavigator () {
     }
 
     /**
      * initializes BlackBeardsNavigator
      */
-    public static void initialize() {
+    public static void initialize () {
         gui = Controller.gui();
     }
 

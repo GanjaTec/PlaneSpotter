@@ -3,9 +3,7 @@ package planespotter.display;
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
 import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
-import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import planespotter.controller.Controller;
-import planespotter.dataclasses.CustomMapMarker;
 
 import javax.swing.*;
 import java.awt.*;
@@ -406,8 +404,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
 
     @Override
     public void componentShown(ComponentEvent e) {
-        GUISlave.windowResized();
-        GUISlave.revalidateAll();
+        this.componentResized(e);
     }
 
     @Override
@@ -424,30 +421,10 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
 
     @Override
     public void mousePressed(MouseEvent e) {
-        BlackBeardsNavigator.markerClicked(e.getPoint());
-    }
-
-    /**
-     * resets all map markers
-     */
-    // TODO richtig machen, ConcurrentModificationException, irgendwas läuft nichts
-    public void resetMapViewer (MapMarker doNotReset) {
-        var viewer = this.mapViewer;
-        var markersIn = viewer.getMapMarkerList();
-        viewer.removeAllMapMarkers();
-        var markersOut = new ArrayList<MapMarker>();
-        for (MapMarker m : markersIn) {
-            if (m != doNotReset) {
-                var markerPos = m.getCoordinate();
-                var newMarker = new CustomMapMarker(markerPos, null);
-                newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR);
-                markersOut.add(newMarker);
-            } else {
-                markersOut.add(m);
-            }
+        int button = e.getButton();
+        if (button == MouseEvent.BUTTON1) {
+            BlackBeardsNavigator.markerClicked(e.getPoint());
         }
-        viewer.setMapMarkerList(markersOut);
-        GUISlave.revalidateAll();
     }
 
     @Override

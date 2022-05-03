@@ -72,7 +72,7 @@ public final class SearchModels {
      * @param parent is the parent panel where the message label is shown in
      * @return
      */
-    static JTextArea searchMessage(JPanel parent) {
+    static JTextArea searchMessage (JPanel parent) {
         var message = "Es muss mindestens eins der Felder ausgefüllt sein!";
         var headMessage = new JTextArea(message);
         headMessage.setBounds(10, parent.getHeight()-80, parent.getWidth()-20, 35);
@@ -92,7 +92,7 @@ public final class SearchModels {
      * @param parent is the parent panel component
      * @return list of JLabels (the search field names)
      */
-    static List<JComponent> flightSearch(JPanel parent, GUI gui) {
+    static List<JComponent> flightSearch (JPanel parent, GUI gui) {
         List<JComponent> components = new ArrayList<>();
         components.add(new JLabel("ID:"));
         JTextField id = new JTextField();

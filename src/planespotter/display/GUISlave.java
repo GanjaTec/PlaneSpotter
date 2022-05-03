@@ -29,6 +29,7 @@ public final class GUISlave {
 
     // only gui instance
     private static GUI gui;
+    private static int currentFileChooser;
 
     /**
      * empty constructor
@@ -251,7 +252,8 @@ public final class GUISlave {
      */
     public static void buttonClicked (JButton button) {
         if (button == gui.btFile) {
-            // gonna be filled
+            MenuModels.fileSaver(gui.window);
+            GUISlave.currentFileChooser++;
         } else if (button == gui.btList) {
             GUISlave.progressbarStart();
             gui.controller.createDataView(LIST_FLIGHT, "");
