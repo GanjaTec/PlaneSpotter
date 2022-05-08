@@ -1,12 +1,13 @@
 package planespotter.controller;
 
+import org.jetbrains.annotations.Nullable;
 import planespotter.constants.SearchType;
 import planespotter.constants.ViewType;
 import planespotter.dataclasses.*;
 import planespotter.display.BlackBeardsNavigator;
 import planespotter.display.GUI;
 import planespotter.display.GUISlave;
-import planespotter.display.TreePlantation;
+import planespotter.model.DBOut;
 import planespotter.model.FileMaster;
 import planespotter.model.Search;
 import planespotter.throwables.DataNotFoundException;
@@ -52,10 +53,12 @@ public class Controller {
 
     // only GUI instance
     static GUI gui;
-    // preloadedFlights list ( should also be thread-safe )
-    public static List<Flight> preloadedFlights;
+    // preloadedFlights list
+    public static List<DataPoint> liveData, loadedData;
     // hash map for all map markers
     public static HashMap<Integer, DataPoint> allMapData = new HashMap<>();
+    // current loaded search
+    public static SearchType currentSearchType = SearchType.PLANE;
 
     /**
      * @return ONE and ONLY controller instance
@@ -68,26 +71,26 @@ public class Controller {
      * initializes the controller
      */
     private void initialize () {
-        this.log("initializing controller...");
-        this.initExecutors();
-        preloadedFlights = new CopyOnWriteArrayList<>();
+        this.log("initializing Controller...");
+        this.startExecutors();
+        liveData = new CopyOnWriteArrayList<>();
         Thread.currentThread().setName("planespotter-main");
-        this.sucsessLog("executors initialized sucsessfully!");
+        this.sucsessLog("Controller initialized sucsessfully!");
     }
 
     /**
      * initializes all executors
      * :: -> method reference
      */
-    private void initExecutors () {
-        this.log("initializing executors...");
+    private void startExecutors () {
+        this.log("initializing Executors...");
         var sec = TimeUnit.SECONDS;
         exe.setKeepAliveTime(KEEP_ALIVE_TIME, sec);
         exe.setMaximumPoolSize(MAX_THREADPOOL_SIZE);
         scheduled_exe.scheduleAtFixedRate(FileMaster::saveConfig, 60, 300, sec);
         scheduled_exe.scheduleAtFixedRate(System::gc, 20, 20, sec);
-        //scheduled_exe.scheduleAtFixedRate(Controller::reloadData, 60, 60, sec); // -> live data
-        this.sucsessLog("executors initialized sucsessfully!");
+        scheduled_exe.scheduleAtFixedRate(Controller::loadLiveData, 10, 10, sec); // -> live data
+        this.sucsessLog("Executors initialized sucsessfully!");
     }
 
     /**
@@ -96,7 +99,7 @@ public class Controller {
     public synchronized void start () {
         try {
             this.openWindow();
-            this.loadData();
+            Controller.loadLiveData();
             while (loading) {
                 this.wait();
             }
@@ -112,7 +115,7 @@ public class Controller {
      */
     private void openWindow () {
         loading = true;
-        this.log("initialising the GUI...");
+        this.log("initialising GUI...");
         if (gui == null) {
             gui = new GUI();
             exe.execute(gui);
@@ -120,34 +123,33 @@ public class Controller {
         GUISlave.initialize();
         BlackBeardsNavigator.initialize(); // TODO hier MapViewer zuweisen! dann nicht mehr
         this.done();
-    }
-
-    /**
-     * loads the DB-data
-     */
-    public void loadData () {
-        long startTime = System.nanoTime();
-        loading = true;
-        if (gui != null) {
-            GUISlave.progressbarStart();
-        }
-        preloadedFlights = new ArrayList<>();
-        new DataMaster().loadFlightsParallel();
-        this.done();
-        this.sucsessLog("loaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3) +
-                    " seconds!" + "\n" + ANSI_ORANGE + " -> completed: " + exe.getCompletedTaskCount() +
-                    ", active: " + exe.getActiveCount() + ", largestPoolSize: " + exe.getLargestPoolSize());
+        this.sucsessLog("GUI initialized sucsessfully!");
     }
 
     /**
      * reloads the data ( static -> able to executed by scheduled_exe )
      * used for live map
      */
-    private static void reloadData () {
+    public static void loadLiveData () {
+        long startTime = System.nanoTime();
         loading = true;
-        preloadedFlights = new ArrayList<>();
-        new DataMaster().loadFlightsParallel();
-        loading = false;
+        liveData = new ArrayList<>();
+        new DataMaster().load();
+        mainController.waitForFinish();
+        mainController.sucsessLog("loaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3) +
+                " seconds!" + "\n" + ANSI_ORANGE + " -> completed: " + exe.getCompletedTaskCount() +
+                ", active: " + exe.getActiveCount() + ", largestPoolSize: " + exe.getLargestPoolSize());
+    }
+
+    /**
+     * waits while data is loading and then adds all loaded data to the live data Flights list
+     * // active waiting
+     */
+    synchronized void waitForFinish () {
+        // waits until there is no running thread, then breaks
+        while (true) {
+            if (exe.getActiveCount() == 0) break;
+        }
     }
 
     /**
@@ -166,30 +168,44 @@ public class Controller {
      * @param type is the ViewType, sets the content type for the
      *             created view (e.g. different List-View-Types)
      */
-    public synchronized void createDataView (ViewType type, String data) {
+    public synchronized void show (ViewType type, @Nullable String... data) {
         // TODO ONLY HERE: dispose GUI view(s)
         GUISlave.disposeView();
         // TODO verschiedene Möglichkeiten (für große Datenmengen)
         switch (type) {
             case LIST_FLIGHT -> {
-                TreePlantation.createTree(TreePlantation.allFlightsTreeNode(preloadedFlights));
+                //TreePlantation.createTree(TreePlantation.allFlightsTreeNode (preLoadedFlights));
             }
             case MAP_ALL -> {
-                BlackBeardsNavigator.createAllFlightsMap(preloadedFlights);
+                BlackBeardsNavigator.createAllFlightsMap(liveData);
                 BlackBeardsNavigator.currentViewType = ViewType.MAP_ALL;
+            }
+            case MAP_FROMSEARCH -> {
+                BlackBeardsNavigator.createAllFlightsMap(loadedData);
+                BlackBeardsNavigator.currentViewType = ViewType.MAP_FROMSEARCH;
             }
             case MAP_TRACKING -> {
                 try {
-                    // TODO recieve-methoden in BBNavigator, bzw. TreePlantation packen (?)
-                    int flightID = Integer.parseInt(data);
-                    var dataMaster = new DataMaster(); // progressbar?
-                    var dps = dataMaster.loadTracking(flightID);
-                    var flight = new DataMaster().flightByID(flightID);
-                    //dataMaster.waitForFinish(); // // FIXME: 29.04.2022 wartet nicht, dps ist null
-                    BlackBeardsNavigator.createFlightRoute(dps, flight); // dps is null
+                    var dps = new ArrayList<DataPoint>();
+                    var out = new DBOut();
+                    int flightID = -1;
+                    if (data.length == 1) {
+                        assert data[0] != null;
+                        flightID = Integer.parseInt(data[0]);
+                        dps.addAll(out.getTrackingByFlight(flightID));
+                    }
+                    else if (data.length > 1) {
+                        for (String id : data) {
+                            assert id != null;
+                            flightID = Integer.parseInt(id);
+                            dps.addAll(out.getTrackingByFlight(flightID));
+                        }
+                    }
+                    var flight = out.getFlightByID(flightID);
+                    BlackBeardsNavigator.createFlightRoute(dps, flight);
                     BlackBeardsNavigator.currentViewType = ViewType.MAP_TRACKING;
                 } catch (NumberFormatException e) {
-                    this.log(ANSI_YELLOW + "NumberFormatException while trying to parse the ID-String! Must be an int!");
+                    this.errorLog("NumberFormatException while trying to parse the ID-String! Must be an int!");
                 } catch (DataNotFoundException e) {
                     this.errorLog(e.getMessage());
                 }
@@ -201,28 +217,73 @@ public class Controller {
 
     /**
      * search method for the GUI-search
+     *
+     * @param inputs are the inputs in the search fields
+     * @param button is the clicked search button, 0 = LIST, 1 = MAP
      */
-    public void search (SearchType type, String[] inputs) { // TODO button abfragen??
+    public void search (String[] inputs, int button) { // TODO button abfragen??
         try {
+            GUISlave.progressbarStart();
             var search = new Search();
-            switch (type) {
+            switch (Controller.currentSearchType) {
                 case AIRLINE -> {
                 }
                 case AIRPORT -> {
                 }
                 case FLIGHT -> {
-                    var flight = search.verifyFlight(inputs);
-                    this.createDataView(ViewType.MAP_TRACKING, flight.getID() + "");
+                    loadedData = search.verifyFlight(inputs);
+                    if (loadedData.size() == 1) {
+                        var dp = loadedData.get(0);
+                        if (button == 1) {
+                            this.show(ViewType.MAP_TRACKING, dp.getFlightID() + "");
+                        }
+                    } else {
+                        var idsNoDupl = new ArrayList<Integer>();
+                        int flightID;
+                        for (var dp : loadedData) {
+                            flightID = dp.getFlightID();
+                            if (!idsNoDupl.contains(flightID)) {
+                                idsNoDupl.add(flightID);
+                            }
+                        }
+                        var ids = new String[idsNoDupl.size()];
+                        for (int i = 0; i < idsNoDupl.size(); i++) {
+                            ids[i] = idsNoDupl.get(i) + "";
+                        }
+                        if (button == 1) {
+                            this.show(ViewType.MAP_TRACKING, ids);
+                        }
+                    }
                 }
-                // weitere cases
                 case PLANE -> {
-                    //var plane = search.
+                    loadedData = search.verifyPlane(inputs);
+                    var idsNoDupl = new ArrayList<Integer>();
+                    int flightID;
+                    for (var dp : loadedData) {
+                        flightID = dp.getFlightID();
+                        if (!idsNoDupl.contains(flightID)) {
+                            idsNoDupl.add(flightID);
+                        }
+                    }
+                    var ids = new String[idsNoDupl.size()];
+                    for (int i = 0; i < idsNoDupl.size(); i++) {
+                        ids[i] = idsNoDupl.get(i) + "";
+                    }
+                    if (button == 1) {
+                        if (!gui.search_planeID.getText().isBlank()) {
+                            this.show(ViewType.MAP_TRACKING, ids); // ganze route -> nur bei einer id / wird evtl noch entfernt
+                        } else {
+                            this.show(ViewType.MAP_FROMSEARCH, ids); // nur letzte data points
+                        }
+                    }
                 }
                 case AREA -> {
                 }
             }
         } catch (DataNotFoundException e) {
             e.printStackTrace();
+        } finally {
+            GUISlave.progressbarVisible(false);
         }
     }
 

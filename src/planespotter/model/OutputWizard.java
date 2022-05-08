@@ -1,17 +1,21 @@
 package planespotter.model;
 
-import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
 import planespotter.controller.DataMaster;
-import planespotter.dataclasses.DataPoint;
 import planespotter.throwables.ThreadOverheadError;
 
-import java.util.HashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static planespotter.constants.GUIConstants.*;
 
+/**
+ * @name OutputWizard
+ * @author jml04
+ * @version 1.1
+ *
+ * class OutputWizard can load the live data threaded or the
+ */
 public class OutputWizard extends DBOut implements Runnable {
     // @Nullable thread pool executor instance
     private final ThreadPoolExecutor executor;
@@ -21,22 +25,14 @@ public class OutputWizard extends DBOut implements Runnable {
     private final String threadName;
     // controller instance
     private final Controller controller;
-    // view type
-    private final ViewType type;
 
     /**
-     * constructor without params, but sets all vars
+     * constructor with only executor as param for small tasks
+     *
+     * @param executor is the thread pool executor
      */
-    public OutputWizard() {
-        this.type = null;
-        this.executor = null;
-        this.threadNumber = -1;
-        this.threadName = null;
-        this.from = -1;
-        this.to = -1;
-        this.flightsPerTask = -1;
-        this.controller = Controller.getInstance();
-        this.flightID = -1;
+    public OutputWizard(ThreadPoolExecutor executor) {
+        this(executor, -1, -1, -1, -1);
     }
 
     /**
@@ -48,37 +44,15 @@ public class OutputWizard extends DBOut implements Runnable {
      * @param to is the end id
      * @param dataPerTask is the max. number of loaded flights by one OutputWizard
      */
-    public OutputWizard(ViewType type, ThreadPoolExecutor executor, int tNumber, int from, int to, int dataPerTask) {
-        this.type = type;
+    public OutputWizard(ThreadPoolExecutor executor, int tNumber, int from, int to, int dataPerTask) {
         this.executor = executor;
         this.threadNumber = tNumber;
         this.threadName = "output-wizard" + this.threadNumber;
         this.from = from;
-        this.to = to-1;
+        this.to = to;
         this.flightsPerTask = dataPerTask;
         this.controller = Controller.getInstance();
         this.flightID = -1;
-    }
-
-    /**
-     * constructor
-     *
-     * @param type is the view type
-     * @param tNumber is the thread number
-     * @param from is the start id
-     * @param to is the end id
-     * @param flightID is the flight id of the loaded flight
-     */
-    public OutputWizard(ViewType type, int tNumber, int from, int to, int flightID) {
-        this.type = type;
-        this.executor = null;
-        this.threadNumber = tNumber;
-        this.threadName = "output-wizard" + this.threadNumber;
-        this.from = from;
-        this.to = to-1;
-        this.flightsPerTask = -1;
-        this.controller = Controller.getInstance();
-        this.flightID = flightID;
     }
 
     /**
@@ -91,7 +65,7 @@ public class OutputWizard extends DBOut implements Runnable {
         Thread.currentThread().setPriority(9);
         Thread.currentThread().setName(this.threadName);
         this.controller.log("thread " + ANSI_ORANGE + this.getName() + ANSI_RESET + " created!");
-        this.loadFlights(from, to);
+        this.loadLiveTrackingBtwn(from, to);
         this.controller.log( this.getName() + ANSI_ORANGE + "@" + ANSI_RESET + Thread.currentThread().getId() +
                             ": loaded data in " + ANSI_YELLOW + (System.nanoTime()-start)/Math.pow(1000, 3) +
                             ANSI_RESET + " seconds!");
@@ -103,15 +77,16 @@ public class OutputWizard extends DBOut implements Runnable {
      * @param fromID is the start-id,
      * @param toID is the (exclusive) end-id
      */
-    public void loadFlights (int fromID, int toID) {
+    public void loadLiveTrackingBtwn (int fromID, int toID) {
         int flightsToLoad = toID - fromID;
         if (flightsToLoad <= this.flightsPerTask) {
-            var flights = super.getAllFlightsFromID(fromID, toID);
-            DataMaster.addToListQueue(flights);
+            //var flights = super.getAllFlightsBetween(fromID, toID);
+            var dps = super.getLiveTrackingBetween(fromID, toID);
+            DataMaster.addToListQueue(dps);
         } else {
             int newEndID = to-(flightsToLoad/2);
-            var out0 = new OutputWizard(ViewType.MAP_ALL, this.executor, this.threadNumber+1, fromID, newEndID, this.flightsPerTask);
-            var out1 = new OutputWizard(ViewType.MAP_ALL, this.executor, this.threadNumber+2, newEndID, toID, this.flightsPerTask);
+            var out0 = new OutputWizard(this.executor, this.threadNumber+1, fromID, newEndID, this.flightsPerTask);
+            var out1 = new OutputWizard(this.executor, this.threadNumber+2, newEndID, toID, this.flightsPerTask);
             try {
                 this.executor.execute(out0);
                 this.executor.execute(out1);

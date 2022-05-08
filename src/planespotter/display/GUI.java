@@ -44,7 +44,12 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     protected JComboBox<String> searchFor_cmbBox;
     protected JSeparator    searchSeperator;
     // search components
-    protected JTextField search_flightID, search_callsign;
+    protected JTextField search_flightID;
+    protected JTextField search_callsign;
+    public JTextField search_planeID;
+    protected JTextField search_planetype;
+    protected JTextField search_icao;
+    protected JTextField search_tailNr;
     // image labels
     protected JLabel bground, menu_bground;
 
@@ -167,6 +172,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 this.searchMessage = SearchModels.searchMessage(this.pSearch);
                 this.searchMessage.setOpaque(false);
                 this.flightSearch = SearchModels.flightSearch(pSearch, this);
+                this.planeSearch = SearchModels.planeSearch(pSearch, this);
             // TODO: initializing background labels
             this.bground = PanelModels.backgroundLabel(this.dpright);
             this.menu_bground = PanelModels.menuBgLabel(this.dpleft);
@@ -224,8 +230,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         this.pList.setVisible(false);
         this.pMap.setVisible(false);
         this.pStartScreen.setVisible(true);
-        runningView = this.pStartScreen;
-        this.controller.log(ANSI_GREEN + "GUI initialized sucsessfully!" + ANSI_RESET);
         return this.window;
     }
 
@@ -248,15 +252,19 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         this.pSearch.add(this.searchFor_cmbBox);
         this.pSearch.add(this.searchSeperator);
         this.pSearch.add(this.searchMessage);
-        for (var c : this.flightSearch) {
-            if (c instanceof JLabel) {
-                c.setOpaque(false);
-            } else if (c instanceof JButton) {
-                ((JButton) c).addActionListener(this);
-            } else if (c instanceof JTextField) {
-                c.addKeyListener(this);
+        for (var comps : this.allSearchModels()) {
+            if (comps != null) {
+                for (var c : comps) {
+                    if (c instanceof JLabel) {
+                        c.setOpaque(false);
+                    } else if (c instanceof JButton) {
+                        ((JButton) c).addActionListener(this);
+                    } else if (c instanceof JTextField) {
+                        c.addKeyListener(this);
+                    }
+                    this.pSearch.add(c);
+                }
             }
-            this.pSearch.add(c);
         }
         // TODO: adding menubar to menu panel
         this.pMenu.add(this.pSearch);
@@ -299,6 +307,19 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     }
 
     /**
+     * @return all search models in a list
+     */
+    ArrayList<List<JComponent>> allSearchModels () {
+        var allSearchComps = new ArrayList<List<JComponent>>();
+        allSearchComps.add(this.flightSearch);
+        allSearchComps.add(this.planeSearch);
+        allSearchComps.add(this.airlineSearch);
+        allSearchComps.add(this.airportSearch);
+        allSearchComps.add(this.areaSearch);
+        return allSearchComps;
+    }
+
+    /**
      * creates a JScrollPane with the given Component and a specific layout
      * @param inside is the JTree or whatever, which is displayed in the JScrollPane
      * @return sp, the JScrollPane
@@ -327,9 +348,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             if (text.startsWith("exit")) {
                 Controller.exit();
             } else if (text.startsWith("loadlist")) {
-                this.controller.createDataView(LIST_FLIGHT, "");
+                this.controller.show(LIST_FLIGHT, "");
             } else if (text.startsWith("loadmap")) {
-                this.controller.createDataView(MAP_ALL, "");
+                this.controller.show(MAP_ALL, "");
             } else if (text.startsWith("maxload")) {
                 var args = text.split(" ");
                 try {
@@ -347,7 +368,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 var args = text.split(" ");
                 if (args.length > 1) {
                     var id = args[1];
-                    this.controller.createDataView(MAP_TRACKING, id);
+                    this.controller.show(MAP_TRACKING, id);
                 }
             }
         }
@@ -442,6 +463,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     @Override
     public void itemStateChanged(ItemEvent e) {
         var item = e.getItem();
+        GUISlave.clearSearch();
         GUISlave.loadSearch((String) item);
     }
 }

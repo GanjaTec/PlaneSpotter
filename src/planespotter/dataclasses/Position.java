@@ -10,7 +10,7 @@ import java.io.Serializable;
  *
  * This Class is used to represent a set of Coordinates
  */
-public class Position extends SuperData implements Serializable {
+public class Position implements SuperData, Serializable {
 	private double lat;
 	private double lon;
 
@@ -44,8 +44,23 @@ public class Position extends SuperData implements Serializable {
 	 * @param coord is the Coordinate to parse
 	 * @return Position, parsed from Coordinate
 	 */
-	public static Position parsePosition(Coordinate coord) {
+	public static Position parsePosition (Coordinate coord) {
 		return new Position(coord.getLat(), coord.getLon());
 	}
 
+	/**
+	 * @param position is the Position to parse
+	 * @return Coordinate, parsed from Position
+	 */
+	public static Coordinate toCoordinate (Position position) {
+		return new Coordinate(position.getLat(), position.getLon());
+	}
+
+	/**
+	 * @return id from the position
+	 */
+	@Override
+	public int getID() {
+		return -9999;
+	}
 }

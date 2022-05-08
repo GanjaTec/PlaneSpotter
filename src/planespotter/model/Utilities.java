@@ -23,7 +23,7 @@ public class Utilities {
     }
 
     /**
-     * @param feet is the plane height, in feet
+     * @param feet is the input, in feet (ft)
      * @return a feet value in meters
      */
     public static int feetToMeters (int feet) {
@@ -31,12 +31,22 @@ public class Utilities {
     }
 
     /**
-     * @param mph is the plane speed, in miles/hour
-     * @return
+     * @param kn is the input, in knots (kn)
+     * @return the knots in km per hour
      */
-    public static int mphToKmh (int mph) {
-        long kmh = Math.round(mph * 1.61);
+    public static int knToKmh (int kn) {
+        long kmh = Math.round(kn * 1.852);
         return (int) kmh;
+    }
+
+    /**
+     * packs a string in the format '...'
+     *
+     * @param input is the string to pack
+     * @return packed input string with 's
+     */
+    public static String packString (String input) {
+        return "'" + input + "'";
     }
 
 }

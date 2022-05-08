@@ -7,7 +7,7 @@ import java.util.HashMap;
  *	
  * This Class is used to Represent a single Flight with all off its Datapoints
  */
-public class Flight extends SuperData {
+public class Flight implements SuperData {
     private int id;
     private Airport start;
     private Airport dest;

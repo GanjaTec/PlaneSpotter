@@ -145,8 +145,8 @@ final class PanelModels {
         // TODO: setting up search panel
         var search = new JPanel();
         search.setBounds(10, 150, parent.getWidth()-20, parent.getHeight()-240);
-        search.setBackground(DEFAULT_BORDER_COLOR);
-        var border = BorderFactory.createLineBorder(DEFAULT_ACCENT_COLOR, 1);
+        search.setBackground(DEFAULT_ACCENT_COLOR);
+        var border = BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR, 1);
         search.setBorder(border);
         search.setLayout(null);
         search.setVisible(false);

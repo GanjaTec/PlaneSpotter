@@ -7,18 +7,12 @@ import planespotter.model.FileMaster;
 import planespotter.throwables.DataNotFoundException;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 
 import static planespotter.constants.GUIConstants.*;
-import static planespotter.constants.Paths.SRC_PATH;
 
 /**
  * @name MenuModels
@@ -229,7 +223,7 @@ final class MenuModels {
         var home = FileSystemView.getFileSystemView().getHomeDirectory();
         var fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.setFileFilter(new FileNameExtensionFilter("nur .pls-Dateien", "pls"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("only .pls-Files", "pls"));
         fileChooser.showOpenDialog(parent);
         HashMap<Integer, DataPoint> route = null;
         try {
@@ -238,7 +232,7 @@ final class MenuModels {
             e.printStackTrace();
         }
         int flightID = route.get(0).getFlightID();
-        Controller.getInstance().createDataView(ViewType.MAP_TRACKING, flightID + "");
+        Controller.getInstance().show(ViewType.MAP_TRACKING, flightID + "");
         return fileChooser;
     }
 

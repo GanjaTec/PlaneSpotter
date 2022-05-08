@@ -21,6 +21,7 @@ public final class GUIConstants {
                                 DEFAULT_BORDER_COLOR = Color.LIGHT_GRAY,
                                 DEFAULT_FONT_COLOR = new Color(230, 230,230),
                                 DEFAULT_ACCENT_COLOR = new Color(85, 100, 210),
+                                DEFAULT_SEARCH_ACCENT_COLOR = new Color(61, 76, 114),
                                 DEFAULT_MAP_ICON_COLOR = new Color(255, 214, 51);
 
     /**

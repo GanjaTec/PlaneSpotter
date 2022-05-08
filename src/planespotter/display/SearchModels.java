@@ -23,7 +23,7 @@ public final class SearchModels {
         // TODO: setting up "search for" combo box
         JComboBox<String> searchFor = new JComboBox(SearchModels.searchBoxItems());
         searchFor.setBounds(parent.getWidth()/2, 10, (parent.getWidth()-20)/2, 25);
-        searchFor.setBackground(DEFAULT_ACCENT_COLOR);
+        searchFor.setBackground(DEFAULT_SEARCH_ACCENT_COLOR);
         searchFor.setForeground(DEFAULT_MAP_ICON_COLOR);
         searchFor.setFont(FONT_MENU);
 
@@ -37,7 +37,6 @@ public final class SearchModels {
     static JLabel cmbBoxLabel (JPanel parent) {
         var boxLabel = new JLabel("Search for:");
         boxLabel.setBounds(10, 10, (parent.getWidth()-20)/2, 25);
-        //boxLabel.setBackground(DEFAULT_BG_COLOR);
         boxLabel.setForeground(DEFAULT_MAP_ICON_COLOR);
         boxLabel.setFont(FONT_MENU);
 
@@ -63,7 +62,7 @@ public final class SearchModels {
         // TODO: setting up exact search panel
         var seperator = new JSeparator(JSeparator.HORIZONTAL);
         seperator.setBounds(10, 43, parent.getWidth()-20, 2);
-        seperator.setBackground(DEFAULT_ACCENT_COLOR);
+        seperator.setBackground(DEFAULT_SEARCH_ACCENT_COLOR);
 
         return seperator;
     }
@@ -93,20 +92,20 @@ public final class SearchModels {
      * @return list of JLabels (the search field names)
      */
     static List<JComponent> flightSearch (JPanel parent, GUI gui) {
-        List<JComponent> components = new ArrayList<>();
+        var components = new ArrayList<JComponent>();
         components.add(new JLabel("ID:"));
-        JTextField id = new JTextField();
+        var id = new JTextField();
         gui.search_flightID = id;
         components.add(id);
         components.add(new JLabel("Flight-Nr.:"));
-        JTextField callsign = new JTextField();
+        var callsign = new JTextField();
         gui.search_callsign = callsign;
         components.add(callsign);
         components.add(new JButton("Load List"));
         components.add(new JButton("Load Map"));
         int width = (parent.getWidth()-20)/2;
         int y = 55;
-        for (JComponent c : components) {
+        for (var c : components) {
             if (c instanceof JLabel) {
                 c.setBounds(10, y, width, 25);
                 c.setBackground(DEFAULT_BG_COLOR);
@@ -115,7 +114,7 @@ public final class SearchModels {
                 c.setBounds(parent.getWidth()/2, y, width, 25);
                 c.setBackground(DEFAULT_FONT_COLOR);
                 c.setForeground(DEFAULT_FG_COLOR);
-                c.setBorder(LINE_BORDER);
+                c.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR));
                 y += 35;
             } else if (c instanceof JButton) {
                 var buttonText = ((JButton) c).getText();
@@ -126,7 +125,63 @@ public final class SearchModels {
                     c.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
                     c.setName("loadMap");
                 }
-                c.setBackground(DEFAULT_ACCENT_COLOR);
+                c.setBackground(DEFAULT_SEARCH_ACCENT_COLOR);
+                c.setForeground(DEFAULT_FONT_COLOR);
+                c.setBorder(MENU_BORDER);
+            }
+            c.setFont(FONT_MENU);
+            c.setVisible(false);
+        }
+        return components;
+    }
+
+    /**
+     * @param parent is the parent panel component
+     * @return list of JLabels (the search field names)
+     */
+    static List<JComponent> planeSearch (JPanel parent, GUI gui) {
+        var components = new ArrayList<JComponent>();
+        components.add(new JLabel("ID:"));
+        var id = new JTextField();
+        gui.search_planeID = id;
+        components.add(id);
+        components.add(new JLabel("Planetype:"));
+        var planetype = new JTextField();
+        gui.search_planetype = planetype;
+        components.add(planetype);
+        components.add(new JLabel("ICAO:"));
+        var icao = new JTextField();
+        gui.search_icao = icao;
+        components.add(icao);
+        components.add(new JLabel("Tail-Nr.:"));
+        var tailNr = new JTextField();
+        gui.search_tailNr = tailNr;
+        components.add(tailNr);
+        components.add(new JButton("Load List"));
+        components.add(new JButton("Load Map"));
+        int width = (parent.getWidth()-20)/2;
+        int y = 55;
+        for (var c : components) {
+            if (c instanceof JLabel) {
+                c.setBounds(10, y, width, 25);
+                c.setBackground(DEFAULT_BG_COLOR);
+                c.setForeground(DEFAULT_MAP_ICON_COLOR);
+            } else if (c instanceof JTextField) {
+                c.setBounds(parent.getWidth()/2, y, width, 25);
+                c.setBackground(DEFAULT_FONT_COLOR);
+                c.setForeground(DEFAULT_FG_COLOR);
+                c.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR));
+                y += 35;
+            } else if (c instanceof JButton) {
+                var buttonText = ((JButton) c).getText();
+                if (buttonText.equals("Load List")) {
+                    c.setBounds(10, parent.getHeight()-35, width-5, 25);
+                    c.setName("loadList");
+                } else if (buttonText.equals("Load Map")) {
+                    c.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
+                    c.setName("loadMap");
+                }
+                c.setBackground(DEFAULT_SEARCH_ACCENT_COLOR);
                 c.setForeground(DEFAULT_FONT_COLOR);
                 c.setBorder(MENU_BORDER);
             }

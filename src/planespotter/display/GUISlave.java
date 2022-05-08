@@ -8,14 +8,13 @@ import planespotter.model.Utilities;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.awt.event.KeyEvent.*;
 import static java.awt.event.KeyEvent.VK_PAGE_DOWN;
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.GUIConstants.FONT_MENU;
-import static planespotter.constants.SearchType.FLIGHT;
+import static planespotter.constants.SearchType.*;
 import static planespotter.constants.ViewType.LIST_FLIGHT;
 import static planespotter.constants.ViewType.MAP_ALL;
 
@@ -161,11 +160,26 @@ public final class GUISlave {
      */
     public static void loadSearch (String forItem) {
         switch (forItem) {
-            case "Flight" -> GUISlave.showSearch(gui.flightSearch);
-            case "Plane" -> GUISlave.showSearch(gui.planeSearch);
-            case "Airline" -> GUISlave.showSearch(gui.airlineSearch);
-            case "Airport" -> GUISlave.showSearch(gui.airportSearch);
-            case "Area" -> GUISlave.showSearch(gui.areaSearch);
+            case "Flight" -> {
+                GUISlave.showSearch(gui.flightSearch);
+                Controller.currentSearchType = FLIGHT;
+            }
+            case "Plane" -> {
+                GUISlave.showSearch(gui.planeSearch);
+                Controller.currentSearchType = PLANE;
+            }
+            case "Airline" -> {
+                GUISlave.showSearch(gui.airlineSearch);
+                Controller.currentSearchType = AIRLINE;
+            }
+            case "Airport" -> {
+                GUISlave.showSearch(gui.airportSearch);
+                Controller.currentSearchType = AIRPORT;
+            }
+            case "Area" -> {
+                GUISlave.showSearch(gui.areaSearch);
+                Controller.currentSearchType = AREA;
+            }
         }
     }
 
@@ -175,13 +189,7 @@ public final class GUISlave {
      * @param search is the given list of search components
      */
     private static void showSearch (List<JComponent> search) {
-        var allSearchComps = new ArrayList<List<JComponent>>();
-        allSearchComps.add(gui.flightSearch);
-        allSearchComps.add(gui.planeSearch);
-        allSearchComps.add(gui.airlineSearch);
-        allSearchComps.add(gui.airportSearch);
-        allSearchComps.add(gui.areaSearch);
-        for (var comps : allSearchComps) {
+        for (var comps : gui.allSearchModels()) {
             var equals = (comps == search);
             if (comps != null) {
                 for (JComponent c : comps) {
@@ -266,10 +274,10 @@ public final class GUISlave {
             MenuModels.fileLoader(gui.window);
         } else if (button == gui.btList) {
             GUISlave.progressbarStart();
-            gui.controller.createDataView(LIST_FLIGHT, "");
+            gui.controller.show(LIST_FLIGHT, "");
         } else if (button == gui.btMap) {
             GUISlave.progressbarStart();
-            gui.controller.createDataView(MAP_ALL, "");
+            gui.controller.show(MAP_ALL, "");
         } else if (button == gui.closeView) {
             GUISlave.disposeView();
             gui.pStartScreen.setVisible(true);
@@ -282,15 +290,13 @@ public final class GUISlave {
         } else if (button == gui.searchButton) {
             gui.pSearch.setVisible(!gui.pSearch.isVisible());
             gui.tfSearch.setVisible(!gui.pSearch.isVisible());
+            GUISlave.loadSearch("Plane");
         } else if (button.getName().equals("loadList")) {
             // future
         } else if (button.getName().equals("loadMap")) {
             // TODO search type abfragen, bzw. ComboBox SelectedItem
-            String[] inputs = {
-                    gui.search_flightID.getText(),
-                    gui.search_callsign.getText()
-            };
-            gui.controller.search(FLIGHT, inputs);
+            String[] inputs = GUISlave.searchInput();
+            gui.controller.search(inputs, 1);
         }
     }
 
@@ -315,7 +321,7 @@ public final class GUISlave {
                         gui.settings_iFrame_maxLoad.setText("");
                         gui.settings_intlFrame.setVisible(false);
                         // work with background worker?
-                        gui.controller.loadData();
+                        Controller.loadLiveData();
                     }
                 }
             } else if (src == gui.mapViewer) {
@@ -336,6 +342,40 @@ public final class GUISlave {
 
     public static JMapViewer mapViewer () {
         return gui.mapViewer;
+    }
+
+    private static String[] searchInput () {
+        switch (Controller.currentSearchType) {
+            case FLIGHT -> {
+                return new String[] {
+                        gui.search_flightID.getText(),
+                        gui.search_callsign.getText()
+                };
+            } case PLANE -> {
+                return new String[] {
+                        gui.search_planeID.getText(),
+                        gui.search_planetype.getText(),
+                        gui.search_icao.getText(),
+                        gui.search_tailNr.getText()
+                };
+            }
+        }
+        return null;
+    }
+
+    static void clearSearch () {
+        var comps = new JTextField[] {
+                gui.search_planetype,
+                gui.search_tailNr,
+                gui.search_planeID,
+                gui.search_callsign,
+                gui.search_flightID,
+                gui.search_icao
+        };
+        for (var c : comps) {
+            c.setText("");
+        }
+
     }
 
 }

@@ -18,9 +18,7 @@ import static planespotter.constants.Configuration.*;
 public class FileMaster {
 
     // controller instance
-    private Controller controller = Controller.getInstance();
-    // saving / loading at the monment ?
-    private static boolean processing;
+    private final Controller controller = Controller.getInstance();
 
     /**
      * constructor
@@ -34,8 +32,8 @@ public class FileMaster {
      */
     public static void saveConfig () {
         var fileWizard = new FileMaster();
+        // saving / loading at the monment ?
         try {
-            processing = true;
             fileWizard.controller.log("saving config...");
             var config = new File(Paths.SRC_PATH + "configuration.cfg");
             if (!config.exists()) { // creating new file if there is no existing one
@@ -49,7 +47,6 @@ public class FileMaster {
             e.printStackTrace();
         } finally {
             fileWizard.controller.sucsessLog("configuration.cfg saved sucsessfully!");
-            processing = false;
         }
     }
 

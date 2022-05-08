@@ -1,5 +1,7 @@
 package planespotter.dataclasses;
 
-public class SuperData {
+public interface SuperData {
+
+    int getID();
     // TODO int id hier rein
 }

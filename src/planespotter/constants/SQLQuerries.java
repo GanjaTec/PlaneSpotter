@@ -30,12 +30,23 @@ public final class SQLQuerries {
 	public static final String getPlaneByID = "SELECT * FROM planes WHERE ID == ";
 	public static final String getAirlineByTag = "SELECT * FROM airlines WHERE icaotag == ";
 	public static final String getAirlineIDByTag = "SELECT ID FROM airlines WHERE icaotag == ";
-	public static final String getPlaneByICAO = "SELECT * FROM planes WHERE icaonr == ";
-	public static final String getFlightByCallsign = "SELECT * FROM flights WHERE callsign == ";
+	public static final String getPlaneIDsByICAO = "SELECT ID FROM planes WHERE icaonr IS ";
+	// all flights IDs with a specific callsign
+	public static final String getFlightIDsByCallsign = "SELECT ID FROM flights WHERE callsign IS ";
 	public static final String checkEndOfFlight = "SELECT ID FROM flights WHERE endTime IS NULL";
 	public static final String getLastTracking = "SELECT timestamp FROM tracking WHERE ID == (?) ORDER BY ID DESC LIMIT 1";
 	public static final String getLastTrackingByFlightID = "SELECT ID FROM tracking WHERE flightid == (?) ORDER BY DESC LIMIT 1";
-	
+	// flights with plane id
+	public static final String getFlightsWithPlaneID = "SELECT * FROM flights WHERE plane = ";
+	// plane id by planetype
+	public static final String getPlaneIDsByType = "SELECT ID FROM planes WHERE type IS ";
+	// plane by tailnumber
+	public static final String getPlaneIDByTailNr = "SELECT ID FROM planes WHERE tailnr = ";
+	// all planetypes
+	public static final String getAllPlanetypes = 	"SELECT DISTINCT type FROM planes WHERE type IS NOT NULL";
+	// all callsigns
+	public static final String getAllCallsigns = "SELECT DISTINCT callsign FROM flights WHERE callsign IS NOT NULL";
+
 	/** @unused */
 	public static final String getFlightsFromID = "SELECT * FROM flights WHERE ID >= (?) AND ID > (?)";
 	// alle flüge ab einer bestimmten id, wird direkt in DBOut gemacht, da ich nicht weiß

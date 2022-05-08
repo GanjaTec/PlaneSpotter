@@ -201,7 +201,7 @@ public final class TreePlantation {
     private static DefaultMutableTreeNode dataPointInfoTreeNode (DataPoint dp) {
         int id = dp.getID(),
             flightID = dp.getFlightID(),
-            speed = Utilities.feetToMeters(dp.getSpeed()),
+            speed = Utilities.knToKmh(dp.getSpeed()),
             height = Utilities.feetToMeters(dp.getAltitude()),
             heading = dp.getHeading(),
             sqawk = dp.getSqawk();
@@ -212,7 +212,7 @@ public final class TreePlantation {
         var root = new DefaultMutableTreeNode("");
         root.add(new DefaultMutableTreeNode("ID: " + id));
         root.add(new DefaultMutableTreeNode("Flight-ID: " + flightID));
-        root.add(new DefaultMutableTreeNode("Speed: " + speed + "  km/h"));
+        root.add(new DefaultMutableTreeNode("Speed: " + speed + " km/h"));
         root.add(new DefaultMutableTreeNode("Height: " + height + "m"));
         root.add(new DefaultMutableTreeNode("Heading: " + heading + "°"));
         root.add(new DefaultMutableTreeNode("Sqawk-Code: " + sqawk));
