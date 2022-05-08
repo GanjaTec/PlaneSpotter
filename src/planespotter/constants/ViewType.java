@@ -6,7 +6,7 @@ public enum ViewType {
     LIST_AIRLINE,
     LIST_AIRPORT,
     MAP_ALL,
-    MAP_FLIGHTROUTE;
+    MAP_FROMSEARCH, MAP_TRACKING
     // TODO weitere
     // map ansichten
 }

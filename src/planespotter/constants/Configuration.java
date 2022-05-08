@@ -18,7 +18,7 @@ public final class Configuration {
     }
 
     // max thread pool size
-    public static final int MAX_THREADPOOL_SIZE = 200;
+    public static final int MAX_THREADPOOL_SIZE = 20;
     // thread keep-alive-time
     public static final long KEEP_ALIVE_TIME = 6L;
 
