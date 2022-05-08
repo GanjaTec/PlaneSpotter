@@ -18,9 +18,10 @@ public final class GUIConstants {
      */
     public static final Color   DEFAULT_BG_COLOR = Color.GRAY,
                                 DEFAULT_FG_COLOR = Color.BLACK,
-                                DEFAULT_BORDER_COLOR = Color.DARK_GRAY,
+                                DEFAULT_BORDER_COLOR = Color.LIGHT_GRAY,
                                 DEFAULT_FONT_COLOR = new Color(230, 230,230),
-                                DEFAULT_ACCENT_COLOR = new Color(84, 101, 210),
+                                DEFAULT_ACCENT_COLOR = new Color(85, 100, 210),
+                                DEFAULT_SEARCH_ACCENT_COLOR = new Color(61, 76, 114),
                                 DEFAULT_MAP_ICON_COLOR = new Color(255, 214, 51);
 
     /**
@@ -32,15 +33,16 @@ public final class GUIConstants {
     /**
      * images
      */
-    public static final ImageIcon   img = new ImageIcon(Paths.SRC_PATH + "background.jpg"),
-                                    title_bground_img = new ImageIcon(Paths.SRC_PATH + "title_background.jpg"),
-                                    flying_plane_icon = new ImageIcon(Paths.SRC_PATH + "flying_plane_icon.png");
+    public static final ImageIcon   BGROUND_IMG = new ImageIcon(Paths.IMG_PATH + "background.png"),
+                                    MENU_BGROUND_IMG = new ImageIcon(Paths.IMG_PATH + "menu_background.png"),
+                                    TITLE_BGROUND_IMG = new ImageIcon(Paths.IMG_PATH + "title_background.jpg"),
+                                    FLYING_PLANE_ICON = new ImageIcon(Paths.IMG_PATH + "flying_plane_icon.png");
 
     /**
      * component borders
      */
-    public static final Border  LINE_BORDER = BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR, 2),
-                                MENU_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY), BorderFactory.createLineBorder(DEFAULT_FG_COLOR));
+    public static final Border  LINE_BORDER = BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR, 1),
+                                MENU_BORDER = BorderFactory.createLineBorder(DEFAULT_BG_COLOR);
 
     /**
      * ANSI-colors for System.out.println

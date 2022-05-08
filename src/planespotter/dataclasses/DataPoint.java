@@ -1,12 +1,14 @@
 package planespotter.dataclasses;
 
+import java.io.Serializable;
+
 /**
  * @author Janne Matti
  * @author Lukas
  *
  * This Class is used to represent a single DB Entry from the 'Tracking'-Table
  */
-public class DataPoint {
+public class DataPoint implements Serializable, SuperData {
 	private int id;
 	private int flightid;
 	private Position pos;

@@ -10,7 +10,7 @@ package planespotter.display;
  */
 public class UserSettings {
     // settings variables
-    private static int maxLoadedFlights = 12400; // 12400 is perfect at the moment
+    private static int maxLoadedFlights = 16000;
 
     /**
      * @return maxLoadedFlights, the limit of loaded flights

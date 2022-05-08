@@ -3,6 +3,8 @@ package planespotter.display;
 import javax.swing.*;
 import javax.swing.border.Border;
 
+import java.awt.*;
+
 import static planespotter.constants.GUIConstants.*;
 
 /**
@@ -139,12 +141,13 @@ final class PanelModels {
     /**
      * search panel // TODO radioButtons, TxtField, 2 Buttons, JLabels -> aber extern
      */
-    static JPanel searchPanel (JPanel parent, GUI gui) {
+    static JPanel searchPanel (JPanel parent) {
         // TODO: setting up search panel
         var search = new JPanel();
-        search.setBounds(10, 150, parent.getWidth()-20, parent.getHeight()-225);
-        search.setBackground(DEFAULT_BG_COLOR);
-        search.setBorder(LINE_BORDER);
+        search.setBounds(10, 150, parent.getWidth()-20, parent.getHeight()-240);
+        search.setBackground(DEFAULT_ACCENT_COLOR);
+        var border = BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR, 1);
+        search.setBorder(border);
         search.setLayout(null);
         search.setVisible(false);
 
@@ -168,15 +171,23 @@ final class PanelModels {
     /**
      * background label
      */
-    static JLabel backgroundLabel (JPanel parent) {
+    static JLabel backgroundLabel (JDesktopPane parent) {
         // TODO: setting up background image
-        var bground = new JLabel(img);
+        var bground = new JLabel(BGROUND_IMG);
         bground.setSize(parent.getWidth(), parent.getHeight());
 
         return bground;
     }
 
+    /**
+     * background label
+     */
+    static JLabel menuBgLabel (JDesktopPane parent) {
+        // TODO: setting up background image
+        var bground = new JLabel(MENU_BGROUND_IMG);
+        bground.setSize(parent.getWidth(), parent.getHeight());
 
-
+        return bground;
+    }
 
 }

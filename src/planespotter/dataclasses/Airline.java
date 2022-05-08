@@ -6,7 +6,7 @@ package planespotter.dataclasses;
  * 
  * Airline class: represents an airline
  */
-public class Airline {
+public class Airline implements SuperData {
 	private int id;
 	private String iatatag;
 	private String name;

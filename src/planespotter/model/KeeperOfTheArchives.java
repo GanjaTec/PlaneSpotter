@@ -33,7 +33,7 @@ public class KeeperOfTheArchives implements Runnable{
 		try {
 			List<Integer> IDs = dbo.checkEnded();
 			for(int id : IDs) {
-				long ts = dbo.getLastTrackingByFlightID(id);
+				long ts = dbo.getLastTimestempByFlightID(id);
 				long tdiff = (System.currentTimeMillis() / 1000L) - ts; 
 				if(tdiff > this.threshold) {
 					dbi.updateFlightEnd(id, ts);

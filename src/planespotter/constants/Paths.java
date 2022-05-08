@@ -22,7 +22,7 @@ public final class Paths {
      * img-path
      * contains all used images
      */
-    public static final String IMG_PATH = "src\\planespotter\\";
+    public static final String IMG_PATH = "src\\planespotter\\images\\";
 
 
 }
