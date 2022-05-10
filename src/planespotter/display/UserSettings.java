@@ -1,5 +1,11 @@
 package planespotter.display;
 
+import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.TMSTileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
+
 /**
  * @name UserSettings
  * @author jml04
@@ -10,22 +16,46 @@ package planespotter.display;
  */
 public class UserSettings {
     // settings variables
-    private static int maxLoadedFlights = 16000;
+    // max loaded data
+    private static int maxLoadedData = 20000;
+
+    private static TileSource currentMapSource = new UserSettings().tmstMap;
+    // map types
+    private final String baseUrl = "https://c.tile.openstreetmap.de";
+    private final TileSource    bingMap = new BingAerialTileSource(),
+                                transportMap = new OsmTileSource.TransportMap(),
+                                tmstMap = new TMSTileSource(new TileSourceInfo("neu", baseUrl, "0"));
+
 
     /**
      * @return maxLoadedFlights, the limit of loaded flights
      */
-    public static int getMaxLoadedFlights () {
-        return maxLoadedFlights;
+    public static int getMaxLoadedData() {
+        return maxLoadedData;
     }
 
     /**
      * @set the max loaded flights variable
      * @param newMax, the new flight limit
      */
-    public static void setMaxLoadedFlights (int newMax) {
-        maxLoadedFlights = newMax;
+    public static void setMaxLoadedData(int newMax) {
+        maxLoadedData = newMax;
     }
 
+    /**
+     * @return the current map tile source
+     */
+    public static TileSource getCurrentMapSource() {
+        return currentMapSource;
+    }
+
+    /**
+     * sets the current map tile source
+     *
+     * @param currentMapSource is the tile source to set (bingMap, tmstMap, transportMap)
+     */
+    public static void setCurrentMapSource(TileSource currentMapSource) {
+        UserSettings.currentMapSource = currentMapSource;
+    }
 
 }

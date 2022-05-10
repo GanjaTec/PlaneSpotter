@@ -154,14 +154,10 @@ public final class BlackBeardsNavigator {
         viewer.setBorder(LINE_BORDER);
         var mapController = new MapManager(viewer);
         mapController.setMovementMouseButton(1);
-        //viewer.getAttribution().
         viewer.setDisplayToFitMapMarkers();
         viewer.setZoomControlsVisible(false);
-        var bingMap = new BingAerialTileSource();
-        var transportMap = new OsmTileSource.TransportMap();
-        var mapnik = new OsmTileSource.Mapnik();
-        var tmstMap = new TMSTileSource(new TileSourceInfo("neu", "https://tile.openstreetmap.org/1/1/1.png", "0"));
-        viewer.setTileSource(bingMap);
+        var mapType = UserSettings.getCurrentMapSource();
+        viewer.setTileSource(mapType);
         viewer.setVisible(true);
         viewer.setBounds(parent.getBounds());
 

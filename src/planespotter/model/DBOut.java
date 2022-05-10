@@ -24,7 +24,7 @@ public class DBOut extends SupperDB {
 	/**
 	 * test: max loaded flights
 	 */
-	private static int maxLoadedFlights = UserSettings.getMaxLoadedFlights();
+	private static int maxLoadedFlights = UserSettings.getMaxLoadedData();
 
 
 	/**
@@ -376,7 +376,7 @@ public class DBOut extends SupperDB {
 	 * @return List<Flight> containing all Flight Objects
 	 * @throws Exception
 	 */
-	public List<Flight> getAllFlights () {
+	public List<Flight> getAllFlights () {  // TODO between
 		var flights = new ArrayList<Flight>();
 		try {
 			var rs = super.querryDB(SQLQuerries.getFlights);
@@ -456,7 +456,7 @@ public class DBOut extends SupperDB {
 		try {
 			var rs = this.querryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
 			int flightID;
-			if (rs.next() == true) {
+			if (rs.next()) {
 				flightID = rs.getInt("ID");
 			} else {
 				flightID = -1;
@@ -691,7 +691,7 @@ public class DBOut extends SupperDB {
 	public final ArrayDeque<DataPoint> getLastTrackingsBetweenFlightIDs(final int from, final int to) {
 		var dps = new ArrayDeque<DataPoint>();
 		try {
-			//var querry = "SELECT f.*, t1.* FROM flights f JOIN tracking t1 ON (f.ID = t1.flightid) LEFT OUTER JOIN tracking t2 ON (f.ID = t2.flightid AND (t1.ID < t2.ID)) WHERE t2.ID IS NULL AND f.ID BETWEEN " + from + " AND " + to;
+			//var querry = "SELECT f.*, t1.* FROM flights f JOIN tracking t1 ON (f.ID = t1.flightid) LEFT OUTER JOIN tracking t2 ON (f.ID = t2.flightid AND (t1.ID < t2.ID)) WHERE t2.ID IS NULL AND f.ID BETWEEN " + from + " AND " + to; //group by flightid
 			var querry = 	"SELECT f.ID, f.endTime, max(t.ID), t.ID, flightid, latitude, " +
 									"longitude, squawk, groundspeed, heading, altitude, timestamp " +
 							"FROM flights f, tracking t " +

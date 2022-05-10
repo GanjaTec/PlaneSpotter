@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.JMapViewer;
 import planespotter.controller.Controller;
 import planespotter.model.Utilities;
+import planespotter.throwables.DataNotFoundException;
 
 import javax.swing.*;
 import java.awt.*;
@@ -249,6 +250,7 @@ public final class GUISlave {
         gui.title_bground.setBounds(gui.pTitle.getBounds());
         gui.title.setBounds(gui.pTitle.getWidth() / 2 - 200, 0, 400, 70);
         gui.closeView.setBounds(gui.pViewHead.getWidth() - 85, 4, 80, 16);
+        gui.btFile.setBounds(gui.pViewHead.getWidth() - 168, 4, 80, 16);
         gui.lblStartScreen.setBounds(0, 0, gui.pStartScreen.getWidth(), gui.pStartScreen.getHeight());
         gui.mapViewer.setBounds(0, 0, gui.pMap.getWidth(), gui.pMap.getHeight());
         gui.menubar.setBounds(gui.pMenu.getBounds());
@@ -261,6 +263,13 @@ public final class GUISlave {
         if (gui.infoTree != null) {
             gui.infoTree.setBounds(gui.pInfo.getBounds());
         }
+        if (gui.fileMenu != null) {
+            int minus = 84;
+            for (var bt : gui.fileMenu) {
+                bt.setBounds(gui.pViewHead.getWidth() - minus, 4, 80, 16);
+                minus += 84;
+            }
+        }
     }
 
     /**
@@ -270,8 +279,8 @@ public final class GUISlave {
      */
     public static void buttonClicked (JButton button) {
         if (button == gui.btFile) {
-            //MenuModels.fileSaver(gui.window);
-            MenuModels.fileLoader(gui.window);
+            GUISlave.setViewHeadBtVisible(false);
+            GUISlave.setFileMenuVisible(true);
         } else if (button == gui.btList) {
             GUISlave.progressbarStart();
             gui.controller.show(LIST_FLIGHT, "");
@@ -297,6 +306,28 @@ public final class GUISlave {
             // TODO search type abfragen, bzw. ComboBox SelectedItem
             String[] inputs = GUISlave.searchInput();
             gui.controller.search(inputs, 1);
+        } else if (button.getName().equals("open")) {
+            try {
+                new MenuModels().fileLoader(gui.window);
+            } catch (DataNotFoundException e) {
+                gui.controller.errorLog(e.getMessage());
+            }
+        } else if (button.getName().equals("save")) {
+            new MenuModels().fileSaver(gui.window);
+        } else if (button.getName().equals("back")) {
+            GUISlave.setFileMenuVisible(false);
+            GUISlave.setViewHeadBtVisible(true);
+        }
+    }
+
+    private static void setViewHeadBtVisible (boolean b) {
+        gui.btFile.setVisible(b);
+        gui.closeView.setVisible(b);
+    }
+
+    private static void setFileMenuVisible (boolean b) {
+        for (var bt : gui.fileMenu) {
+            bt.setVisible(b);
         }
     }
 
@@ -317,11 +348,11 @@ public final class GUISlave {
                     // TODO fixen: settings fenster schließt erst nach loading
                     if (Integer.parseInt(gui.settings_iFrame_maxLoad.getText()) >= 4) {
                         GUISlave.progressbarStart();
-                        UserSettings.setMaxLoadedFlights(Integer.parseInt(gui.settings_iFrame_maxLoad.getText()));
+                        UserSettings.setMaxLoadedData(Integer.parseInt(gui.settings_iFrame_maxLoad.getText()));
                         gui.settings_iFrame_maxLoad.setText("");
                         gui.settings_intlFrame.setVisible(false);
                         // work with background worker?
-                        Controller.loadLiveData();
+                        //Controller.loadLiveData();
                     }
                 }
             } else if (src == gui.mapViewer) {

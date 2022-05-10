@@ -53,6 +53,8 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     // image labels
     protected JLabel bground, menu_bground;
 
+    protected JButton[] fileMenu;
+
     protected volatile JTree listView, infoTree, dpInfoTree;
     // TODO fix ConcurrentModificationException on mapViewer
     protected volatile JMapViewer mapViewer;
@@ -114,6 +116,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * creates new GUI window
      */
     protected JFrame initialize () {
+        var menuModels = new MenuModels();
         // TODO: setting up window
         this.window = new JFrame("PlaneSpotter");
         this.window.setSize(1280, 720);
@@ -177,30 +180,33 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
             this.bground = PanelModels.backgroundLabel(this.dpright);
             this.menu_bground = PanelModels.menuBgLabel(this.dpleft);
             // TODO: initializing pTitle
-            this.menubar = MenuModels.menuBar(this.pMenu);
+            this.menubar = menuModels.menuBar(this.pMenu);
             this.menubar.setOpaque(false);
                 // TODO: initializing buttons
-                this.btFile = MenuModels.fileButton(menubar);
-                this.btFile.addActionListener(this);
-                this.btList = MenuModels.listButton(menubar);
+                this.btList = menuModels.listButton(this.menubar);
                 this.btList.addActionListener(this);
-                this.btMap = MenuModels.mapButton(menubar);
+                this.btMap = menuModels.mapButton(this.menubar);
                 this.btMap.addActionListener(this);
-                this.settings = MenuModels.settingsButton(menubar);
+                this.settings = menuModels.settingsButton(this.menubar);
                 this.settings.addActionListener(this);
-                this.tfSearch = MenuModels.searchTextField(this.menubar);
+                this.tfSearch = menuModels.searchTextField(this.menubar);
                 this.tfSearch.addKeyListener(this);
-                this.searchButton = MenuModels.searchButton(this.menubar);
+                this.searchButton = menuModels.searchButton(this.menubar);
                 this.searchButton.addActionListener(this);
-                this.progressbar = MenuModels.progressBar(this.menubar);
-                this.settings_intlFrame = MenuModels.settings_intlFrame(this.mainpanel);
-                this.settings_iFrame_maxLoad = MenuModels.settingsOP_maxLoadTxtField();
+                this.progressbar = menuModels.progressBar(this.menubar);
+                this.settings_intlFrame = menuModels.settings_intlFrame(this.mainpanel);
+                this.settings_iFrame_maxLoad = menuModels.settingsOP_maxLoadTxtField();
                 this.settings_iFrame_maxLoad.addKeyListener(this);
             // TODO: initializing view head text label
             this.viewHeadText = PanelModels.headLabel("PlaneSpotter");
             this.viewHeadText.setOpaque(false);
+            // TODO: initializing file button
+            this.btFile = menuModels.fileButton(this.dpright);
+            this.btFile.addActionListener(this);
+            // TODO: initializing file menu buttons
+            this.fileMenu = menuModels.fileMenu(this.pViewHead);
             // TODO: initializing close view button
-            this.closeView = MenuModels.closeViewButton(this.dpright);
+            this.closeView = menuModels.closeViewButton(this.dpright);
             this.closeView.addActionListener(this);
             // TODO: setting up title backround img
             // ich bekomme nur mit der getRessource methode ein Bild zurückgeliefert
@@ -240,7 +246,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     private void addAllToWinow() {
         // Adding to Window
         // TODO: adding everything to menubar
-        this.menubar.add(this.btFile);
         this.menubar.add(this.btList);
         this.menubar.add(this.btMap);
         this.menubar.add(this.settings);
@@ -273,9 +278,14 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         this.pMap.add(this.mapViewer);
         // TODO: adding label to start screen panel
         this.pStartScreen.add(this.lblStartScreen);
+        for (var bt : this.fileMenu) {
+            bt.addActionListener(this);
+            this.pViewHead.add(bt);
+        }
         // TODO: adding everything to pViewHead
         this.pViewHead.add(this.viewHeadText);
         this.pViewHead.add(this.closeView);
+        this.pViewHead.add(this.btFile);
         // TODO: adding everything to right desktop pane
         this.dpright.add(this.pViewHead);
         this.dpright.add(this.pList);
@@ -290,7 +300,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         this.pTitle.add(PanelModels.titleTxtLabel(this.pTitle));
         this.pTitle.add(this.title_bground);
         // TODO: adding textfield to internal settings frame
-        this.settings_iFrame_maxLoad.setText(UserSettings.getMaxLoadedFlights() + "");
+        this.settings_iFrame_maxLoad.setText(UserSettings.getMaxLoadedData() + "");
         this.settings_intlFrame.add(this.settings_iFrame_maxLoad);
         // setting desktopPanes visible
         this.dpright.setVisible(true);
@@ -356,7 +366,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 try {
                     int max = Integer.parseInt(args[1]);
                     if (max <= 10000) {
-                        UserSettings.setMaxLoadedFlights(max);
+                        UserSettings.setMaxLoadedData(max);
                         this.controller.log("maxload changed to " + args[1] + " !");
                     } else {
                         this.controller.log("Failed! Maximum is 10000!");
