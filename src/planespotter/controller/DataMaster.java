@@ -10,7 +10,6 @@ import planespotter.throwables.DataNotFoundException;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -35,7 +34,7 @@ public class DataMaster {
      */
     void load() {
         int startID = 0;
-        int endID = UserSettings.getMaxLoadedFlights();
+        int endID = UserSettings.getMaxLoadedData();
         int dataPerTask = 5000; // vorher: (endID-startID)/100
         var outputWizard = new OutputWizard(exe, 0, startID, endID, dataPerTask);
         exe.execute(outputWizard);

@@ -7,6 +7,7 @@ import planespotter.dataclasses.*;
 import planespotter.display.BlackBeardsNavigator;
 import planespotter.display.GUI;
 import planespotter.display.GUISlave;
+import planespotter.display.TreePlantation;
 import planespotter.model.DBOut;
 import planespotter.model.FileMaster;
 import planespotter.model.Search;
@@ -16,6 +17,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static planespotter.constants.Configuration.*;
 import static planespotter.constants.GUIConstants.*;
@@ -174,7 +177,13 @@ public class Controller {
         // TODO verschiedene Möglichkeiten (für große Datenmengen)
         switch (type) {
             case LIST_FLIGHT -> {
-                //TreePlantation.createTree(TreePlantation.allFlightsTreeNode (preLoadedFlights));
+                List<Flight> flights = new ArrayList<>();
+                for (int i = 0; i < 100; i++) {  // TODO anders machen! dauert zu lange, zu viele Anfragen!
+                    int fid = liveData.get(i).getFlightID();
+                    var flight = new DataMaster().flightByID(fid);
+                    flights.add(flight);
+                }
+                TreePlantation.createTree(TreePlantation.allFlightsTreeNode(flights));
             }
             case MAP_ALL -> {
                 BlackBeardsNavigator.createAllFlightsMap(liveData);

@@ -24,5 +24,11 @@ public final class Paths {
      */
     public static final String IMG_PATH = "src\\planespotter\\images\\";
 
+    /**
+     * libs-path
+     * contains all external libraries
+     */
+    public static final String LIBS_PATH = "src\\libs\\";
+
 
 }

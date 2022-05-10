@@ -1,9 +1,6 @@
 package planespotter.display;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-
-import java.awt.*;
 
 import static planespotter.constants.GUIConstants.*;
 

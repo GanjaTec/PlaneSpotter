@@ -1,5 +1,8 @@
 package planespotter.display;
 
+import libs.UWPButton;
+
+import javax.imageio.spi.ServiceRegistry;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -97,12 +100,16 @@ public final class SearchModels {
         var id = new JTextField();
         gui.search_flightID = id;
         components.add(id);
-        components.add(new JLabel("Flight-Nr.:"));
+        components.add(new JLabel("Callsign.:"));
         var callsign = new JTextField();
         gui.search_callsign = callsign;
         components.add(callsign);
-        components.add(new JButton("Load List"));
-        components.add(new JButton("Load Map"));
+        var loadList = new UWPButton();
+        loadList.setText("Load List");
+        components.add(loadList);
+        var loadMap = new UWPButton();
+        loadMap.setText("Load Map");
+        components.add(loadMap);
         int width = (parent.getWidth()-20)/2;
         int y = 55;
         for (var c : components) {
@@ -157,8 +164,12 @@ public final class SearchModels {
         var tailNr = new JTextField();
         gui.search_tailNr = tailNr;
         components.add(tailNr);
-        components.add(new JButton("Load List"));
-        components.add(new JButton("Load Map"));
+        var loadList = new UWPButton();
+        loadList.setText("Load List");
+        components.add(loadList);
+        var loadMap = new UWPButton();
+        loadMap.setText("Load Map");
+        components.add(loadMap);
         int width = (parent.getWidth()-20)/2;
         int y = 55;
         for (var c : components) {
@@ -198,7 +209,7 @@ public final class SearchModels {
      * @return option pane with a error message
      */
     public static JOptionPane errorMsgPane (String msg) {
-        return new JOptionPane(msg, TrayIcon.MessageType.WARNING.ordinal());
+        return new JOptionPane(msg, JOptionPane.ERROR_MESSAGE);
     }
 
 }
