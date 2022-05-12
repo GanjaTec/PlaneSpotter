@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static planespotter.controller.Controller.*;
-
 public class DataMaster {
 
     // controller instance
@@ -34,10 +32,11 @@ public class DataMaster {
      */
     void load() {
         int startID = 0;
-        int endID = UserSettings.getMaxLoadedData();
+        int endID = new UserSettings().getMaxLoadedData();
         int dataPerTask = 5000; // vorher: (endID-startID)/100
+        var exe = controller.getScheduler();
         var outputWizard = new OutputWizard(exe, 0, startID, endID, dataPerTask);
-        exe.execute(outputWizard);
+        exe.exec(outputWizard);
         controller.waitForFinish();
         this.addAllToPre();
         controller.done();
@@ -48,14 +47,14 @@ public class DataMaster {
      */
     private void addAllToPre () {
        while (!listQueue.isEmpty()) { // adding all loaded lists to the main list ( listQueue is threadSafe )
-            liveData.addAll((Collection<? extends DataPoint>) listQueue.poll());
+            controller.liveData.addAll((Collection<? extends DataPoint>) listQueue.poll());
         }
     }
 
     /**
      * adds a List of SuperData subclasses to the queue
      */
-    public static void addToListQueue (List<? extends SuperData> toAdd) {
+    public void addToListQueue (List<? extends SuperData> toAdd) {
         listQueue.add(toAdd);
     }
 
@@ -67,7 +66,7 @@ public class DataMaster {
         try {
             return new DBOut().getFlightByID(id);
         } catch (DataNotFoundException e) {
-            this.controller.errorLog("flight with the ID " + id + " doesn't exist!");
+            this.controller.getLogger().errorLog("flight with the ID " + id + " doesn't exist!", this);
         } return null;
     }
 

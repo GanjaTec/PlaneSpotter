@@ -36,20 +36,20 @@ public class Search {
                 var list = out.getTrackingByFlight(fid);
                 return list;
             } else if (!callsign.isBlank()) {
+                var controller = Controller.getInstance();
                 var signs = this.findCallsigns(callsign);
-                Controller.loadedData = new ArrayList<>();
+                controller.loadedData = new ArrayList<>();
                 var fids = new ArrayDeque<Integer>();
                 while (!signs.isEmpty()) {
-                    var ids = out.getFlightIDsByCallsign(signs.poll());
-                    fids.addAll(ids);
+                    fids.addAll(out.getFlightIDsByCallsign(signs.poll()));
                 }
                 int counter = 0;
                 for (int i : fids) {
-                    Controller.loadedData.addAll(out.getTrackingByFlight(i));
+                    controller.loadedData.addAll(out.getTrackingByFlight(i));
                     if (counter++ > 10) break; // MAX 10 FLIGHTS
                 }
-                if (!Controller.loadedData.isEmpty()) {
-                    return Controller.loadedData;
+                if (!controller.loadedData.isEmpty()) {
+                    return controller.loadedData;
                 } else {
                     throw new DataNotFoundException("No flight found for callsign " + callsign + "!");
                 }
@@ -66,7 +66,7 @@ public class Search {
      * @param inputs are the input strings
      */
     public List<DataPoint> verifyPlane (String[] inputs) throws DataNotFoundException {
-        var id = inputs[0];
+        var id = inputs[0]; // FIXME: 11.05.2022 ID ist 5 statt 56
         var planetypes = this.findPlanetypes(inputs[1]); // FIXME: 06.05.2022 ES WERDEN RANDOM planetypes zurückgegeben
         var icao = inputs[2]; // find ICAOs
         var tailNr = inputs[3]; // find TailNr
@@ -86,9 +86,26 @@ public class Search {
             throw new DataNotFoundException("no data found! / no input!");
         }
         // TODO ist noch sehr langsam
-        var list = new ArrayList<DataPoint>();
-        list.addAll(out.getLastTrackingsByFlightIDs(fids)); // working???
-        return list;
+        return new ArrayList<DataPoint>(out.getLastTrackingsByFlightIDs(fids)); // working???
+    }
+
+    public List<DataPoint> verifyAirport (String[] inputs) throws DataNotFoundException {
+        var id = inputs[0];
+        var tag = inputs[1];
+        var name = inputs[2];
+        var out = new DBOut();
+        var dps = new ArrayList<DataPoint>();
+        ArrayDeque<Integer> aids;
+        if (!id.isBlank()) {
+
+        } else if (!tag.isBlank() || !name.isBlank()) {
+            aids = this.findAirports(Objects.requireNonNullElse(tag, name));
+            dps.addAll(out.getLastTrackingsByFlightIDs(aids));
+        }
+        if (dps.isEmpty()) {
+            throw new DataNotFoundException("No airports found for these inputs!");
+        }
+        return dps;
     }
 
     /**
@@ -105,12 +122,20 @@ public class Search {
         return allPlanetypes;
     }
 
-    private ArrayDeque<String> findCallsigns (String input) throws DataNotFoundException {
+    private ArrayDeque<String> findCallsigns (String input) throws DataNotFoundException { // TODO evtl. hier catchen!! in DBout Werfen
         var allCallsigns = new DBOut().getAllCallsignsLike(input);
         if (allCallsigns.isEmpty()) {
             throw new DataNotFoundException("no existing callsign found for " + input + "!");
         }
         return allCallsigns;
+    }
+
+    private ArrayDeque<Integer> findAirports (String airport) throws DataNotFoundException {
+        var aids = new DBOut().getAirportIDsLike(airport);
+        if (aids.isEmpty()) {
+            throw new DataNotFoundException("No existing airport found for " + airport + "!");
+        }
+        return aids;
     }
 
 }

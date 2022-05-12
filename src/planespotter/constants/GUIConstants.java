@@ -36,6 +36,7 @@ public final class GUIConstants {
     public static final ImageIcon   BGROUND_IMG = new ImageIcon(Paths.IMG_PATH + "background.png"),
                                     MENU_BGROUND_IMG = new ImageIcon(Paths.IMG_PATH + "menu_background.png"),
                                     TITLE_BGROUND_IMG = new ImageIcon(Paths.IMG_PATH + "title_background.jpg"),
+                                    PAPER_PLANE_ICON = new ImageIcon(Paths.IMG_PATH + "planespotter_icon.png"),
                                     FLYING_PLANE_ICON = new ImageIcon(Paths.IMG_PATH + "flying_plane_icon.png");
 
     /**

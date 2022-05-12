@@ -1,5 +1,7 @@
 package planespotter.model;
 
+import com.google.gson.internal.Streams;
+import com.google.gson.stream.JsonReader;
 import planespotter.constants.Paths;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
@@ -8,6 +10,8 @@ import planespotter.throwables.DataNotFoundException;
 
 import javax.swing.*;
 import java.io.*;
+import java.time.LocalTime;
+import java.util.Date;
 import java.util.HashMap;
 
 import static planespotter.constants.Configuration.*;
@@ -18,36 +22,37 @@ import static planespotter.constants.Configuration.*;
 public class FileMaster {
 
     // controller instance
-    private final Controller controller = Controller.getInstance();
+    private final Controller controller;
 
     /**
      * constructor
      */
     public FileMaster() {
-
+        controller = Controller.getInstance();
     }
 
     /**
      * saves the config as a .cfg file
      */
-    public static void saveConfig () {
+    public Runnable saveConfig () {
         var fileWizard = new FileMaster();
         // saving / loading at the monment ?
         try {
-            fileWizard.controller.log("saving config...");
+            fileWizard.controller.getLogger().log("saving config...", fileWizard);
             var config = new File(Paths.SRC_PATH + "configuration.cfg");
             if (!config.exists()) { // creating new file if there is no existing one
                 config.createNewFile();
             }
             var writer = new FileWriter(config);
             writer.write("maxThreadPoolSize: " + MAX_THREADPOOL_SIZE + "\n");
-            writer.write("maxLoadedFlights: " + UserSettings.getMaxLoadedData() + "\n");
+            writer.write("maxLoadedFlights: " + new UserSettings().getMaxLoadedData() + "\n");
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            fileWizard.controller.sucsessLog("configuration.cfg saved sucsessfully!");
+            fileWizard.controller.getLogger().sucsessLog("configuration.cfg saved sucsessfully!", fileWizard);
         }
+        return this::saveConfig;
     }
 
     /**
@@ -75,9 +80,27 @@ public class FileMaster {
             if (!file.exists()) {
                 file.createNewFile();
             }
-            if (!Controller.allMapData.isEmpty()) {
-                this.writeFlightRoute(file, Controller.allMapData);
+            var ctrl = Controller.getInstance();
+            if (!ctrl.allMapData.isEmpty()) {
+                this.writeFlightRoute(file, ctrl.allMapData);
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // TODO will be replaced with log4j (-> saving logs)
+    public void saveLogFile (String logged) {
+        try {
+            if (logged == null) {
+                throw new IllegalArgumentException("logged data might not be null!");
+            }
+            var filename = "log_" + (this.hashCode()/2 + logged.hashCode()/2) + ".log";
+            var file = new File("logs\\" + filename);
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            this.writeLog(file, logged);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -108,6 +131,16 @@ public class FileMaster {
         oos.writeObject(route);
         oos.close();
         fos.close();
+    }
+
+    private void writeLog (File file, String text) {
+        try {
+            var writer = new FileWriter(file);
+            writer.write(text);
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

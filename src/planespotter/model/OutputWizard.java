@@ -2,12 +2,11 @@ package planespotter.model;
 
 import planespotter.controller.Controller;
 import planespotter.controller.DataMaster;
+import planespotter.controller.Scheduler;
 import planespotter.throwables.ThreadOverheadError;
 
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
-
-import static planespotter.constants.GUIConstants.*;
 
 /**
  * @name OutputWizard
@@ -18,7 +17,7 @@ import static planespotter.constants.GUIConstants.*;
  */
 public class OutputWizard extends DBOut implements Runnable {
     // @Nullable thread pool executor instance
-    private final ThreadPoolExecutor executor;
+    private final Scheduler scheduler;
     // ints: thread number, start-/end-id, max flights per one task, @Nullable flightID
     private final int threadNumber, from, to, flightsPerTask, flightID;
     // thread name
@@ -29,23 +28,23 @@ public class OutputWizard extends DBOut implements Runnable {
     /**
      * constructor with only executor as param for small tasks
      *
-     * @param executor is the thread pool executor
+     * @param scheduler is the thread pool executor
      */
-    public OutputWizard(ThreadPoolExecutor executor) {
-        this(executor, -1, -1, -1, -1);
+    public OutputWizard(Scheduler scheduler) {
+        this(scheduler, -1, -1, -1, -1);
     }
 
     /**
      * constructor
      *
-     * @param executor is the ThreadPoolExecutor, which executes the OutputWizards
+     * @param scheduler is the Scheduler, which executes the OutputWizards
      * @param tNumber is the thread number
      * @param from is the start id
      * @param to is the end id
      * @param dataPerTask is the max. number of loaded flights by one OutputWizard
      */
-    public OutputWizard(ThreadPoolExecutor executor, int tNumber, int from, int to, int dataPerTask) {
-        this.executor = executor;
+    public OutputWizard(Scheduler scheduler, int tNumber, int from, int to, int dataPerTask) {
+        this.scheduler = scheduler;
         this.threadNumber = tNumber;
         this.threadName = "output-wizard" + this.threadNumber;
         this.from = from;
@@ -64,11 +63,12 @@ public class OutputWizard extends DBOut implements Runnable {
         long start = System.nanoTime();
         Thread.currentThread().setPriority(9);
         Thread.currentThread().setName(this.threadName);
-        this.controller.log("thread " + ANSI_ORANGE + this.getName() + ANSI_RESET + " created!");
+        long threadID = Thread.currentThread().getId();
+        this.controller.getLogger().log("thread " + this.threadName + "@" + threadID + " created!", this);
         this.loadLiveTrackingBtwn(from, to);
-        this.controller.log( this.getName() + ANSI_ORANGE + "@" + ANSI_RESET + Thread.currentThread().getId() +
-                            ": loaded data in " + ANSI_YELLOW + (System.nanoTime()-start)/Math.pow(1000, 3) +
-                            ANSI_RESET + " seconds!");
+        this.controller.getLogger().sucsessLog(this.threadName +  "@" + threadID +
+                                                ": loaded data in " + (System.nanoTime()-start)/Math.pow(1000, 3) +
+                                                " seconds!", this);
     }
 
     /**
@@ -82,14 +82,14 @@ public class OutputWizard extends DBOut implements Runnable {
         if (flightsToLoad <= this.flightsPerTask) {
             //var flights = super.getAllFlightsBetween(fromID, toID);
             var dps = super.getLiveTrackingBetween(fromID, toID);
-            DataMaster.addToListQueue(dps);
+            new DataMaster().addToListQueue(dps);
         } else {
             int newEndID = to-(flightsToLoad/2);
-            var out0 = new OutputWizard(this.executor, this.threadNumber+1, fromID, newEndID, this.flightsPerTask);
-            var out1 = new OutputWizard(this.executor, this.threadNumber+2, newEndID, toID, this.flightsPerTask);
+            var out0 = new OutputWizard(this.scheduler, this.threadNumber+1, fromID, newEndID, this.flightsPerTask);
+            var out1 = new OutputWizard(this.scheduler, this.threadNumber+2, newEndID, toID, this.flightsPerTask);
             try {
-                this.executor.execute(out0);
-                this.executor.execute(out1);
+                this.scheduler.exec(out0);
+                this.scheduler.exec(out1);
             } catch (RejectedExecutionException e) {
                 throw new ThreadOverheadError();
             }

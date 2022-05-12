@@ -5,6 +5,7 @@ import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.TMSTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
+import planespotter.controller.Controller;
 
 /**
  * @name UserSettings
@@ -21,16 +22,16 @@ public class UserSettings {
 
     private static TileSource currentMapSource = new UserSettings().tmstMap;
     // map types
-    private final String baseUrl = "https://c.tile.openstreetmap.de";
-    private final TileSource    bingMap = new BingAerialTileSource(),
-                                transportMap = new OsmTileSource.TransportMap(),
-                                tmstMap = new TMSTileSource(new TileSourceInfo("neu", baseUrl, "0"));
+    private final String baseUrl = "https://a.tile.openstreetmap.de";
+    public final TileSource    bingMap = new BingAerialTileSource(),
+                               transportMap = new OsmTileSource.TransportMap(),
+                               tmstMap = new TMSTileSource(new TileSourceInfo("neu", baseUrl, "0"));
 
 
     /**
      * @return maxLoadedFlights, the limit of loaded flights
      */
-    public static int getMaxLoadedData() {
+    public int getMaxLoadedData() {
         return maxLoadedData;
     }
 
@@ -38,14 +39,14 @@ public class UserSettings {
      * @set the max loaded flights variable
      * @param newMax, the new flight limit
      */
-    public static void setMaxLoadedData(int newMax) {
+    public void setMaxLoadedData(int newMax) {
         maxLoadedData = newMax;
     }
 
     /**
      * @return the current map tile source
      */
-    public static TileSource getCurrentMapSource() {
+    public TileSource getCurrentMapSource() {
         return currentMapSource;
     }
 
@@ -54,8 +55,27 @@ public class UserSettings {
      *
      * @param currentMapSource is the tile source to set (bingMap, tmstMap, transportMap)
      */
-    public static void setCurrentMapSource(TileSource currentMapSource) {
+    public void setCurrentMapSource(TileSource currentMapSource) {
         UserSettings.currentMapSource = currentMapSource;
+    }
+
+    /**
+     *
+     * @param data [0] and [1] must be filled
+     */
+    public void confirm (String... data) {
+        if (data[0] == null || data[1] == null) {
+            throw new IllegalArgumentException("Please fill all fields! (with the right params)");
+        }
+        this.setMaxLoadedData(Integer.parseInt(data[0]));
+        var map = this.getCurrentMapSource();
+        switch (data[1]) {
+            case "Bing Map" -> map = this.bingMap;
+            case "Default Map" -> map = this.tmstMap;
+            case "Transport Map" -> map = this.transportMap;
+        }
+        this.setCurrentMapSource(map);
+        new GUISlave().mapViewer().setTileSource(map);
     }
 
 }

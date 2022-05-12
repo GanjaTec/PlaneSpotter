@@ -107,14 +107,14 @@ final class MenuModels {
      */
     JProgressBar progressBar (JMenuBar parent) {
         // TODO: seting up progress bar
-        var progressbar = new JProgressBar(0, 100);
+        var progressbar = new JProgressBar();
         progressbar.setBorder(LINE_BORDER);
         progressbar.setBackground(DEFAULT_FONT_COLOR);
         progressbar.setBorderPainted(true);
         progressbar.setForeground(new Color(92, 214, 92));
-        progressbar.setBounds(10, 135, parent.getWidth()-20, 15);
+        progressbar.setBounds(10, 90, parent.getWidth()-20, 15);
+        progressbar.setIndeterminate(true);
         progressbar.setVisible(false);
-        progressbar.setValue(0);
 
         return progressbar;
     }
@@ -167,20 +167,28 @@ final class MenuModels {
     /**
      * @return settings option pane (which pops up)
      */
-    JInternalFrame settings_intlFrame (JPanel parent) {
+    JDialog settingsDialog (JFrame parent) {
             var maxLoadLbl = new JLabel("Max. loaded Data:");
             maxLoadLbl.setBounds(20, 20, 180, 30);
             maxLoadLbl.setForeground(DEFAULT_FONT_COLOR);
             maxLoadLbl.setFont(FONT_MENU);
-        var settings = new JInternalFrame();
+            maxLoadLbl.setOpaque(false);
+            var mapType = new JLabel("Map Type:");
+            mapType.setBounds(20, 70, 300, 30);
+            mapType.setForeground(DEFAULT_FONT_COLOR);
+            mapType.setFont(FONT_MENU);
+            mapType.setOpaque(false);
+        var settings = new JDialog(parent);
         settings.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 500, 400);
         settings.setLayout(null);
-        settings.setBackground(DEFAULT_BORDER_COLOR);
-        settings.setClosable(true);
+        settings.setBackground(DEFAULT_SEARCH_ACCENT_COLOR);
+        settings.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        settings.setType(Window.Type.POPUP);
         settings.setResizable(false);
         settings.setFocusable(false);
         settings.add(maxLoadLbl);
-        settings.hide();
+        settings.add(mapType);
+        settings.setVisible(false);
 
         return settings;
     }
@@ -188,7 +196,7 @@ final class MenuModels {
     /**
      * settings opt. pane max-load text field
      */
-    JTextField settingsOP_maxLoadTxtField () {
+    JTextField settings_maxLoadTxtField () {
         var maxLoadTxtfield = new JTextField();
         maxLoadTxtfield.setBounds(200, 20, 50, 30);
         maxLoadTxtfield.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR));
@@ -197,6 +205,39 @@ final class MenuModels {
         maxLoadTxtfield.setFont(FONT_MENU);
 
         return maxLoadTxtfield;
+    }
+
+    JButton[] settingsButtons (JDialog parent) {
+        int mid = parent.getWidth() / 2;
+        int height = parent.getHeight() - 80;
+        var cancel = new UWPButton("Cancel");
+            cancel.setBackground(DEFAULT_SEARCH_ACCENT_COLOR);
+            cancel.setForeground(DEFAULT_FONT_COLOR);
+            cancel.setFont(FONT_MENU);
+        cancel.setBounds(mid - 140, height, 120, 30);
+        var confirm = new UWPButton("Confirm");
+        confirm.setBackground(DEFAULT_SEARCH_ACCENT_COLOR);
+        confirm.setForeground(DEFAULT_FONT_COLOR);
+        confirm.setFont(FONT_MENU);
+        confirm.setBounds(mid + 20, height, 120, 30);
+        return new UWPButton[] {
+                cancel, confirm
+        };
+    }
+
+    JComboBox<String> settings_mapTypeCmbBox () {
+        var mapTypeCmbBox = new JComboBox<String>(new String[] {
+                "Bing Map",
+                "Default Map",
+                "Transport Map"
+        });
+        mapTypeCmbBox.setBounds(200, 70, 100,  30);
+        mapTypeCmbBox.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR));
+        mapTypeCmbBox.setBackground(DEFAULT_BG_COLOR);
+        mapTypeCmbBox.setForeground(DEFAULT_MAP_ICON_COLOR);
+        mapTypeCmbBox.setFont(FONT_MENU);
+
+        return mapTypeCmbBox;
     }
 
     /**

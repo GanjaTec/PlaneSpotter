@@ -16,7 +16,7 @@ final class PanelModels {
     /**
      * main-panel
      */
-    static JPanel mainPanel (JFrame parent) {
+    JPanel mainPanel (JFrame parent) {
         // TODO: setting up mainpanel
         var mainpanel = new JPanel();
         mainpanel.setBounds(0, 0, parent.getWidth(), parent.getHeight()); // mainpanel width: 1260
@@ -28,7 +28,7 @@ final class PanelModels {
     /**
      * title panel with bground and title
      */
-    static JPanel titlePanel (JPanel parent) {
+    JPanel titlePanel (JPanel parent) {
         // TODO: setting up title panel
         var title = new JPanel();
         title.setBounds(0, 0, parent.getWidth(), 70);
@@ -42,7 +42,7 @@ final class PanelModels {
     /**
      * title text label
      */
-    static JLabel titleTxtLabel (JPanel parent) {
+    JLabel titleTxtLabel (JPanel parent) {
         // TODO: setting up title label
         var title_text = new JLabel("P l a n e S p o t t e r");
         title_text.setFont(TITLE_FONT);
@@ -56,7 +56,7 @@ final class PanelModels {
     /**
      * @return head panel for view
      */
-    static JPanel viewHeadPanel (JDesktopPane parent) {
+    JPanel viewHeadPanel (JDesktopPane parent) {
         // TODO: setting up view head panel
         var viewHead = new JPanel();
         viewHead.setBounds(0, 0, parent.getWidth(), 24);
@@ -71,10 +71,10 @@ final class PanelModels {
         /**
          * @return head label, which is part of viewHeadPanel
          */
-        static JLabel headLabel (String text) {
+        JLabel headLabel (String text) {
             // TODO: setting up head label
             var head = new JLabel(text + " > ");
-            head.setBounds(5, 0, 400, 20);
+            head.setBounds(5, 0, 600, 20);
             head.setFont(FONT_MENU.deriveFont(18));
             head.setForeground(DEFAULT_FONT_COLOR);
 
@@ -84,7 +84,7 @@ final class PanelModels {
     /**
      * @return list panel
      */
-    static JPanel listPanel (JDesktopPane parent) {
+    JPanel listPanel (JDesktopPane parent) {
         // TODO: setting up list panel
         var list = new JPanel();
         list.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
@@ -98,7 +98,7 @@ final class PanelModels {
     /**
      * map panel
      */
-    static JPanel mapPanel (JDesktopPane parent) {
+    JPanel mapPanel (JDesktopPane parent) {
         // TODO: setting up map panel
         var map = new JPanel();
         map.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
@@ -112,7 +112,7 @@ final class PanelModels {
     /**
      * menu panel
      */
-    static JPanel menuPanel (JDesktopPane parent) {
+    JPanel menuPanel (JDesktopPane parent) {
         // TODO: setting up menu panel
         var menu = new JPanel();
         menu.setBounds(0, 0, parent.getWidth(), parent.getHeight());
@@ -125,7 +125,7 @@ final class PanelModels {
     /**
      * info panel
      */
-    static JPanel infoPanel (JDesktopPane parent) {
+    JPanel infoPanel (JDesktopPane parent) {
         // TODO: setting up info panel
         var info = new JPanel();
         info.setBounds(0, 0, parent.getWidth(), parent.getHeight());
@@ -138,7 +138,7 @@ final class PanelModels {
     /**
      * search panel // TODO radioButtons, TxtField, 2 Buttons, JLabels -> aber extern
      */
-    static JPanel searchPanel (JPanel parent) {
+    JPanel searchPanel (JPanel parent) {
         // TODO: setting up search panel
         var search = new JPanel();
         search.setBounds(10, 150, parent.getWidth()-20, parent.getHeight()-240);
@@ -154,7 +154,7 @@ final class PanelModels {
     /**
      * start panel
      */
-    static JPanel startPanel (JDesktopPane parent) {
+    JPanel startPanel (JDesktopPane parent) {
         // TODO setting up start screen panel
         var start = new JPanel();
         start.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
@@ -168,7 +168,7 @@ final class PanelModels {
     /**
      * background label
      */
-    static JLabel backgroundLabel (JDesktopPane parent) {
+    JLabel backgroundLabel (JDesktopPane parent) {
         // TODO: setting up background image
         var bground = new JLabel(BGROUND_IMG);
         bground.setSize(parent.getWidth(), parent.getHeight());
@@ -179,7 +179,7 @@ final class PanelModels {
     /**
      * background label
      */
-    static JLabel menuBgLabel (JDesktopPane parent) {
+    JLabel menuBgLabel (JDesktopPane parent) {
         // TODO: setting up background image
         var bground = new JLabel(MENU_BGROUND_IMG);
         bground.setSize(parent.getWidth(), parent.getHeight());

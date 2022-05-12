@@ -15,7 +15,7 @@ public class Utilities {
      * plays a sound from the default toolkit
      * @param sound is the sound to be played (see: GUIConstants)
      */
-    public static void playSound(String sound) {
+    public void playSound(String sound) {
         var sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(sound);
         if (sound2 != null) {
             sound2.run();
@@ -26,7 +26,7 @@ public class Utilities {
      * @param feet is the input, in feet (ft)
      * @return a feet value in meters
      */
-    public static int feetToMeters (int feet) {
+    public int feetToMeters (int feet) {
         return (int) (feet/3.2808);
     }
 
@@ -34,7 +34,7 @@ public class Utilities {
      * @param kn is the input, in knots (kn)
      * @return the knots in km per hour
      */
-    public static int knToKmh (int kn) {
+    public int knToKmh (int kn) {
         long kmh = Math.round(kn * 1.852);
         return (int) kmh;
     }
@@ -45,8 +45,16 @@ public class Utilities {
      * @param input is the string to pack
      * @return packed input string with 's
      */
-    public static String packString (String input) {
+    public String packString (String input) {
         return "'" + input + "'";
+    }
+
+    /**
+     * @param in is the string to strip
+     * @return input-string, but without the "s
+     */
+    public String stripString (String in) {
+        return in.replaceAll("\"", "");
     }
 
 }

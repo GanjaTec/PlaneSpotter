@@ -24,7 +24,7 @@ public class DBOut extends SupperDB {
 	/**
 	 * test: max loaded flights
 	 */
-	private static int maxLoadedFlights = UserSettings.getMaxLoadedData();
+	private final int maxLoadedFlights = new UserSettings().getMaxLoadedData();
 
 
 	/**
@@ -76,7 +76,7 @@ public class DBOut extends SupperDB {
 	public Airline getAirlineByTag (String tag) {
 		Airline a = null;
 		try {
-			tag = Controller.stripString(tag);
+			tag = new Utilities().stripString(tag);
 			var rs = querryDB(SQLQuerries.getAirlineByTag + tag); // ist leer TODO fixen
 			if (rs.next()) {
 				a = new Airline(rs.getInt("ID"), rs.getString("iatatag"), rs.getString("name"));
@@ -164,7 +164,7 @@ public class DBOut extends SupperDB {
 		// TODO: Bug fixen
 		// org.sqlite.SQLiteException: [SQLITE_ERROR] SQL error or missing database (unrecognized token: "06A1EB")
 		//icao = stripString(icao);
-		icao = Utilities.packString(icao);
+		icao = new Utilities().packString(icao);
 		var ids = new ArrayDeque<Integer>();
 		try {
 			var rs = querryDB(SQLQuerries.getPlaneIDsByICAO + icao);
@@ -248,7 +248,7 @@ public class DBOut extends SupperDB {
 	// TODO hier muss der Fehler sein
 	public List<DataPoint> getTrackingByFlight (int flightID) {
 		var dps = new ArrayList<DataPoint>();
-		//var flight_id = Utilities.packString(flightID);
+		//var flight_id = new Utilities().packString(flightID);
 		try {
 			var rs = querryDB("SELECT * FROM tracking WHERE flightid = " + flightID);
 			while (rs.next()) {
@@ -273,7 +273,7 @@ public class DBOut extends SupperDB {
 
 	public HashMap<Integer, DataPoint> getCompleteTrackingByFlight (int flightID) {
 		var dps = new HashMap<Integer, DataPoint>();
-		//var flight_id = Utilities.packString(flightID);
+		//var flight_id = new Utilities().packString(flightID);
 		try {
 			var rs = querryDB("SELECT * FROM tracking WHERE flightid = " + flightID);
 			while (rs.next()) {
@@ -381,7 +381,7 @@ public class DBOut extends SupperDB {
 		try {
 			var rs = super.querryDB(SQLQuerries.getFlights);
 			int counter = 0;
-			while (rs.next() && counter <= maxLoadedFlights) { // counter: max flights -> to limit the incoming data (prevents a crash)
+			while (rs.next() && counter <= this.maxLoadedFlights) { // counter: max flights -> to limit the incoming data (prevents a crash)
 				var dps = this.getCompleteTrackingByFlight(rs.getInt("ID"));
 				var aps = this.getAirports(rs.getString("src"), rs.getString("dest"));
 				var plane = this.getPlaneByID(rs.getInt("plane"));
@@ -404,7 +404,7 @@ public class DBOut extends SupperDB {
 	 * @throws Exception
 	 */
 	public ArrayDeque<Integer> getFlightIDsByCallsign (String callsign) {
-		callsign = Utilities.packString(callsign);
+		callsign = new Utilities().packString(callsign);
 		var ids = new ArrayDeque<Integer>();
 		try {
 			var rs = querryDB(SQLQuerries.getFlightIDsByCallsign + callsign);
@@ -495,18 +495,15 @@ public class DBOut extends SupperDB {
 			ResultSet rs = super.querryDB(SQLQuerries.getFlightByID + id);
 
 			if (rs.next()) {
-				var airports = getAirports(rs.getString("src"), rs.getString("dest")).toArray();
+				var airports = this.getAirports(rs.getString("src"), rs.getString("dest")).toArray();
 				var tracking = this.getCompleteTrackingByFlight(rs.getInt("ID"));
 				f = new Flight(rs.getInt("ID"), (Airport) airports[0], (Airport) airports[1], rs.getString("callsign"), getPlaneByID(rs.getInt("plane")), rs.getString("flightnr"), tracking);
 			} else {
-				var nullAirline = new Airline(-1, "None", "None");
-				var nullAirport = new Airport(-1, "None", "None", new Position(0d, 0d));
-				var nullPlane = new Plane(-1, "None", "None", "None", "None", nullAirline);
-				f = new Flight(-1, nullAirport, nullAirport, "None", nullPlane, "None", new HashMap<Integer, DataPoint>());
-				// throws DataNotFoundException, to signal that there were no data found
-				throw new DataNotFoundException();
+				throw new DataNotFoundException("No Flight found for id " + id + "!", true);
 			}
 			rs.close();
+		} catch (DataNotFoundException ignored) {
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
@@ -608,7 +605,7 @@ public class DBOut extends SupperDB {
 	 * @throws DataNotFoundException if there was no plane found
 	 */
 	public ArrayDeque<Integer> getPlaneIDsByTailNr (String tailNr) throws DataNotFoundException {
-		tailNr = Utilities.packString(tailNr);
+		tailNr = new Utilities().packString(tailNr);
 		var ids = new ArrayDeque<Integer>();
 		try {
 			var rs = super.querryDB(SQLQuerries.getPlaneIDByTailNr + tailNr);
@@ -647,7 +644,7 @@ public class DBOut extends SupperDB {
 
 	/**
 	 * @return list of all callsigns
-	 */ // FIXME: 05.05.2022 HIER IST EIN FEHLER !!
+	 */
 	public ArrayDeque<String> getAllCallsignsLike (String callsign) {
 		var allCallsigns = new ArrayDeque<String>();
 		try {
@@ -664,6 +661,26 @@ public class DBOut extends SupperDB {
 	}
 
 	/**
+	 * @return list of all callsigns
+	 */ // FIXME: 05.05.2022 HIER IST EIN FEHLER !!
+	public ArrayDeque<Integer> getAirportIDsLike (String airport) {
+		var aids = new ArrayDeque<Integer>();
+		try {
+			var rs = super.querryDB(	"SELECT DISTINCT ID FROM airports " +
+											 	"WHERE ((iatatag LIKE '%" + airport + "%') " +
+												"OR (name LIKE '%" + airport + "%'))");
+			while (rs.next()) {
+				aids.add(rs.getInt("ID"));
+			}
+			rs.close();
+			return aids;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
 	 *
 	 * @param flightIDs are the flight ids
 	 * @return last tracking point for each flight id
@@ -671,7 +688,9 @@ public class DBOut extends SupperDB {
 	public final ArrayDeque<DataPoint> getLastTrackingsByFlightIDs (final ArrayDeque<Integer> flightIDs) {
 		var dps = new ArrayDeque<DataPoint>();
 		try {
-			var querry = "SELECT max(t.ID) AS ID, t.flightid, t.latitude, t.longitude, t.altitude, t.groundspeed, t.heading, t.squawk, t.timestamp FROM tracking t WHERE flightid IN " + IN_INT(flightIDs) + " GROUP BY flightid";
+			var querry = 	"SELECT max(t.ID) AS ID, t.flightid, t.latitude, t.longitude, t.altitude, t.groundspeed, t.heading, t.squawk, t.timestamp " +
+							"FROM tracking t " +
+							"WHERE flightid IN " + IN_INT(flightIDs) + " GROUP BY flightid";
 			var rs = super.querryDB(querry);
 			while (rs.next()) {
 				var p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
@@ -736,10 +755,48 @@ public class DBOut extends SupperDB {
 		return ids;
 	}
 
+	/**
+	 *
+	 * @param from
+	 * @param to
+	 * @return
+	 */
 	public final List<DataPoint> getLiveTrackingBetween (final int from, final int to) {
 		var liveTracking = this.getLastTrackingsBetweenFlightIDs(from, to);
 		return new ArrayList<>(liveTracking);
+	}
 
+	/**
+	 *
+	 * @param airport
+	 * @return
+	 * @throws DataNotFoundException
+	 */
+	public final ArrayDeque<DataPoint> getTrackingsWithAirport (String airport)
+			throws DataNotFoundException { // TODO IN
+		var dps = new ArrayDeque<DataPoint>();
+		try {
+			var querry = "SELECT t.* FROM tracking t " +
+					"JOIN flights f ON ((f.ID = t.flightid) " +
+					"AND ((f.src LIKE '%" + airport + "%') " +
+					"OR (f.dest LIKE '%" + airport + "%')))"; // FIXME: 10.05.2022 Querry gibt lerres RS zurück
+			var rs = super.querryDB(querry);
+			DataPoint dp;
+			while (rs.next()) {
+				dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"),
+						new Position(rs.getDouble("latitude"), rs.getDouble("longitude")),
+						rs.getLong("timestamp"), rs.getInt("squawk"), rs.getInt("groundspeed"),
+						rs.getInt("heading"), rs.getInt("altitude"));
+				dps.add(dp);
+			}
+			if (dps.isEmpty()) {
+				throw new DataNotFoundException("No flights found with airport " + airport + "!", true);
+			}
+		} catch (DataNotFoundException ignored) {
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return dps;
 	}
 
 	// TODO public ArrayDeque<Integer> getPlaneIDsWhereTypeLike (String input) // sollte schneller sein
@@ -761,9 +818,9 @@ public class DBOut extends SupperDB {
 		int counter = 0;
 		for (var s : inThis) {
 			if (counter == inThis.size()-1) {
-				out += Utilities.packString(s);
+				out += new Utilities().packString(s);
 			} else {
-				out += Utilities.packString(s) + ", ";
+				out += new Utilities().packString(s) + ", ";
 			}
 			counter++;
 		}
