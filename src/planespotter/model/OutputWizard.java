@@ -5,6 +5,7 @@ import planespotter.controller.DataMaster;
 import planespotter.controller.Scheduler;
 import planespotter.throwables.ThreadOverheadError;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -61,9 +62,10 @@ public class OutputWizard extends DBOut implements Runnable {
     @Override
     public void run () {
         long start = System.nanoTime();
-        Thread.currentThread().setPriority(9);
-        Thread.currentThread().setName(this.threadName);
-        long threadID = Thread.currentThread().getId();
+        var thread = Thread.currentThread();
+        thread.setPriority(9);
+        thread.setName(this.threadName);
+        long threadID = thread.getId();
         this.controller.getLogger().log("thread " + this.threadName + "@" + threadID + " created!", this);
         this.loadLiveTrackingBtwn(from, to);
         this.controller.getLogger().sucsessLog(this.threadName +  "@" + threadID +

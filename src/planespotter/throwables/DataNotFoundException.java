@@ -60,6 +60,7 @@ public class DataNotFoundException extends Exception {
         var logger = Controller.getInstance().getLogger();
         var out = stringBuilder.toString();
         logger.errorLog(out, this);
+        super.printStackTrace();
     }
 
     @Override

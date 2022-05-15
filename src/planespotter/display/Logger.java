@@ -16,6 +16,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.util.Objects;
 
 import static planespotter.constants.GUIConstants.*;
+import static planespotter.constants.GUIConstants.DefaultColor.*;
 
 /**
  * @name Logger
@@ -43,7 +44,7 @@ public class Logger extends JFrame implements ComponentListener {
         super.setSize(700, 400);
         super.setLocationRelativeTo(null);
         super.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
-        super.setBackground(DEFAULT_BG_COLOR);
+        super.setBackground(DEFAULT_BG_COLOR.get());
         super.setLayout(null);
         super.setAlwaysOnTop(false);
         super.setIconImage(PAPER_PLANE_ICON.getImage());
@@ -51,10 +52,10 @@ public class Logger extends JFrame implements ComponentListener {
 
         this.out = new JTextPane();
         this.out.setBounds(0, 0, super.getWidth()-25, super.getHeight()-45);
-        this.out.setBackground(DEFAULT_SEARCH_ACCENT_COLOR);
-        this.out.setForeground(DEFAULT_FONT_COLOR);
+        this.out.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+        this.out.setForeground(DEFAULT_FONT_COLOR.get());
         this.out.setBorder(MENU_BORDER);
-        this.out.setCaretColor(DEFAULT_MAP_ICON_COLOR);
+        this.out.setCaretColor(DEFAULT_MAP_ICON_COLOR.get());
         this.out.setEditable(false);
         this.out.setFont(new Font("Consolas", Font.PLAIN, 12));
         var caret = (DefaultCaret) this.out.getCaret();
@@ -110,7 +111,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param ref
      */
     public void log (String txt, @Nullable Object ref) {
-        this.logInColor(txt, DEFAULT_FONT_COLOR, ref);
+        this.logInColor(txt, DEFAULT_FONT_COLOR.get(), ref);
     }
 
     /**
@@ -126,14 +127,14 @@ public class Logger extends JFrame implements ComponentListener {
         var timeFormat = new DateTimeFormatterBuilder().appendPattern("HH:mm:ss").toFormatter();
         var date = now.format(dateFormat);
         var time = now.format(timeFormat);
-        this.text(date, DEFAULT_FONT_COLOR);
+        this.text(date, DEFAULT_FONT_COLOR.get());
         this.sign(4);
-        this.text(time, DEFAULT_FONT_COLOR);
+        this.text(time, DEFAULT_FONT_COLOR.get());
         this.sign(3); // TODO make Sign values to Enum
         if (ref == null) {
-            this.text(mainref.getClass().getSimpleName(), DEFAULT_FONT_COLOR);
+            this.text(mainref.getClass().getSimpleName(), DEFAULT_FONT_COLOR.get());
         } else {
-            this.text(ref.getClass().getSimpleName(), DEFAULT_FONT_COLOR);
+            this.text(ref.getClass().getSimpleName(), DEFAULT_FONT_COLOR.get());
         }
         this.sign(1);
         this.text(" " + txt + "\n", col);
@@ -146,11 +147,11 @@ public class Logger extends JFrame implements ComponentListener {
      */
     private void sign (int val) {
         switch (val) {
-            case 0 -> this.text("[", DEFAULT_MAP_ICON_COLOR);
-            case 1 -> this.text("]", DEFAULT_MAP_ICON_COLOR);
-            case 2 -> this.text("> ", DEFAULT_MAP_ICON_COLOR);
-            case 3 -> this.text("@", DEFAULT_MAP_ICON_COLOR);
-            case 4 -> this.text(", ", DEFAULT_MAP_ICON_COLOR);
+            case 0 -> this.text("[", DEFAULT_MAP_ICON_COLOR.get());
+            case 1 -> this.text("]", DEFAULT_MAP_ICON_COLOR.get());
+            case 2 -> this.text("> ", DEFAULT_MAP_ICON_COLOR.get());
+            case 3 -> this.text("@", DEFAULT_MAP_ICON_COLOR.get());
+            case 4 -> this.text(", ", DEFAULT_MAP_ICON_COLOR.get());
         }
     }
 

@@ -1,11 +1,8 @@
 package planespotter.controller;
 
-import java.util.List;
-import java.util.Stack;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.*;
 
 import static planespotter.constants.Configuration.KEEP_ALIVE_TIME;
 import static planespotter.constants.Configuration.MAX_THREADPOOL_SIZE;
@@ -13,37 +10,51 @@ import static planespotter.constants.Configuration.MAX_THREADPOOL_SIZE;
 public class Scheduler {
 
     // ThreadPoolExecutor for thread execution in a thread pool -> package-private (only usable in controller package)
-    private final ThreadPoolExecutor exe;
-    private final ScheduledExecutorService scheduled_exe;
+    private static final ThreadPoolExecutor exe;
+    private static final ScheduledExecutorService scheduled_exe;
 
+    static { // like static constructor
+        exe = new ThreadPoolExecutor(0, MAX_THREADPOOL_SIZE, KEEP_ALIVE_TIME,
+                TimeUnit.SECONDS, new SynchronousQueue<>());
+        scheduled_exe = Executors.newScheduledThreadPool(0);
+
+    }
 
     public Scheduler () {
-        exe = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-        scheduled_exe = Executors.newScheduledThreadPool(1); // erstmal 1, wird evtl. noch mehr
-        this.exe.setKeepAliveTime(KEEP_ALIVE_TIME, TimeUnit.SECONDS);
-        this.exe.setMaximumPoolSize(MAX_THREADPOOL_SIZE);
     }
 
     public void exec (Runnable task) {
-        this.exe.execute(task);
+        this.exec(task, null);
     }
 
     public void schedule (Runnable task, int initDelay, int period) {
-        this.scheduled_exe.scheduleAtFixedRate(task, initDelay, period, TimeUnit.SECONDS);
+        scheduled_exe.scheduleAtFixedRate(task, initDelay, period, TimeUnit.SECONDS);
     }
 
-    public void runTask (Runnable task, String tName) {
+    public void exec (Runnable task, String tName) {
         var thread = new Thread(task);
-        thread.setName(tName);
+        if (tName != null) {
+            thread.setName(tName);
+        }
+        exe.execute(thread);
+        Controller.getWatchDog().watch(thread);
+    }
+
+    public void runAsThread(Runnable target, String name) {
+        var thread = new Thread(target);
+        thread.setName(name);
         thread.start();
     }
 
-    public void cancel () {
+    public synchronized void cancel (@NotNull Runnable... targets) {
         var ctrl = Controller.getInstance();
-        ctrl.getLogger().infoLog("All tasks cancelled!", this);
-        this.exe.purge();
-        //System.exit(1); // TODO soll nicht mehr gemacht werden
-        ctrl.getLogger().errorLog("FAIL!", this);
+        ctrl.getLogger().infoLog("Task cancelled!", this);
+        for (var r : targets) {
+            if (r == null) {
+                throw new NullPointerException("Task to cancel");
+            }
+            exe.remove(r);
+        }
     }
 
     public int active () {

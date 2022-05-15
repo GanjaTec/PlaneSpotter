@@ -13,6 +13,8 @@ import java.io.*;
 import java.time.LocalTime;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Vector;
 
 import static planespotter.constants.Configuration.*;
 
@@ -59,7 +61,7 @@ public class FileMaster {
      * saves a flight route in a .psp (.planespotter) file
      * @return
      */
-    public HashMap<Integer, DataPoint> loadPlsFile (JFileChooser chooser) throws DataNotFoundException {
+    public Vector<DataPoint> loadPlsFile (JFileChooser chooser) throws DataNotFoundException {
         var file = chooser.getSelectedFile();
         if (file.exists()) {
             try {
@@ -81,8 +83,8 @@ public class FileMaster {
                 file.createNewFile();
             }
             var ctrl = Controller.getInstance();
-            if (!ctrl.allMapData.isEmpty()) {
-                this.writeFlightRoute(file, ctrl.allMapData);
+            if (!ctrl.loadedData.isEmpty()) {
+                this.writeFlightRoute(file, ctrl.loadedData);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -110,11 +112,11 @@ public class FileMaster {
      * @param file is the file to read from
      * @return the flight route hash map
      */
-    private HashMap<Integer, DataPoint> readFlightRoute(File file)
+    private Vector<DataPoint> readFlightRoute(File file)
             throws ClassCastException, IOException, ClassNotFoundException {
         var fis = new FileInputStream(file);
         var ois = new ObjectInputStream(fis);
-        HashMap<Integer, DataPoint> route = (HashMap<Integer, DataPoint>) ois.readObject();
+        var route = (Vector<DataPoint>) ois.readObject();
         ois.close();
         return route;
     }
@@ -122,7 +124,7 @@ public class FileMaster {
     /**
      *
      */
-    private void writeFlightRoute (File toWrite, HashMap<Integer, DataPoint> route)
+    private void writeFlightRoute (File toWrite, Vector<DataPoint> route)
             throws IOException {
         // TODO how to write Hashmap to File?
         //  Serializable? new Class? Gson? (must not be readable, just loadable)

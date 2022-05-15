@@ -3,6 +3,7 @@ package planespotter.display;
 import javax.swing.*;
 
 import static planespotter.constants.GUIConstants.*;
+import static planespotter.constants.GUIConstants.DefaultColor.*;
 
 /**
  * @name PanelModels
@@ -21,7 +22,7 @@ final class PanelModels {
         var mainpanel = new JPanel();
         mainpanel.setBounds(0, 0, parent.getWidth(), parent.getHeight()); // mainpanel width: 1260
         mainpanel.setLayout(null);
-        mainpanel.setBackground(DEFAULT_BG_COLOR);
+        mainpanel.setBackground(DEFAULT_BG_COLOR.get());
         return mainpanel;
     }
 
@@ -33,7 +34,7 @@ final class PanelModels {
         var title = new JPanel();
         title.setBounds(0, 0, parent.getWidth(), 70);
         title.setOpaque(true);
-        title.setBackground(DEFAULT_ACCENT_COLOR);
+        title.setBackground(DEFAULT_ACCENT_COLOR.get());
         title.setLayout(null);
         title.setBorder(LINE_BORDER);
         return title;
@@ -46,7 +47,7 @@ final class PanelModels {
         // TODO: setting up title label
         var title_text = new JLabel("P l a n e S p o t t e r");
         title_text.setFont(TITLE_FONT);
-        title_text.setForeground(DEFAULT_FG_COLOR);
+        title_text.setForeground(DEFAULT_FG_COLOR.get());
         title_text.setFocusable(false);
         title_text.setBounds(parent.getWidth()/2-200, 0, 400, 70); // bounds in Bounds Klasse (?)
 
@@ -61,9 +62,9 @@ final class PanelModels {
         var viewHead = new JPanel();
         viewHead.setBounds(0, 0, parent.getWidth(), 24);
         viewHead.setLayout(null);
-        var border = BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR);
+        var border = BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR.get());
         viewHead.setBorder(border);
-        viewHead.setBackground(DEFAULT_BG_COLOR);
+        viewHead.setBackground(DEFAULT_BG_COLOR.get());
 
         return viewHead;
     }
@@ -76,7 +77,7 @@ final class PanelModels {
             var head = new JLabel(text + " > ");
             head.setBounds(5, 0, 600, 20);
             head.setFont(FONT_MENU.deriveFont(18));
-            head.setForeground(DEFAULT_FONT_COLOR);
+            head.setForeground(DEFAULT_FONT_COLOR.get());
 
             return head;
         }
@@ -88,7 +89,7 @@ final class PanelModels {
         // TODO: setting up list panel
         var list = new JPanel();
         list.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
-        list.setBackground(DEFAULT_BG_COLOR);
+        list.setBackground(DEFAULT_BG_COLOR.get());
         list.setLayout(null);
         list.setBorder(LINE_BORDER);
 
@@ -102,7 +103,7 @@ final class PanelModels {
         // TODO: setting up map panel
         var map = new JPanel();
         map.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
-        map.setBackground(DEFAULT_BG_COLOR);
+        map.setBackground(DEFAULT_BG_COLOR.get());
         map.setLayout(null);
         map.setBorder(LINE_BORDER);
 
@@ -116,7 +117,7 @@ final class PanelModels {
         // TODO: setting up menu panel
         var menu = new JPanel();
         menu.setBounds(0, 0, parent.getWidth(), parent.getHeight());
-        menu.setBackground(DEFAULT_BG_COLOR);
+        menu.setBackground(DEFAULT_BG_COLOR.get());
         menu.setLayout(null);
 
         return menu;
@@ -129,7 +130,7 @@ final class PanelModels {
         // TODO: setting up info panel
         var info = new JPanel();
         info.setBounds(0, 0, parent.getWidth(), parent.getHeight());
-        info.setBackground(DEFAULT_ACCENT_COLOR);
+        info.setBackground(DEFAULT_ACCENT_COLOR.get());
         info.setLayout(null);
 
         return info;
@@ -142,8 +143,8 @@ final class PanelModels {
         // TODO: setting up search panel
         var search = new JPanel();
         search.setBounds(10, 150, parent.getWidth()-20, parent.getHeight()-240);
-        search.setBackground(DEFAULT_ACCENT_COLOR);
-        var border = BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR, 1);
+        search.setBackground(DEFAULT_ACCENT_COLOR.get());
+        var border = BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get(), 1);
         search.setBorder(border);
         search.setLayout(null);
         search.setVisible(false);
@@ -158,7 +159,7 @@ final class PanelModels {
         // TODO setting up start screen panel
         var start = new JPanel();
         start.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
-        start.setBackground(DEFAULT_BG_COLOR);
+        start.setBackground(DEFAULT_BG_COLOR.get());
         start.setLayout(null);
         start.setBorder(LINE_BORDER);
 

@@ -15,7 +15,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static planespotter.constants.GUIConstants.DEFAULT_MAP_ICON_COLOR;
+import static planespotter.constants.GUIConstants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
 import static planespotter.constants.GUIConstants.LINE_BORDER;
 
 
@@ -37,7 +37,8 @@ public final class BlackBeardsNavigator {
     /**
      * constructor, is private because @unused
      */
-    public BlackBeardsNavigator() {
+    public BlackBeardsNavigator () {
+        BlackBeardsNavigator.initialize();
     }
 
     /**
@@ -49,43 +50,47 @@ public final class BlackBeardsNavigator {
 
     /**
      * creates a map with a flight route from a specific flight
-     *
-     * @param dps is the given tracking-hashmap
      */
-    public void createFlightRoute (List<DataPoint> dps, Flight flight, String text, boolean showPoints) throws DataNotFoundException {
+    public void createFlightRoute (Flight flight, String text, boolean showPoints) throws DataNotFoundException {
         var viewer = gui.mapViewer;
         var ctrl = Controller.getInstance();
-        ctrl.allMapData = new HashMap<>();
+        var dps = ctrl.loadedData;
+        int size = dps.size();
         int counter = 0;
         DataPoint last = null;
-        var polys = new ArrayList<MapPolygon>();
-        var markers = new ArrayList<MapMarker>();
+        CustomMapMarker newMarker;
+        Coordinate pos1, pos2;
+        MapPolygonImpl line;
+        var polys = new ArrayList<MapPolygon>(size);
+        var markers = new ArrayList<MapMarker>(size);
         for (var dp : dps) {
             var pos = dp.getPos();
-            var newMarker = new CustomMapMarker(new Coordinate(pos.getLat(), pos.getLon()), flight);
             int altitude = dp.getAltitude();
             // TODO in Constants auslagern -> Farben je nach Höhe (oder anders Attribut)
-            var color = new BlackBeardsNavigator().colorByAltitude(altitude);
+            var color = this.colorByAltitude(altitude);
             if (counter > 0) {
-                if (dp.getFlightID() == last.getFlightID()) {
-                    var pos1 = Position.toCoordinate(dp.getPos());
-                    var pos2 = Position.toCoordinate(last.getPos());
-                    var line = new MapPolygonImpl(pos1, pos2, pos1);
+                if (dp.getFlightID() == last.getFlightID()
+                        && dp.getTimestemp() >= last.getTimestemp()) {
+                    pos1 = Position.toCoordinate(dp.getPos());
+                    pos2 = Position.toCoordinate(last.getPos());
+                    line = new MapPolygonImpl(pos1, pos2, pos1);
                     line.setColor(color);
                     polys.add(line);
                 }
             }
-            newMarker.setBackColor(color);
             if (showPoints) {
+                newMarker = new CustomMapMarker(new Coordinate(pos.getLat(), pos.getLon()), null);
+                newMarker.setBackColor(color);
                 markers.add(newMarker);
             }
-            ctrl.allMapData.put(counter, dp);
             counter++;
             last = dp;
         }
 
         if (!dps.isEmpty()) {
-            viewer.setMapMarkerList(markers);
+            if (showPoints) {
+                viewer.setMapMarkerList(markers);
+            }
             viewer.setMapPolygonList(polys);
             new GUISlave().recieveMap(viewer, "Route: " + text);
             new TreePlantation().createFlightInfo(flight);
@@ -95,23 +100,20 @@ public final class BlackBeardsNavigator {
     /**
      * creates a map with all flights from the given list
      *
-     * @param list is the given flight list
-     *
      *             // FIXME: 27.04.2022 Methode aufteilen!!
      */ // TODO change to param List<Position>
-    public void createAllFlightsMap (List<DataPoint> list) {
-        var viewer = gui.mapViewer;
+    public void createAllFlightsMap () {
+        var viewer = new GUISlave().mapViewer();
         var viewSize = viewer.getVisibleRect(); // may be used in the future
         var ctrl = Controller.getInstance();
-        ctrl.allMapData = new HashMap<>();
-        int counter = 0;
-        for (var dp : list) {
-            var lastPos = dp.getPos();
-            var newMarker = new MapMarkerDot(new Coordinate(lastPos.getLat(), lastPos.getLon()));
-            newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR);
+        var util = new Utilities();
+        var data = (currentViewType == ViewType.MAP_ALL)
+                                    ? util.parsePositionVector(ctrl.liveData)
+                                    : util.parsePositionVector(ctrl.loadedData);
+        for (var pos : data) {
+            var newMarker = new MapMarkerDot(new Coordinate(pos.getLat(), pos.getLon()));
+            newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
             viewer.addMapMarker(newMarker);
-            ctrl.allMapData.put(counter, dp);
-            counter++;
         }
         new GUISlave().recieveMap(viewer, "Live-Map");
     }
@@ -174,7 +176,7 @@ public final class BlackBeardsNavigator {
      * @param point is the clicked map point (no coordinate)
      */
     void markerClicked (Point point) {
-        var clicked = gui.mapViewer.getPosition(point);
+        var clicked = new GUISlave().mapViewer().getPosition(point);
         var bbn = new BlackBeardsNavigator();
         switch (BlackBeardsNavigator.currentViewType) {
             case MAP_ALL, MAP_FROMSEARCH -> bbn.onClick_all(clicked);
@@ -186,7 +188,7 @@ public final class BlackBeardsNavigator {
      * is executed when a map marker is clicked and the current is MAP_ALL
      */
     private void onClick_all (ICoordinate clickedCoord) {
-        var markers = gui.mapViewer.getMapMarkerList();
+        var markers = new GUISlave().mapViewer().getMapMarkerList();
         var newMarkerList = new ArrayList<MapMarker>();
         Coordinate markerCoord;
         CustomMapMarker newMarker;
@@ -196,18 +198,18 @@ public final class BlackBeardsNavigator {
         var ctrl = Controller.getInstance();
         for (MapMarker m : markers) {
             markerCoord = m.getCoordinate();
-            newMarker = new CustomMapMarker(markerCoord, null);
+            newMarker = new CustomMapMarker(markerCoord, null); // FIXME: 13.05.2022
             if (bbn.markerHit(markerCoord, clickedCoord)) {
                 markerHit = true;
                 newMarker.setBackColor(Color.RED);
                 gui.pMenu.setVisible(false);
                 gui.pInfo.removeAll();
                 gui.dpleft.moveToFront(gui.pInfo);
-                int flightID = ctrl.allMapData.get(counter).getFlightID();
+                int flightID = ctrl.liveData.get(counter).getFlightID();
                 var flight = new DataMaster().flightByID(flightID);
                 new TreePlantation().createFlightInfo(flight);
             } else {
-                newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR);
+                newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
             }
             newMarker.setName(m.getName());
             newMarkerList.add(newMarker);
@@ -232,7 +234,7 @@ public final class BlackBeardsNavigator {
             markerCoord = m.getCoordinate();
             if (bbn.markerHit(markerCoord, clickedCoord)) {
                 gui.pInfo.removeAll();
-                var dp = ctrl.allMapData.get(counter);
+                var dp = ctrl.loadedData.get(counter);
                 var flight = new DataMaster().flightByID(dp.getFlightID()); // TODO woanders!!!
                 new TreePlantation().createDataPointInfo(flight, dp);
                 gui.mapViewer.setMapMarkerList(bbn.resetMarkers(m));
@@ -247,7 +249,7 @@ public final class BlackBeardsNavigator {
      * @return true, if clicked coord is equals marker coord, with tolarance
      */
     private boolean markerHit (Coordinate marker, ICoordinate clicked) {
-        int zoom = gui.mapViewer.getZoom();
+        int zoom = new GUISlave().mapViewer().getZoom();
         double tolerance = 0.005 * zoom; // // FIXME: 23.04.2022 falsche formel (exponential?)
         return (clicked.getLat() < marker.getLat() + tolerance &&
                 clicked.getLat() > marker.getLat() - tolerance &&

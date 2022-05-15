@@ -3,15 +3,16 @@ package planespotter.display;
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
 import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
+import planespotter.constants.Paths;
 import planespotter.controller.Controller;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
 import static planespotter.constants.GUIConstants.*;
+import static planespotter.constants.GUIConstants.DefaultColor.*;
 import static planespotter.constants.ViewType.*;
 
 /**
@@ -29,7 +30,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * components // unsorted TODO sort
      */
     public JFrame        window;
-    protected JFrame loadingScreen;
+    public JFrame loadingScreen;
     protected JDesktopPane  dpleft, dpright;
     protected JPanel        mainpanel, pTitle, pViewHead, pList, pMap, pMenu, pInfo, pStartScreen, pSearch;
     protected JLabel        title, title_bground, lblStartScreen, lblLoading, viewHeadText, searchForLabel;
@@ -63,22 +64,15 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     // TODO fix ConcurrentModificationException on mapViewer
     protected volatile JMapViewer mapViewer;
 
-    // swing background worker
-    public SwingWorker<Runnable, Void> worker;
-    public boolean working = false;
-
     // alternative test path: "C:\\Users\\jml04\\Desktop\\loading.gif"
-    private final ImageIcon loading_gif = new ImageIcon(Objects.requireNonNull(this.getClass().getResource("/planespotter/images/loading.gif")));
-
-    // controller instance
-    Controller controller;
+    private final ImageIcon loading_gif = new ImageIcon(Paths.IMG_PATH + "loading.gif");
 
     /**
      * constructor for GUI
      */
     public GUI() {
-        this.worker = this.nullWorker();
-        window = this.initialize();
+        this.loadingScreen = this.loadingScreen();
+        this.window = this.initialize();
     }
 
     /**
@@ -86,10 +80,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      */
     @Override
     public void run() {
-        Thread.currentThread().setName("planespotter-gui");
-        var loading = this.loadingScreen();
-        loading.setVisible(true);
-
+        this.loadingScreen.setVisible(true);
     }
 
     /**
@@ -115,7 +106,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      * creates new GUI window
      */
     protected JFrame initialize () {
-        controller = Controller.getInstance();
         var menuModels = new MenuModels();
         var panelModels = new PanelModels();
         var searchModels = new SearchModels();
@@ -130,14 +120,14 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         // TODO: setting up right desktop pane
         this.dpright = new JDesktopPane();
         this.dpright.setBorder(LINE_BORDER);
-        this.dpright.setBackground(DEFAULT_BG_COLOR);
+        this.dpright.setBackground(DEFAULT_BG_COLOR.get());
         this.dpright.setDesktopManager(new DefaultDesktopManager());
         this.dpright.setBounds(280, 70, this.mainpanel.getWidth()-280, this.mainpanel.getHeight()-70);
         this.dpright.setOpaque(false);
         // TODO: setting up left desktop pane
         this.dpleft = new JDesktopPane();
         this.dpleft.setBorder(LINE_BORDER);
-        this.dpleft.setBackground(DEFAULT_BG_COLOR);
+        this.dpleft.setBackground(DEFAULT_BG_COLOR.get());
         this.dpleft.setDesktopManager(new DefaultDesktopManager());
         this.dpleft.setBounds(0, 70, 280, this.mainpanel.getHeight()-70);
         this.dpleft.setOpaque(false);
@@ -350,14 +340,14 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     JScrollPane listScrollPane(JTree inside) {
         var sp = new JScrollPane(inside);
         sp.setViewportView(inside);
-        sp.setBackground(DEFAULT_BG_COLOR);
-        sp.setForeground(DEFAULT_BORDER_COLOR);
+        sp.setBackground(DEFAULT_BG_COLOR.get());
+        sp.setForeground(DEFAULT_BORDER_COLOR.get());
         sp.setBounds(0, 0, this.pList.getWidth(), this.pList.getHeight());
         sp.setBorder(LINE_BORDER);
         var verticalScrollBar = sp.getVerticalScrollBar();
-        verticalScrollBar.setBackground(DEFAULT_BG_COLOR);
-        verticalScrollBar.setForeground(DEFAULT_ACCENT_COLOR);
-        verticalScrollBar.setBorder(BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR));
+        verticalScrollBar.setBackground(DEFAULT_BG_COLOR.get());
+        verticalScrollBar.setForeground(DEFAULT_ACCENT_COLOR.get());
+        verticalScrollBar.setBorder(BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR.get()));
         sp.setVerticalScrollBar(verticalScrollBar);
         sp.setOpaque(false);
         return sp;
@@ -382,9 +372,9 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                     int max = Integer.parseInt(args[1]);
                     if (max <= 10000) {
                         new UserSettings().setMaxLoadedData(max);
-                        this.controller.getLogger().log("maxload changed to " + args[1] + " !", this);
+                        Controller.getLogger().log("maxload changed to " + args[1] + " !", this);
                     } else {
-                        this.controller.getLogger().log("Failed! Maximum is 10000!", this);
+                        Controller.getLogger().log("Failed! Maximum is 10000!", this);
                     }
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
@@ -412,21 +402,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         var src = e.getSource();
         if (src instanceof JButton) {
             var gsl = new GUISlave();
-            worker = new SwingWorker<Runnable, Void>() {
-                @Override
-                protected Runnable doInBackground() throws Exception {
-                    working = true;
-                    gsl.buttonClicked((JButton) src);
-                    return null;
-                }
-
-                @Override
-                protected void done () {
-                    working = false;
-                }
-            };
-            worker.execute();
-
+            Controller.getScheduler().exec(() -> gsl.buttonClicked((JButton) src));
         }
     }
 
@@ -500,7 +476,6 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     // item listener (combo-box)
     @Override
     public void itemStateChanged(ItemEvent e) {
-        var comp = e.getSource();
         var item = e.getItem();
         if (e.getSource() == this.searchFor_cmbBox) {
             var gsl = new GUISlave();
@@ -518,12 +493,4 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         }
     }
 
-    private SwingWorker<Runnable, Void> nullWorker () {
-        return new SwingWorker<Runnable, Void>() {
-            @Override
-            protected Runnable doInBackground() throws Exception {
-                return null;
-            }
-        };
-    }
 }

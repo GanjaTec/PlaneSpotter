@@ -26,30 +26,30 @@ public class Search {
      *
      * @param inputs are the input strings
      */
-    public List<DataPoint> verifyFlight (String[] inputs) throws DataNotFoundException {
+    public Vector<DataPoint> verifyFlight (String[] inputs) throws DataNotFoundException {
         var id = inputs[0];
         var callsign = inputs[1];
         try {
             var out = new DBOut();
+            var ctrl = Controller.getInstance();
             if (!id.isBlank()) {
                 int fid = Integer.parseInt(id);
-                var list = out.getTrackingByFlight(fid);
-                return list;
+                ctrl.loadedData = out.getTrackingByFlight(fid);
+                return ctrl.loadedData;
             } else if (!callsign.isBlank()) {
-                var controller = Controller.getInstance();
                 var signs = this.findCallsigns(callsign);
-                controller.loadedData = new ArrayList<>();
+                ctrl.loadedData = new Vector<>();
                 var fids = new ArrayDeque<Integer>();
                 while (!signs.isEmpty()) {
                     fids.addAll(out.getFlightIDsByCallsign(signs.poll()));
                 }
                 int counter = 0;
                 for (int i : fids) {
-                    controller.loadedData.addAll(out.getTrackingByFlight(i));
+                    ctrl.loadedData.addAll(out.getTrackingByFlight(i));
                     if (counter++ > 10) break; // MAX 10 FLIGHTS
                 }
-                if (!controller.loadedData.isEmpty()) {
-                    return controller.loadedData;
+                if (!ctrl.loadedData.isEmpty()) {
+                    return ctrl.loadedData;
                 } else {
                     throw new DataNotFoundException("No flight found for callsign " + callsign + "!");
                 }
@@ -65,7 +65,7 @@ public class Search {
      *
      * @param inputs are the input strings
      */
-    public List<DataPoint> verifyPlane (String[] inputs) throws DataNotFoundException {
+    public Vector<DataPoint> verifyPlane (String[] inputs) throws DataNotFoundException {
         var id = inputs[0]; // FIXME: 11.05.2022 ID ist 5 statt 56
         var planetypes = this.findPlanetypes(inputs[1]); // FIXME: 06.05.2022 ES WERDEN RANDOM planetypes zurückgegeben
         var icao = inputs[2]; // find ICAOs
@@ -83,29 +83,28 @@ public class Search {
             fids.addAll(out.getPlaneIDsByTailNr(tailNr)); // dont add plane ids but flight ids
         }
         if (fids.isEmpty()) {
-            throw new DataNotFoundException("no data found! / no input!");
+            throw new DataNotFoundException("no data found / no input at Search::verifyPlane!");
         }
         // TODO ist noch sehr langsam
-        return new ArrayList<DataPoint>(out.getLastTrackingsByFlightIDs(fids)); // working???
+        return new Vector<>(out.getLastTrackingsByFlightIDs(fids)); // working???
     }
 
-    public List<DataPoint> verifyAirport (String[] inputs) throws DataNotFoundException {
+    public Vector<DataPoint> verifyAirport (String[] inputs) throws DataNotFoundException {
         var id = inputs[0];
         var tag = inputs[1];
         var name = inputs[2];
         var out = new DBOut();
-        var dps = new ArrayList<DataPoint>();
-        ArrayDeque<Integer> aids;
+        var ctrl = Controller.getInstance();
+        ctrl.loadedData = new Vector<>();
         if (!id.isBlank()) {
 
         } else if (!tag.isBlank() || !name.isBlank()) {
-            aids = this.findAirports(Objects.requireNonNullElse(tag, name));
-            dps.addAll(out.getLastTrackingsByFlightIDs(aids));
+            ctrl.loadedData.addAll(out.getTrackingsWithAirport(Objects.requireNonNullElse(tag, name)));
         }
-        if (dps.isEmpty()) {
+        if (ctrl.loadedData.isEmpty()) {
             throw new DataNotFoundException("No airports found for these inputs!");
         }
-        return dps;
+        return ctrl.loadedData;
     }
 
     /**
@@ -130,12 +129,12 @@ public class Search {
         return allCallsigns;
     }
 
-    private ArrayDeque<Integer> findAirports (String airport) throws DataNotFoundException {
+    private int findAirport (String airport) throws DataNotFoundException {
         var aids = new DBOut().getAirportIDsLike(airport);
         if (aids.isEmpty()) {
             throw new DataNotFoundException("No existing airport found for " + airport + "!");
         }
-        return aids;
+        return aids.getFirst();
     }
 
 }

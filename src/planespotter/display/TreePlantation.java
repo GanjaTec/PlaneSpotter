@@ -1,5 +1,6 @@
 package planespotter.display;
 
+import org.jetbrains.annotations.NotNull;
 import planespotter.constants.Paths;
 import planespotter.dataclasses.*;
 import planespotter.model.Utilities;
@@ -12,6 +13,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import static planespotter.constants.GUIConstants.*;
+import static planespotter.constants.GUIConstants.DefaultColor.DEFAULT_BG_COLOR;
+import static planespotter.constants.GUIConstants.DefaultColor.DEFAULT_SEARCH_ACCENT_COLOR;
 
 /**
  * @name TreePlantation
@@ -77,7 +80,7 @@ public final class TreePlantation {
     private  JTree defaultTree (DefaultMutableTreeNode treeNode) {
         var tree = new JTree(treeNode);
         tree.setFont(FONT_MENU);
-        tree.setBackground(DEFAULT_BG_COLOR);
+        tree.setBackground(DEFAULT_BG_COLOR.get());
         tree.setOpaque(false);
         // creating tree cell renderer
         var renderer = new CustomCellRenderer();
@@ -151,7 +154,7 @@ public final class TreePlantation {
      * creates only ONE flight tree node
      * @return DefaultMutableTreeNode, represents a flight (as a tree)
      */
-    public  DefaultMutableTreeNode flightInfoTreeNode (Flight f) {
+    public DefaultMutableTreeNode flightInfoTreeNode (@NotNull Flight f) {
         String strToStrip;
             var plane = f.getPlane();
             var airline = plane.getAirline();
@@ -256,18 +259,18 @@ public final class TreePlantation {
      * private class CustomCellRenderer is a custom tree cell renderer
      * it modifies the style of the tree cells
      */
-    private class CustomCellRenderer extends DefaultTreeCellRenderer {
+    private static class CustomCellRenderer extends DefaultTreeCellRenderer {
             @Override
             public Component getTreeCellRendererComponent(JTree tree, Object value,
                                                           boolean sel, boolean exp, boolean leaf,
                                                           int row, boolean hasFocus) {
                 super.getTreeCellRendererComponent(tree, value, sel, exp, leaf, row, hasFocus);
                 if (row % 2 == 0) {
-                    setBackgroundNonSelectionColor(DEFAULT_BG_COLOR);
+                    setBackgroundNonSelectionColor(DEFAULT_BG_COLOR.get());
                 } else {
                     setBackgroundNonSelectionColor(new Color(150, 150, 150));
                 }
-                setBackgroundSelectionColor(DEFAULT_SEARCH_ACCENT_COLOR);
+                setBackgroundSelectionColor(DEFAULT_SEARCH_ACCENT_COLOR.get());
 
                 return this;
             }

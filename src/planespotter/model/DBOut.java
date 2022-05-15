@@ -246,8 +246,8 @@ public class DBOut extends SupperDB {
 	 */
 	// TODO fix: HashMap lentgh was 1, but last Tracking id was about 23000
 	// TODO hier muss der Fehler sein
-	public List<DataPoint> getTrackingByFlight (int flightID) {
-		var dps = new ArrayList<DataPoint>();
+	public Vector<DataPoint> getTrackingByFlight (int flightID) {
+		var dps = new Vector<DataPoint>();
 		//var flight_id = new Utilities().packString(flightID);
 		try {
 			var rs = querryDB("SELECT * FROM tracking WHERE flightid = " + flightID);
@@ -555,7 +555,7 @@ public class DBOut extends SupperDB {
 		var flights = new ArrayDeque<Integer>();
 		try {
 			String querry = "SELECT ID FROM flights " +
-							"WHERE plane IN " + this.IN_INT(ids);
+							"WHERE plane " + this.IN_INT(ids);
 			var rs = super.querryDB(querry);
 			while (rs.next())  {
 				int id = rs.getInt("ID");
@@ -582,7 +582,7 @@ public class DBOut extends SupperDB {
 		try {
 			var querry = 	"SELECT f.ID FROM flights f " +
 							"JOIN planes p ON ((p.ID = f.plane) AND (f.endTime IS NULL))" +
-							"WHERE p.type IN " + this.IN_STR(planetypes);
+							"WHERE p.type " + this.IN_STR(planetypes);
 			var rs = super.querryDB(querry);
 			while (rs.next()) {
 				var id = rs.getInt("ID");
@@ -591,7 +591,7 @@ public class DBOut extends SupperDB {
 			}
 			rs.close();
 			if (ids.size() < 1) {
-				throw new DataNotFoundException("No plane IDs found for type " + planetypes + "!");
+				throw new DataNotFoundException("No plane IDs found for type " + planetypes + "!", true);
 			}
 		} catch (Exception e) { // FIXME: 03.05.2022 sollte querryDB eine Exception werfen? oder eine SQLException?
 			e.printStackTrace();
@@ -690,7 +690,7 @@ public class DBOut extends SupperDB {
 		try {
 			var querry = 	"SELECT max(t.ID) AS ID, t.flightid, t.latitude, t.longitude, t.altitude, t.groundspeed, t.heading, t.squawk, t.timestamp " +
 							"FROM tracking t " +
-							"WHERE flightid IN " + IN_INT(flightIDs) + " GROUP BY flightid";
+							"WHERE flightid " + this.IN_INT(flightIDs) + " GROUP BY flightid";
 			var rs = super.querryDB(querry);
 			while (rs.next()) {
 				var p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
@@ -729,7 +729,7 @@ public class DBOut extends SupperDB {
 				dps.add(dp);
 			}
 			if (dps.isEmpty()) {
-				throw new DataNotFoundException("No live flights found between " + from + "-" + to + " !");
+				throw new DataNotFoundException("No live flights found between " + from + "-" + to + " !", true);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -806,21 +806,23 @@ public class DBOut extends SupperDB {
 	 * @param inThis
 	 * @return
 	 */ // TODO zu einer Methode machen mit Wildcards
-	private String IN_INT(final ArrayDeque<Integer> inThis) {
-		var out = "(";
+	private String IN_INT (final ArrayDeque<Integer> inThis) {
+		var out = "IN (";
 		for (int i : inThis) {
 			out += i + ",";
 		}
 		return out.substring(0, out.length()-2) + ")";
 	}
 	private String IN_STR (final ArrayDeque<String> inThis) {
-		var out = "(";
+		var out = "IN (";
 		int counter = 0;
+		int last = inThis.size() - 1;
+		var util = new Utilities();
 		for (var s : inThis) {
-			if (counter == inThis.size()-1) {
-				out += new Utilities().packString(s);
+			if (counter == last) {
+				out += util.packString(s);
 			} else {
-				out += new Utilities().packString(s) + ", ";
+				out += util.packString(s) + ", ";
 			}
 			counter++;
 		}

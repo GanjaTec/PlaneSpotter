@@ -1,6 +1,6 @@
 package planespotter.constants;
 
-public final class Areas {
+public final class Areas { // TODO zu Enum machen (die einzel Strings) mit String area Bsp.: URKAINE("...").get() oder so
 	
 	//Ukraine War
 	public static final String UKRAINE = "52.567%2C45.909%2C17.843%2C45.967";

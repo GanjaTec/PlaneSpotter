@@ -41,23 +41,6 @@ public final class GUISlave {
     }
 
     /**
-     * initializes GUISlave class
-     */
-    public static void initialize () {
-
-    }
-
-    /**
-     * this method is executed when pre-loading is done
-     */
-    public void donePreLoading () {
-        new Utilities().playSound(SOUND_DEFAULT);
-        gui.loadingScreen.setVisible(false);
-        gui.window.setVisible(true);
-        gui.window.requestFocus();
-    }
-
-    /**
      * sets the JMapViewer in mapViewer
      *
      * @param map is the map to be set
@@ -232,7 +215,6 @@ public final class GUISlave {
         gui.viewHeadText.setText(DEFAULT_HEAD_TEXT);
         BlackBeardsNavigator.currentViewType = null;
         this.revalidateAll();
-        this.requestComponentFocus(gui.tfSearch);
     }
 
     void windowResized () {
@@ -296,7 +278,6 @@ public final class GUISlave {
             this.disposeView();
             var ctrl = Controller.getInstance(); // muss das sein
             ctrl.loadedData = null;
-            ctrl.allMapData = null;
             this.gui.pStartScreen.setVisible(true);
             this.gui.dpright.moveToFront(gui.pStartScreen);
         } else if (button == gui.settings) {

@@ -30,13 +30,13 @@ public class DataMaster {
      * works parallel ( recursive )
      * when a there are more than 50 flights to load, new ThreadedOutputWizards are created recursively
      */
-    void load() {
+    void load () {
         int startID = 0;
         int endID = new UserSettings().getMaxLoadedData();
-        int dataPerTask = 5000; // vorher: (endID-startID)/100
-        var exe = controller.getScheduler();
-        var outputWizard = new OutputWizard(exe, 0, startID, endID, dataPerTask);
-        exe.exec(outputWizard);
+        int dataPerTask = 5000; // testen!
+        var scheduler = Controller.getScheduler();
+        var outputWizard = new OutputWizard(scheduler, 0, startID, endID, dataPerTask);
+        scheduler.exec(outputWizard);
         controller.waitForFinish();
         this.addAllToPre();
         controller.done();

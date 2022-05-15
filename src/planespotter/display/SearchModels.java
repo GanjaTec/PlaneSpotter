@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static planespotter.constants.GUIConstants.*;
+import static planespotter.constants.GUIConstants.DefaultColor.*;
 
 /**
  * @name SearchModels
@@ -26,8 +27,8 @@ public final class SearchModels {
         // TODO: setting up "search for" combo box
         JComboBox<String> searchFor = new JComboBox(new SearchModels().searchBoxItems());
         searchFor.setBounds(parent.getWidth()/2, 10, (parent.getWidth()-20)/2, 25);
-        searchFor.setBackground(DEFAULT_SEARCH_ACCENT_COLOR);
-        searchFor.setForeground(DEFAULT_MAP_ICON_COLOR);
+        searchFor.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+        searchFor.setForeground(DEFAULT_MAP_ICON_COLOR.get());
         searchFor.setFont(FONT_MENU);
 
         return searchFor;
@@ -40,7 +41,7 @@ public final class SearchModels {
     JLabel cmbBoxLabel (JPanel parent) {
         var boxLabel = new JLabel("Search for:");
         boxLabel.setBounds(10, 10, (parent.getWidth()-20)/2, 25);
-        boxLabel.setForeground(DEFAULT_MAP_ICON_COLOR);
+        boxLabel.setForeground(DEFAULT_MAP_ICON_COLOR.get());
         boxLabel.setFont(FONT_MENU);
 
         return boxLabel;
@@ -65,7 +66,7 @@ public final class SearchModels {
         // TODO: setting up exact search panel
         var seperator = new JSeparator(JSeparator.HORIZONTAL);
         seperator.setBounds(10, 43, parent.getWidth()-20, 2);
-        seperator.setBackground(DEFAULT_SEARCH_ACCENT_COLOR);
+        seperator.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
 
         return seperator;
     }
@@ -78,8 +79,8 @@ public final class SearchModels {
         var message = "Es muss mindestens eins der Felder ausgefüllt sein!";
         var headMessage = new JTextArea(message);
         headMessage.setBounds(10, parent.getHeight()-80, parent.getWidth()-20, 35);
-        headMessage.setBackground(DEFAULT_BG_COLOR);
-        headMessage.setForeground(DEFAULT_FONT_COLOR);
+        headMessage.setBackground(DEFAULT_BG_COLOR.get());
+        headMessage.setForeground(DEFAULT_FONT_COLOR.get());
         headMessage.setBorder(null);
         headMessage.setEditable(false);
         headMessage.setLineWrap(true);
@@ -115,13 +116,13 @@ public final class SearchModels {
         for (var c : components) {
             if (c instanceof JLabel) {
                 c.setBounds(10, y, width, 25);
-                c.setBackground(DEFAULT_BG_COLOR);
-                c.setForeground(DEFAULT_MAP_ICON_COLOR);
+                c.setBackground(DEFAULT_BG_COLOR.get());
+                c.setForeground(DEFAULT_MAP_ICON_COLOR.get());
             } else if (c instanceof JTextField) {
                 c.setBounds(parent.getWidth()/2, y, width, 25);
-                c.setBackground(DEFAULT_FONT_COLOR);
-                c.setForeground(DEFAULT_FG_COLOR);
-                c.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR));
+                c.setBackground(DEFAULT_FONT_COLOR.get());
+                c.setForeground(DEFAULT_FG_COLOR.get());
+                c.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
                 y += 35;
             } else if (c instanceof JButton) {
                 var buttonText = ((JButton) c).getText();
@@ -132,8 +133,8 @@ public final class SearchModels {
                     c.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
                     c.setName("loadMap");
                 }
-                c.setBackground(DEFAULT_SEARCH_ACCENT_COLOR);
-                c.setForeground(DEFAULT_FONT_COLOR);
+                c.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                c.setForeground(DEFAULT_FONT_COLOR.get());
                 c.setBorder(MENU_BORDER);
             }
             c.setFont(FONT_MENU);
@@ -175,13 +176,13 @@ public final class SearchModels {
         for (var c : components) {
             if (c instanceof JLabel) {
                 c.setBounds(10, y, width, 25);
-                c.setBackground(DEFAULT_BG_COLOR);
-                c.setForeground(DEFAULT_MAP_ICON_COLOR);
+                c.setBackground(DEFAULT_BG_COLOR.get());
+                c.setForeground(DEFAULT_MAP_ICON_COLOR.get());
             } else if (c instanceof JTextField) {
                 c.setBounds(parent.getWidth()/2, y, width, 25);
-                c.setBackground(DEFAULT_FONT_COLOR);
-                c.setForeground(DEFAULT_FG_COLOR);
-                c.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR));
+                c.setBackground(DEFAULT_FONT_COLOR.get());
+                c.setForeground(DEFAULT_FG_COLOR.get());
+                c.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
                 y += 35;
             } else if (c instanceof JButton) {
                 var buttonText = ((JButton) c).getText();
@@ -192,8 +193,8 @@ public final class SearchModels {
                     c.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
                     c.setName("loadMap");
                 }
-                c.setBackground(DEFAULT_SEARCH_ACCENT_COLOR);
-                c.setForeground(DEFAULT_FONT_COLOR);
+                c.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                c.setForeground(DEFAULT_FONT_COLOR.get());
                 c.setBorder(MENU_BORDER);
             }
             c.setFont(FONT_MENU);
@@ -227,13 +228,13 @@ public final class SearchModels {
         for (var c : components) {
             if (c instanceof JLabel) {
                 c.setBounds(10, y, width, 25);
-                c.setBackground(DEFAULT_BG_COLOR);
-                c.setForeground(DEFAULT_MAP_ICON_COLOR);
+                c.setBackground(DEFAULT_BG_COLOR.get());
+                c.setForeground(DEFAULT_MAP_ICON_COLOR.get());
             } else if (c instanceof JTextField) {
                 c.setBounds(parent.getWidth()/2, y, width, 25);
-                c.setBackground(DEFAULT_FONT_COLOR);
-                c.setForeground(DEFAULT_FG_COLOR);
-                c.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR));
+                c.setBackground(DEFAULT_FONT_COLOR.get());
+                c.setForeground(DEFAULT_FG_COLOR.get());
+                c.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
                 y += 35;
             } else if (c instanceof JButton) {
                 var buttonText = ((JButton) c).getText();
@@ -244,8 +245,8 @@ public final class SearchModels {
                     c.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
                     c.setName("loadMap");
                 }
-                c.setBackground(DEFAULT_SEARCH_ACCENT_COLOR);
-                c.setForeground(DEFAULT_FONT_COLOR);
+                c.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                c.setForeground(DEFAULT_FONT_COLOR.get());
                 c.setBorder(MENU_BORDER);
             }
             c.setFont(FONT_MENU);

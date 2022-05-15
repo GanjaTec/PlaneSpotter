@@ -16,6 +16,7 @@ public class Deserializer {
 	//Now this is an awful way to handle things... dont do this:
 	
 	public String stripString (String in) {
+		if (in == null) return "";
 		String temp = in.replaceAll("\"", "");
 		String out = temp.replace("\n", "");
 		return out.replaceAll("\"", "");

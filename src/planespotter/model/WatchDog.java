@@ -4,51 +4,60 @@ import org.jetbrains.annotations.Nullable;
 import planespotter.controller.Controller;
 import planespotter.throwables.TimeoutException;
 
-import javax.swing.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
-public class WatchDog {
+public class WatchDog implements Runnable {
 
-    private final Controller ctrl;
+    private ConcurrentLinkedQueue<Thread> watchQueue;
 
-    public WatchDog (Controller ctrl) {
-        this.ctrl = ctrl;
+    private boolean onLock = false;
+
+    public WatchDog () {
+        this.watchQueue = new ConcurrentLinkedQueue<>();
     }
 
-    public void watch () {
-        this.watchBoolean(this.ctrl.loading, this.ctrl.getScheduler()::cancel);
-    }
-
-    private void watchBoolean (boolean target, Runnable action) {
-        try {
-            var sec = TimeUnit.SECONDS;
-            int erased = 0;
-            for (int time = 7; time > 0;) {
-                if (target) {
-                    sec.sleep(time);
-                    erased += time;
-                    this.ctrl.getLogger().infoLog("WARNING: Controller loading for " + erased + " seconds, Timeout expected!", this);
-                    if (time > 4) {
-                        time -= 2;
-                    } else {
-                        time--;
+    @Override
+    public void run() {
+        for (;;) {
+            if (this.watchQueue.isEmpty()) {
+                try {
+                    onLock = true;
+                    synchronized (this) {
+                        this.wait();
                     }
-                } else return;
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                var currentThread = this.watchQueue.poll();
+                var watcher = this.watcher(currentThread, 10, TimeUnit.SECONDS);
+                Controller.getScheduler().runAsThread(watcher, "WatchDog-Watcher");
+
             }
-            throw new TimeoutException(erased);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            this.critical(e.getMessage(), action, this);
         }
     }
 
-    public void watch (SwingWorker<Runnable, Void> target) {
-        this.ctrl.getScheduler().runTask(
-                () ->this.watchBoolean(this.ctrl.gui().working,
-                    () -> this.critical("All Swing-Worker Tasks cancelled!",
-                        //() -> target.cancel(true), this)), "WatchDog-Canceller");
-                            /*() -> System.exit(1)*/() -> this.ctrl.getLogger().errorLog("FAIL!", this), this)), "WatchDog-Canceller"); // TODO soll nicht mehr gemacht werden
+    public synchronized void watch (Thread target) {
+        this.watchQueue.add(target);
+        if (onLock) {
+            this.notify();
+            onLock = false;
+        }
+    }
+
+    private Runnable watcher (Thread target, int timeout, TimeUnit timeUnit) {
+        return () -> {
+            try {
+                new Utilities().timeoutTask(timeout, timeUnit);
+            } catch (TimeoutException e) {
+                if (target.isAlive()) {
+                    target.interrupt();
+                    Controller.getLogger().errorLog("TimeoutException caused by thread " + target.getName() +
+                            ", loaded over " + timeout + " " + timeUnit, this);
+                }
+            }
+        };
     }
 
     /**
@@ -72,9 +81,9 @@ public class WatchDog {
             throw new IllegalArgumentException("Runnable may not be null!");
         }
         if (msg != null) {
-            Controller.getInstance().getLogger().errorLog(msg, ref);
+            Controller.getLogger().errorLog(msg, ref);
         }
-        Controller.getInstance().getScheduler().runTask(doNext, "WatchDog-Critical");
+        Controller.getScheduler().exec(doNext, "WatchDog-Critical");
     }
 
 }
