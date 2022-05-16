@@ -10,7 +10,7 @@ import java.io.Serializable;
  *
  * This Class is used to represent a set of Coordinates
  */
-public class Position implements SuperData, Serializable {
+public class Position implements Data, Serializable {
 	private double lat;
 	private double lon;
 

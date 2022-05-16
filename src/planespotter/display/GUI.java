@@ -13,6 +13,7 @@ import java.util.List;
 
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.GUIConstants.DefaultColor.*;
+import static planespotter.constants.GUIConstants.Images.FLYING_PLANE_ICON;
 import static planespotter.constants.ViewType.*;
 
 /**
@@ -24,7 +25,7 @@ import static planespotter.constants.ViewType.*;
  * and has all components -> it contains window one sees
  */
 public class GUI implements ActionListener, KeyListener, JMapViewerEventListener,
-        ComponentListener, Runnable, MouseListener, ItemListener {
+                            ComponentListener, Runnable, MouseListener, ItemListener {
 
     /**
      * components // unsorted TODO sort
@@ -109,56 +110,56 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         var menuModels = new MenuModels();
         var panelModels = new PanelModels();
         var searchModels = new SearchModels();
-        // TODO: setting up window
+        // setting up window
         this.window = new JFrame("PlaneSpotter");
         this.window.setSize(1280, 720);
         this.window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         this.window.setLocationRelativeTo(null);
         this.window.addComponentListener(this);
-        // TODO: initializing mainpanel
+        // initializing mainpanel
         this.mainpanel = panelModels.mainPanel(this.window);
-        // TODO: setting up right desktop pane
+        // setting up right desktop pane
         this.dpright = new JDesktopPane();
         this.dpright.setBorder(LINE_BORDER);
         this.dpright.setBackground(DEFAULT_BG_COLOR.get());
         this.dpright.setDesktopManager(new DefaultDesktopManager());
         this.dpright.setBounds(280, 70, this.mainpanel.getWidth()-280, this.mainpanel.getHeight()-70);
         this.dpright.setOpaque(false);
-        // TODO: setting up left desktop pane
+        // setting up left desktop pane
         this.dpleft = new JDesktopPane();
         this.dpleft.setBorder(LINE_BORDER);
         this.dpleft.setBackground(DEFAULT_BG_COLOR.get());
         this.dpleft.setDesktopManager(new DefaultDesktopManager());
         this.dpleft.setBounds(0, 70, 280, this.mainpanel.getHeight()-70);
         this.dpleft.setOpaque(false);
-            // TODO: initializing title panel
+            // initializing title panel
             this.pTitle = panelModels.titlePanel(this.mainpanel);
-            // TODO: initializing view head panel
+            // initializing view head panel
             this.pViewHead = panelModels.viewHeadPanel(this.dpright);
             this.pViewHead.setOpaque(false);
-            // TODO: initializing list panel
+            // initializing list panel
             this.pList = panelModels.listPanel(this.dpright);
             this.pList.setOpaque(false);
-            // TODO: initializing map panel
+            // initializing map panel
             this.pMap = panelModels.mapPanel(this.dpright);
             this.pMap.setOpaque(false);
-                // TODO: initializing map viewer
+                // initializing map viewer
                 this.mapViewer = new BlackBeardsNavigator().defaultMapViewer(this.pMap);
                 this.mapViewer.addKeyListener(this);
                 this.mapViewer.addMouseListener(this);
                 this.mapViewer.addJMVListener(this);
-            // TODO: initializing menu panel
+            // initializing menu panel
             this.pMenu = panelModels.menuPanel(this.dpleft);
             this.pMenu.setOpaque(false);
-            // TODO: initializing info panel
+            // initializing info panel
             this.pInfo = panelModels.infoPanel(this.dpleft);
             this.pInfo.setOpaque(false);
-            // TODO: initializing start screen panel
+            // initializing start screen panel
             this.pStartScreen = panelModels.startPanel(this.dpright);
             this.pStartScreen.setOpaque(false);
-            // TODO: initializing search panel
+            // initializing search panel
             this.pSearch = panelModels.searchPanel(this.pMenu);
-                // TODO: initializing search panel components
+                // initializing search panel components
                 this.searchForLabel = searchModels.cmbBoxLabel(this.pSearch);
                 this.searchForLabel.setOpaque(false);
                 this.searchFor_cmbBox = searchModels.searchFor_cmbBox(this.pSearch);
@@ -169,13 +170,13 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 this.flightSearch = searchModels.flightSearch(pSearch, this);
                 this.planeSearch = searchModels.planeSearch(pSearch, this);
                 this.airportSearch = searchModels.airportSearch(this.pSearch, this);
-            // TODO: initializing background labels
+            // initializing background labels
             this.bground = panelModels.backgroundLabel(this.dpright);
             this.menu_bground = panelModels.menuBgLabel(this.dpleft);
-            // TODO: initializing pTitle
+            // initializing pTitle
             this.menubar = menuModels.menuBar(this.pMenu);
             this.menubar.setOpaque(false);
-                // TODO: initializing buttons
+                // initializing buttons
                 this.btList = menuModels.listButton(this.menubar);
                 this.btList.addActionListener(this);
                 this.btMap = menuModels.mapButton(this.menubar);
@@ -196,45 +197,41 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 for (var bt : this.settingsButtons) {
                     bt.addActionListener(this);
                 }
-            // TODO: initializing view head text label
+            // initializing view head text label
             this.viewHeadText = panelModels.headLabel("PlaneSpotter");
             this.viewHeadText.setOpaque(false);
-            // TODO: initializing file button
+            // initializing file button
             this.btFile = menuModels.fileButton(this.dpright);
             this.btFile.addActionListener(this);
-            // TODO: initializing file menu buttons
+            // initializing file menu buttons
             this.fileMenu = menuModels.fileMenu(this.pViewHead);
-            // TODO: initializing close view button
+            // initializing close view button
             this.closeView = menuModels.closeViewButton(this.dpright);
             this.closeView.addActionListener(this);
-            // TODO: setting up title backround img
+            // setting up title backround img
             // ich bekomme nur mit der getRessource methode ein Bild zurückgeliefert
-            var img = new ImageIcon(Objects.requireNonNull(
-                    this.getClass().getResource("/planespotter/images/title_background.jpg"))); // // FIXME: 27.04.2022 in Constants auslagern!
+            var img = new ImageIcon(Paths.IMG_PATH + "title_background.jpg"); // // FIXME: 27.04.2022 in Constants auslagern!
             this.title_bground = new JLabel(img);
             this.title_bground.setBounds(this.pTitle.getBounds());
             this.title_bground.setBorder(LINE_BORDER);
             // title text (might be replaced through one image)
             this.title = panelModels.titleTxtLabel(this.pTitle);
-            // TODO: setting up start screen
-            var start_image = new ImageIcon(Objects.requireNonNull(
-                    this.getClass().getResource("/planespotter/images/start_image.png")));
+            // setting up start screen
+            var start_image = new ImageIcon(Paths.IMG_PATH + "start_image.png"); // 15.05.2022  
             this.lblStartScreen = new JLabel(start_image);
             this.lblStartScreen.setBounds(0, 0, this.pStartScreen.getWidth(), this.pStartScreen.getHeight());
             this.lblStartScreen.setBorder(LINE_BORDER);
-            // TODO: adding test bground image
-        // FIXME: 11.05.2022 VERBESSERN
-            var test_img = new ImageIcon(Objects.requireNonNull(
-                    this.getClass().getResource("/planespotter/images/ttowers.png")));
+            // adding test bground image
+            var test_img = new ImageIcon(Paths.IMG_PATH + "ttowers.png"); // 15.05.2022
             this.lblStartScreen.setIcon(test_img);
             this.lblStartScreen.setOpaque(false);
 
-            this.window.setIconImage(FLYING_PLANE_ICON.getImage());
+            this.window.setIconImage(FLYING_PLANE_ICON.get().getImage());
 
-        // TODO: adding all generated components to window
+        // adding all generated components to window
         this.addAllToWinow();
 
-        // TODO: setting list and map panel invisible, start screen visible
+        // setting list and map panel invisible, start screen visible
         this.pList.setVisible(false);
         this.pMap.setVisible(false);
         this.pStartScreen.setVisible(true);
@@ -247,14 +244,14 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      */
     private void addAllToWinow() {
         // Adding to Window
-        // TODO: adding everything to menubar
+        // adding everything to menubar
         this.menubar.add(this.btList);
         this.menubar.add(this.btMap);
         this.menubar.add(this.settings);
         this.menubar.add(this.tfSearch);
         this.menubar.add(this.searchButton);
         this.menubar.add(this.progressbar);
-        // TODO: adding everything to search panel
+        // adding everything to search panel
         this.pSearch.add(this.searchForLabel);
         this.pSearch.add(this.searchFor_cmbBox);
         this.pSearch.add(this.searchSeperator);
@@ -273,35 +270,35 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
                 }
             }
         }
-        // TODO: adding menubar to menu panel
+        // adding menubar to menu panel
         this.pMenu.add(this.pSearch);
         this.pMenu.add(this.menubar);
-        // TODO: adding mapViewer to map panel
+        // adding mapViewer to map panel
         this.pMap.add(this.mapViewer);
-        // TODO: adding label to start screen panel
+        // adding label to start screen panel
         this.pStartScreen.add(this.lblStartScreen);
         for (var bt : this.fileMenu) {
             bt.addActionListener(this);
             this.pViewHead.add(bt);
         }
-        // TODO: adding everything to pViewHead
+        // adding everything to pViewHead
         this.pViewHead.add(this.viewHeadText);
         this.pViewHead.add(this.closeView);
         this.pViewHead.add(this.btFile);
-        // TODO: adding everything to right desktop pane
+        // adding everything to right desktop pane
         this.dpright.add(this.pViewHead);
         this.dpright.add(this.pList);
         this.dpright.add(this.pMap);
         this.dpright.add(this.pStartScreen);
         this.dpright.add(this.bground); // background 1
-        // TODO: adding everything to left desktop pane
+        // adding everything to left desktop pane
         this.dpleft.add(this.pMenu);
         this.dpleft.add(this.pInfo);
         this.dpleft.add(this.menu_bground);
-        // TODO: adding to pTitle
+        // adding to pTitle
         this.pTitle.add(new PanelModels().titleTxtLabel(this.pTitle));
         this.pTitle.add(this.title_bground);
-        // TODO: adding textfield to internal settings frame
+        // adding textfield to internal settings frame
         this.settings_maxLoadTf.setText(new UserSettings().getMaxLoadedData() + "");
         this.settingsDialog.add(this.settings_maxLoadTf);
         this.settingsDialog.add(this.settings_mapTypeCmbBox);
@@ -310,12 +307,12 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
         // setting desktopPanes visible
         this.dpright.setVisible(true);
         this.dpleft.setVisible(true);
-        // TODO: adding title panel to mainpanel
+        // adding title panel to mainpanel
         this.mainpanel.add(this.pTitle);
-        // TODO: adding desktop panes to mainpanel
+        // adding desktop panes to mainpanel
         this.mainpanel.add(this.dpright);
         this.mainpanel.add(this.dpleft);
-        // TODO: adding mainpanel to frame
+        // adding mainpanel to frame
         this.window.add(this.mainpanel);
     }
 

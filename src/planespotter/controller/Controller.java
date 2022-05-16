@@ -81,6 +81,7 @@ public class Controller {
      */
     private void startExecutors () {
         logger.log("initializing Executors...", this);
+        //scheduler.runAsThread(new DataMaster().dataLoader(), "Data-Loader"); // läuft noch nicht
         scheduler.runAsThread(watchDog, "Watch-Dog");
         scheduler.schedule(new FileMaster()::saveConfig, 60, 300);
         scheduler.schedule(() -> {
@@ -126,11 +127,11 @@ public class Controller {
      * reloads the data ( static -> able to executed by scheduled_exe )
      * used for live map
      */
-    public synchronized Runnable loadLiveData() {
+    public synchronized void loadLiveData() {
         if (!this.loading) {
             long startTime = System.nanoTime();
             this.loading = true;
-            liveData = new Vector<>();
+            //liveData = new Vector<>();
             new DataMaster().load();
             this.waitForFinish();
             logger.sucsessLog("loaded Live-Data in " + (System.nanoTime() - startTime) / Math.pow(1000, 3) +
@@ -145,7 +146,6 @@ public class Controller {
                 }
             }
         }
-        return this::loadLiveData;
     }
 
     /**
@@ -205,7 +205,10 @@ public class Controller {
                 var treePlant = new TreePlantation();
                 treePlant.createTree(treePlant.allFlightsTreeNode(flights));
             }
-            case MAP_ALL, MAP_FROMSEARCH -> bbn.createAllFlightsMap();
+            case MAP_ALL, MAP_FROMSEARCH -> {
+                this.loadedData = this.liveData;
+                bbn.createAllFlightsMap();
+            }
             case MAP_TRACKING -> {
                 try {
                     var out = new DBOut();

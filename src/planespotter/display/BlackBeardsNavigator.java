@@ -107,9 +107,10 @@ public final class BlackBeardsNavigator {
         var viewSize = viewer.getVisibleRect(); // may be used in the future
         var ctrl = Controller.getInstance();
         var util = new Utilities();
-        var data = (currentViewType == ViewType.MAP_ALL)
+        /*var data = (currentViewType == ViewType.MAP_ALL)
                                     ? util.parsePositionVector(ctrl.liveData)
-                                    : util.parsePositionVector(ctrl.loadedData);
+                                    : util.parsePositionVector(ctrl.loadedData);*/
+        var data = util.parsePositionVector(ctrl.loadedData);
         for (var pos : data) {
             var newMarker = new MapMarkerDot(new Coordinate(pos.getLat(), pos.getLon()));
             newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
@@ -175,7 +176,7 @@ public final class BlackBeardsNavigator {
      *
      * @param point is the clicked map point (no coordinate)
      */
-    void markerClicked (Point point) {
+    synchronized void markerClicked (Point point) {
         var clicked = new GUISlave().mapViewer().getPosition(point);
         var bbn = new BlackBeardsNavigator();
         switch (BlackBeardsNavigator.currentViewType) {
@@ -187,36 +188,42 @@ public final class BlackBeardsNavigator {
     /**
      * is executed when a map marker is clicked and the current is MAP_ALL
      */
+    boolean clicked = false;
     private void onClick_all (ICoordinate clickedCoord) {
-        var markers = new GUISlave().mapViewer().getMapMarkerList();
-        var newMarkerList = new ArrayList<MapMarker>();
-        Coordinate markerCoord;
-        CustomMapMarker newMarker;
-        int counter = 0;
-        boolean markerHit = false;
-        var bbn = new BlackBeardsNavigator();
-        var ctrl = Controller.getInstance();
-        for (MapMarker m : markers) {
-            markerCoord = m.getCoordinate();
-            newMarker = new CustomMapMarker(markerCoord, null); // FIXME: 13.05.2022
-            if (bbn.markerHit(markerCoord, clickedCoord)) {
-                markerHit = true;
-                newMarker.setBackColor(Color.RED);
-                gui.pMenu.setVisible(false);
-                gui.pInfo.removeAll();
-                gui.dpleft.moveToFront(gui.pInfo);
-                int flightID = ctrl.liveData.get(counter).getFlightID();
-                var flight = new DataMaster().flightByID(flightID);
-                new TreePlantation().createFlightInfo(flight);
-            } else {
-                newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
+        if (!this.clicked) {
+            this.clicked = true;
+            var markers = new GUISlave().mapViewer().getMapMarkerList();
+            var newMarkerList = new ArrayList<MapMarker>();
+            Coordinate markerCoord;
+            CustomMapMarker newMarker;
+            boolean markerHit = false;
+            var bbn = new BlackBeardsNavigator();
+            var ctrl = Controller.getInstance();
+            int counter = 0;
+            for (MapMarker m : markers) {
+                markerCoord = m.getCoordinate();
+                newMarker = new CustomMapMarker(markerCoord, null); // FIXME: 13.05.2022
+                if (bbn.markerHit(markerCoord, clickedCoord)) {
+                    markerHit = true;
+                    newMarker.setBackColor(Color.RED);
+                    gui.pMenu.setVisible(false);
+                    gui.pInfo.removeAll();
+                    gui.dpleft.moveToFront(gui.pInfo);
+                    int flightID = ctrl.loadedData.get(counter).getFlightID(); // FIXME: 15.05.2022 WAS IST MIT DEM COUNTER LOS
+                                                                             //  (keine info beim click - flight is null)
+                    var flight = new DataMaster().flightByID(flightID);
+                    new TreePlantation().createFlightInfo(flight);
+                } else {
+                    newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
+                }
+                newMarker.setName(m.getName());
+                newMarkerList.add(newMarker);
+                counter++;
             }
-            newMarker.setName(m.getName());
-            newMarkerList.add(newMarker);
-            counter++;
-        }
-        if (markerHit) {
-            gui.mapViewer.setMapMarkerList(newMarkerList);
+            if (markerHit) {
+                gui.mapViewer.setMapMarkerList(newMarkerList);
+            }
+            this.clicked = false;
         }
     }
 

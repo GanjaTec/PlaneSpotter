@@ -4,6 +4,8 @@ import javax.swing.*;
 
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.GUIConstants.DefaultColor.*;
+import static planespotter.constants.GUIConstants.Images.BGROUND_IMG;
+import static planespotter.constants.GUIConstants.Images.MENU_BGROUND_IMG;
 
 /**
  * @name PanelModels
@@ -171,7 +173,7 @@ final class PanelModels {
      */
     JLabel backgroundLabel (JDesktopPane parent) {
         // TODO: setting up background image
-        var bground = new JLabel(BGROUND_IMG);
+        var bground = new JLabel(BGROUND_IMG.get());
         bground.setSize(parent.getWidth(), parent.getHeight());
 
         return bground;
@@ -182,7 +184,7 @@ final class PanelModels {
      */
     JLabel menuBgLabel (JDesktopPane parent) {
         // TODO: setting up background image
-        var bground = new JLabel(MENU_BGROUND_IMG);
+        var bground = new JLabel(MENU_BGROUND_IMG.get());
         bground.setSize(parent.getWidth(), parent.getHeight());
 
         return bground;

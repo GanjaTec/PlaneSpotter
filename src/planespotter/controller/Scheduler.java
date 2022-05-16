@@ -2,11 +2,19 @@ package planespotter.controller;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.concurrent.*;
 
 import static planespotter.constants.Configuration.KEEP_ALIVE_TIME;
 import static planespotter.constants.Configuration.MAX_THREADPOOL_SIZE;
 
+/**
+ * @name Scheduler
+ * @author jml04
+ * @version 1.0
+ *
+ * scheduler class contains all thread pool executors and is responsible for threading
+ */
 public class Scheduler {
 
     // ThreadPoolExecutor for thread execution in a thread pool -> package-private (only usable in controller package)
@@ -17,20 +25,37 @@ public class Scheduler {
         exe = new ThreadPoolExecutor(0, MAX_THREADPOOL_SIZE, KEEP_ALIVE_TIME,
                 TimeUnit.SECONDS, new SynchronousQueue<>());
         scheduled_exe = Executors.newScheduledThreadPool(0);
-
     }
 
+    /**
+     *
+     */
     public Scheduler () {
     }
 
-    public void exec (Runnable task) {
-        this.exec(task, null);
-    }
-
+    /**
+     *
+     * @param task
+     * @param initDelay
+     * @param period
+     */
     public void schedule (Runnable task, int initDelay, int period) {
         scheduled_exe.scheduleAtFixedRate(task, initDelay, period, TimeUnit.SECONDS);
     }
 
+    /**
+     *
+     * @param task
+     */
+    public void exec (Runnable task) {
+        this.exec(task, null);
+    }
+
+    /**
+     *
+     * @param task
+     * @param tName
+     */
     public void exec (Runnable task, String tName) {
         var thread = new Thread(task);
         if (tName != null) {
@@ -40,33 +65,58 @@ public class Scheduler {
         Controller.getWatchDog().watch(thread);
     }
 
+    /**
+     *
+     * @param target
+     * @param name
+     */
     public void runAsThread(Runnable target, String name) {
         var thread = new Thread(target);
         thread.setName(name);
         thread.start();
     }
 
+    /**
+     *
+     * @param targets
+     */
     public synchronized void cancel (@NotNull Runnable... targets) {
         var ctrl = Controller.getInstance();
-        ctrl.getLogger().infoLog("Task cancelled!", this);
-        for (var r : targets) {
-            if (r == null) {
-                throw new NullPointerException("Task to cancel");
-            }
-            exe.remove(r);
+        Controller.getLogger().infoLog("Task cancelled!", this);
+        Arrays.stream(targets)
+                .forEach(exe::remove);
+    }
+
+    public void interruptThread (Thread target) {
+        if (!target.isAlive()) {
+            target.interrupt();
+        }
+        if (!target.isInterrupted()) {
+            Controller.getLogger().infoLog("Couldn't interrupt thread " + target.getName(), this);
+        } else {
+            Controller.getLogger().infoLog("Thread " + target.getName() + " interrupted!", this);
         }
     }
 
+    /**
+     * @return
+     */
     public int active () {
-        return this.exe.getActiveCount();
+        return exe.getActiveCount();
     }
 
+    /**
+     * @return
+     */
     public long completed () {
-        return this.exe.getCompletedTaskCount();
+        return exe.getCompletedTaskCount();
     }
 
+    /**
+     * @return
+     */
     public int largestPoolSize () {
-        return this.exe.getLargestPoolSize();
+        return exe.getLargestPoolSize();
     }
 
 }

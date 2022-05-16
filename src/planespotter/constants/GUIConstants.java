@@ -53,11 +53,23 @@ public final class GUIConstants {
     /**
      * images
      */
-    public static final ImageIcon   BGROUND_IMG = new ImageIcon(Paths.IMG_PATH + "background.png"),
-                                    MENU_BGROUND_IMG = new ImageIcon(Paths.IMG_PATH + "menu_background.png"),
-                                    TITLE_BGROUND_IMG = new ImageIcon(Paths.IMG_PATH + "title_background.jpg"),
-                                    PAPER_PLANE_ICON = new ImageIcon(Paths.IMG_PATH + "planespotter_icon.png"),
-                                    FLYING_PLANE_ICON = new ImageIcon(Paths.IMG_PATH + "flying_plane_icon.png");
+    public enum Images {
+        BGROUND_IMG(new ImageIcon(Paths.IMG_PATH + "background.png")),
+        MENU_BGROUND_IMG(new ImageIcon(Paths.IMG_PATH + "menu_background.png")),
+        TITLE_BGROUND_IMG(new ImageIcon(Paths.IMG_PATH + "title_background.jpg")),
+        PAPER_PLANE_ICON(new ImageIcon(Paths.IMG_PATH + "planespotter_icon.png")),
+        FLYING_PLANE_ICON(new ImageIcon(Paths.IMG_PATH + "flying_plane_icon.png"));
+
+        private final ImageIcon img;
+
+        Images (ImageIcon img) {
+            this.img = img;
+        }
+
+        public ImageIcon get() {
+            return this.img;
+        }
+    }
 
     /**
      * component borders

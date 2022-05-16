@@ -47,7 +47,7 @@ public class Supplier implements Runnable{
 		try {
 			Deserializer ds = new Deserializer();
 			System.out.println("Starting Thread \"" + this.ThreadName + "\"");
-			writeToDB(new Test().deserialize(fr24get()));
+			writeToDB(ds.deserialize(fr24get()));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -761,9 +761,9 @@ public class DBOut extends SupperDB {
 	 * @param to
 	 * @return
 	 */
-	public final List<DataPoint> getLiveTrackingBetween (final int from, final int to) {
+	public final Vector<DataPoint> getLiveTrackingBetween (final int from, final int to) {
 		var liveTracking = this.getLastTrackingsBetweenFlightIDs(from, to);
-		return new ArrayList<>(liveTracking);
+		return new Vector<>(liveTracking);
 	}
 
 	/**

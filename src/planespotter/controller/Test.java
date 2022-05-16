@@ -6,10 +6,8 @@ import planespotter.constants.Areas;
 import planespotter.dataclasses.Frame;
 import planespotter.model.Supplier;
 
-import javax.annotation.processing.Processor;
 import java.net.http.HttpResponse;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 @TestOnly
 public class Test {
@@ -18,33 +16,9 @@ public class Test {
     // FIXME: 04.05.2022 callsigns und planetypes sind beide noch in "" (Bsp: "A320" statt A320)
     // FIXME: 05.05.2022 planetypes werden in getAllPlanetypes doppelt ausgegeben!
     public static void main(String[] args) throws Exception {
-
-        var frames = new Test().deserialize(new Supplier(0, Areas.CGN_LANDESCHNEISE).fr24get());
-        frames.forEach(f -> System.out.println(f.getCallsign()));
-
-    }
-
-    @TestOnly
-    private void heapTest () {
-        try {
-            ArrayDeque<Object> objects = new ArrayDeque<>(50000);
-            for (var o : objects) {
-                objects.add(new Object());
-            }
-            TimeUnit seconds = TimeUnit.SECONDS;
-            for (var v : objects) {
-                System.out.println(v.toString());
-            }
-            seconds.sleep(15);
-            objects = new ArrayDeque<>();
-            for (var v : objects) {
-                System.out.println(v.toString());
-            }
-            seconds.sleep(30);
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        Supplier supplier = new Supplier(0, Areas.S_GER);
+        var frames = new Test().deserialize(supplier.fr24get());
+        frames.forEach(Frame::printValues);
     }
 
     /**
@@ -56,14 +30,15 @@ public class Test {
      *
      * @indev
      */
-    public List<Frame> deserialize (HttpResponse<String> response) {
+    public Deque<Frame> deserialize (HttpResponse<String> response) {
         var jsa = this.parseJsonArray(response);
-        var frames = new ArrayList<Frame>();
+        var frames = new ArrayDeque<Frame>();
         var it = jsa.iterator();
+        var gson = new Gson();
         Frame frame;
         for (JsonElement j; it.hasNext();) {
             j = it.next();
-            frame = new Gson().fromJson(j, Frame.class);
+            frame = gson.fromJson(j, Frame.class);
             frames.add(frame);
         }
         return frames;

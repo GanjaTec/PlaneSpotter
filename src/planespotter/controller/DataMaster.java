@@ -2,28 +2,19 @@ package planespotter.controller;
 
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
-import planespotter.dataclasses.SuperData;
 import planespotter.display.UserSettings;
 import planespotter.model.DBOut;
 import planespotter.model.OutputWizard;
 import planespotter.throwables.DataNotFoundException;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 public class DataMaster {
 
     // controller instance
     private final Controller controller = Controller.getInstance();
-
-    /**
-     * preloadedFlights queue ( thread-safe )
-     * the data waits here until added to preloadedFlights
-     * // TODO test {@link java.util.concurrent.ConcurrentLinkedDeque}
-     */
-    private static final Queue<List<? extends SuperData>> listQueue = new ConcurrentLinkedQueue<>();
 
     /**
      * loads flights into the preloadedFlights list
@@ -35,27 +26,11 @@ public class DataMaster {
         int endID = new UserSettings().getMaxLoadedData();
         int dataPerTask = 5000; // testen!
         var scheduler = Controller.getScheduler();
+        controller.liveData = new Vector<>();
         var outputWizard = new OutputWizard(scheduler, 0, startID, endID, dataPerTask);
         scheduler.exec(outputWizard);
         controller.waitForFinish();
-        this.addAllToPre();
         controller.done();
-    }
-
-    /**
-     * adds a data from the queue preloadedFlights
-     */
-    private void addAllToPre () {
-       while (!listQueue.isEmpty()) { // adding all loaded lists to the main list ( listQueue is threadSafe )
-            controller.liveData.addAll((Collection<? extends DataPoint>) listQueue.poll());
-        }
-    }
-
-    /**
-     * adds a List of SuperData subclasses to the queue
-     */
-    public void addToListQueue (List<? extends SuperData> toAdd) {
-        listQueue.add(toAdd);
     }
 
     /**
@@ -66,8 +41,53 @@ public class DataMaster {
         try {
             return new DBOut().getFlightByID(id);
         } catch (DataNotFoundException e) {
-            this.controller.getLogger().errorLog("flight with the ID " + id + " doesn't exist!", this);
+            Controller.getLogger().errorLog("flight with the ID " + id + " doesn't exist!", this);
         } return null;
+    }
+
+
+    private boolean onLock = false;
+    public synchronized Thread dataLoader () {
+        return new Thread(() -> {
+            int startID = 0;
+            int dataPerTask = 5000;
+            int maxStartID = 20000;
+            var ctrl = Controller.getInstance();
+            OutputWizard outw;
+            for (;;) {
+                if (ctrl.loading || OutputWizard.dataQueue.isEmpty()) {
+                    try {
+                        this.onLock = true;
+                        //this.wait(1000);
+                        TimeUnit.SECONDS.sleep(1);
+                        //this.notify();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } finally {
+                        this.onLock = false;
+                    }
+                } else {
+                    var dps = OutputWizard.dataQueue.poll();
+                    var dataPointStream = dps.parallelStream(); // kann man bestimmt besser machen
+                    var liveData = ctrl.liveData;
+                    dataPointStream // ?
+                            .filter(dp -> this.liveFlightIDs().contains(dp.getFlightID()))
+                            .forEach(dp -> liveData.replaceAll(a -> (dp.getFlightID() == a.getFlightID()) ? dp : a)); // FIXME: 16.05.2022 das müsste falsch sein //??? jetzt vielleicht richtig?
+                    dataPointStream
+                            .filter(dp -> !this.liveFlightIDs().contains(dp.getFlightID()))
+                            .forEach(liveData::add);
+                    dataPointStream.close();
+                }
+            } // TODO alte müssen noch gelöscht werden
+        });
+    }
+
+    private Vector<Integer> liveFlightIDs () {
+        var ids = new Vector<Integer>();
+        Controller.getInstance().liveData
+                .stream()
+                .forEach(dp -> ids.add(dp.getFlightID()));
+        return ids;
     }
 
 }

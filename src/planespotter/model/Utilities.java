@@ -6,7 +6,6 @@ import planespotter.dataclasses.Position;
 import planespotter.throwables.TimeoutException;
 
 import java.awt.*;
-import java.util.HashMap;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
@@ -55,7 +54,9 @@ public class Utilities {
      * @return packed input string with 's
      */
     public String packString (String input) {
-        if (input == null) throw new IllegalArgumentException("input cannot be null");
+        if (input == null) {
+            throw new IllegalArgumentException("input cannot be null");
+        }
         return "'" + input + "'";
     }
 
@@ -64,13 +65,15 @@ public class Utilities {
      * @return input-string, but without the "s
      */
     public String stripString (String in) {
-        if (in == null) throw new IllegalArgumentException("input cannot be null");
+        if (in == null) {
+            throw new IllegalArgumentException("input cannot be null");
+        }
         return in.replaceAll("\"", "");
     }
 
     public Vector<Position> parsePositionVector (Vector<DataPoint> dps) {
         var positions = new Vector<Position>();
-        dps.forEach(d -> positions.add(d.getPos()));
+        dps.forEach(dp -> positions.add(dp.getPos()));
         if (positions.isEmpty()) {
             throw new NullPointerException("data point list is empty!");
         }
@@ -81,10 +84,10 @@ public class Utilities {
         throws TimeoutException {
         try {
             timeUnit.sleep(time);
-            throw new TimeoutException(time);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        throw new TimeoutException(time);
     }
 
 

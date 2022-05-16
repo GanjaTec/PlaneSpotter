@@ -40,9 +40,9 @@ public class WatchDog implements Runnable {
 
     public synchronized void watch (Thread target) {
         this.watchQueue.add(target);
-        if (onLock) {
+        if (this.onLock) {
             this.notify();
-            onLock = false;
+            this.onLock = false;
         }
     }
 
@@ -50,9 +50,13 @@ public class WatchDog implements Runnable {
         return () -> {
             try {
                 new Utilities().timeoutTask(timeout, timeUnit);
-            } catch (TimeoutException e) {
+                Controller.getScheduler().interruptThread(target);
+            } catch (TimeoutException e) { // TODO: 16.05.2022 remove redundant code
                 if (target.isAlive()) {
                     target.interrupt();
+                    if (!target.isInterrupted()) {
+                        Controller.getLogger().infoLog("Couldn't interrupt thread " + target.getName(), this);
+                    }
                     Controller.getLogger().errorLog("TimeoutException caused by thread " + target.getName() +
                             ", loaded over " + timeout + " " + timeUnit, this);
                 }

@@ -17,6 +17,7 @@ import java.util.Objects;
 
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.GUIConstants.DefaultColor.*;
+import static planespotter.constants.GUIConstants.Images.PAPER_PLANE_ICON;
 
 /**
  * @name Logger
@@ -47,7 +48,7 @@ public class Logger extends JFrame implements ComponentListener {
         super.setBackground(DEFAULT_BG_COLOR.get());
         super.setLayout(null);
         super.setAlwaysOnTop(false);
-        super.setIconImage(PAPER_PLANE_ICON.getImage());
+        super.setIconImage(PAPER_PLANE_ICON.get().getImage());
         super.addComponentListener(this);
 
         this.out = new JTextPane();
