@@ -21,18 +21,18 @@ public class WatchDog implements Runnable {
     public void run() {
         for (;;) {
             if (this.watchQueue.isEmpty()) {
-                try {
+                /*try {
                     onLock = true;
                     synchronized (this) {
                         this.wait();
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                }
+                }*/
             } else {
                 var currentThread = this.watchQueue.poll();
                 var watcher = this.watcher(currentThread, 10, TimeUnit.SECONDS);
-                Controller.getScheduler().runAsThread(watcher, "WatchDog-Watcher");
+                Controller.getScheduler().runAsThread(watcher, "WatchDog-Watcher", false); // daemon?
 
             }
         }

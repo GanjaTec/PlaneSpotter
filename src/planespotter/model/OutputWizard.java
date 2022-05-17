@@ -1,8 +1,10 @@
 package planespotter.model;
 
+import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.DataPoint;
+import planespotter.display.BlackBeardsNavigator;
 import planespotter.throwables.ThreadOverheadError;
 
 import java.util.Vector;
@@ -26,8 +28,12 @@ public class OutputWizard extends DBOut implements Runnable {
     private final int flightsPerTask;
     // thread name
     private final String threadName;
+
+    private final int dataType;
     // controller instance
     private final Controller controller;
+
+    // psfi data types
 
     public static final ConcurrentLinkedQueue<Vector<DataPoint>> dataQueue;
 
@@ -41,7 +47,7 @@ public class OutputWizard extends DBOut implements Runnable {
      * @param scheduler is the thread pool executor
      */
     public OutputWizard(Scheduler scheduler) {
-        this(scheduler, -1, -1, -1, -1);
+        this(scheduler, -1, -1, -1, -1, -1);
     }
 
     /**
@@ -53,7 +59,7 @@ public class OutputWizard extends DBOut implements Runnable {
      * @param to is the end id
      * @param dataPerTask is the max. number of loaded flights by one OutputWizard
      */
-    public OutputWizard(Scheduler scheduler, int tNumber, int from, int to, int dataPerTask) {
+    public OutputWizard(Scheduler scheduler, int tNumber, int from, int to, int dataPerTask, int dataType) {
         this.scheduler = scheduler;
         this.threadNumber = tNumber;
         this.threadName = "output-wizard" + this.threadNumber;
@@ -61,6 +67,7 @@ public class OutputWizard extends DBOut implements Runnable {
         this.to = to;
         this.flightsPerTask = dataPerTask;
         this.controller = Controller.getInstance();
+        this.dataType = dataType;
     }
 
     /**
@@ -69,6 +76,12 @@ public class OutputWizard extends DBOut implements Runnable {
      */
     @Override
     public void run () {
+        switch (this.dataType) {
+            case 0 -> this.run_liveData();
+        }
+    }
+
+    private void run_liveData() {
         long start = System.nanoTime();
         var thread = Thread.currentThread();
         thread.setPriority(9);
@@ -95,8 +108,8 @@ public class OutputWizard extends DBOut implements Runnable {
             //dataQueue.add(dps);
         } else {
             int newEndID = to-(flightsToLoad/2);
-            var out0 = new OutputWizard(this.scheduler, this.threadNumber+1, fromID, newEndID, this.flightsPerTask);
-            var out1 = new OutputWizard(this.scheduler, this.threadNumber+2, newEndID, toID, this.flightsPerTask);
+            var out0 = new OutputWizard(this.scheduler, this.threadNumber+1, fromID, newEndID, this.flightsPerTask, this.dataType);
+            var out1 = new OutputWizard(this.scheduler, this.threadNumber+2, newEndID, toID, this.flightsPerTask, this.dataType);
             try {
                 this.scheduler.exec(out0);
                 this.scheduler.exec(out1);

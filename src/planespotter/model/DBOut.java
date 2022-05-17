@@ -1,7 +1,6 @@
 package planespotter.model;
 
 import planespotter.constants.SQLQuerries;
-import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
 import planespotter.dataclasses.Frame;
 import planespotter.display.UserSettings;
@@ -124,8 +123,8 @@ public class DBOut extends SupperDB {
 	public List<Airport> getAirports (String srcAirport, String destAirport) {
 		var aps = new ArrayList<Airport>();
 		try {
-			var rsSrc = querryDB(SQLQuerries.getAirportByTag + srcAirport);
-			var rsDst = querryDB(SQLQuerries.getAirportByTag + destAirport);
+			var rsSrc = querryDB(SQLQuerries.getAirportByTag + srcAirport + "'");
+			var rsDst = querryDB(SQLQuerries.getAirportByTag + destAirport + "'");
 
 			if (rsSrc.next()) {
 				var srcAp = new Airport(rsSrc.getInt("ID"), rsSrc.getString("iatatag"), rsSrc.getString("name"), convertCoords(rsSrc.getString("coords")));
@@ -555,7 +554,7 @@ public class DBOut extends SupperDB {
 		var flights = new ArrayDeque<Integer>();
 		try {
 			String querry = "SELECT ID FROM flights " +
-							"WHERE plane " + this.IN_INT(ids);
+							"WHERE plane " + SQLQuerries.IN_INT(ids);
 			var rs = super.querryDB(querry);
 			while (rs.next())  {
 				int id = rs.getInt("ID");
@@ -582,7 +581,7 @@ public class DBOut extends SupperDB {
 		try {
 			var querry = 	"SELECT f.ID FROM flights f " +
 							"JOIN planes p ON ((p.ID = f.plane) AND (f.endTime IS NULL))" +
-							"WHERE p.type " + this.IN_STR(planetypes);
+							"WHERE p.type " + SQLQuerries.IN_STR(planetypes);
 			var rs = super.querryDB(querry);
 			while (rs.next()) {
 				var id = rs.getInt("ID");
@@ -690,7 +689,7 @@ public class DBOut extends SupperDB {
 		try {
 			var querry = 	"SELECT max(t.ID) AS ID, t.flightid, t.latitude, t.longitude, t.altitude, t.groundspeed, t.heading, t.squawk, t.timestamp " +
 							"FROM tracking t " +
-							"WHERE flightid " + this.IN_INT(flightIDs) + " GROUP BY flightid";
+							"WHERE flightid " + SQLQuerries.IN_INT(flightIDs) + " GROUP BY flightid";
 			var rs = super.querryDB(querry);
 			while (rs.next()) {
 				var p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
@@ -768,18 +767,18 @@ public class DBOut extends SupperDB {
 
 	/**
 	 *
-	 * @param airport
+	 * @param tag, the airport tag
 	 * @return
 	 * @throws DataNotFoundException
 	 */
-	public final ArrayDeque<DataPoint> getTrackingsWithAirport (String airport)
+	public final ArrayDeque<DataPoint> getTrackingsWithAirportTag (String tag)
 			throws DataNotFoundException { // TODO IN
 		var dps = new ArrayDeque<DataPoint>();
 		try {
-			var querry = "SELECT t.* FROM tracking t " +
+			var querry = "SELECT t.* FROM tracking t " + // TODO!!! threaden!, viele daten!
 					"JOIN flights f ON ((f.ID = t.flightid) " +
-					"AND ((f.src LIKE '%" + airport + "%') " +
-					"OR (f.dest LIKE '%" + airport + "%')))"; // FIXME: 10.05.2022 Querry gibt lerres RS zurück
+					"AND ((f.src LIKE '_" + tag + "_') " +
+					"OR (f.dest LIKE '_" + tag + "_')))";
 			var rs = super.querryDB(querry);
 			DataPoint dp;
 			while (rs.next()) {
@@ -790,7 +789,7 @@ public class DBOut extends SupperDB {
 				dps.add(dp);
 			}
 			if (dps.isEmpty()) {
-				throw new DataNotFoundException("No flights found with airport " + airport + "!", true);
+				throw new DataNotFoundException("No flights found with airport tag " + tag + "!", true);
 			}
 		} catch (DataNotFoundException ignored) {
 		} catch (Exception e) {
@@ -801,32 +800,5 @@ public class DBOut extends SupperDB {
 
 	// TODO public ArrayDeque<Integer> getPlaneIDsWhereTypeLike (String input) // sollte schneller sein
 
-	/**
-	 *
-	 * @param inThis
-	 * @return
-	 */ // TODO zu einer Methode machen mit Wildcards
-	private String IN_INT (final ArrayDeque<Integer> inThis) {
-		var out = "IN (";
-		for (int i : inThis) {
-			out += i + ",";
-		}
-		return out.substring(0, out.length()-2) + ")";
-	}
-	private String IN_STR (final ArrayDeque<String> inThis) {
-		var out = "IN (";
-		int counter = 0;
-		int last = inThis.size() - 1;
-		var util = new Utilities();
-		for (var s : inThis) {
-			if (counter == last) {
-				out += util.packString(s);
-			} else {
-				out += util.packString(s) + ", ";
-			}
-			counter++;
-		}
-		return out + ")";
-	}
 
 }

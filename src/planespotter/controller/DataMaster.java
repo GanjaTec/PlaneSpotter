@@ -1,5 +1,6 @@
 package planespotter.controller;
 
+import planespotter.constants.ViewType;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.display.UserSettings;
@@ -11,6 +12,7 @@ import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+// DIESE KLASSE WIRD WAHRSCHEINLICH GELÖSCHT
 public class DataMaster {
 
     // controller instance
@@ -27,25 +29,13 @@ public class DataMaster {
         int dataPerTask = 5000; // testen!
         var scheduler = Controller.getScheduler();
         controller.liveData = new Vector<>();
-        var outputWizard = new OutputWizard(scheduler, 0, startID, endID, dataPerTask);
+        var outputWizard = new OutputWizard(scheduler, 0, startID, endID, dataPerTask, 0);
         scheduler.exec(outputWizard);
         controller.waitForFinish();
         controller.done();
     }
 
-    /**
-     * @param id is the flight id to search for
-     * @return a flight
-     */
-    public Flight flightByID (final int id) {
-        try {
-            return new DBOut().getFlightByID(id);
-        } catch (DataNotFoundException e) {
-            Controller.getLogger().errorLog("flight with the ID " + id + " doesn't exist!", this);
-        } return null;
-    }
-
-
+    // TODO wird das überhaupt gebraucht? / schwierig, weil die alten daten nicht aktualisiert werden
     private boolean onLock = false;
     public synchronized Thread dataLoader () {
         return new Thread(() -> {
@@ -53,7 +43,6 @@ public class DataMaster {
             int dataPerTask = 5000;
             int maxStartID = 20000;
             var ctrl = Controller.getInstance();
-            OutputWizard outw;
             for (;;) {
                 if (ctrl.loading || OutputWizard.dataQueue.isEmpty()) {
                     try {
@@ -85,7 +74,6 @@ public class DataMaster {
     private Vector<Integer> liveFlightIDs () {
         var ids = new Vector<Integer>();
         Controller.getInstance().liveData
-                .stream()
                 .forEach(dp -> ids.add(dp.getFlightID()));
         return ids;
     }

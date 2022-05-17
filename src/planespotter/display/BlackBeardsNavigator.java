@@ -2,11 +2,10 @@ package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.*;
-import org.openstreetmap.gui.jmapviewer.tilesources.*;
 import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
-import planespotter.controller.DataMaster;
 import planespotter.dataclasses.*;
+import planespotter.model.DBOut;
 import planespotter.model.Utilities;
 import planespotter.throwables.DataNotFoundException;
 
@@ -188,10 +187,10 @@ public final class BlackBeardsNavigator {
     /**
      * is executed when a map marker is clicked and the current is MAP_ALL
      */
-    boolean clicked = false;
+    boolean clicking = false;
     private void onClick_all (ICoordinate clickedCoord) {
-        if (!this.clicked) {
-            this.clicked = true;
+        if (!this.clicking) {
+            this.clicking = true;
             var markers = new GUISlave().mapViewer().getMapMarkerList();
             var newMarkerList = new ArrayList<MapMarker>();
             Coordinate markerCoord;
@@ -200,7 +199,11 @@ public final class BlackBeardsNavigator {
             var bbn = new BlackBeardsNavigator();
             var ctrl = Controller.getInstance();
             int counter = 0;
-            for (MapMarker m : markers) {
+            var data = ctrl.loadedData;
+            DBOut dbOut = new DBOut();
+            var tpl = new TreePlantation();
+            var logger = Controller.getLogger();
+            for (var m : markers) {
                 markerCoord = m.getCoordinate();
                 newMarker = new CustomMapMarker(markerCoord, null); // FIXME: 13.05.2022
                 if (bbn.markerHit(markerCoord, clickedCoord)) {
@@ -209,10 +212,14 @@ public final class BlackBeardsNavigator {
                     gui.pMenu.setVisible(false);
                     gui.pInfo.removeAll();
                     gui.dpleft.moveToFront(gui.pInfo);
-                    int flightID = ctrl.loadedData.get(counter).getFlightID(); // FIXME: 15.05.2022 WAS IST MIT DEM COUNTER LOS
+                    int flightID = data.get(counter).getFlightID(); // FIXME: 15.05.2022 WAS IST MIT DEM COUNTER LOS
                                                                              //  (keine info beim click - flight is null)
-                    var flight = new DataMaster().flightByID(flightID);
-                    new TreePlantation().createFlightInfo(flight);
+                    try {
+                        var flight = dbOut.getFlightByID(flightID);
+                        tpl.createFlightInfo(flight);
+                    } catch (DataNotFoundException e) {
+                        logger.errorLog("flight with the ID " + flightID + " doesn't exist!", this);
+                    }
                 } else {
                     newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
                 }
@@ -223,7 +230,7 @@ public final class BlackBeardsNavigator {
             if (markerHit) {
                 gui.mapViewer.setMapMarkerList(newMarkerList);
             }
-            this.clicked = false;
+            this.clicking = false;
         }
     }
 
@@ -232,19 +239,30 @@ public final class BlackBeardsNavigator {
      * @param clickedCoord is the clicked coordinate
      */
     private void onClick_tracking (ICoordinate clickedCoord) {
-        var markers = gui.mapViewer.getMapMarkerList();
+        var map = new GUISlave().mapViewer();
+        var markers = map.getMapMarkerList();
         Coordinate markerCoord;
         int counter = 0;
         var bbn = new BlackBeardsNavigator();
         var ctrl = Controller.getInstance();
-        for (MapMarker m : markers) {
+        DataPoint dp;
+        int flightID;
+        Flight flight;
+        var tpl = new TreePlantation();
+        var dbOut = new DBOut();
+        for (var m : markers) {
             markerCoord = m.getCoordinate();
             if (bbn.markerHit(markerCoord, clickedCoord)) {
                 gui.pInfo.removeAll();
-                var dp = ctrl.loadedData.get(counter);
-                var flight = new DataMaster().flightByID(dp.getFlightID()); // TODO woanders!!!
-                new TreePlantation().createDataPointInfo(flight, dp);
-                gui.mapViewer.setMapMarkerList(bbn.resetMarkers(m));
+                dp = ctrl.loadedData.get(counter);
+                flightID = dp.getFlightID();
+                try {
+                    flight = dbOut.getFlightByID(flightID); // TODO woanders!!!
+                    tpl.createDataPointInfo(flight, dp);
+                } catch (DataNotFoundException e) {
+                    Controller.getLogger().errorLog("flight with the ID " + flightID + " doesn't exist!", this);
+                }
+                map.setMapMarkerList(bbn.resetMarkers(m));
             }
             counter++;
         }

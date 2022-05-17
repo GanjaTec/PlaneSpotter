@@ -9,6 +9,7 @@ import planespotter.throwables.DataNotFoundException;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.awt.event.KeyEvent.*;
@@ -176,10 +177,11 @@ public final class GUISlave {
      * @param search is the given list of search components
      */
     private void showSearch (List<JComponent> search) {
-        for (var comps : gui.allSearchModels()) {
+        var searchModels = gui.allSearchModels();
+        for (var comps : searchModels) {
             var equals = (comps == search);
             if (comps != null) {
-                for (JComponent c : comps) {
+                for (var c : comps) {
                     c.setVisible(equals);
                 }
             }
@@ -252,7 +254,8 @@ public final class GUISlave {
         }
         if (gui.fileMenu != null) {
             int minus = 84;
-            for (var bt : gui.fileMenu) {
+            var fileMenu = gui.fileMenu;
+            for (var bt : fileMenu) {
                 bt.setBounds(gui.pViewHead.getWidth() - minus, 4, 80, 16);
                 minus += 84;
             }
@@ -319,7 +322,8 @@ public final class GUISlave {
     }
 
     private void setFileMenuVisible (boolean b) {
-        for (var bt : gui.fileMenu) {
+        var fileMenu = gui.fileMenu;
+        for (var bt : fileMenu) {
             bt.setVisible(b);
         }
     }

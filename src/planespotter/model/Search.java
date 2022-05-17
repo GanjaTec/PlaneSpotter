@@ -44,8 +44,9 @@ public class Search {
                     fids.addAll(out.getFlightIDsByCallsign(signs.poll()));
                 }
                 int counter = 0;
+                var data = ctrl.loadedData;
                 for (int i : fids) {
-                    ctrl.loadedData.addAll(out.getTrackingByFlight(i));
+                    data.addAll(out.getTrackingByFlight(i));
                     if (counter++ > 10) break; // MAX 10 FLIGHTS
                 }
                 if (!ctrl.loadedData.isEmpty()) {
@@ -97,9 +98,12 @@ public class Search {
         var ctrl = Controller.getInstance();
         ctrl.loadedData = new Vector<>();
         if (!id.isBlank()) {
-
-        } else if (!tag.isBlank() || !name.isBlank()) {
-            ctrl.loadedData.addAll(out.getTrackingsWithAirport(Objects.requireNonNullElse(tag, name)));
+            // trackings with airport id (-> airport join)
+        } else if (!tag.isBlank()) {
+            ctrl.loadedData.addAll(out.getTrackingsWithAirportTag(tag));
+            //ctrl.loadedData.addAll(out.getTrackingsWithAirport(Objects.requireNonNullElse(tag, name)));
+        } else if (!name.isBlank()) {
+            //ctrl.loadedData.addAll( ); (-> airport join)
         }
         if (ctrl.loadedData.isEmpty()) {
             throw new DataNotFoundException("No airports found for these inputs!");

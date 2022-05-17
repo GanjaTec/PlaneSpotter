@@ -82,7 +82,7 @@ public class Controller {
     private void startExecutors () {
         logger.log("initializing Executors...", this);
         //scheduler.runAsThread(new DataMaster().dataLoader(), "Data-Loader"); // läuft noch nicht
-        scheduler.runAsThread(watchDog, "Watch-Dog");
+        scheduler.runAsThread(watchDog, "Watch-Dog", true);
         scheduler.schedule(new FileMaster()::saveConfig, 60, 300);
         scheduler.schedule(() -> {
             System.gc();
@@ -131,9 +131,14 @@ public class Controller {
         if (!this.loading) {
             long startTime = System.nanoTime();
             this.loading = true;
-            //liveData = new Vector<>();
-            new DataMaster().load();
+            int startID = 0;
+            int endID = new UserSettings().getMaxLoadedData();
+            int dataPerTask = 5000; // testen!
+            this.liveData = new Vector<>();
+            var outputWizard = new OutputWizard(scheduler, 0, startID, endID, dataPerTask, 0);
+            scheduler.exec(outputWizard);
             this.waitForFinish();
+            this.done();
             logger.sucsessLog("loaded Live-Data in " + (System.nanoTime() - startTime) / Math.pow(1000, 3) +
                     " seconds!", this);
             logger.infoLog("-> completed: " + scheduler.completed() + ", active: " + scheduler.active() +
@@ -197,10 +202,16 @@ public class Controller {
             case LIST_FLIGHT -> {
                 List<Flight> flights = new ArrayList<>();
                 Flight flight;
+                var dbOut = new DBOut();
+                int flightID;
                 for (int i = 0; i < 100; i++) {  // TODO anders machen! dauert zu lange, zu viele Anfragen!
-                    int fid = liveData.get(i).getFlightID();
-                    flight = new DataMaster().flightByID(fid);
-                    flights.add(flight);
+                    flightID = liveData.get(i).getFlightID();
+                    try {
+                        flight = dbOut.getFlightByID(flightID);
+                        flights.add(flight);
+                    } catch (DataNotFoundException e) {
+                        logger.errorLog("flight with the ID " + flightID + " doesn't exist!", this);
+                    }
                 }
                 var treePlant = new TreePlantation();
                 treePlant.createTree(treePlant.allFlightsTreeNode(flights));
@@ -219,7 +230,7 @@ public class Controller {
                         loadedData.addAll(out.getTrackingByFlight(flightID));
                     }
                     else if (data.length > 1) {
-                        for (String id : data) {
+                        for (var id : data) {
                             assert id != null;
                             flightID = Integer.parseInt(id);
                             loadedData.addAll(out.getTrackingByFlight(flightID));
@@ -244,7 +255,7 @@ public class Controller {
                         loadedData.addAll(out.getTrackingByFlight(flightID));
                     }
                     else if (data.length > 1) {
-                        for (String id : data) {
+                        for (var id : data) {
                             assert id != null;
                             flightID = Integer.parseInt(id);
                             loadedData.addAll(out.getTrackingByFlight(flightID));
@@ -288,8 +299,9 @@ public class Controller {
                             idsNoDupl.add(flightID);
                         }
                     }
-                    var ids = new String[idsNoDupl.size()];
-                    for (int i = 0; i < idsNoDupl.size(); i++) {
+                    int size = idsNoDupl.size();
+                    var ids = new String[size];
+                    for (int i = 0; i < size; i++) {
                         ids[i] = idsNoDupl.get(i) + "";
                     }
                     if (button == 1) {
@@ -312,8 +324,9 @@ public class Controller {
                                 idsNoDupl.add(flightID);
                             }
                         }
-                        var ids = new String[idsNoDupl.size()];
-                        for (int i = 0; i < idsNoDupl.size(); i++) {
+                        int size = idsNoDupl.size();
+                        var ids = new String[size];
+                        for (int i = 0; i < size; i++) {
                             ids[i] = idsNoDupl.get(i) + "";
                         }
                         if (button == 1) {
@@ -331,8 +344,9 @@ public class Controller {
                             idsNoDupl.add(flightID);
                         }
                     }
-                    var ids = new String[idsNoDupl.size()];
-                    for (int i = 0; i < idsNoDupl.size(); i++) {
+                    int size = idsNoDupl.size();
+                    var ids = new String[size];
+                    for (int i = 0; i < size; i++) {
                         ids[i] = idsNoDupl.get(i) + "";
                     }
                     if (button == 1) {

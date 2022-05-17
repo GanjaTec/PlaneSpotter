@@ -70,8 +70,9 @@ public class Scheduler {
      * @param target
      * @param name
      */
-    public void runAsThread(Runnable target, String name) {
+    public void runAsThread(Runnable target, String name, boolean daemon) {
         var thread = new Thread(target);
+        thread.setDaemon(daemon);
         thread.setName(name);
         thread.start();
     }
