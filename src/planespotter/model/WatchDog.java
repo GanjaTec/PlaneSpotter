@@ -49,7 +49,7 @@ public class WatchDog implements Runnable {
     private Runnable watcher (Thread target, int timeout, TimeUnit timeUnit) {
         return () -> {
             try {
-                new Utilities().timeoutTask(timeout, timeUnit);
+                Utilities.timeoutTask(timeout, timeUnit);
                 Controller.getScheduler().interruptThread(target);
             } catch (TimeoutException e) { // TODO: 16.05.2022 remove redundant code
                 if (target.isAlive()) {

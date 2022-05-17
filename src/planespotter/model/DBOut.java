@@ -75,7 +75,7 @@ public class DBOut extends SupperDB {
 	public Airline getAirlineByTag (String tag) {
 		Airline a = null;
 		try {
-			tag = new Utilities().stripString(tag);
+			tag = Utilities.stripString(tag);
 			var rs = querryDB(SQLQuerries.getAirlineByTag + tag); // ist leer TODO fixen
 			if (rs.next()) {
 				a = new Airline(rs.getInt("ID"), rs.getString("iatatag"), rs.getString("name"));
@@ -163,7 +163,7 @@ public class DBOut extends SupperDB {
 		// TODO: Bug fixen
 		// org.sqlite.SQLiteException: [SQLITE_ERROR] SQL error or missing database (unrecognized token: "06A1EB")
 		//icao = stripString(icao);
-		icao = new Utilities().packString(icao);
+		icao = Utilities.packString(icao);
 		var ids = new ArrayDeque<Integer>();
 		try {
 			var rs = querryDB(SQLQuerries.getPlaneIDsByICAO + icao);
@@ -247,7 +247,7 @@ public class DBOut extends SupperDB {
 	// TODO hier muss der Fehler sein
 	public Vector<DataPoint> getTrackingByFlight (int flightID) {
 		var dps = new Vector<DataPoint>();
-		//var flight_id = new Utilities().packString(flightID);
+		//var flight_id = Utilities.packString(flightID);
 		try {
 			var rs = querryDB("SELECT * FROM tracking WHERE flightid = " + flightID);
 			while (rs.next()) {
@@ -272,7 +272,7 @@ public class DBOut extends SupperDB {
 
 	public HashMap<Integer, DataPoint> getCompleteTrackingByFlight (int flightID) {
 		var dps = new HashMap<Integer, DataPoint>();
-		//var flight_id = new Utilities().packString(flightID);
+		//var flight_id = Utilities.packString(flightID);
 		try {
 			var rs = querryDB("SELECT * FROM tracking WHERE flightid = " + flightID);
 			while (rs.next()) {
@@ -403,7 +403,7 @@ public class DBOut extends SupperDB {
 	 * @throws Exception
 	 */
 	public ArrayDeque<Integer> getFlightIDsByCallsign (String callsign) {
-		callsign = new Utilities().packString(callsign);
+		callsign = Utilities.packString(callsign);
 		var ids = new ArrayDeque<Integer>();
 		try {
 			var rs = querryDB(SQLQuerries.getFlightIDsByCallsign + callsign);
@@ -604,7 +604,7 @@ public class DBOut extends SupperDB {
 	 * @throws DataNotFoundException if there was no plane found
 	 */
 	public ArrayDeque<Integer> getPlaneIDsByTailNr (String tailNr) throws DataNotFoundException {
-		tailNr = new Utilities().packString(tailNr);
+		tailNr = Utilities.packString(tailNr);
 		var ids = new ArrayDeque<Integer>();
 		try {
 			var rs = super.querryDB(SQLQuerries.getPlaneIDByTailNr + tailNr);

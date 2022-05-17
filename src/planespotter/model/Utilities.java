@@ -22,7 +22,7 @@ public class Utilities {
      * plays a sound from the default toolkit
      * @param sound is the sound to be played (see: GUIConstants)
      */
-    public void playSound(String sound) {
+    public static void playSound (String sound) {
         if (sound == null) throw new IllegalArgumentException("no sound to play, input may not be null!");
         var sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(sound);
         if (sound2 != null) {
@@ -34,7 +34,7 @@ public class Utilities {
      * @param feet is the input, in feet (ft)
      * @return a feet value in meters
      */
-    public int feetToMeters (int feet) {
+    public static int feetToMeters (int feet) {
         return (int) (feet/3.2808);
     }
 
@@ -42,7 +42,7 @@ public class Utilities {
      * @param kn is the input, in knots (kn)
      * @return the knots in km per hour
      */
-    public int knToKmh (int kn) {
+    public static int knToKmh (int kn) {
         long kmh = Math.round(kn * 1.852);
         return (int) kmh;
     }
@@ -53,7 +53,7 @@ public class Utilities {
      * @param input is the string to pack
      * @return packed input string with 's
      */
-    public String packString (String input) {
+    public static String packString (String input) {
         if (input == null) {
             throw new IllegalArgumentException("input cannot be null");
         }
@@ -64,14 +64,14 @@ public class Utilities {
      * @param in is the string to strip
      * @return input-string, but without the "s
      */
-    public String stripString (String in) {
+    public static String stripString (String in) {
         if (in == null) {
             throw new IllegalArgumentException("input cannot be null");
         }
         return in.replaceAll("\"", "");
     }
 
-    public Vector<Position> parsePositionVector (Vector<DataPoint> dps) {
+    public static Vector<Position> parsePositionVector (Vector<DataPoint> dps) {
         var positions = new Vector<Position>();
         dps.forEach(dp -> positions.add(dp.getPos()));
         if (positions.isEmpty()) {
@@ -80,7 +80,7 @@ public class Utilities {
         return positions;
     }
 
-    public void timeoutTask (final int time, @NotNull final TimeUnit timeUnit)
+    public static void timeoutTask (final int time, @NotNull final TimeUnit timeUnit)
         throws TimeoutException {
         try {
             timeUnit.sleep(time);
