@@ -1,5 +1,6 @@
 package planespotter.throwables;
 
+import planespotter.controller.Controller;
 import planespotter.display.SearchModels;
 
 import javax.swing.*;
@@ -8,24 +9,62 @@ import javax.swing.*;
 public class DataNotFoundException extends Exception {
 
     // exception message
-    static final String MESSAGE = "db-data couldn't be found!";
+    final String MESSAGE = "db-data couldn't be found!";
 
     /**
      * constructor, is called when this exception is thrown
      */
     public DataNotFoundException () {
-        new DataNotFoundException("");
+        this(null, false);
     }
 
     /**
-     * second constructor with string param
+     * constructor only with error message
      *
-     * @param msg is the exception message
+     * @param msg is the error message
      */
     public DataNotFoundException (String msg) {
-        super(MESSAGE + "\n" + msg);
-        var errorMsgPane = SearchModels.errorMsgPane(msg);
-        errorMsgPane.setVisible(true);
+        this(msg, false);
     }
 
+
+    /**
+     * (main) constructor with string and boolean params
+     *
+     * @param msg is the exception message
+     * @param doLog says if the exception should be logged in the console
+     */
+    public DataNotFoundException (String msg, boolean doLog) {
+        if (doLog) {
+            var ctrl = Controller.getInstance();
+            if (ctrl != null) {
+                ctrl.getLogger().errorLog(MESSAGE + "\n" + msg, this);
+            }
+        } else {
+            if (msg == null) {
+                this.printStackTrace();
+            }
+        }
+        /*var errorMsgPane = new SearchModels().errorMsgPane(msg);
+        errorMsgPane.setVisible(true);*/
+    }
+
+    @Override
+    public void printStackTrace () {
+        var stringBuilder = new StringBuilder();
+        var stackTrace = super.getStackTrace();
+        stringBuilder.append(MESSAGE);
+        for (var el : stackTrace) {
+            stringBuilder.append("\n at ").append(el);
+        }
+        var logger = Controller.getInstance().getLogger();
+        var out = stringBuilder.toString();
+        logger.errorLog(out, this);
+        super.printStackTrace();
+    }
+
+    @Override
+    public String getMessage() {
+        return this.MESSAGE;
+    }
 }

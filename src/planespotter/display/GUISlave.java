@@ -9,12 +9,12 @@ import planespotter.throwables.DataNotFoundException;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.awt.event.KeyEvent.*;
 import static java.awt.event.KeyEvent.VK_PAGE_DOWN;
 import static planespotter.constants.GUIConstants.*;
-import static planespotter.constants.GUIConstants.FONT_MENU;
 import static planespotter.constants.SearchType.*;
 import static planespotter.constants.ViewType.LIST_FLIGHT;
 import static planespotter.constants.ViewType.MAP_ALL;
@@ -29,29 +29,16 @@ import static planespotter.constants.ViewType.MAP_ALL;
 public final class GUISlave {
 
     // only gui instance
-    private static GUI gui;
+    private final GUI gui;
+    // controller instance
+    private final Controller controller;
 
     /**
      * empty constructor
      */
     public GUISlave() {
-    }
-
-    /**
-     * initializes GUISlave class
-     */
-    public static void initialize () {
-        gui = Controller.gui();
-    }
-
-    /**
-     * this method is executed when pre-loading is done
-     */
-    public static void donePreLoading () {
-        Utilities.playSound(SOUND_DEFAULT);
-        gui.loadingScreen.setVisible(false);
-        gui.window.setVisible(true);
-        gui.window.requestFocus();
+        this.controller = Controller.getInstance();
+        this.gui = this.controller.gui();
     }
 
     /**
@@ -59,16 +46,16 @@ public final class GUISlave {
      *
      * @param map is the map to be set
      */
-    public static void recieveMap (JMapViewer map) {
+    public void recieveMap (JMapViewer map, String text) {
         gui.mapViewer = map;
         // TODO: adding MapViewer to panel
         gui.pMap.add(gui.mapViewer);
-        gui.viewHeadText.setText(DEFAULT_HEAD_TEXT + "Map-Viewer > Live-Map");
+        gui.viewHeadText.setText(DEFAULT_HEAD_TEXT + "Map-Viewer > " + text);
         // revalidating window frame to refresh everything
         gui.pMap.setVisible(true);
         gui.mapViewer.setVisible(true);
-        GUISlave.requestComponentFocus(gui.mapViewer);
-        GUISlave.revalidateAll();
+        this.requestComponentFocus(gui.mapViewer);
+        this.revalidateAll();
     }
 
     /**
@@ -76,7 +63,7 @@ public final class GUISlave {
      *
      * @param tree is the tree to set
      */
-    public static void recieveTree (JTree tree) {
+    public void recieveTree (JTree tree) {
         tree.setBounds(0, 0, gui.pList.getWidth(), gui.pList.getHeight());
         gui.listView = tree;
         gui.spList = gui.listScrollPane(gui.listView);
@@ -87,8 +74,8 @@ public final class GUISlave {
         gui.pList.setVisible(true);
         gui.viewHeadText.setText(DEFAULT_HEAD_TEXT + "Flight-List");
         // revalidate window -> making the tree visible
-        GUISlave.revalidateAll();
-        GUISlave.requestComponentFocus(gui.listView);
+        this.revalidateAll();
+        this.requestComponentFocus(gui.listView);
     }
 
     /**
@@ -96,7 +83,7 @@ public final class GUISlave {
      * @param flightTree is the flight tree to set
      * @param dpInfoTree is the @Nullable data point info tree
      */
-    public static void recieveInfoTree(JTree flightTree, @Nullable JTree dpInfoTree) {
+    public void recieveInfoTree(JTree flightTree, @Nullable JTree dpInfoTree) {
         int width = gui.pInfo.getWidth();
         int height = (gui.pInfo.getHeight() / 2);
         gui.pMenu.setVisible(false);
@@ -115,14 +102,14 @@ public final class GUISlave {
         }
         gui.dpleft.moveToFront(gui.pInfo);
         gui.pInfo.setVisible(true);
-        GUISlave.revalidateAll();
+        this.revalidateAll();
     }
 
     /**
      * starts a indeterminate progressBar
      */
-    public static void progressbarStart () {
-        GUISlave.progressbarVisible(true);
+    public void progressbarStart () {
+        this.progressbarVisible(true);
         gui.progressbar.setIndeterminate(true);
         gui.progressbar.setString("Loading data...");
         gui.progressbar.setStringPainted(true);
@@ -133,15 +120,15 @@ public final class GUISlave {
      *
      * @param v is the visible-boolean
      */
-    public static void progressbarVisible (boolean v) {
+    public void progressbarVisible (boolean v) {
         gui.progressbar.setVisible(v);
-        GUISlave.revalidateAll();
+        this.revalidateAll();
     }
 
     /**
      * revalidates all swing components
      */
-    public static void revalidateAll () {
+    public void revalidateAll () {
         gui.window.revalidate();
     }
 
@@ -150,7 +137,7 @@ public final class GUISlave {
      *
      * @param comp is the component that requests the focus
      */
-    static void requestComponentFocus(Component comp) {
+    void requestComponentFocus(Component comp) {
         comp.requestFocus();
     }
 
@@ -159,27 +146,27 @@ public final class GUISlave {
      *
      * @param forItem is the search type
      */
-    public static void loadSearch (String forItem) {
+    public void loadSearch (String forItem) {
         switch (forItem) {
             case "Flight" -> {
-                GUISlave.showSearch(gui.flightSearch);
-                Controller.currentSearchType = FLIGHT;
+                this.showSearch(gui.flightSearch);
+                controller.currentSearchType = FLIGHT;
             }
             case "Plane" -> {
-                GUISlave.showSearch(gui.planeSearch);
-                Controller.currentSearchType = PLANE;
+                this.showSearch(gui.planeSearch);
+                controller.currentSearchType = PLANE;
             }
             case "Airline" -> {
-                GUISlave.showSearch(gui.airlineSearch);
-                Controller.currentSearchType = AIRLINE;
+                this.showSearch(gui.airlineSearch);
+                controller.currentSearchType = AIRLINE;
             }
             case "Airport" -> {
-                GUISlave.showSearch(gui.airportSearch);
-                Controller.currentSearchType = AIRPORT;
+                this.showSearch(gui.airportSearch);
+                controller.currentSearchType = AIRPORT;
             }
             case "Area" -> {
-                GUISlave.showSearch(gui.areaSearch);
-                Controller.currentSearchType = AREA;
+                this.showSearch(gui.areaSearch);
+                controller.currentSearchType = AREA;
             }
         }
     }
@@ -189,11 +176,12 @@ public final class GUISlave {
      *
      * @param search is the given list of search components
      */
-    private static void showSearch (List<JComponent> search) {
-        for (var comps : gui.allSearchModels()) {
+    private void showSearch (List<JComponent> search) {
+        var searchModels = gui.allSearchModels();
+        for (var comps : searchModels) {
             var equals = (comps == search);
             if (comps != null) {
-                for (JComponent c : comps) {
+                for (var c : comps) {
                     c.setVisible(equals);
                 }
             }
@@ -204,7 +192,7 @@ public final class GUISlave {
      * disposes all views (and opens the start screen)
      * if no other view is opened, nothing is done
      */
-    public static void disposeView() {
+    public void disposeView() {
         if (gui.pStartScreen != null) {
             gui.pStartScreen.setVisible(false);
         } if (gui.listView != null) {
@@ -212,7 +200,9 @@ public final class GUISlave {
             gui.listView.setVisible(false);
             gui.listView = null;
             gui.pList.setVisible(false);
-        } if (gui.mapViewer != null) {
+        } if (this.mapViewer() != null) {
+            this.mapViewer().removeAllMapMarkers();
+            this.mapViewer().removeAllMapPolygons();
             gui.pMap.remove(gui.mapViewer);
             gui.mapViewer.setVisible(false);
             gui.pMap.setVisible(false);
@@ -226,11 +216,10 @@ public final class GUISlave {
         gui.dpleft.moveToFront(gui.pMenu);
         gui.viewHeadText.setText(DEFAULT_HEAD_TEXT);
         BlackBeardsNavigator.currentViewType = null;
-        GUISlave.revalidateAll();
-        GUISlave.requestComponentFocus(gui.tfSearch);
+        this.revalidateAll();
     }
 
-    static void windowResized () {
+    void windowResized () {
         gui.mainpanel.setBounds(0, 0, gui.window.getWidth()-14, gui.window.getHeight()-37);
         gui.pTitle.setBounds(0, 0, gui.mainpanel.getWidth(), 70);
 
@@ -265,7 +254,8 @@ public final class GUISlave {
         }
         if (gui.fileMenu != null) {
             int minus = 84;
-            for (var bt : gui.fileMenu) {
+            var fileMenu = gui.fileMenu;
+            for (var bt : fileMenu) {
                 bt.setBounds(gui.pViewHead.getWidth() - minus, 4, 80, 16);
                 minus += 84;
             }
@@ -277,56 +267,63 @@ public final class GUISlave {
      * 
      * @param button is the clicked button
      */
-    public static void buttonClicked (JButton button) {
+    public void buttonClicked (JButton button) {
         if (button == gui.btFile) {
-            GUISlave.setViewHeadBtVisible(false);
-            GUISlave.setFileMenuVisible(true);
+            this.setViewHeadBtVisible(false);
+            this.setFileMenuVisible(true);
         } else if (button == gui.btList) {
-            GUISlave.progressbarStart();
-            gui.controller.show(LIST_FLIGHT, "");
+            this.progressbarStart();
+            this.controller.show(LIST_FLIGHT, "");
         } else if (button == gui.btMap) {
-            GUISlave.progressbarStart();
-            gui.controller.show(MAP_ALL, "");
+            this.progressbarStart();
+            this.controller.show(MAP_ALL, "");
         } else if (button == gui.closeView) {
-            GUISlave.disposeView();
-            gui.pStartScreen.setVisible(true);
-            gui.dpright.moveToFront(gui.pStartScreen);
+            this.disposeView();
+            var ctrl = Controller.getInstance(); // muss das sein
+            ctrl.loadedData = null;
+            this.gui.pStartScreen.setVisible(true);
+            this.gui.dpright.moveToFront(gui.pStartScreen);
         } else if (button == gui.settings) {
-            gui.settings_intlFrame.show();
-            gui.settings_iFrame_maxLoad.setCaretColor(Color.YELLOW);
-            gui.settings_iFrame_maxLoad.setCaretPosition(gui.settings_iFrame_maxLoad.getText().length());
-            gui.settings_iFrame_maxLoad.grabFocus();
+            this.gui.settingsDialog.setVisible(true);
+            this.gui.settings_maxLoadTf.setCaretColor(Color.YELLOW);
+            this.requestComponentFocus(this.gui.settings_maxLoadTf);
         } else if (button == gui.searchButton) {
-            gui.pSearch.setVisible(!gui.pSearch.isVisible());
-            gui.tfSearch.setVisible(!gui.pSearch.isVisible());
-            GUISlave.loadSearch("Plane");
+            this.gui.pSearch.setVisible(!gui.pSearch.isVisible());
+            this.gui.tfSearch.setVisible(!gui.pSearch.isVisible());
+            this.loadSearch("Plane");
+        } else if (button == gui.settingsButtons[0]) {
+            gui.settingsDialog.setVisible(false);
+        } else if (button == gui.settingsButtons[1]) {
+            new UserSettings().confirm(gui.settings_maxLoadTf.getText(), (String) gui.settings_mapTypeCmbBox.getSelectedItem());
+            gui.settingsDialog.setVisible(false);
         } else if (button.getName().equals("loadList")) {
             // future
         } else if (button.getName().equals("loadMap")) {
             // TODO search type abfragen, bzw. ComboBox SelectedItem
-            String[] inputs = GUISlave.searchInput();
-            gui.controller.search(inputs, 1);
+            var inputs = this.searchInput();
+            this.controller.search(inputs, 1);
         } else if (button.getName().equals("open")) {
             try {
                 new MenuModels().fileLoader(gui.window);
             } catch (DataNotFoundException e) {
-                gui.controller.errorLog(e.getMessage());
+                this.controller.getLogger().errorLog(e.getMessage(), this);
             }
         } else if (button.getName().equals("save")) {
             new MenuModels().fileSaver(gui.window);
         } else if (button.getName().equals("back")) {
-            GUISlave.setFileMenuVisible(false);
-            GUISlave.setViewHeadBtVisible(true);
+            this.setFileMenuVisible(false);
+            this.setViewHeadBtVisible(true);
         }
     }
 
-    private static void setViewHeadBtVisible (boolean b) {
+    private void setViewHeadBtVisible (boolean b) {
         gui.btFile.setVisible(b);
         gui.closeView.setVisible(b);
     }
 
-    private static void setFileMenuVisible (boolean b) {
-        for (var bt : gui.fileMenu) {
+    private void setFileMenuVisible (boolean b) {
+        var fileMenu = gui.fileMenu;
+        for (var bt : fileMenu) {
             bt.setVisible(b);
         }
     }
@@ -334,7 +331,7 @@ public final class GUISlave {
     /**
      * executed when a key is pressed
      */
-    static void keyPressed (KeyEvent e) {
+    void keyPressed (KeyEvent e) {
         var src = e.getSource();
         int key = e.getKeyCode();
         try {
@@ -343,16 +340,16 @@ public final class GUISlave {
                     if (gui.tfSearch.hasFocus())
                         gui.enterText();
                 }
-            } else if (src == gui.settings_iFrame_maxLoad) {
+            } else if (src == gui.settings_maxLoadTf) {
                 if (key == KeyEvent.VK_ENTER) {
                     // TODO fixen: settings fenster schließt erst nach loading
-                    if (Integer.parseInt(gui.settings_iFrame_maxLoad.getText()) >= 4) {
-                        GUISlave.progressbarStart();
-                        UserSettings.setMaxLoadedData(Integer.parseInt(gui.settings_iFrame_maxLoad.getText()));
-                        gui.settings_iFrame_maxLoad.setText("");
-                        gui.settings_intlFrame.setVisible(false);
+                    if (Integer.parseInt(gui.settings_maxLoadTf.getText()) >= 4) {
+                        this.progressbarStart();
+                        new UserSettings().setMaxLoadedData(Integer.parseInt(gui.settings_maxLoadTf.getText()));
+                        gui.settings_maxLoadTf.setText("");
+                        gui.settingsDialog.setVisible(false);
                         // work with background worker?
-                        //Controller.loadLiveData();
+                        //controller.loadLiveData();
                     }
                 }
             } else if (src == gui.mapViewer) {
@@ -362,21 +359,21 @@ public final class GUISlave {
                     case VK_END -> gui.mapViewer.moveMap(2, 0);
                     case VK_PAGE_DOWN -> gui.mapViewer.moveMap(0, -2);
                 }
-                GUISlave.revalidateAll();
+                this.revalidateAll();
             }
         } catch (NumberFormatException ex) {
-                    gui.settings_iFrame_maxLoad.setText("Error");
+                    gui.settings_maxLoadTf.setText("Error");
         } catch (Exception ex){
             ex.printStackTrace();
         }
     }
 
-    public static JMapViewer mapViewer () {
+    public JMapViewer mapViewer () {
         return gui.mapViewer;
     }
 
-    private static String[] searchInput () {
-        switch (Controller.currentSearchType) {
+    private String[] searchInput () {
+        switch (controller.currentSearchType) {
             case FLIGHT -> {
                 return new String[] {
                         gui.search_flightID.getText(),
@@ -389,12 +386,18 @@ public final class GUISlave {
                         gui.search_icao.getText(),
                         gui.search_tailNr.getText()
                 };
+            } case AIRPORT -> {
+                return new String[] {
+                        gui.search_airpID.getText(),
+                        gui.search_airpTag.getText(),
+                        gui.search_airpName.getText()
+                };
             }
         }
         return null;
     }
 
-    static void clearSearch () {
+    void clearSearch () {
         var comps = new JTextField[] {
                 gui.search_planetype,
                 gui.search_tailNr,

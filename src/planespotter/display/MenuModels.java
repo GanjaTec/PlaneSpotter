@@ -13,8 +13,11 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Vector;
 
 import static planespotter.constants.GUIConstants.*;
+import static planespotter.constants.GUIConstants.DefaultColor.*;
 
 /**
  * @name MenuModels
@@ -33,8 +36,8 @@ final class MenuModels {
     JMenuBar menuBar (JPanel parent) {
         // TODO: setting up menubar
         var menubar = new JMenuBar();
-        menubar.setBackground(DEFAULT_BG_COLOR);
-        menubar.setForeground(DEFAULT_FG_COLOR);
+        menubar.setBackground(DEFAULT_BG_COLOR.get());
+        menubar.setForeground(DEFAULT_FG_COLOR.get());
         menubar.setBounds(0, 0, parent.getWidth(), parent.getHeight());
         menubar.setBorder(LINE_BORDER);
         menubar.setLayout(null);
@@ -49,8 +52,8 @@ final class MenuModels {
         // TODO setting up list button
         var list = new UWPButton();
         list.setText("List-View");
-        list.setBackground(DEFAULT_ACCENT_COLOR);
-        list.setForeground(DEFAULT_FONT_COLOR);
+        list.setBackground(DEFAULT_ACCENT_COLOR.get());
+        list.setForeground(DEFAULT_FONT_COLOR.get());
         list.setBounds(10, 15, ((parent.getWidth()-20)/2)-5, 25);
         list.setFont(FONT_MENU);
 
@@ -64,8 +67,8 @@ final class MenuModels {
         // TODO setting up list button
         var map = new UWPButton();
         map.setText("Live-Map");
-        map.setBackground(DEFAULT_ACCENT_COLOR);
-        map.setForeground(DEFAULT_FONT_COLOR);
+        map.setBackground(DEFAULT_ACCENT_COLOR.get());
+        map.setForeground(DEFAULT_FONT_COLOR.get());
         map.setBounds(145, 15, ((parent.getWidth()-20)/2)-5, 25);
         map.setFont(FONT_MENU);
 
@@ -79,8 +82,8 @@ final class MenuModels {
         // TODO: setting up settings menu
         var settings = new UWPButton();
         settings.setText("Settings");
-        settings.setBackground(DEFAULT_ACCENT_COLOR);
-        settings.setForeground(DEFAULT_FONT_COLOR);
+        settings.setBackground(DEFAULT_ACCENT_COLOR.get());
+        settings.setForeground(DEFAULT_FONT_COLOR.get());
         settings.setFont(FONT_MENU);
         settings.setBounds(10, 55, parent.getWidth()-20, 25);
 
@@ -94,8 +97,8 @@ final class MenuModels {
         // TODO: setting up search-settings menu
         var search_settings = new UWPButton();
         search_settings.setText("Search");
-        search_settings.setBackground(DEFAULT_ACCENT_COLOR);
-        search_settings.setForeground(DEFAULT_FONT_COLOR);
+        search_settings.setBackground(DEFAULT_ACCENT_COLOR.get());
+        search_settings.setForeground(DEFAULT_FONT_COLOR.get());
         search_settings.setFont(FONT_MENU);
         search_settings.setBounds(10, parent.getHeight()-15, parent.getWidth()-20, 25);
 
@@ -107,14 +110,14 @@ final class MenuModels {
      */
     JProgressBar progressBar (JMenuBar parent) {
         // TODO: seting up progress bar
-        var progressbar = new JProgressBar(0, 100);
+        var progressbar = new JProgressBar();
         progressbar.setBorder(LINE_BORDER);
-        progressbar.setBackground(DEFAULT_FONT_COLOR);
+        progressbar.setBackground(DEFAULT_FONT_COLOR.get());
         progressbar.setBorderPainted(true);
         progressbar.setForeground(new Color(92, 214, 92));
-        progressbar.setBounds(10, 135, parent.getWidth()-20, 15);
+        progressbar.setBounds(10, 90, parent.getWidth()-20, 15);
+        progressbar.setIndeterminate(true);
         progressbar.setVisible(false);
-        progressbar.setValue(0);
 
         return progressbar;
     }
@@ -142,7 +145,7 @@ final class MenuModels {
         var file = new UWPButton();
         file.setText("File");
         file.setBackground(Color.DARK_GRAY);
-        file.setForeground(DEFAULT_FONT_COLOR);
+        file.setForeground(DEFAULT_FONT_COLOR.get());
         file.setBounds(parent.getWidth()-184, 4, 80, 16);
         file.setFont(new Font("DialogInput", Font.PLAIN, 14));
 
@@ -157,7 +160,7 @@ final class MenuModels {
         var closeView = new UWPButton();
         closeView.setText("Close");
         closeView.setBackground(Color.DARK_GRAY);
-        closeView.setForeground(DEFAULT_FONT_COLOR);
+        closeView.setForeground(DEFAULT_FONT_COLOR.get());
         closeView.setBounds(parent.getWidth()-85, 4, 80, 16);
         closeView.setFont(new Font("DialogInput", Font.PLAIN, 14));
 
@@ -167,20 +170,28 @@ final class MenuModels {
     /**
      * @return settings option pane (which pops up)
      */
-    JInternalFrame settings_intlFrame (JPanel parent) {
+    JDialog settingsDialog (JFrame parent) {
             var maxLoadLbl = new JLabel("Max. loaded Data:");
             maxLoadLbl.setBounds(20, 20, 180, 30);
-            maxLoadLbl.setForeground(DEFAULT_FONT_COLOR);
+            maxLoadLbl.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
             maxLoadLbl.setFont(FONT_MENU);
-        var settings = new JInternalFrame();
+            maxLoadLbl.setOpaque(false);
+            var mapType = new JLabel("Map Type:");
+            mapType.setBounds(20, 70, 300, 30);
+            mapType.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+            mapType.setFont(FONT_MENU);
+            mapType.setOpaque(false);
+        var settings = new JDialog(parent);
         settings.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 500, 400);
         settings.setLayout(null);
-        settings.setBackground(DEFAULT_BORDER_COLOR);
-        settings.setClosable(true);
+        settings.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+        settings.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        settings.setType(Window.Type.POPUP);
         settings.setResizable(false);
         settings.setFocusable(false);
         settings.add(maxLoadLbl);
-        settings.hide();
+        settings.add(mapType);
+        settings.setVisible(false);
 
         return settings;
     }
@@ -188,15 +199,48 @@ final class MenuModels {
     /**
      * settings opt. pane max-load text field
      */
-    JTextField settingsOP_maxLoadTxtField () {
+    JTextField settings_maxLoadTxtField () {
         var maxLoadTxtfield = new JTextField();
         maxLoadTxtfield.setBounds(200, 20, 50, 30);
-        maxLoadTxtfield.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR));
-        maxLoadTxtfield.setBackground(DEFAULT_BG_COLOR);
-        maxLoadTxtfield.setForeground(DEFAULT_MAP_ICON_COLOR);
+        maxLoadTxtfield.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR.get()));
+        maxLoadTxtfield.setBackground(DEFAULT_BG_COLOR.get());
+        maxLoadTxtfield.setForeground(DEFAULT_MAP_ICON_COLOR.get());
         maxLoadTxtfield.setFont(FONT_MENU);
 
         return maxLoadTxtfield;
+    }
+
+    JButton[] settingsButtons (JDialog parent) {
+        int mid = parent.getWidth() / 2;
+        int height = parent.getHeight() - 80;
+        var cancel = new UWPButton("Cancel");
+            cancel.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+            cancel.setForeground(DEFAULT_FONT_COLOR.get());
+            cancel.setFont(FONT_MENU);
+        cancel.setBounds(mid - 140, height, 120, 30);
+        var confirm = new UWPButton("Confirm");
+        confirm.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+        confirm.setForeground(DEFAULT_FONT_COLOR.get());
+        confirm.setFont(FONT_MENU);
+        confirm.setBounds(mid + 20, height, 120, 30);
+        return new UWPButton[] {
+                cancel, confirm
+        };
+    }
+
+    JComboBox<String> settings_mapTypeCmbBox () {
+        var mapTypeCmbBox = new JComboBox<String>(new String[] {
+                "Bing Map",
+                "Default Map",
+                "Transport Map"
+        });
+        mapTypeCmbBox.setBounds(200, 70, 100,  30);
+        mapTypeCmbBox.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR.get()));
+        mapTypeCmbBox.setBackground(DEFAULT_BG_COLOR.get());
+        mapTypeCmbBox.setForeground(DEFAULT_MAP_ICON_COLOR.get());
+        mapTypeCmbBox.setFont(FONT_MENU);
+
+        return mapTypeCmbBox;
     }
 
     /**
@@ -222,19 +266,21 @@ final class MenuModels {
         fileChooser.setAcceptAllFileFilterUsed(false);
         fileChooser.setFileFilter(new FileNameExtensionFilter("only .pls-Files", "pls"));
         fileChooser.showOpenDialog(parent);
-        HashMap<Integer, DataPoint> route = null;
+        Vector<DataPoint> route = null;
         try {
             route = new FileMaster().loadPlsFile(fileChooser);
         } catch (DataNotFoundException e) {
             e.printStackTrace();
         }
-        int flightID;
+        //int flightID;
         if (route != null) {
-            flightID = route.get(0).getFlightID();
+            //flightID = route.get(0).getFlightID();
+            Controller.getInstance().loadedData = route;
+
         } else {
             throw new DataNotFoundException("No route to save, select a route first!");
         }
-        Controller.getInstance().show(ViewType.MAP_TRACKING, flightID + "");
+        Controller.getInstance().show(ViewType.MAP_TRACKING, "Loaded from File");
         return fileChooser;
     }
 
@@ -248,7 +294,7 @@ final class MenuModels {
         for (var comp : components) {
             comp.setBounds(parent.getWidth() - minus, 4, 80, 16);
             comp.setBackground(Color.DARK_GRAY);
-            comp.setForeground(DEFAULT_FONT_COLOR);
+            comp.setForeground(DEFAULT_FONT_COLOR.get());
             comp.setFont(new Font("DialogInput", Font.PLAIN, 14));
             comp.setVisible(false);
             minus += 84;

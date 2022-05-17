@@ -1,7 +1,7 @@
 package planespotter.display;
 
+import org.jetbrains.annotations.NotNull;
 import planespotter.constants.Paths;
-import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
 import planespotter.model.Utilities;
 
@@ -13,6 +13,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import static planespotter.constants.GUIConstants.*;
+import static planespotter.constants.GUIConstants.DefaultColor.DEFAULT_BG_COLOR;
+import static planespotter.constants.GUIConstants.DefaultColor.DEFAULT_SEARCH_ACCENT_COLOR;
 
 /**
  * @name TreePlantation
@@ -26,12 +28,12 @@ public final class TreePlantation {
     /**
      * default plane icon in the JTree
      */
-    private static final Icon PLANE_ICON = new ImageIcon(Paths.SRC_PATH + "planespotter/images/tree_plane_icon.png");
+    private final Icon PLANE_ICON = new ImageIcon(Paths.SRC_PATH + "planespotter/images/tree_plane_icon.png");
 
     /**
      * private constructor
      */
-    private TreePlantation () {
+    public TreePlantation() {
     }
 
     /**
@@ -39,11 +41,11 @@ public final class TreePlantation {
      *
      * @param treeNode is the root node of the given tree
      */
-    public static void createTree(DefaultMutableTreeNode treeNode) {
+    public  void createTree(DefaultMutableTreeNode treeNode) {
         // initialisation new JTree
-        var tree = TreePlantation.defaultTree(treeNode);
+        var tree = this.defaultTree(treeNode);
         tree.setVisible(true);
-        GUISlave.recieveTree(tree);
+        new GUISlave().recieveTree(tree);
     }
 
     /**
@@ -51,10 +53,10 @@ public final class TreePlantation {
      *
      * @param flight is the flight to show
      */
-    static void createFlightInfo (Flight flight) {
-        JTree tree = TreePlantation.defaultTree(TreePlantation.flightInfoTreeNode(flight));
+     void createFlightInfo (Flight flight) {
+        JTree tree = this.defaultTree(this.flightInfoTreeNode(flight));
         tree.setVisible(true);
-        GUISlave.recieveInfoTree(tree, null);
+        new GUISlave().recieveInfoTree(tree, null);
     }
 
     /**
@@ -62,10 +64,10 @@ public final class TreePlantation {
      *
      * @param dp is the data point to show
      */
-    static void createDataPointInfo (Flight flight, DataPoint dp) {
-        var flightInfo = TreePlantation.defaultTree(TreePlantation.flightInfoTreeNode(flight));
-        var dpInfo = TreePlantation.defaultTree(TreePlantation.dataPointInfoTreeNode(dp));
-        GUISlave.recieveInfoTree(flightInfo, dpInfo);
+     void createDataPointInfo (Flight flight, DataPoint dp) {
+        var flightInfo = this.defaultTree(this.flightInfoTreeNode(flight));
+        var dpInfo = this.defaultTree(this.dataPointInfoTreeNode(dp));
+        new GUISlave().recieveInfoTree(flightInfo, dpInfo);
         dpInfo.setVisible(true);
     }
 
@@ -75,10 +77,10 @@ public final class TreePlantation {
      * @param treeNode is the root tree node
      * @return default JTree
      */
-    private static JTree defaultTree (DefaultMutableTreeNode treeNode) {
+    private  JTree defaultTree (DefaultMutableTreeNode treeNode) {
         var tree = new JTree(treeNode);
         tree.setFont(FONT_MENU);
-        tree.setBackground(DEFAULT_BG_COLOR);
+        tree.setBackground(DEFAULT_BG_COLOR.get());
         tree.setOpaque(false);
         // creating tree cell renderer
         var renderer = new CustomCellRenderer();
@@ -98,7 +100,7 @@ public final class TreePlantation {
      * @param list is the list of flights to be converted into a tree node
      * @return DefaultMutableTreeNode, the root node of the JTree, with all its children nodes
      */
-    public static DefaultMutableTreeNode allFlightsTreeNode (List<Flight> list) {
+    public  DefaultMutableTreeNode allFlightsTreeNode (List<Flight> list) {
         var it = list.iterator();
         // root node
         var root = new DefaultMutableTreeNode("");
@@ -152,7 +154,7 @@ public final class TreePlantation {
      * creates only ONE flight tree node
      * @return DefaultMutableTreeNode, represents a flight (as a tree)
      */
-    public static DefaultMutableTreeNode flightInfoTreeNode (Flight f) {
+    public DefaultMutableTreeNode flightInfoTreeNode (@NotNull Flight f) {
         String strToStrip;
             var plane = f.getPlane();
             var airline = plane.getAirline();
@@ -161,18 +163,18 @@ public final class TreePlantation {
         // Attributes
         root.add(new DefaultMutableTreeNode("Flight-ID: " + f.getID()));
         strToStrip = "Flight-Nr.: " + f.getFlightnr();
-        root.add(new DefaultMutableTreeNode(Controller.stripString(strToStrip)));
+        root.add(new DefaultMutableTreeNode(new Utilities().stripString(strToStrip)));
         strToStrip = "Callsign: " + f.getCallsign();
-        root.add(new DefaultMutableTreeNode(Controller.stripString(strToStrip)));
+        root.add(new DefaultMutableTreeNode(new Utilities().stripString(strToStrip)));
         root.add(new DefaultMutableTreeNode("Plane-ID: " + plane.getID()));
         strToStrip = "Plane-Type: " + plane.getPlanetype();
-        root.add(new DefaultMutableTreeNode(Controller.stripString(strToStrip)));
+        root.add(new DefaultMutableTreeNode(new Utilities().stripString(strToStrip)));
         strToStrip = "Plane-ICAO: " + plane.getIcao();
-        root.add(new DefaultMutableTreeNode(Controller.stripString(strToStrip)));
+        root.add(new DefaultMutableTreeNode(new Utilities().stripString(strToStrip)));
         strToStrip = "Plane-Registration: " + plane.getRegistration();
-        root.add(new DefaultMutableTreeNode(Controller.stripString(strToStrip)));
+        root.add(new DefaultMutableTreeNode(new Utilities().stripString(strToStrip)));
         strToStrip = "Plane-Tailnr.: " + plane.getTailnr();
-        root.add(new DefaultMutableTreeNode(Controller.stripString(strToStrip)));
+        root.add(new DefaultMutableTreeNode(new Utilities().stripString(strToStrip)));
         root.add(new DefaultMutableTreeNode("Airline-ID: " + airline.getID()));
         root.add(new DefaultMutableTreeNode("Airline-Tag: " + airline.getTag()));
         root.add(new DefaultMutableTreeNode("Airline-Name: " + airline.getName()));
@@ -198,11 +200,11 @@ public final class TreePlantation {
      * @param dp is the data point to be shown
      * @return data point info root tree node
      */
-    private static DefaultMutableTreeNode dataPointInfoTreeNode (DataPoint dp) {
+    private  DefaultMutableTreeNode dataPointInfoTreeNode (DataPoint dp) {
         int id = dp.getID(),
             flightID = dp.getFlightID(),
-            speed = Utilities.knToKmh(dp.getSpeed()),
-            height = Utilities.feetToMeters(dp.getAltitude()),
+            speed = new Utilities().knToKmh(dp.getSpeed()),
+            height = new Utilities().feetToMeters(dp.getAltitude()),
             heading = dp.getHeading(),
             sqawk = dp.getSqawk();
         double  lat = dp.getPos().getLat(),
@@ -227,7 +229,7 @@ public final class TreePlantation {
      * creates a 'Tree' of
      * @return root, the root node of the tree
      */
-    public static DefaultMutableTreeNode allAirlinesTreeNode (List<Airline> list) {
+    public  DefaultMutableTreeNode allAirlinesTreeNode (List<Airline> list) {
         // list iterator for going through the list
         Iterator<Airline> it = list.iterator();
         // root node
@@ -261,14 +263,14 @@ public final class TreePlantation {
             @Override
             public Component getTreeCellRendererComponent(JTree tree, Object value,
                                                           boolean sel, boolean exp, boolean leaf,
-                                                          int row, boolean hasFocus ) {
+                                                          int row, boolean hasFocus) {
                 super.getTreeCellRendererComponent(tree, value, sel, exp, leaf, row, hasFocus);
                 if (row % 2 == 0) {
-                    setBackgroundNonSelectionColor(DEFAULT_BG_COLOR);
+                    setBackgroundNonSelectionColor(DEFAULT_BG_COLOR.get());
                 } else {
                     setBackgroundNonSelectionColor(new Color(150, 150, 150));
                 }
-                setBackgroundSelectionColor(DEFAULT_BORDER_COLOR);
+                setBackgroundSelectionColor(DEFAULT_SEARCH_ACCENT_COLOR.get());
 
                 return this;
             }

@@ -1,5 +1,6 @@
 package planespotter.model;
 
+import planespotter.controller.Test;
 import planespotter.dataclasses.Frame;
 
 import java.io.File;
@@ -11,6 +12,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 /**

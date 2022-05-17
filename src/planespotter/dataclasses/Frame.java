@@ -1,5 +1,8 @@
 package planespotter.dataclasses;
 
+import java.util.ArrayDeque;
+import java.util.List;
+
 public class Frame{
 	private String icaoaddr;
 	private double lat;
@@ -122,7 +125,32 @@ public class Frame{
 	public String getAirline() {
 		return this.airline;
 	}
-	
+
+	/**
+	 * prints all values
+	 */
+	public void printValues () {
+		System.out.println("ICAO: " + this.getIcaoAdr() + ',' +
+							" Lat: " + this.getLat() + ',' +
+							" Lon: " + this.getLon() + ',' +
+							" Heading: " + this.getHeading() + ',' +
+							" Altitude: " + this.getAltitude() + ',' +
+							" Registration: " + this.getRegistration() + ',' +
+							" Squawk: " + this.getSquawk() + ',' +
+							" TailNr.: " + this.getTailnr() + ',' +
+							" Planetype: " + this.getPlanetype() + ',' +
+							" Registration: " + this.getRegistration() + ',' +
+							" TailNr.: " + this.getTailnr() + ',' +
+							" SrcAirport: " + this.getSrcAirport() + ',' +
+							" DestAirport: " + this.getDestAirport() + ',' +
+							" FlightNr.: " + this.getFlightnumber() + ',' +
+							" Unkwn1: " + this.getUnknown1() + ',' +
+							" Unkwn2: " + this.getUnknown2() + ',' +
+							" Callsign: " + this.getCallsign() + ',' +
+							" Unkwn3: " + this.getUnknown3() + ',' +
+							" Airline: " + this.getAirline());
+		
+	}
 	
 }
 

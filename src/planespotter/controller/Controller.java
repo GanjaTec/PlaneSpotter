@@ -1,49 +1,52 @@
 package planespotter.controller;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import planespotter.constants.SearchType;
 import planespotter.constants.ViewType;
 import planespotter.dataclasses.*;
-import planespotter.display.BlackBeardsNavigator;
-import planespotter.display.GUI;
-import planespotter.display.GUISlave;
-import planespotter.display.TreePlantation;
-import planespotter.model.DBOut;
-import planespotter.model.FileMaster;
-import planespotter.model.Search;
+import planespotter.display.*;
+import planespotter.model.*;
 import planespotter.throwables.DataNotFoundException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Vector;
 
-import static planespotter.constants.Configuration.*;
-import static planespotter.constants.GUIConstants.*;
+import static planespotter.constants.GUIConstants.Sound.SOUND_DEFAULT;
 
 /**
  * @name    Controller
  * @author  @all Lukas   jml04   Bennet
  * @version 1.1
  */
-// TODO we need a scheduled executor to update the data in background
-// TODO -> starts a background worker every (?) minutes
-////////////////////////////////////////////////////////////////////
-// TODO eventuell flights tabelle aufteilen in: flightsNow/flightsEnded -> zwei verschiedene DB-Anfragen (?)
-// TODO -> so würde man die Zeit der DB-Anfrage deutlich verkürzen, da nicht unnötig nicht-gebrauchte felder gelesen werden müssen
 public class Controller {
+    // ONLY Controller instance
+    private static final Controller mainController;
     /**
      * executor services / thread pools
      */
-    // TODO eventuell JoinForkPool einbauen, kann Aufgaben threaded rekursiv verarbeiten
-    //  (wenn Aufgabe zu groß, wird sie in weitere Teilaufgaben(Threads) aufgeteilt)
-    // ThreadPoolExecutor for thread execution in a thread pool -> package-private (only usable in controller package)
-    static final ThreadPoolExecutor exe = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-    private static final ScheduledExecutorService scheduled_exe = Executors.newScheduledThreadPool(1); // erstmal 1, wird noch mehr
-    // boolean loading is true when something is loading
-    public static boolean loading;
+    private static final Scheduler scheduler;
+    // logger for whole program
+    private static Logger logger;
+    // thread watch dog
+    private static WatchDog watchDog;
+    // boolean loading is true when something is loading (volatile?)
+    public volatile boolean loading;
+    // boolean loggerOn is true when the logger is visible
+    public boolean loggerOn;
+    // only GUI instance
+    private GUI gui;
+    // lists for live flights and loaded flights
+    public volatile Vector<DataPoint> liveData, loadedData;
+    // current loaded search
+    public SearchType currentSearchType = SearchType.FLIGHT;
+
+    static {
+        scheduler = new Scheduler();
+        mainController = new Controller();
+    }
 
     /**
      * constructor - private -> only ONE instance ( getter: Controller.getInstance() )
@@ -51,17 +54,6 @@ public class Controller {
     private Controller () {
         this.initialize();
     }
-    // ONLY Controller instance
-    private static final Controller mainController = new Controller();
-
-    // only GUI instance
-    static GUI gui;
-    // preloadedFlights list
-    public static List<DataPoint> liveData, loadedData;
-    // hash map for all map markers
-    public static HashMap<Integer, DataPoint> allMapData = new HashMap<>();
-    // current loaded search
-    public static SearchType currentSearchType = SearchType.PLANE;
 
     /**
      * @return ONE and ONLY controller instance
@@ -74,11 +66,13 @@ public class Controller {
      * initializes the controller
      */
     private void initialize () {
-        this.log("initializing Controller...");
+        logger = new Logger(this);
+        watchDog = new WatchDog();
+        logger.log("initializing Controller...", this);
+        liveData = new Vector<>();
         this.startExecutors();
-        liveData = new CopyOnWriteArrayList<>();
-        Thread.currentThread().setName("planespotter-main");
-        this.sucsessLog("Controller initialized sucsessfully!");
+        Thread.currentThread().setName("Planespotter-Main");
+        logger.sucsessLog("Controller initialized sucsessfully!", this);
     }
 
     /**
@@ -86,14 +80,16 @@ public class Controller {
      * :: -> method reference
      */
     private void startExecutors () {
-        this.log("initializing Executors...");
-        var sec = TimeUnit.SECONDS;
-        exe.setKeepAliveTime(KEEP_ALIVE_TIME, sec);
-        exe.setMaximumPoolSize(MAX_THREADPOOL_SIZE);
-        scheduled_exe.scheduleAtFixedRate(FileMaster::saveConfig, 60, 300, sec);
-        scheduled_exe.scheduleAtFixedRate(System::gc, 20, 20, sec);
-        scheduled_exe.scheduleAtFixedRate(Controller::loadLiveData, 10, 10, sec); // -> live data
-        this.sucsessLog("Executors initialized sucsessfully!");
+        logger.log("initializing Executors...", this);
+        //scheduler.runAsThread(new DataMaster().dataLoader(), "Data-Loader"); // läuft noch nicht
+        scheduler.runAsThread(watchDog, "Watch-Dog", true);
+        scheduler.schedule(new FileMaster()::saveConfig, 60, 300);
+        scheduler.schedule(() -> {
+            System.gc();
+            logger.log("Calling Garbage Collector...", this);
+        }, 10, 10);
+        scheduler.schedule(this::loadLiveData, 0, 10); // -> live data
+        logger.sucsessLog("Executors initialized sucsessfully!", this);
     }
 
     /**
@@ -102,12 +98,13 @@ public class Controller {
     public synchronized void start () {
         try {
             this.openWindow();
-            Controller.loadLiveData();
-            while (loading) {
+            this.loadLiveData();
+            while (this.loading) {
                 this.wait();
             }
             this.notify();
-            GUISlave.donePreLoading();
+            this.donePreLoading();
+            this.done();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -116,32 +113,44 @@ public class Controller {
     /**
      * opens a new GUI window as a thread
      */
-    private void openWindow () {
-        loading = true;
-        this.log("initialising GUI...");
-        if (gui == null) {
-            gui = new GUI();
-            exe.execute(gui);
-        }
-        GUISlave.initialize();
-        BlackBeardsNavigator.initialize(); // TODO hier MapViewer zuweisen! dann nicht mehr
+    private synchronized void openWindow () {
+        gui = new GUI();
+        this.loading = true;
+        logger.log("initialising GUI...", gui);
+        scheduler.exec(gui, "Planespotter-GUI");
+        logger.sucsessLog("GUI initialized sucsessfully!", gui);
+        logger.sucsessLog("Display-Package initialized sucsessfully!", this);
         this.done();
-        this.sucsessLog("GUI initialized sucsessfully!");
     }
 
     /**
      * reloads the data ( static -> able to executed by scheduled_exe )
      * used for live map
      */
-    public static void loadLiveData () {
-        long startTime = System.nanoTime();
-        loading = true;
-        liveData = new ArrayList<>();
-        new DataMaster().load();
-        mainController.waitForFinish();
-        mainController.sucsessLog("loaded data in " + (System.nanoTime()-startTime)/Math.pow(1000, 3) +
-                " seconds!" + "\n" + ANSI_ORANGE + " -> completed: " + exe.getCompletedTaskCount() +
-                ", active: " + exe.getActiveCount() + ", largestPoolSize: " + exe.getLargestPoolSize());
+    public synchronized void loadLiveData() {
+        if (!this.loading) {
+            long startTime = System.nanoTime();
+            this.loading = true;
+            int startID = 0;
+            int endID = new UserSettings().getMaxLoadedData();
+            int dataPerTask = 5000; // testen!
+            this.liveData = new Vector<>();
+            var outputWizard = new OutputWizard(scheduler, 0, startID, endID, dataPerTask, 0);
+            scheduler.exec(outputWizard);
+            this.waitForFinish();
+            this.done();
+            logger.sucsessLog("loaded Live-Data in " + (System.nanoTime() - startTime) / Math.pow(1000, 3) +
+                    " seconds!", this);
+            logger.infoLog("-> completed: " + scheduler.completed() + ", active: " + scheduler.active() +
+                    ", largestPoolSize: " + scheduler.largestPoolSize(), this);
+            if (BlackBeardsNavigator.currentViewType != null) {
+                switch (BlackBeardsNavigator.currentViewType) {
+                    case MAP_ALL, MAP_TRACKING, MAP_TRACKING_NP, MAP_FROMSEARCH -> {
+                        // TODO reload map
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -151,7 +160,7 @@ public class Controller {
     synchronized void waitForFinish () {
         // waits until there is no running thread, then breaks
         while (true) {
-            if (exe.getActiveCount() == 0) break;
+            if (scheduler.active() == 0) break;
         }
     }
 
@@ -159,11 +168,22 @@ public class Controller {
      * this method is executed when a loading process is done
      */
     void done () {
-        loading = false;
-        if (gui != null) {
-            GUISlave.progressbarVisible(false);
-            GUISlave.revalidateAll();
+        this.loading = false;
+        if (this.gui != null) {
+            var gsl = new GUISlave();
+            gsl.progressbarVisible(false);
+            gsl.revalidateAll();
         }
+    }
+
+    /**
+     * this method is executed when pre-loading is done
+     */
+    public void donePreLoading () {
+        new Utilities().playSound(SOUND_DEFAULT.get());
+        gui.loadingScreen.dispose();
+        gui.window.setVisible(true);
+        gui.window.requestFocus();
     }
 
     /**
@@ -171,57 +191,87 @@ public class Controller {
      * @param type is the ViewType, sets the content type for the
      *             created view (e.g. different List-View-Types)
      */
-    public synchronized void show (ViewType type, @Nullable String... data) {
+    public synchronized void show (@NotNull ViewType type, String headText, @Nullable String... data) {
         // TODO ONLY HERE: dispose GUI view(s)
-        GUISlave.disposeView();
+        new GUISlave().disposeView();
         // TODO verschiedene Möglichkeiten (für große Datenmengen)
+        var bbn = new BlackBeardsNavigator();
+        BlackBeardsNavigator.currentViewType = type;
+        this.loading = true;
         switch (type) {
             case LIST_FLIGHT -> {
                 List<Flight> flights = new ArrayList<>();
+                Flight flight;
+                var dbOut = new DBOut();
+                int flightID;
                 for (int i = 0; i < 100; i++) {  // TODO anders machen! dauert zu lange, zu viele Anfragen!
-                    int fid = liveData.get(i).getFlightID();
-                    var flight = new DataMaster().flightByID(fid);
-                    flights.add(flight);
+                    flightID = liveData.get(i).getFlightID();
+                    try {
+                        flight = dbOut.getFlightByID(flightID);
+                        flights.add(flight);
+                    } catch (DataNotFoundException e) {
+                        logger.errorLog("flight with the ID " + flightID + " doesn't exist!", this);
+                    }
                 }
-                TreePlantation.createTree(TreePlantation.allFlightsTreeNode(flights));
+                var treePlant = new TreePlantation();
+                treePlant.createTree(treePlant.allFlightsTreeNode(flights));
             }
-            case MAP_ALL -> {
-                BlackBeardsNavigator.createAllFlightsMap(liveData);
-                BlackBeardsNavigator.currentViewType = ViewType.MAP_ALL;
-            }
-            case MAP_FROMSEARCH -> {
-                BlackBeardsNavigator.createAllFlightsMap(loadedData);
-                BlackBeardsNavigator.currentViewType = ViewType.MAP_FROMSEARCH;
+            case MAP_ALL, MAP_FROMSEARCH -> {
+                this.loadedData = this.liveData;
+                bbn.createAllFlightsMap();
             }
             case MAP_TRACKING -> {
                 try {
-                    var dps = new ArrayList<DataPoint>();
                     var out = new DBOut();
                     int flightID = -1;
                     if (data.length == 1) {
                         assert data[0] != null;
                         flightID = Integer.parseInt(data[0]);
-                        dps.addAll(out.getTrackingByFlight(flightID));
+                        loadedData.addAll(out.getTrackingByFlight(flightID));
                     }
                     else if (data.length > 1) {
-                        for (String id : data) {
+                        for (var id : data) {
                             assert id != null;
                             flightID = Integer.parseInt(id);
-                            dps.addAll(out.getTrackingByFlight(flightID));
+                            loadedData.addAll(out.getTrackingByFlight(flightID));
                         }
                     }
                     var flight = out.getFlightByID(flightID);
-                    BlackBeardsNavigator.createFlightRoute(dps, flight);
-                    BlackBeardsNavigator.currentViewType = ViewType.MAP_TRACKING;
+                    bbn.createFlightRoute(flight, headText, true);
                 } catch (NumberFormatException e) {
-                    this.errorLog("NumberFormatException while trying to parse the ID-String! Must be an int!");
+                    logger.errorLog("NumberFormatException while trying to parse the ID-String! Must be an int!", this);
                 } catch (DataNotFoundException e) {
-                    this.errorLog(e.getMessage());
+                    logger.errorLog(e.getMessage(), this);
+                }
+            }
+            case MAP_TRACKING_NP -> {
+                try {
+                    loadedData = new Vector<>();
+                    var out = new DBOut();
+                    int flightID = -1;
+                    if (data.length == 1) {
+                        assert data[0] != null;
+                        flightID = Integer.parseInt(data[0]);
+                        loadedData.addAll(out.getTrackingByFlight(flightID));
+                    }
+                    else if (data.length > 1) {
+                        for (var id : data) {
+                            assert id != null;
+                            flightID = Integer.parseInt(id);
+                            loadedData.addAll(out.getTrackingByFlight(flightID));
+                        }
+                    }
+                    var flight = out.getFlightByID(flightID);
+                    bbn.createFlightRoute(flight, headText, false);
+                } catch (NumberFormatException e) {
+                    logger.errorLog("NumberFormatException while trying to parse the ID-String! Must be an int!", this);
+                } catch (DataNotFoundException e) {
+                    logger.errorLog(e.getMessage(), this);
                 }
             }
         }
         this.done();
-        this.sucsessLog("view loaded!");
+        logger.sucsessLog("view loaded!", this);
     }
 
     /**
@@ -231,13 +281,32 @@ public class Controller {
      * @param button is the clicked search button, 0 = LIST, 1 = MAP
      */
     public void search (String[] inputs, int button) { // TODO button abfragen??
+        var gsl = new GUISlave();
+        this.loading = true;
         try {
-            GUISlave.progressbarStart();
+            gsl.progressbarStart();
             var search = new Search();
-            switch (Controller.currentSearchType) {
+            switch (this.currentSearchType) {
                 case AIRLINE -> {
                 }
                 case AIRPORT -> {
+                    loadedData = search.verifyAirport(inputs);
+                    var idsNoDupl = new ArrayList<Integer>();
+                    int flightID;
+                    for (var dp : loadedData) {
+                        flightID = dp.getFlightID();
+                        if (!idsNoDupl.contains(flightID)) {
+                            idsNoDupl.add(flightID);
+                        }
+                    }
+                    int size = idsNoDupl.size();
+                    var ids = new String[size];
+                    for (int i = 0; i < size; i++) {
+                        ids[i] = idsNoDupl.get(i) + "";
+                    }
+                    if (button == 1) {
+                        this.show(ViewType.MAP_TRACKING_NP, "Flight Search Results", ids);
+                    }
                 }
                 case FLIGHT -> {
                     loadedData = search.verifyFlight(inputs);
@@ -255,14 +324,15 @@ public class Controller {
                                 idsNoDupl.add(flightID);
                             }
                         }
-                        var ids = new String[idsNoDupl.size()];
-                        for (int i = 0; i < idsNoDupl.size(); i++) {
+                        int size = idsNoDupl.size();
+                        var ids = new String[size];
+                        for (int i = 0; i < size; i++) {
                             ids[i] = idsNoDupl.get(i) + "";
                         }
                         if (button == 1) {
-                            this.show(ViewType.MAP_TRACKING, ids);
+                            this.show(ViewType.MAP_TRACKING, "Flight Search Results", ids);
                         }
-                    }
+                    } // TODO !!! show soll Datapoints bekommen und nicht fids, das ist eine weitere anfrage;
                 }
                 case PLANE -> {
                     loadedData = search.verifyPlane(inputs);
@@ -274,66 +344,63 @@ public class Controller {
                             idsNoDupl.add(flightID);
                         }
                     }
-                    var ids = new String[idsNoDupl.size()];
-                    for (int i = 0; i < idsNoDupl.size(); i++) {
+                    int size = idsNoDupl.size();
+                    var ids = new String[size];
+                    for (int i = 0; i < size; i++) {
                         ids[i] = idsNoDupl.get(i) + "";
                     }
                     if (button == 1) {
+                        var headText = "Plane Search Results:";
                         if (!gui.search_planeID.getText().isBlank()) {
-                            this.show(ViewType.MAP_TRACKING, ids); // ganze route -> nur bei einer id / wird evtl noch entfernt
+                            this.show(ViewType.MAP_TRACKING, headText, ids); // ganze route -> nur bei einer id / wird evtl noch entfernt
                         } else {
-                            this.show(ViewType.MAP_FROMSEARCH, ids); // nur letzte data points
+                            this.show(ViewType.MAP_FROMSEARCH, headText, ids); // nur letzte data points
                         }
                     }
                 }
                 case AREA -> {
                 }
             }
-        } catch (DataNotFoundException e) {
-            e.printStackTrace();
+        } catch (DataNotFoundException ignored) {
         } finally {
-            GUISlave.progressbarVisible(false);
+            gsl.progressbarVisible(false);
         }
     }
 
     /**
-     * FIXME should only be used in DBOut! - but some strings need to be stripped while loading them into the gui
-     * @param in is the string to strip
-     * @return input-string, but without the "s
+     * @return main logger
      */
-    public static String stripString (String in) {
-        return in.replaceAll("\"", "");
+    public static Logger getLogger () {
+        return logger;
     }
 
     /**
-     * System.out.println, but with style
+     * @return main scheduler
      */
-    public void log (String txt) {
-        System.out.println( EKlAuf + this.getClass().getSimpleName() + EKlZu + " " + txt + ANSI_RESET);
+    public static Scheduler getScheduler () {
+        return scheduler;
     }
 
     /**
-     * uses this.log to make a 'sucsess' log
+     *
+     * @return main watch dog
      */
-    public void sucsessLog (String txt) {
-        this.log(ANSI_GREEN + txt);
+    public static WatchDog getWatchDog () {
+        return watchDog;
     }
 
     /**
-     * uses this.log to make an 'error' log
+     * @return main gui
      */
-    public void errorLog (String txt) {
-        this.log(ANSI_RED + txt);
-    }
-
-    public static GUI gui () {
-        return gui;
+    public GUI gui () {
+        return this.gui;
     }
 
     /**
      * program exit method
      */
-    public static synchronized void exit () {
+    public synchronized void exit () {
+        logger.close();
         System.exit(0);
     }
 

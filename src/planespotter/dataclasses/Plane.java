@@ -6,7 +6,7 @@ package planespotter.dataclasses;
  *
  * This Class is used to Represent a DB Entry from the 'Plane' Table 
  */
-public class Plane implements SuperData {
+public class Plane implements Data {
 
 	private int id;
 	private String icao;

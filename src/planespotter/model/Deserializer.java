@@ -16,6 +16,7 @@ public class Deserializer {
 	//Now this is an awful way to handle things... dont do this:
 	
 	public String stripString (String in) {
+		if (in == null) return "";
 		String temp = in.replaceAll("\"", "");
 		String out = temp.replace("\n", "");
 		return out.replaceAll("\"", "");
@@ -29,7 +30,7 @@ public class Deserializer {
 		String respdata = resp.body();
 		String[] array = respdata.split(",", 3);
 
-		List<String> datalist = new ArrayList<String>();
+		List<String> datalist = new ArrayList<String>(); // TODO  man könnte hier new ArrayList<String>(array) benutzen
 		for (String a : array) datalist.add(a);
 
 		// Remove fr24 internal version info and such
@@ -40,7 +41,7 @@ public class Deserializer {
 		String data;
 		data = datalist.get(0);
 		data = data.replaceAll("\\[", "");
-		data = data.replaceAll("]\n,\"........\"", "\n");
+		data = data.replaceAll("]\n,\"........\"", "\n"); // TODO hier kann man data.replaceAll(...).replaceAll(...).replaceAll(...) machen (untereinander)
 		data = data.replaceAll("]", "");
 		array = data.split(":");
 		for (String a : array)

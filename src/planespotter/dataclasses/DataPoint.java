@@ -8,7 +8,7 @@ import java.io.Serializable;
  *
  * This Class is used to represent a single DB Entry from the 'Tracking'-Table
  */
-public class DataPoint implements Serializable, SuperData {
+public class DataPoint implements Serializable, Data {
 	private int id;
 	private int flightid;
 	private Position pos;
