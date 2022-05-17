@@ -180,7 +180,7 @@ public class Controller {
      * this method is executed when pre-loading is done
      */
     public void donePreLoading () {
-        new Utilities().playSound(SOUND_DEFAULT.get());
+        Utilities.playSound(SOUND_DEFAULT.get());
         gui.loadingScreen.dispose();
         gui.window.setVisible(true);
         gui.window.requestFocus();
@@ -205,7 +205,7 @@ public class Controller {
                 var dbOut = new DBOut();
                 int flightID;
                 for (int i = 0; i < 100; i++) {  // TODO anders machen! dauert zu lange, zu viele Anfragen!
-                    flightID = liveData.get(i).getFlightID();
+                    flightID = liveData.get(i).flightID();
                     try {
                         flight = dbOut.getFlightByID(flightID);
                         flights.add(flight);
@@ -294,7 +294,7 @@ public class Controller {
                     var idsNoDupl = new ArrayList<Integer>();
                     int flightID;
                     for (var dp : loadedData) {
-                        flightID = dp.getFlightID();
+                        flightID = dp.flightID();
                         if (!idsNoDupl.contains(flightID)) {
                             idsNoDupl.add(flightID);
                         }
@@ -313,13 +313,13 @@ public class Controller {
                     if (loadedData.size() == 1) {
                         var dp = loadedData.get(0);
                         if (button == 1) {
-                            this.show(ViewType.MAP_TRACKING, dp.getFlightID() + "");
+                            this.show(ViewType.MAP_TRACKING, dp.flightID() + "");
                         }
                     } else {
                         var idsNoDupl = new ArrayList<Integer>();
                         int flightID;
                         for (var dp : loadedData) {
-                            flightID = dp.getFlightID();
+                            flightID = dp.flightID();
                             if (!idsNoDupl.contains(flightID)) {
                                 idsNoDupl.add(flightID);
                             }
@@ -339,7 +339,7 @@ public class Controller {
                     var idsNoDupl = new ArrayList<Integer>();
                     int flightID;
                     for (var dp : loadedData) {
-                        flightID = dp.getFlightID();
+                        flightID = dp.flightID();
                         if (!idsNoDupl.contains(flightID)) {
                             idsNoDupl.add(flightID);
                         }

@@ -73,7 +73,7 @@ public class Utilities {
 
     public static Vector<Position> parsePositionVector (Vector<DataPoint> dps) {
         var positions = new Vector<Position>();
-        dps.forEach(dp -> positions.add(dp.getPos()));
+        dps.forEach(dp -> positions.add(dp.pos()));
         if (positions.isEmpty()) {
             throw new NullPointerException("data point list is empty!");
         }

@@ -6,17 +6,21 @@ package planespotter.dataclasses;
  * 
  * Airline class: represents an airline
  */
-public class Airline implements Data {
+public record Airline (int id,
+					   String iataTag,
+					   String name) {
+}
+/*public class Airline implements Data {
 	private int id;
 	private String iatatag;
 	private String name;
 
-	/** Constructor 
+	*//** Constructor
 	 * 
 	 * @param id int Database ID
 	 * @param tag String IATA Tag
 	 * @param name String Airline Name
-	 */
+	 *//*
 	public Airline(int id, String tag, String name) {
 		this.id = id;
 		this.iatatag = tag;
@@ -24,24 +28,24 @@ public class Airline implements Data {
 	}
 
 	//getter	
-	/**
+	*//**
 	 * @return int Database ID
-	 */
+	 *//*
 	public int getID() {
 		return this.id;
 	}
 
-	/**
+	*//**
 	 * @return String IATA Tag
-	 */
+	 *//*
 	public String getTag() {
 		return this.iatatag;
 	}
 
-	/**
+	*//**
 	 * @return String Airline Name
-	 */
+	 *//*
 	public String getName() {
 		return this.name;
 	}
-}
+}*/

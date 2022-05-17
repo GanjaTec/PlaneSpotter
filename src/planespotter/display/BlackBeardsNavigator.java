@@ -63,15 +63,15 @@ public final class BlackBeardsNavigator {
         var polys = new ArrayList<MapPolygon>(size);
         var markers = new ArrayList<MapMarker>(size);
         for (var dp : dps) {
-            var pos = dp.getPos();
-            int altitude = dp.getAltitude();
+            var pos = dp.pos();
+            int altitude = dp.altitude();
             // TODO in Constants auslagern -> Farben je nach Höhe (oder anders Attribut)
             var color = this.colorByAltitude(altitude);
             if (counter > 0) {
-                if (dp.getFlightID() == last.getFlightID()
-                        && dp.getTimestemp() >= last.getTimestemp()) {
-                    pos1 = Position.toCoordinate(dp.getPos());
-                    pos2 = Position.toCoordinate(last.getPos());
+                if (dp.flightID() == last.flightID()
+                        && dp.timestamp() >= last.timestamp()) {
+                    pos1 = Position.toCoordinate(dp.pos());
+                    pos2 = Position.toCoordinate(last.pos());
                     line = new MapPolygonImpl(pos1, pos2, pos1);
                     line.setColor(color);
                     polys.add(line);
@@ -212,7 +212,7 @@ public final class BlackBeardsNavigator {
                     gui.pMenu.setVisible(false);
                     gui.pInfo.removeAll();
                     gui.dpleft.moveToFront(gui.pInfo);
-                    int flightID = data.get(counter).getFlightID(); // FIXME: 15.05.2022 WAS IST MIT DEM COUNTER LOS
+                    int flightID = data.get(counter).flightID(); // FIXME: 15.05.2022 WAS IST MIT DEM COUNTER LOS
                                                                              //  (keine info beim click - flight is null)
                     try {
                         var flight = dbOut.getFlightByID(flightID);
@@ -255,7 +255,7 @@ public final class BlackBeardsNavigator {
             if (bbn.markerHit(markerCoord, clickedCoord)) {
                 gui.pInfo.removeAll();
                 dp = ctrl.loadedData.get(counter);
-                flightID = dp.getFlightID();
+                flightID = dp.flightID();
                 try {
                     flight = dbOut.getFlightByID(flightID); // TODO woanders!!!
                     tpl.createDataPointInfo(flight, dp);

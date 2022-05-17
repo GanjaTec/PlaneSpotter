@@ -60,10 +60,10 @@ public class DataMaster {
                     var dataPointStream = dps.parallelStream(); // kann man bestimmt besser machen
                     var liveData = ctrl.liveData;
                     dataPointStream // ?
-                            .filter(dp -> this.liveFlightIDs().contains(dp.getFlightID()))
-                            .forEach(dp -> liveData.replaceAll(a -> (dp.getFlightID() == a.getFlightID()) ? dp : a)); // FIXME: 16.05.2022 das müsste falsch sein //??? jetzt vielleicht richtig?
+                            .filter(dp -> this.liveFlightIDs().contains(dp.flightID()))
+                            .forEach(dp -> liveData.replaceAll(a -> (dp.flightID() == a.flightID()) ? dp : a)); // FIXME: 16.05.2022 das müsste falsch sein //??? jetzt vielleicht richtig?
                     dataPointStream
-                            .filter(dp -> !this.liveFlightIDs().contains(dp.getFlightID()))
+                            .filter(dp -> !this.liveFlightIDs().contains(dp.flightID()))
                             .forEach(liveData::add);
                     dataPointStream.close();
                 }
@@ -74,7 +74,7 @@ public class DataMaster {
     private Vector<Integer> liveFlightIDs () {
         var ids = new Vector<Integer>();
         Controller.getInstance().liveData
-                .forEach(dp -> ids.add(dp.getFlightID()));
+                .forEach(dp -> ids.add(dp.flightID()));
         return ids;
     }
 
