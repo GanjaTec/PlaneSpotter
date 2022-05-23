@@ -1,4 +1,4 @@
-package planespotter.controller;
+package planespotter.util;
 
 import org.jetbrains.annotations.Nullable;
 import planespotter.model.io.FileMaster;

@@ -1,7 +1,7 @@
 package planespotter.model.io;
 
 import planespotter.controller.Controller;
-import planespotter.controller.Scheduler;
+import planespotter.model.Scheduler;
 import planespotter.dataclasses.DataPoint;
 import planespotter.throwables.ThreadOverheadError;
 

@@ -3,9 +3,9 @@ package planespotter.model.io;
 import planespotter.constants.SQLQuerries;
 import planespotter.dataclasses.*;
 import planespotter.dataclasses.Frame;
-import planespotter.display.UserSettings;
+import planespotter.constants.UserSettings;
 import planespotter.model.nio.Deserializer;
-import planespotter.model.Utilities;
+import planespotter.util.Utilities;
 import planespotter.throwables.DataNotFoundException;
 
 import java.sql.*;

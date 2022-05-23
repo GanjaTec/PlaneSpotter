@@ -2,7 +2,7 @@ package test;
 
 import org.junit.jupiter.api.Test;
 import planespotter.constants.GUIConstants;
-import planespotter.model.Utilities;
+import planespotter.util.Utilities;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -7,6 +7,7 @@ import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import planespotter.constants.SearchType;
+import planespotter.constants.UserSettings;
 import planespotter.constants.ViewType;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
@@ -15,6 +16,8 @@ import planespotter.model.io.DBOut;
 import planespotter.model.io.FileMaster;
 import planespotter.model.io.OutputWizard;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.util.Logger;
+import planespotter.util.Utilities;
 
 import javax.swing.*;
 import java.awt.*;
@@ -190,7 +193,7 @@ public class Controller {
     public void done() {
         this.loading = false;
         if (this.gui != null) {
-            var gsl = new GUISlave();
+            var gsl = new GUIAdapter();
             gsl.stopProgressBar();
             gsl.update();
         }
@@ -212,7 +215,7 @@ public class Controller {
      *             created view (e.g. different List-View-Types)
      */
     public synchronized void show(@NotNull ViewType type, String headText, @Nullable String... data) {
-        var gsl = new GUISlave();
+        var gsl = new GUIAdapter();
         // TODO verschiedene Möglichkeiten (für große Datenmengen)
         var bbn = new BlackBeardsNavigator();
         this.loading = true;
@@ -238,7 +241,7 @@ public class Controller {
      * @param button is the clicked search button, 0 = LIST, 1 = MAP
      */
     public void search(String[] inputs, int button) { // TODO button abfragen??
-        var gsl = new GUISlave();
+        var gsl = new GUIAdapter();
         this.loading = true;
         try {
             gsl.startProgressBar();
@@ -273,7 +276,7 @@ public class Controller {
             case "Transport Map" -> map = us.transportMap;
         }
         us.setCurrentMapSource(map);
-        new GUISlave().mapViewer().setTileSource(map);
+        new GUIAdapter().mapViewer().setTileSource(map);
     }
 
     /**
@@ -282,7 +285,7 @@ public class Controller {
      * @param point is the clicked map point (no coordinate)
      */
     public synchronized void mapClicked(Point point) {
-        var clicked = new GUISlave().mapViewer().getPosition(point);
+        var clicked = new GUIAdapter().mapViewer().getPosition(point);
         switch (this.currentViewType) {
             case MAP_ALL, MAP_FROMSEARCH -> this.onClick_all(clicked);
             case MAP_TRACKING -> this.onClick_tracking(clicked);
@@ -296,7 +299,7 @@ public class Controller {
     private void onClick_all(ICoordinate clickedCoord) { // TODO aufteilen
         if (!this.clicking) {
             this.clicking = true;
-            var markers = new GUISlave().mapViewer().getMapMarkerList();
+            var markers = new GUIAdapter().mapViewer().getMapMarkerList();
             var newMarkerList = new ArrayList<MapMarker>();
             Coordinate markerCoord;
             CustomMapMarker newMarker;
@@ -360,7 +363,7 @@ public class Controller {
      * @param clickedCoord is the clicked coordinate
      */
     public void onClick_tracking(ICoordinate clickedCoord) { // TODO aufteilen
-        var map = new GUISlave().mapViewer();
+        var map = new GUIAdapter().mapViewer();
         var markers = map.getMapMarkerList();
         Coordinate markerCoord;
         int counter = 0;
@@ -389,7 +392,35 @@ public class Controller {
         }
     }
 
-    /**
+    public void saveFile() {
+        this.currentVisibleRect = new GUIAdapter().mapViewer().getVisibleRect();
+        var fileChooser = new MenuModels().fileSaver(this.gui.window);
+        new FileMaster().savePlsFile(fileChooser); // TODO move to controller
+    }
+
+    public void loadFile() {
+        try {
+            var fileChooser = new MenuModels().fileLoader(this.gui.window);
+            this.loadedData = new FileMaster().loadPlsFile(fileChooser);
+            var idList = this.loadedData
+                    .stream()
+                    .map(DataPoint::flightID)
+                    .distinct()
+                    .toList();
+            int size = idList.size();
+            var ids = new String[size];
+            int counter = 0;
+            for (var id : idList) {
+                ids[counter] = id.toString();
+                counter++;
+            }
+            this.show(ViewType.MAP_TRACKING, "Loaded from File", ids);
+        } catch (DataNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+        /**
      * @return main logger
      */
     public static Logger getLogger () {
@@ -418,7 +449,7 @@ public class Controller {
         System.exit(0);
     }
 
-    private void showSignificanceMap(String headText, GUISlave gsl, BlackBeardsNavigator bbn, DBOut dbOut) {
+    private void showSignificanceMap(String headText, GUIAdapter gsl, BlackBeardsNavigator bbn, DBOut dbOut) {
         try {
             var aps = dbOut.getAllAirports();
             var signifMap = new Statistics().airportSignificance(aps);
@@ -430,7 +461,7 @@ public class Controller {
         }
     }
 
-    private void showTrackingMapNoPoints(String headText, GUISlave gsl, BlackBeardsNavigator bbn, @Nullable String[] data) {
+    private void showTrackingMapNoPoints(String headText, GUIAdapter gsl, BlackBeardsNavigator bbn, @Nullable String[] data) {
         try {
             loadedData = new Vector<>();
             var out = new DBOut();
@@ -448,7 +479,7 @@ public class Controller {
                 }
             }
             var flight = out.getFlightByID(flightID);
-            var flightRoute = bbn.createTrackingMap(flight, false);
+            var flightRoute = bbn.createTrackingMap(this.loadedData, flight, false);
             gsl.recieveMap(flightRoute, headText);
         } catch (NumberFormatException e) {
             logger.errorLog("NumberFormatException while trying to parse the ID-String! Must be an int!", this);
@@ -457,7 +488,7 @@ public class Controller {
         }
     }
 
-    private void showTrackingMap(String headText, GUISlave gsl, BlackBeardsNavigator bbn, DBOut dbOut, @Nullable String[] data) {
+    private void showTrackingMap(String headText, GUIAdapter gsl, BlackBeardsNavigator bbn, DBOut dbOut, @Nullable String[] data) {
         try {
             int flightID = -1;
             if (data.length == 1) {
@@ -476,7 +507,7 @@ public class Controller {
                 throw new IllegalArgumentException("Flight may not be null!");
             }
             var flight = dbOut.getFlightByID(flightID);
-            var flightRoute = bbn.createTrackingMap(flight, true);
+            var flightRoute = bbn.createTrackingMap(this.loadedData, flight, true);
             gsl.recieveMap(flightRoute, headText);
         } catch (NumberFormatException e) {
             logger.errorLog("NumberFormatException while trying to parse the ID-String! Must be an int!", this);
@@ -485,9 +516,9 @@ public class Controller {
         }
     }
 
-    private void showLiveMap(String headText, GUISlave gsl, BlackBeardsNavigator bbn) {
+    private void showLiveMap(String headText, GUIAdapter gsl, BlackBeardsNavigator bbn) {
         this.loadedData = this.liveData;
-        var allMap = bbn.createLiveMap();
+        var allMap = bbn.createLiveMap(this.loadedData);
         gsl.recieveMap(allMap, headText);
     }
 

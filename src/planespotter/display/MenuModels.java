@@ -2,12 +2,6 @@ package planespotter.display;
 
 import libs.UWPButton;
 
-import planespotter.constants.ViewType;
-import planespotter.controller.Controller;
-import planespotter.dataclasses.DataPoint;
-import planespotter.model.io.FileMaster;
-import planespotter.throwables.DataNotFoundException;
-
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
@@ -23,15 +17,13 @@ import static planespotter.constants.GUIConstants.DefaultColor.*;
  *
  * MenuModels class contains different menu component models
  */
-final class MenuModels {
-
-    // TODO AUSWAHL: selectAll, selectByID, selectByICAO, selectByName, selectByIATA, selectByPlaneType; //...
+public final class MenuModels {
 
     /**
      * menubar (contains the other menu components)
      */
     JMenuBar menuBar (JPanel parent) {
-        // TODO: setting up menubar
+        // setting up menubar
         var menubar = new JMenuBar();
         menubar.setBackground(DEFAULT_BG_COLOR.get());
         menubar.setForeground(DEFAULT_FG_COLOR.get());
@@ -46,7 +38,7 @@ final class MenuModels {
      * list button
      */
     JButton listButton (JMenuBar parent) {
-        // TODO setting up list button
+        // setting up list button
         var list = new UWPButton();
         list.setText("List-View");
         list.setBackground(DEFAULT_ACCENT_COLOR.get());
@@ -61,7 +53,7 @@ final class MenuModels {
      * map button
      */
     JButton mapButton (JMenuBar parent) {
-        // TODO setting up list button
+        // setting up list button
         var map = new UWPButton();
         map.setText("Live-Map");
         map.setBackground(DEFAULT_ACCENT_COLOR.get());
@@ -76,7 +68,7 @@ final class MenuModels {
      * settings button
      */
     JButton settingsButton (JMenuBar parent) {
-        // TODO: setting up settings menu
+        // setting up settings menu
         var settings = new UWPButton();
         settings.setText("Settings");
         settings.setBackground(DEFAULT_ACCENT_COLOR.get());
@@ -91,7 +83,7 @@ final class MenuModels {
      * search-filter button
      */
     JButton searchButton (JMenuBar parent) {
-        // TODO: setting up search-settings menu
+        // setting up search-settings menu
         var search_settings = new UWPButton();
         search_settings.setText("Search");
         search_settings.setBackground(DEFAULT_ACCENT_COLOR.get());
@@ -106,7 +98,7 @@ final class MenuModels {
      *
      */
     JProgressBar progressBar (JMenuBar parent) {
-        // TODO: seting up progress bar
+        // seting up progress bar
         var progressbar = new JProgressBar();
         progressbar.setBorder(LINE_BORDER);
         progressbar.setBackground(DEFAULT_FONT_COLOR.get());
@@ -123,7 +115,7 @@ final class MenuModels {
      * search text field
      */
     JTextField searchTextField (JMenuBar parent) {
-        // TODO: setting up search text field
+        // setting up search text field
         var search = new JTextField();
         search.setToolTipText("Search");
         search.setBounds(10, parent.getHeight()-60, parent.getWidth()-20, 25);
@@ -138,7 +130,7 @@ final class MenuModels {
      * close view button
      */
     JButton fileButton (JDesktopPane parent) {
-        // TODO: setting up view close button
+        // setting up view close button
         var file = new UWPButton();
         file.setText("File");
         file.setBackground(Color.DARK_GRAY);
@@ -153,7 +145,7 @@ final class MenuModels {
      * close view button
      */
     JButton closeViewButton (JDesktopPane parent) {
-        // TODO: setting up view close button
+        // setting up view close button
         var closeView = new UWPButton();
         closeView.setText("Close");
         closeView.setBackground(Color.DARK_GRAY);
@@ -243,15 +235,13 @@ final class MenuModels {
     /**
      * @return file chooser for file dialog
      */
-    JFileChooser fileSaver (JFrame parent) {
+    public JFileChooser fileSaver (JFrame parent) {
         var home = FileSystemView.getFileSystemView().getHomeDirectory();
         var fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);
         var pls = new FileNameExtensionFilter("nur .pls-Dateien", "pls"); // TODO constant?
         fileChooser.setFileFilter(pls);
         fileChooser.showSaveDialog(parent);
-        Controller.getInstance().currentVisibleRect = new GUISlave().mapViewer().getVisibleRect();
-        new FileMaster().savePlsFile(fileChooser); // TODO move to controller
 
         return fileChooser;
     }
@@ -259,34 +249,15 @@ final class MenuModels {
     /**
      * @return file chooser for file dialog
      */
-    JFileChooser fileLoader (JFrame parent) throws DataNotFoundException {
+    public JFileChooser fileLoader (JFrame parent) {
         var home = FileSystemView.getFileSystemView().getHomeDirectory();
         var fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);
         var pls = new FileNameExtensionFilter("only .pls-Files", "pls");
         fileChooser.setFileFilter(pls);
         fileChooser.showOpenDialog(parent);
-        try { // TODO besser
-            var ctrl = Controller.getInstance();
-            ctrl.loadedData = new FileMaster().loadPlsFile(fileChooser);
-            var idList = ctrl.loadedData
-                                    .stream()
-                                    .map(DataPoint::flightID)
-                                    .distinct()
-                                    .toList();
-            int size = idList.size();
-            var ids = new String[size];
-            int counter = 0;
-            for (var id : idList) {
-                ids[counter] = id.toString();
-                counter++;
-            }
-            ctrl.show(ViewType.MAP_TRACKING, "Loaded from File", ids); // FIXME: 18.05.2022 HIER fehler
-            return fileChooser;
-        } catch (DataNotFoundException e) {
-            e.printStackTrace();
-            throw new DataNotFoundException("No route to save, select a route first!");
-        }
+
+        return fileChooser;
     }
 
     JButton[] fileMenu (JPanel parent) {

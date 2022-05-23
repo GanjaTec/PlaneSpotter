@@ -2,9 +2,9 @@ package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.*;
-import planespotter.controller.Controller;
+import planespotter.constants.UserSettings;
 import planespotter.dataclasses.*;
-import planespotter.model.Utilities;
+import planespotter.util.Utilities;
 import planespotter.throwables.DataNotFoundException;
 
 import javax.swing.*;
@@ -36,10 +36,10 @@ public final class BlackBeardsNavigator {
     /**
      * creates a map with a flight route from a specific flight
      */
-    public JMapViewer createTrackingMap(Flight flight, boolean showPoints)
+    public JMapViewer createTrackingMap(Vector<DataPoint> dataPoints, Flight flight, boolean showPoints)
             throws DataNotFoundException {
-        var viewer = new GUISlave().mapViewer();
-        var dps = Controller.getInstance().loadedData;
+        var viewer = new GUIAdapter().mapViewer();
+        var dps = dataPoints;
         int size = dps.size(),
             counter = 0,
             altitude,
@@ -89,10 +89,10 @@ public final class BlackBeardsNavigator {
     /**
      * creates a map with all flights from the given list
      */
-    public JMapViewer createLiveMap() {
-        var gsl = new GUISlave();
+    public JMapViewer createLiveMap(Vector<DataPoint> dataPoints) {
+        var gsl = new GUIAdapter();
         var viewer = gsl.mapViewer();
-        var data = Utilities.parsePositionVector(Controller.getInstance().loadedData);
+        var data = Utilities.parsePositionVector(dataPoints);
         CustomMapMarker newMarker;
         for (var pos : data) {
             newMarker = new CustomMapMarker(new Coordinate(pos.lat(), pos.lon()), 90); // FIXME: 19.05.2022
@@ -103,7 +103,7 @@ public final class BlackBeardsNavigator {
     }
 
     public JMapViewer createSignificanceMap(HashMap<Airport, Integer> significanceMap) {
-        var viewer = new GUISlave().mapViewer();
+        var viewer = new GUIAdapter().mapViewer();
         var markers = new LinkedList<MapMarker>();
         var atomRadius = new AtomicInteger();
         var atomCoord = new AtomicReference<Coordinate>();
@@ -179,7 +179,7 @@ public final class BlackBeardsNavigator {
      * @return true, if clicked coord is equals marker coord, with tolarance
      */
     public boolean isMarkerHit(Coordinate marker, ICoordinate clicked) {
-        int zoom = new GUISlave().mapViewer().getZoom();
+        int zoom = new GUIAdapter().mapViewer().getZoom();
         double tolerance = 0.008 * zoom; // // FIXME: 23.04.2022 falsche formel (exponential?)
         return (clicked.getLat() < marker.getLat() + tolerance &&
                 clicked.getLat() > marker.getLat() - tolerance &&
@@ -193,7 +193,7 @@ public final class BlackBeardsNavigator {
      */
     public List<MapMarker> resetTrackingMarkers(MapMarker clicked) {
         var mapMarkers = new ArrayList<MapMarker>();
-        var markerList = new GUISlave().mapViewer().getMapMarkerList();
+        var markerList = new GUIAdapter().mapViewer().getMapMarkerList();
         for (var m : markerList) {
             var marker = new CustomMapMarker(m.getCoordinate(), 90); // FIXME: 19.05.2022
             if (m == clicked) {

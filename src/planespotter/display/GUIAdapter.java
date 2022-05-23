@@ -3,12 +3,13 @@ package planespotter.display;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.JMapViewer;
+import planespotter.constants.UserSettings;
 import planespotter.controller.Controller;
-import planespotter.throwables.DataNotFoundException;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 import static java.awt.event.KeyEvent.*;
@@ -24,7 +25,7 @@ import static planespotter.constants.ViewType.*;
  *
  * class GUIWorker contains methods to do some actions for the GUI (that the GUI class is not too full)
  */
-public final class GUISlave {
+public final class GUIAdapter {
 
     // only gui instance
     private final GUI gui;
@@ -34,7 +35,7 @@ public final class GUISlave {
     /**
      * empty constructor
      */
-    public GUISlave() {
+    public GUIAdapter() {
         this.ctrl = Controller.getInstance();
         this.gui = this.ctrl.gui();
     }
@@ -270,51 +271,57 @@ public final class GUISlave {
      * @param button is the clicked button
      */
     public synchronized void buttonClicked(JButton button) {
-        if (button == gui.btFile) {
-            this.setViewHeadBtVisible(false);
-            this.setFileMenuVisible(true);
-        } else if (button == gui.btList) {
-            this.startProgressBar();
-            this.ctrl.show(LIST_FLIGHT, "");
-        } else if (button == gui.btMap) {
-            this.startProgressBar();
-            this.ctrl.show(MAP_ALL, "");
-        } else if (button == gui.closeView) {
-            this.disposeView();
-            ctrl.loadedData = null;
-            this.gui.pStartScreen.setVisible(true);
-            this.gui.dpright.moveToFront(gui.pStartScreen);
-        } else if (button == gui.settings) {
-            this.gui.settingsDialog.setVisible(true);
-            this.gui.settings_maxLoadTf.setCaretColor(Color.YELLOW);
-            this.requestComponentFocus(this.gui.settings_maxLoadTf);
-        } else if (button == gui.searchButton) {
-            this.gui.pSearch.setVisible(!gui.pSearch.isVisible());
-            this.gui.tfSearch.setVisible(!gui.pSearch.isVisible());
-            this.loadSearch("Plane");
-        } else if (button == gui.settingsButtons[0]) {
-            this.gui.settingsDialog.setVisible(false);
-        } else if (button == gui.settingsButtons[1]) {
-            this.ctrl.confirmSettings(gui.settings_maxLoadTf.getText(), (String) gui.settings_mapTypeCmbBox.getSelectedItem());
-            this.gui.settingsDialog.setVisible(false);
-        } else if (button.getName().equals("loadList")) {
-            // future
-            this.ctrl.show(MAP_SIGNIFICANCE, "Significance Map");
-        } else if (button.getName().equals("loadMap")) {
-            // TODO search type abfragen, bzw. ComboBox SelectedItem
-            var inputs = this.searchInput();
-            this.ctrl.search(inputs, 1);
-        } else if (button.getName().equals("open")) {
-            try {
-                new MenuModels().fileLoader(gui.window);
-            } catch (DataNotFoundException e) {
-                Controller.getLogger().errorLog(e.getMessage(), this);
+        Controller.getScheduler().exec(() -> {
+            if (button == gui.btFile) {
+                this.setViewHeadBtVisible(false);
+                this.setFileMenuVisible(true);
+            } else if (button == gui.btList) {
+                this.startProgressBar();
+                this.ctrl.show(LIST_FLIGHT, "");
+            } else if (button == gui.btMap) {
+                this.startProgressBar();
+                this.ctrl.show(MAP_ALL, "");
+            } else if (button == gui.closeView) {
+                this.disposeView();
+                ctrl.loadedData = null;
+                this.gui.pStartScreen.setVisible(true);
+                this.gui.dpright.moveToFront(gui.pStartScreen);
+            } else if (button == gui.settings) {
+                this.gui.settingsDialog.setVisible(true);
+                this.gui.settings_maxLoadTf.setCaretColor(Color.YELLOW);
+                this.requestComponentFocus(this.gui.settings_maxLoadTf);
+            } else if (button == gui.searchButton) {
+                this.gui.pSearch.setVisible(!gui.pSearch.isVisible());
+                this.gui.tfSearch.setVisible(!gui.pSearch.isVisible());
+                this.loadSearch("Plane");
+            } else if (button == gui.settingsButtons[0]) {
+                this.gui.settingsDialog.setVisible(false);
+            } else if (button == gui.settingsButtons[1]) {
+                this.ctrl.confirmSettings(gui.settings_maxLoadTf.getText(), (String) gui.settings_mapTypeCmbBox.getSelectedItem());
+                this.gui.settingsDialog.setVisible(false);
+            } else if (button.getName().equals("loadList")) {
+                // future
+                this.ctrl.show(MAP_SIGNIFICANCE, "Significance Map");
+            } else if (button.getName().equals("loadMap")) {
+                // TODO search type abfragen, bzw. ComboBox SelectedItem
+                var inputs = this.searchInput();
+                this.ctrl.search(inputs, 1);
+            } else if (button.getName().equals("open")) {
+                Controller.getInstance().loadFile();
+            } else if (button.getName().equals("save")) {
+                Controller.getInstance().saveFile();
+            } else if (button.getName().equals("back")) {
+                this.setFileMenuVisible(false);
+                this.setViewHeadBtVisible(true);
             }
-        } else if (button.getName().equals("save")) {
-            new MenuModels().fileSaver(gui.window);
-        } else if (button.getName().equals("back")) {
-            this.setFileMenuVisible(false);
-            this.setViewHeadBtVisible(true);
+        }, "GUI-Adapter", false, 5, true);
+    }
+
+    public void mapClicked(MouseEvent clickEvent) {
+        int button = clickEvent.getButton();
+        var ctrl = Controller.getInstance();
+        if (button == MouseEvent.BUTTON1 && ctrl.currentViewType != null) {
+            ctrl.mapClicked(clickEvent.getPoint());
         }
     }
 
@@ -340,7 +347,7 @@ public final class GUISlave {
             if (src == gui.tfSearch) {
                 if (key == KeyEvent.VK_ENTER) {
                     if (gui.tfSearch.hasFocus())
-                        new GUISlave().enterText();
+                        new GUIAdapter().enterText();
                 }
             } else if (src == gui.settings_maxLoadTf) {
                 if (key == KeyEvent.VK_ENTER) {
