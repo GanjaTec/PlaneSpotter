@@ -4,7 +4,7 @@ import com.google.gson.*;
 import org.jetbrains.annotations.TestOnly;
 import planespotter.constants.Areas;
 import planespotter.dataclasses.Frame;
-import planespotter.model.Supplier;
+import planespotter.model.nio.Supplier;
 
 import java.net.http.HttpResponse;
 import java.util.*;
@@ -16,10 +16,36 @@ public class Test {
     // FIXME: 04.05.2022 callsigns und planetypes sind beide noch in "" (Bsp: "A320" statt A320)
     // FIXME: 05.05.2022 planetypes werden in getAllPlanetypes doppelt ausgegeben!
     public static void main(String[] args) throws Exception {
-        Supplier supplier = new Supplier(0, Areas.S_GER);
+        /*var supplier = new Supplier(0, Areas.S_GER);
         var frames = new Test().deserialize(supplier.fr24get());
-        frames.forEach(Frame::printValues);
+        frames.forEach(Frame::printValues);*/
+
+        /*Test test = new Test();
+        test.printSystemProperties();
+        System.out.println();
+        System.out.println();
+        test.printSystemEnvironment();*/
+
     }
+
+    private void printSystemEnvironment() {
+        var sysEnv = System.getenv();
+        var envStr = sysEnv.toString();
+        var envSubStr = envStr.substring(1, envStr.length() - 1);
+        var split = envSubStr.split(",");
+        Arrays.stream(split)
+                .forEach(System.out::println);
+    }
+
+    private void printSystemProperties() {
+        var split = System.getProperties()
+                .toString()
+                .split(",");
+        Arrays.stream(split)
+                .forEach(System.out::println);
+    }
+
+
 
     /**
      * deserializes incoming http response

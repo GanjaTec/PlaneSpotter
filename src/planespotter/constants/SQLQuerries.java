@@ -20,7 +20,7 @@ public final class SQLQuerries {
 	
 	//insert Querrys
 	public static final String planequerry = "INSERT INTO planes(icaonr, tailnr, registration, type, airline) VALUES(?,?,?,?,?)";
-	public static final String flightquerry = "INSERT INTO flights(plane,src,dest,flightnr,callsign,start) VALUES(?,?,?,?,?,?)";
+	public static final String flightquerry = "INSERT INTO flights(plane,src,dest,flightnr,callsign,src) VALUES(?,?,?,?,?,?)";
 	public static final String trackingquerry = "INSERT INTO tracking(flightid,latitude,longitude,altitude,groundspeed,heading,squawk,timestamp) VALUES(?,?,?,?,?,?,?,?)";
 	public static final String checkFlightInDB = "SELECT ID FROM flights WHERE plane == (?) AND flightnr == (?) AND endTime IS NULL";
 	
@@ -30,7 +30,7 @@ public final class SQLQuerries {
 	public static final String getTrackingByFlight = "SELECT * FROM tracking WHERE ID == "; // FIXME sollte das nicht flightid sein=
 	public static final String getFlights = "SELECT * FROM flights";
 	public static final String getFlightByID = "SELECT * FROM flights WHERE ID == ";
-	public static final String getAirportByTag = "SELECT * FROM airports WHERE iatatag IS '"; // TODO changed!
+	public static final String getAirportByTag = "SELECT * FROM airports WHERE iatatag IS "; // TODO changed!
 	public static final String getPlaneByID = "SELECT * FROM planes WHERE ID == ";
 	public static final String getAirlineByTag = "SELECT * FROM airlines WHERE icaotag == ";
 	public static final String getAirlineIDByTag = "SELECT ID FROM airlines WHERE icaotag == ";
@@ -75,10 +75,9 @@ public final class SQLQuerries {
 		var out = new StringBuilder("IN (");
 		int counter = 0;
 		int last = inThis.size() - 1;
-		var util = new Utilities();
 		boolean eq = (counter == last);
 		for (var s : inThis) {
-			var packedStr = util.packString(s);
+			var packedStr = Utilities.packString(s);
 			out.append(packedStr);
 			if (!eq) {
 				out.append(",");
@@ -92,30 +91,39 @@ public final class SQLQuerries {
 		return "IS '" + isWhat + "'";
 	}
 
-	public static String SELECT (String... fields) {
+	public static String SELECT(boolean distinct, String... fields) {
 		var sbl = new StringBuilder("SELECT ");
+		if (distinct) {
+			sbl.append("DISTINCT ");
+		}
 		int length = fields.length;
 		int lm1 = length - 1;
 		for (int i = 0; i < length; i++) {
 			sbl.append(fields[i]);
 			if (i < lm1) {
-				sbl.append(", ");
+				sbl.append(",");
 			}
+			sbl.append(" ");
 		}
 		return sbl.toString();
 	}
 
-	public static String FROM (String... tables) {
-		var sbl = new StringBuilder("SELECT ");
+	public static String FROM(String... tables) {
+		var sbl = new StringBuilder("FROM ");
 		int length = tables.length;
 		int lm1 = length - 1;
 		for (int i = 0; i < length; i++) {
 			sbl.append(tables[i]);
 			if (i < lm1) {
-				sbl.append(", ");
+				sbl.append(",");
 			}
+			sbl.append(" ");
 		}
 		return sbl.toString();
+	}
+
+	public static String WHERE(String boolStr) {
+		return "WHERE " + boolStr + " ";
 	}
 
 	// TODO JOIN, WHERE, ...

@@ -2,6 +2,7 @@ package planespotter.model;
 
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
+import planespotter.model.io.DBOut;
 import planespotter.throwables.DataNotFoundException;
 
 import java.util.*;
@@ -55,8 +56,8 @@ public class Search {
                     throw new DataNotFoundException("No flight found for callsign " + callsign + "!");
                 }
             }
-        } catch (DataNotFoundException ignored) {
-            ignored.printStackTrace();
+        } catch (DataNotFoundException e) {
+            e.printStackTrace();
         }
         throw new DataNotFoundException("no data found! - loadedData is empty");
     }

@@ -8,7 +8,7 @@ import java.util.HashMap;
  * This Class is used to Represent a single Flight with all off its Datapoints
  */
 public record Flight(int id,
-                     Airport start,
+                     Airport src,
                      Airport dest,
                      String callsign,
                      Plane plane,
@@ -18,7 +18,7 @@ public record Flight(int id,
 
 /*public class Flight implements Data {
     private int id;
-    private Airport start;
+    private Airport src;
     private Airport dest;
     private String callsign;
     private String flightnr;
@@ -29,16 +29,16 @@ public record Flight(int id,
      * Constructor
      * 
      * @param id int Database ID
-     * @param start Airport Starting Airport
+     * @param src Airport Starting Airport
      * @param dest Airport Destination Airport
      * @param callsign String Callsign of the Flight
      * @param plane Plane a single Plane
      * @param flightnr String Flightnumber, not the FlightID
      * @param datapoints HashMap<Integer, DataPoint> Hashmap containing all Datapoint keyed by Timestamp
      *//*
-    public Flight (int id, Airport start, Airport dest, String callsign, Plane plane, String flightnr, HashMap<Integer, DataPoint> datapoints) {
+    public Flight (int id, Airport src, Airport dest, String callsign, Plane plane, String flightnr, HashMap<Integer, DataPoint> datapoints) {
         this.id = id;
-        this.start = start;
+        this.src = src;
         this.dest = dest;
         this.callsign = callsign;
         this.plane = plane;
@@ -61,7 +61,7 @@ public record Flight(int id,
      * @return Airport Starting Airport
      *//*
     public Airport getStart() {
-    	return this.start;
+    	return this.src;
     	}
 
     *//**

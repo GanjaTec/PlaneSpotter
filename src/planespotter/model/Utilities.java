@@ -1,13 +1,10 @@
 package planespotter.model;
 
-import org.jetbrains.annotations.NotNull;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
-import planespotter.throwables.TimeoutException;
 
 import java.awt.*;
 import java.util.Vector;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @name Utilities
@@ -22,12 +19,16 @@ public class Utilities {
      * plays a sound from the default toolkit
      * @param sound is the sound to be played (see: GUIConstants)
      */
-    public static void playSound (String sound) {
-        if (sound == null) throw new IllegalArgumentException("no sound to play, input may not be null!");
+    public static boolean playSound (String sound) {
+        if (sound == null) {
+            throw new IllegalArgumentException("no sound to play, input may not be null!");
+        }
         var sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(sound);
         if (sound2 != null) {
             sound2.run();
+            return true;
         }
+        return false;
     }
 
     /**
@@ -35,6 +36,9 @@ public class Utilities {
      * @return a feet value in meters
      */
     public static int feetToMeters (int feet) {
+        if (feet < 0) {
+            throw new IllegalArgumentException("number must be higher or equals 0!");
+        }
         return (int) (feet/3.2808);
     }
 
@@ -43,6 +47,9 @@ public class Utilities {
      * @return the knots in km per hour
      */
     public static int knToKmh (int kn) {
+        if (kn < 0) {
+            throw new IllegalArgumentException("number must be higher or equals 0!");
+        }
         long kmh = Math.round(kn * 1.852);
         return (int) kmh;
     }
@@ -66,12 +73,15 @@ public class Utilities {
      */
     public static String stripString (String in) {
         if (in == null) {
-            throw new IllegalArgumentException("input cannot be null");
+            throw new IllegalArgumentException("input cannot be null!");
         }
         return in.replaceAll("\"", "");
     }
 
     public static Vector<Position> parsePositionVector (Vector<DataPoint> dps) {
+        if (dps == null || dps.isEmpty()) {
+            throw new IllegalArgumentException("input cannot be null / empty!");
+        }
         var positions = new Vector<Position>();
         dps.forEach(dp -> positions.add(dp.pos()));
         if (positions.isEmpty()) {
@@ -80,15 +90,6 @@ public class Utilities {
         return positions;
     }
 
-    public static void timeoutTask (final int time, @NotNull final TimeUnit timeUnit)
-        throws TimeoutException {
-        try {
-            timeUnit.sleep(time);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        throw new TimeoutException(time);
-    }
 
 
 }

@@ -1,23 +1,21 @@
 package planespotter.display;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.JMapViewer;
 import planespotter.controller.Controller;
-import planespotter.model.Utilities;
 import planespotter.throwables.DataNotFoundException;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.awt.event.KeyEvent.*;
 import static java.awt.event.KeyEvent.VK_PAGE_DOWN;
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.SearchType.*;
-import static planespotter.constants.ViewType.LIST_FLIGHT;
-import static planespotter.constants.ViewType.MAP_ALL;
+import static planespotter.constants.ViewType.*;
 
 /**
  * @name GUIWorker
@@ -31,14 +29,14 @@ public final class GUISlave {
     // only gui instance
     private final GUI gui;
     // controller instance
-    private final Controller controller;
+    private final Controller ctrl;
 
     /**
      * empty constructor
      */
     public GUISlave() {
-        this.controller = Controller.getInstance();
-        this.gui = this.controller.gui();
+        this.ctrl = Controller.getInstance();
+        this.gui = this.ctrl.gui();
     }
 
     /**
@@ -55,7 +53,6 @@ public final class GUISlave {
         gui.pMap.setVisible(true);
         gui.mapViewer.setVisible(true);
         this.requestComponentFocus(gui.mapViewer);
-        this.revalidateAll();
     }
 
     /**
@@ -68,13 +65,11 @@ public final class GUISlave {
         gui.listView = tree;
         gui.spList = gui.listScrollPane(gui.listView);
         gui.spList.setOpaque(false);
-        // TODO: adding list scrollpane to list pane
         gui.pList.add(gui.spList);
         gui.dpright.moveToFront(gui.pList);
         gui.pList.setVisible(true);
-        gui.viewHeadText.setText(DEFAULT_HEAD_TEXT + "Flight-List");
+        gui.viewHeadText.setText(DEFAULT_HEAD_TEXT + "Flight-List"); // TODO: 21.05.2022 add text
         // revalidate window -> making the tree visible
-        this.revalidateAll();
         this.requestComponentFocus(gui.listView);
     }
 
@@ -94,22 +89,25 @@ public final class GUISlave {
         gui.infoTree.setFont(FONT_MENU.deriveFont(12f));
         gui.pInfo.add(gui.infoTree);
         if (dpInfoTree != null) {
-            gui.dpInfoTree = dpInfoTree;
-            gui.dpInfoTree.setBounds(0, height + 50, width, height - 50);
-            gui.dpInfoTree.setBorder(LINE_BORDER);
-            gui.dpInfoTree.setFont(FONT_MENU.deriveFont(12f));
-            gui.pInfo.add(gui.dpInfoTree);
+            this.recieveDataPointInfoTree(dpInfoTree, width, height);
         }
         gui.dpleft.moveToFront(gui.pInfo);
         gui.pInfo.setVisible(true);
-        this.revalidateAll();
+    }
+
+    private void recieveDataPointInfoTree(@NotNull JTree dpInfoTree, int width, int height) {
+        gui.dpInfoTree = dpInfoTree;
+        gui.dpInfoTree.setBounds(0, height + 50, width, height - 50);
+        gui.dpInfoTree.setBorder(LINE_BORDER);
+        gui.dpInfoTree.setFont(FONT_MENU.deriveFont(12f));
+        gui.pInfo.add(gui.dpInfoTree);
     }
 
     /**
      * starts a indeterminate progressBar
      */
-    public void progressbarStart () {
-        this.progressbarVisible(true);
+    public void startProgressBar() {
+        this.stopProgressBar();
         gui.progressbar.setIndeterminate(true);
         gui.progressbar.setString("Loading data...");
         gui.progressbar.setStringPainted(true);
@@ -118,17 +116,15 @@ public final class GUISlave {
     /**
      * sets the visibility of the progressBar
      *
-     * @param v is the visible-boolean
      */
-    public void progressbarVisible (boolean v) {
-        gui.progressbar.setVisible(v);
-        this.revalidateAll();
+    public void stopProgressBar() {
+        gui.progressbar.setVisible(false);
     }
 
     /**
      * revalidates all swing components
      */
-    public void revalidateAll () {
+    public void update() {
         gui.window.revalidate();
     }
 
@@ -146,27 +142,27 @@ public final class GUISlave {
      *
      * @param forItem is the search type
      */
-    public void loadSearch (String forItem) {
+    public void loadSearch(String forItem) {
         switch (forItem) {
             case "Flight" -> {
                 this.showSearch(gui.flightSearch);
-                controller.currentSearchType = FLIGHT;
+                ctrl.currentSearchType = FLIGHT;
             }
             case "Plane" -> {
                 this.showSearch(gui.planeSearch);
-                controller.currentSearchType = PLANE;
+                ctrl.currentSearchType = PLANE;
             }
             case "Airline" -> {
                 this.showSearch(gui.airlineSearch);
-                controller.currentSearchType = AIRLINE;
+                ctrl.currentSearchType = AIRLINE;
             }
             case "Airport" -> {
                 this.showSearch(gui.airportSearch);
-                controller.currentSearchType = AIRPORT;
+                ctrl.currentSearchType = AIRPORT;
             }
             case "Area" -> {
                 this.showSearch(gui.areaSearch);
-                controller.currentSearchType = AREA;
+                ctrl.currentSearchType = AREA;
             }
         }
     }
@@ -176,7 +172,7 @@ public final class GUISlave {
      *
      * @param search is the given list of search components
      */
-    private void showSearch (List<JComponent> search) {
+    private void showSearch(List<JComponent> search) {
         var searchModels = gui.allSearchModels();
         for (var comps : searchModels) {
             var equals = (comps == search);
@@ -189,10 +185,10 @@ public final class GUISlave {
     }
 
     /**
-     * disposes all views (and opens the start screen)
+     * disposes all views (and opens the src screen)
      * if no other view is opened, nothing is done
      */
-    public void disposeView() {
+    public synchronized void disposeView() {
         if (gui.pStartScreen != null) {
             gui.pStartScreen.setVisible(false);
         } if (gui.listView != null) {
@@ -203,10 +199,10 @@ public final class GUISlave {
         } if (this.mapViewer() != null) {
             this.mapViewer().removeAllMapMarkers();
             this.mapViewer().removeAllMapPolygons();
-            gui.pMap.remove(gui.mapViewer);
-            gui.mapViewer.setVisible(false);
+            gui.pMap.remove(this.mapViewer());
+            this.mapViewer().setVisible(false);
             gui.pMap.setVisible(false);
-            gui.mapViewer.removeAllMapMarkers();
+            this.mapViewer().removeAllMapMarkers();
         } if (gui.infoTree != null) {
             gui.infoTree.setVisible(false);
             gui.infoTree = null;
@@ -215,13 +211,19 @@ public final class GUISlave {
         gui.pMenu.setVisible(true);
         gui.dpleft.moveToFront(gui.pMenu);
         gui.viewHeadText.setText(DEFAULT_HEAD_TEXT);
-        BlackBeardsNavigator.currentViewType = null;
-        this.revalidateAll();
+        ctrl.currentViewType = null;
+        this.update();
     }
 
-    void windowResized () {
+    void windowResized() {
         gui.mainpanel.setBounds(0, 0, gui.window.getWidth()-14, gui.window.getHeight()-37);
         gui.pTitle.setBounds(0, 0, gui.mainpanel.getWidth(), 70);
+
+        int width = gui.pTitle.getWidth();
+        int height = gui.pTitle.getHeight();
+        gui.title_bground.setBounds(0, 0, width, height);
+        var img = Images.TITLE.get();
+        gui.title_bground.setIcon(this.scaledImage(img, width, height));
 
         gui.dpright.setBounds(280, 70, gui.mainpanel.getWidth() - 280, gui.mainpanel.getHeight() - 70);
         gui.dpleft.setBounds(0, 70, 280, gui.mainpanel.getHeight() - 70);
@@ -267,19 +269,18 @@ public final class GUISlave {
      * 
      * @param button is the clicked button
      */
-    public void buttonClicked (JButton button) {
+    public synchronized void buttonClicked(JButton button) {
         if (button == gui.btFile) {
             this.setViewHeadBtVisible(false);
             this.setFileMenuVisible(true);
         } else if (button == gui.btList) {
-            this.progressbarStart();
-            this.controller.show(LIST_FLIGHT, "");
+            this.startProgressBar();
+            this.ctrl.show(LIST_FLIGHT, "");
         } else if (button == gui.btMap) {
-            this.progressbarStart();
-            this.controller.show(MAP_ALL, "");
+            this.startProgressBar();
+            this.ctrl.show(MAP_ALL, "");
         } else if (button == gui.closeView) {
             this.disposeView();
-            var ctrl = Controller.getInstance(); // muss das sein
             ctrl.loadedData = null;
             this.gui.pStartScreen.setVisible(true);
             this.gui.dpright.moveToFront(gui.pStartScreen);
@@ -292,21 +293,22 @@ public final class GUISlave {
             this.gui.tfSearch.setVisible(!gui.pSearch.isVisible());
             this.loadSearch("Plane");
         } else if (button == gui.settingsButtons[0]) {
-            gui.settingsDialog.setVisible(false);
+            this.gui.settingsDialog.setVisible(false);
         } else if (button == gui.settingsButtons[1]) {
-            new UserSettings().confirm(gui.settings_maxLoadTf.getText(), (String) gui.settings_mapTypeCmbBox.getSelectedItem());
-            gui.settingsDialog.setVisible(false);
+            this.ctrl.confirmSettings(gui.settings_maxLoadTf.getText(), (String) gui.settings_mapTypeCmbBox.getSelectedItem());
+            this.gui.settingsDialog.setVisible(false);
         } else if (button.getName().equals("loadList")) {
             // future
+            this.ctrl.show(MAP_SIGNIFICANCE, "Significance Map");
         } else if (button.getName().equals("loadMap")) {
             // TODO search type abfragen, bzw. ComboBox SelectedItem
             var inputs = this.searchInput();
-            this.controller.search(inputs, 1);
+            this.ctrl.search(inputs, 1);
         } else if (button.getName().equals("open")) {
             try {
                 new MenuModels().fileLoader(gui.window);
             } catch (DataNotFoundException e) {
-                this.controller.getLogger().errorLog(e.getMessage(), this);
+                Controller.getLogger().errorLog(e.getMessage(), this);
             }
         } else if (button.getName().equals("save")) {
             new MenuModels().fileSaver(gui.window);
@@ -316,7 +318,7 @@ public final class GUISlave {
         }
     }
 
-    private void setViewHeadBtVisible (boolean b) {
+    private void setViewHeadBtVisible(boolean b) {
         gui.btFile.setVisible(b);
         gui.closeView.setVisible(b);
     }
@@ -338,28 +340,25 @@ public final class GUISlave {
             if (src == gui.tfSearch) {
                 if (key == KeyEvent.VK_ENTER) {
                     if (gui.tfSearch.hasFocus())
-                        gui.enterText();
+                        new GUISlave().enterText();
                 }
             } else if (src == gui.settings_maxLoadTf) {
                 if (key == KeyEvent.VK_ENTER) {
                     // TODO fixen: settings fenster schließt erst nach loading
                     if (Integer.parseInt(gui.settings_maxLoadTf.getText()) >= 4) {
-                        this.progressbarStart();
+                        this.startProgressBar();
                         new UserSettings().setMaxLoadedData(Integer.parseInt(gui.settings_maxLoadTf.getText()));
                         gui.settings_maxLoadTf.setText("");
                         gui.settingsDialog.setVisible(false);
-                        // work with background worker?
-                        //controller.loadLiveData();
                     }
                 }
-            } else if (src == gui.mapViewer) {
+            } else if (src == this.mapViewer()) {
                 switch (key) {
-                    case VK_PAGE_UP -> gui.mapViewer.moveMap(0, 2);
-                    case VK_HOME -> gui.mapViewer.moveMap(-2, 0);
-                    case VK_END -> gui.mapViewer.moveMap(2, 0);
-                    case VK_PAGE_DOWN -> gui.mapViewer.moveMap(0, -2);
+                    case VK_PAGE_UP -> this.mapViewer().moveMap(0, 10);
+                    case VK_HOME -> this.mapViewer().moveMap(-10, 0);
+                    case VK_END -> this.mapViewer().moveMap(10, 0);
+                    case VK_PAGE_DOWN -> this.mapViewer().moveMap(0, -10);
                 }
-                this.revalidateAll();
             }
         } catch (NumberFormatException ex) {
                     gui.settings_maxLoadTf.setText("Error");
@@ -373,7 +372,7 @@ public final class GUISlave {
     }
 
     private String[] searchInput () {
-        switch (controller.currentSearchType) {
+        switch (ctrl.currentSearchType) {
             case FLIGHT -> {
                 return new String[] {
                         gui.search_flightID.getText(),
@@ -410,6 +409,47 @@ public final class GUISlave {
             c.setText("");
         }
 
+    }
+
+    /**
+     * enters the text in the textfield (use for key listener)
+     */
+    private void enterText() {
+        var text = gui.tfSearch.getText().toLowerCase();
+        if (!text.isBlank()) {
+            if (text.startsWith("exit")) {
+                ctrl.exit();
+            } else if (text.startsWith("loadlist")) {
+                ctrl.show(LIST_FLIGHT, "");
+            } else if (text.startsWith("loadmap")) {
+                ctrl.show(MAP_ALL, "");
+            } else if (text.startsWith("maxload")) {
+                var args = text.split(" ");
+                try {
+                    int max = Integer.parseInt(args[1]);
+                    if (max <= 10000) {
+                        new UserSettings().setMaxLoadedData(max);
+                        Controller.getLogger().log("maxload changed to " + args[1] + " !", gui);
+                    } else {
+                        Controller.getLogger().log("Failed! Maximum is 10000!", gui);
+                    }
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+            } else if (text.startsWith("flightroute") || text.startsWith("fl")) {
+                var args = text.split(" ");
+                if (args.length > 1) {
+                    var id = args[1];
+                    ctrl.show(MAP_TRACKING, id);
+                }
+            }
+        }
+        gui.tfSearch.setText("");
+    }
+
+    public ImageIcon scaledImage(ImageIcon input, int width, int height) {
+        var scaled = input.getImage().getScaledInstance(width, height, 4);
+        return new ImageIcon(scaled);
     }
 
 }

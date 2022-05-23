@@ -30,7 +30,7 @@
 Command Line: -Xms512m -Xmx4096m -Dfile.encoding=UTF-8 --module-path=C:\Users\Lukas\git\PlaneSpotter\src\libs\gson-2.8.6.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\JMapViewer.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\mysql-connector-java-8.0.28.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\sqlite-jdbc-3.34.0.jar -XX:+ShowCodeDetailsInExceptionMessages planespotter.TestMain
 
 Host: AMD Ryzen 7 3800X 8-Core Processor             , 16 cores, 31G,  Windows 10 , 64 bit Build 19041 (10.0.19041.1202)
-Time: Thu Apr 14 14:47:23 2022 Mitteleuropäische Sommerzeit elapsed time: 2716.236506 seconds (0d 0h 45m 16s)
+Time: Thu Apr 14 14:47:23 2022 Mitteleuropï¿½ische Sommerzeit elapsed time: 2716.236506 seconds (0d 0h 45m 16s)
 
 ---------------  T H R E A D  ---------------
 
@@ -79,9 +79,9 @@ j  org.sqlite.core.DB.newSQLException(ILjava/lang/String;)Lorg/sqlite/SQLiteExce
 j  org.sqlite.core.DB.newSQLException(I)Lorg/sqlite/SQLiteException;+5 sqlite.jdbc@3.34.0
 j  org.sqlite.core.DB.execute(Lorg/sqlite/core/CoreStatement;[Ljava/lang/Object;)Z+214 sqlite.jdbc@3.34.0
 J 4009 c2 org.sqlite.jdbc3.JDBC3PreparedStatement.executeUpdate()I sqlite.jdbc@3.34.0 (59 bytes) @ 0x000001d7c5208f54 [0x000001d7c5208c80+0x00000000000002d4]
-J 4055 c2 planespotter.model.DBIn.insertTracking(Lplanespotter/dataclasses/Frame;I)V (126 bytes) @ 0x000001d7c521c76c [0x000001d7c521be60+0x000000000000090c]
-J 4837 c1 planespotter.model.Supplier.writeToDB(Ljava/util/List;)V (226 bytes) @ 0x000001d7be5856dc [0x000001d7be584ee0+0x00000000000007fc]
-j  planespotter.model.Supplier.run()V+47
+J 4055 c2 planespotter.model.io.DBIn.insertTracking(Lplanespotter/dataclasses/Frame;I)V (126 bytes) @ 0x000001d7c521c76c [0x000001d7c521be60+0x000000000000090c]
+J 4837 c1 planespotter.model.nio.Supplier.writeToDB(Ljava/util/List;)V (226 bytes) @ 0x000001d7be5856dc [0x000001d7be584ee0+0x00000000000007fc]
+j  planespotter.model.nio.Supplier.run()V+47
 J 4888 c1 java.util.concurrent.ThreadPoolExecutor.runWorker(Ljava/util/concurrent/ThreadPoolExecutor$Worker;)V java.base@15.0.2 (187 bytes) @ 0x000001d7be5a5bbc [0x000001d7be5a52a0+0x000000000000091c]
 J 4887 c1 java.util.concurrent.ThreadPoolExecutor$Worker.run()V java.base@15.0.2 (9 bytes) @ 0x000001d7be5a6fc4 [0x000001d7be5a6f40+0x0000000000000084]
 J 4884 c1 java.lang.Thread.run()V java.base@15.0.2 (17 bytes) @ 0x000001d7be5a4204 [0x000001d7be5a40c0+0x0000000000000144]

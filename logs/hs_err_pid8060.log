@@ -30,7 +30,7 @@
 Command Line: -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:50558,suspend=y,server=n -javaagent:C:\Users\jml04\AppData\Local\JetBrains\IdeaIC2021.3\captureAgent\debugger-agent.jar -Dfile.encoding=UTF-8 planespotter.Main
 
 Host: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz, 12 cores, 7G,  Windows 10 , 64 bit Build 22000 (10.0.22000.613)
-Time: Thu May  5 19:42:56 2022 Mitteleuropäische Sommerzeit elapsed time: 416.042937 seconds (0d 0h 6m 56s)
+Time: Thu May  5 19:42:56 2022 Mitteleuropï¿½ische Sommerzeit elapsed time: 416.042937 seconds (0d 0h 6m 56s)
 
 ---------------  T H R E A D  ---------------
 
@@ -52,12 +52,12 @@ C  0x000001cde22e232b
 
 Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
 v  ~UncommonTrapBlob
-J 2420 c2 planespotter.model.DBOut.querryDB(Ljava/lang/String;)Ljava/sql/ResultSet; (23 bytes) @ 0x000001cde9eed454 [0x000001cde9eeb980+0x0000000000001ad4]
-J 2480 c2 planespotter.model.DBOut.getLastTrackingIDByFlightID(I)I (84 bytes) @ 0x000001cde9f07ca0 [0x000001cde9f07860+0x0000000000000440]
-j  planespotter.model.DBOut.getLastTrackingsByFlightIDs(Ljava/util/ArrayDeque;)Ljava/util/ArrayDeque;+50
-j  planespotter.model.DBOut.getLiveTrackingBetween(II)Ljava/util/List;+7
-j  planespotter.model.OutputWizard.loadFlights(II)V+19
-j  planespotter.model.OutputWizard.run()V+47
+J 2420 c2 planespotter.model.io.DBOut.querryDB(Ljava/lang/String;)Ljava/sql/ResultSet; (23 bytes) @ 0x000001cde9eed454 [0x000001cde9eeb980+0x0000000000001ad4]
+J 2480 c2 planespotter.model.io.DBOut.getLastTrackingIDByFlightID(I)I (84 bytes) @ 0x000001cde9f07ca0 [0x000001cde9f07860+0x0000000000000440]
+j  planespotter.model.io.DBOut.getLastTrackingsByFlightIDs(Ljava/util/ArrayDeque;)Ljava/util/ArrayDeque;+50
+j  planespotter.model.io.DBOut.getLiveTrackingBetween(II)Ljava/util/List;+7
+j  planespotter.model.io.OutputWizard.loadFlights(II)V+19
+j  planespotter.model.io.OutputWizard.run()V+47
 j  java.util.concurrent.ThreadPoolExecutor.runWorker(Ljava/util/concurrent/ThreadPoolExecutor$Worker;)V+92 java.base@17.0.1
 j  java.util.concurrent.ThreadPoolExecutor$Worker.run()V+5 java.base@17.0.1
 j  java.lang.Thread.run()V+11 java.base@17.0.1

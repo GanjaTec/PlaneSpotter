@@ -5,16 +5,13 @@ import libs.UWPButton;
 import planespotter.constants.ViewType;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
-import planespotter.model.FileMaster;
+import planespotter.model.io.FileMaster;
 import planespotter.throwables.DataNotFoundException;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Vector;
 
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.GUIConstants.DefaultColor.*;
@@ -229,7 +226,7 @@ final class MenuModels {
     }
 
     JComboBox<String> settings_mapTypeCmbBox () {
-        var mapTypeCmbBox = new JComboBox<String>(new String[] {
+        var mapTypeCmbBox = new JComboBox<>(new String[]{
                 "Bing Map",
                 "Default Map",
                 "Transport Map"
@@ -250,8 +247,10 @@ final class MenuModels {
         var home = FileSystemView.getFileSystemView().getHomeDirectory();
         var fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.setFileFilter(new FileNameExtensionFilter("nur .pls-Dateien", "pls"));
+        var pls = new FileNameExtensionFilter("nur .pls-Dateien", "pls"); // TODO constant?
+        fileChooser.setFileFilter(pls);
         fileChooser.showSaveDialog(parent);
+        Controller.getInstance().currentVisibleRect = new GUISlave().mapViewer().getVisibleRect();
         new FileMaster().savePlsFile(fileChooser);
 
         return fileChooser;
@@ -264,24 +263,30 @@ final class MenuModels {
         var home = FileSystemView.getFileSystemView().getHomeDirectory();
         var fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.setFileFilter(new FileNameExtensionFilter("only .pls-Files", "pls"));
+        var pls = new FileNameExtensionFilter("only .pls-Files", "pls");
+        fileChooser.setFileFilter(pls);
         fileChooser.showOpenDialog(parent);
-        Vector<DataPoint> route = null;
-        try {
-            route = new FileMaster().loadPlsFile(fileChooser);
+        try { // TODO besser
+            var ctrl = Controller.getInstance();
+            ctrl.loadedData = new FileMaster().loadPlsFile(fileChooser);
+            var idList = ctrl.loadedData
+                                    .stream()
+                                    .map(DataPoint::flightID)
+                                    .distinct()
+                                    .toList();
+            int size = idList.size();
+            var ids = new String[size];
+            int counter = 0;
+            for (var id : idList) {
+                ids[counter] = id.toString();
+                counter++;
+            }
+            ctrl.show(ViewType.MAP_TRACKING, "Loaded from File", ids); // FIXME: 18.05.2022 HIER fehler
+            return fileChooser;
         } catch (DataNotFoundException e) {
             e.printStackTrace();
-        }
-        //int flightID;
-        if (route != null) {
-            //flightID = route.get(0).getFlightID();
-            Controller.getInstance().loadedData = route;
-
-        } else {
             throw new DataNotFoundException("No route to save, select a route first!");
         }
-        Controller.getInstance().show(ViewType.MAP_TRACKING, "Loaded from File");
-        return fileChooser;
     }
 
     JButton[] fileMenu (JPanel parent) {

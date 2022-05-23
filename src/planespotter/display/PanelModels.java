@@ -74,9 +74,9 @@ final class PanelModels {
         /**
          * @return head label, which is part of viewHeadPanel
          */
-        JLabel headLabel (String text) {
+        JLabel headLabel() {
             // TODO: setting up head label
-            var head = new JLabel(text + " > ");
+            var head = new JLabel("PlaneSpotter > ");
             head.setBounds(5, 0, 600, 20);
             head.setFont(FONT_MENU.deriveFont(18));
             head.setForeground(DEFAULT_FONT_COLOR.get());
@@ -155,10 +155,10 @@ final class PanelModels {
     }
 
     /**
-     * start panel
+     * src panel
      */
     JPanel startPanel (JDesktopPane parent) {
-        // TODO setting up start screen panel
+        // TODO setting up src screen panel
         var start = new JPanel();
         start.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
         start.setBackground(DEFAULT_BG_COLOR.get());

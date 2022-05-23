@@ -3,6 +3,10 @@ package planespotter.dataclasses;
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
+import planespotter.constants.Paths;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * @name CustomMapMarker
@@ -13,22 +17,23 @@ import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
  */
 public class CustomMapMarker extends MapMarkerDot implements MapMarker {
 
-    // flight at the marker position // one marker has one flight
-    private Flight flight;
+    public static final Image img = new ImageIcon(Paths.RESSOURCE_PATH + "flying_plane_icon.png").getImage();
+    private final int heading;
 
     /**
      * constructor for CustomMapMarker
      * @param coord is the Map Marker coord,
-     * @param flight is the flight at the coord-Position
      */
-    public CustomMapMarker(Coordinate coord, Flight flight) {
+    public CustomMapMarker(Coordinate coord, int heading) {
         super(coord);
+        this.heading = heading;
     }
 
-    /**
-     * @return flight, the flight at the map marker point
-     */
-    public Flight getFlight () {
-        return flight;
-    }
+    /*@Override
+    public void paint(Graphics g, Point position, int radius) {
+        var g2d = (Graphics2D) g;
+        g2d.clearRect(0, 0, 100, 100);
+        g2d.drawImage(img, position.x+5, position.y+5, null);
+        super.paint(g2d, position, radius);
+    }*/
 }

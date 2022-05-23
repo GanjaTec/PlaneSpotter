@@ -35,7 +35,7 @@ public final class GUIConstants {
         DEFAULT_FG_COLOR(Color.BLACK),
         DEFAULT_BORDER_COLOR(Color.LIGHT_GRAY),
         DEFAULT_FONT_COLOR(new Color(230, 230,230)),
-        DEFAULT_ACCENT_COLOR(new Color(85, 100, 210)),
+        DEFAULT_ACCENT_COLOR(new Color(44, 119, 154)),
         DEFAULT_SEARCH_ACCENT_COLOR(new Color(61, 76, 114)),
         DEFAULT_MAP_ICON_COLOR(new Color(255, 214, 51));
 
@@ -54,11 +54,12 @@ public final class GUIConstants {
      * images
      */
     public enum Images {
-        BGROUND_IMG(new ImageIcon(Paths.IMG_PATH + "background.png")),
-        MENU_BGROUND_IMG(new ImageIcon(Paths.IMG_PATH + "menu_background.png")),
-        TITLE_BGROUND_IMG(new ImageIcon(Paths.IMG_PATH + "title_background.jpg")),
-        PAPER_PLANE_ICON(new ImageIcon(Paths.IMG_PATH + "planespotter_icon.png")),
-        FLYING_PLANE_ICON(new ImageIcon(Paths.IMG_PATH + "flying_plane_icon.png"));
+        TITLE(new ImageIcon(Paths.RESSOURCE_PATH + "newTitle.png")),
+        BGROUND_IMG(new ImageIcon(Paths.RESSOURCE_PATH + "background.png")),
+        MENU_BGROUND_IMG(new ImageIcon(Paths.RESSOURCE_PATH + "menu_background.png")),
+        TITLE_BGROUND_IMG(new ImageIcon(Paths.RESSOURCE_PATH + "title_background.jpg")),
+        PAPER_PLANE_ICON(new ImageIcon(Paths.RESSOURCE_PATH + "planespotter_icon.png")),
+        FLYING_PLANE_ICON(new ImageIcon(Paths.RESSOURCE_PATH + "flying_plane_icon.png"));
 
         private final ImageIcon img;
 
@@ -120,7 +121,7 @@ public final class GUIConstants {
         SOUND_QUESTION("win.sound.question"),
         SOUND_RESTORE_UP("win.sound.restoreDown"),
         SOUND_RESTOPRE_DOWN("win.sound.restoreUp"),
-        SOUND_START("win.sound.start");
+        SOUND_START("win.sound.src");
 
         private final String sound;
 
