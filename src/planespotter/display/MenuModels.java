@@ -251,7 +251,7 @@ final class MenuModels {
         fileChooser.setFileFilter(pls);
         fileChooser.showSaveDialog(parent);
         Controller.getInstance().currentVisibleRect = new GUISlave().mapViewer().getVisibleRect();
-        new FileMaster().savePlsFile(fileChooser);
+        new FileMaster().savePlsFile(fileChooser); // TODO move to controller
 
         return fileChooser;
     }

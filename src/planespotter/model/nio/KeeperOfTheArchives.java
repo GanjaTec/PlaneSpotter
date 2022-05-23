@@ -15,11 +15,11 @@ import java.util.List;
  *
  */
 public class KeeperOfTheArchives implements Runnable{
-	private long threshold;
-	private int threadNumber;
-	private String threadName;
-	DBOut dbo = new DBOut();
-	DBIn dbi = new DBIn();
+	private final long threshold;
+	private final int threadNumber;
+	private final String threadName;
+	private final DBOut dbo = new DBOut();
+	private final DBIn dbi = new DBIn();
 	
 	public KeeperOfTheArchives(int threadNumber, long endThreshold) {
 		this.threadNumber = threadNumber;

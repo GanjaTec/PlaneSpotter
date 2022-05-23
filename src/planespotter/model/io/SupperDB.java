@@ -16,8 +16,7 @@ public class SupperDB {
 	protected static Connection getDBConnection() throws Exception {
 		Class.forName("com.mysql.cj.jdbc.Driver");
 		String db = "jdbc:sqlite:plane.db";
-		Connection conn = DriverManager.getConnection(db);
-		return conn;
+		return DriverManager.getConnection(db);
 	}
 	
 	/**

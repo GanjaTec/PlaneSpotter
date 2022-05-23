@@ -13,7 +13,7 @@ import planespotter.dataclasses.Frame;
 public class DBIn extends SupperDB {
 
 	public int insertPlane(Frame f, int airlineID) throws Exception {
-		Connection conn = super.getDBConnection();		
+		Connection conn = SupperDB.getDBConnection();
 		//TODO Airline ID anfrage
 		// insert into planes
 		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.planequerry, Statement.RETURN_GENERATED_KEYS);
@@ -58,7 +58,7 @@ public class DBIn extends SupperDB {
 
 	public void insertTracking(Frame f, int id) throws Exception {
 
-		Connection conn = super.getDBConnection();
+		Connection conn = SupperDB.getDBConnection();
 
 		// insert into tracking
 		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.trackingquerry);
@@ -75,7 +75,7 @@ public class DBIn extends SupperDB {
 	}
 
 	public void updateFlightEnd(int id, long timestamp) throws Exception {
-		Connection conn = super.getDBConnection();
+		Connection conn = SupperDB.getDBConnection();
 
 		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.updateFlightEnd);
 		pstmt.setInt(2, id);

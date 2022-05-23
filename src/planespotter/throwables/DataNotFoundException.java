@@ -1,9 +1,6 @@
 package planespotter.throwables;
 
 import planespotter.controller.Controller;
-import planespotter.display.SearchModels;
-
-import javax.swing.*;
 
 // TODO neuen DIalog erstellen!! wenn kein flug oder so gefunden wurde // neuer Konstructor mit param dialog
 public class DataNotFoundException extends Exception {
@@ -57,7 +54,7 @@ public class DataNotFoundException extends Exception {
         for (var el : stackTrace) {
             stringBuilder.append("\n at ").append(el);
         }
-        var logger = Controller.getInstance().getLogger();
+        var logger = Controller.getLogger();
         var out = stringBuilder.toString();
         logger.errorLog(out, this);
         super.printStackTrace();

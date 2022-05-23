@@ -2,10 +2,10 @@ package planespotter.throwables;
 
 public class JFrameNotFoundException extends Exception {
 
-    private final String message = "FrameNotFoundException: Frame coldn't be found!";
+    private static final String message = "FrameNotFoundException: Frame coldn't be found!";
 
     public JFrameNotFoundException () {
-        super();
+        super(message);
     }
 
     public String getMessage() {

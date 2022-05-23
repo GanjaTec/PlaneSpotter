@@ -15,7 +15,6 @@ import planespotter.model.io.DBOut;
 import planespotter.model.io.FileMaster;
 import planespotter.model.io.OutputWizard;
 import planespotter.throwables.DataNotFoundException;
-import planespotter.unused.WatchDog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,8 +43,6 @@ public class Controller {
     private static final Scheduler scheduler;
     // logger for whole program
     private static Logger logger;
-    // thread watch dog
-    private static WatchDog watchDog;
     // boolean loading is true when something is loading (volatile?)
     public volatile boolean loading;
     // boolean loggerOn is true when the logger is visible
@@ -314,7 +311,7 @@ public class Controller {
             var menu = gui.pMenu;
             var info = gui.pInfo;
             var dpleft = gui.dpleft;
-            goThroughMarkers:
+            // going though markers
             for (var m : markers) {
                 markerCoord = m.getCoordinate();
                 newMarker = new CustomMapMarker(markerCoord, 90); // FIXME: 13.05.2022 // FIXME 19.05.2022
