@@ -21,5 +21,7 @@ public final class Configuration {
     public static final int MAX_THREADPOOL_SIZE = 40;
     // thread keep-alive-time
     public static final long KEEP_ALIVE_TIME = 6L;
+    // core pool size (threads that are running constantly)
+    public static final int CORE_POOLSIZE = 0;
 
 }

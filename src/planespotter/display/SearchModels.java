@@ -2,7 +2,6 @@ package planespotter.display;
 
 import libs.UWPButton;
 
-import javax.imageio.spi.ServiceRegistry;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -25,7 +24,7 @@ public final class SearchModels {
      */
     JComboBox<String> searchFor_cmbBox (JPanel parent) {
         // TODO: setting up "search for" combo box
-        JComboBox<String> searchFor = new JComboBox(new SearchModels().searchBoxItems());
+        var searchFor = new JComboBox<>(new SearchModels().searchBoxItems());
         searchFor.setBounds(parent.getWidth()/2, 10, (parent.getWidth()-20)/2, 25);
         searchFor.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         searchFor.setForeground(DEFAULT_MAP_ICON_COLOR.get());
@@ -51,12 +50,11 @@ public final class SearchModels {
      * @return search combo-box items (array of Strings)
      */
     private String[] searchBoxItems () {
-        String[] items = {  "Plane",
+        return new String[] {  "Plane",
                 "Flight",
                 "Airline",
                 "Airport",
                 "Area"};
-        return items;
     }
 
     /**
@@ -73,7 +71,7 @@ public final class SearchModels {
 
     /**
      * @param parent is the parent panel where the message label is shown in
-     * @return
+     * @return the search message text area
      */
     JTextArea searchMessage (JPanel parent) {
         var message = "Es muss mindestens eins der Felder ausgefüllt sein!";

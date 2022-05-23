@@ -226,7 +226,7 @@
 > [13.05.2022, 17:21:38@DataNotFoundException] db-data couldn't be found!
 No Flight found for id -1!
 > [13.05.2022, 17:22:10@DataNotFoundException] db-data couldn't be found!
- at planespotter.model.FileMaster.loadPlsFile(FileMaster.java:73)
+ at planespotter.model.io.FileMaster.loadPlsFile(FileMaster.java:73)
  at planespotter.display.MenuModels.fileLoader(MenuModels.java:270)
  at planespotter.display.GUISlave.buttonClicked(GUISlave.java:321)
  at planespotter.display.GUI$1.doInBackground(GUI.java:417)
