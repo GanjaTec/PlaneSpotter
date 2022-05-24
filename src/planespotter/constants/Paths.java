@@ -19,10 +19,16 @@ public final class Paths {
     public static final String SRC_PATH = "src\\";
 
     /**
-     * img-path
-     * contains all used images
+     * ressource-path
+     * contains all used images, etc.
      */
-    public static final String IMG_PATH = "src\\planespotter\\images\\";
+    public static final String RESSOURCE_PATH = "src\\planespotter\\ressources\\";
+
+    /**
+     * libs-path
+     * contains all external libraries
+     */
+    public static final String LIBS_PATH = "src\\libs\\";
 
 
 }

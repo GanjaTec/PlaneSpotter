@@ -1,5 +1,9 @@
 package planespotter.constants;
 
+import planespotter.util.Utilities;
+
+import java.util.ArrayDeque;
+
 /**
  * 
  *
@@ -26,7 +30,7 @@ public final class SQLQuerries {
 	public static final String getTrackingByFlight = "SELECT * FROM tracking WHERE ID == "; // FIXME sollte das nicht flightid sein=
 	public static final String getFlights = "SELECT * FROM flights";
 	public static final String getFlightByID = "SELECT * FROM flights WHERE ID == ";
-	public static final String getAirportByTag = "SELECT * FROM airports WHERE iatatag == ";
+	public static final String getAirportByTag = "SELECT * FROM airports WHERE iatatag IS "; // TODO changed!
 	public static final String getPlaneByID = "SELECT * FROM planes WHERE ID == ";
 	public static final String getAirlineByTag = "SELECT * FROM airlines WHERE icaotag == ";
 	public static final String getAirlineIDByTag = "SELECT ID FROM airlines WHERE icaotag == ";
@@ -54,5 +58,74 @@ public final class SQLQuerries {
 
 	//update Querries
 	public static final String updateFlightEnd = "UPDATE flights SET endTime = (?) WHERE ID == (?)";
+
+	/**
+	 *
+	 * @param inThis
+	 * @return
+	 */ // TODO zu einer Methode machen mit Wildcards
+	public static String IN_INT (final ArrayDeque<Integer> inThis) {
+		var out = new StringBuilder("IN (");
+		for (int i : inThis) {
+			out.append(i).append(",");
+		}
+		return out.substring(0, out.length()-2) + ")";
+	}
+	public static String IN_STR (final ArrayDeque<String> inThis) {
+		var out = new StringBuilder("IN (");
+		int counter = 0;
+		int last = inThis.size() - 1;
+		boolean eq = (counter == last);
+		for (var s : inThis) {
+			var packedStr = Utilities.packString(s);
+			out.append(packedStr);
+			if (!eq) {
+				out.append(",");
+			}
+			counter++;
+		}
+		return out + ")";
+	}
+
+	public static String IS (String isWhat) {
+		return "IS '" + isWhat + "'";
+	}
+
+	public static String SELECT(boolean distinct, String... fields) {
+		var sbl = new StringBuilder("SELECT ");
+		if (distinct) {
+			sbl.append("DISTINCT ");
+		}
+		int length = fields.length;
+		int lm1 = length - 1;
+		for (int i = 0; i < length; i++) {
+			sbl.append(fields[i]);
+			if (i < lm1) {
+				sbl.append(",");
+			}
+			sbl.append(" ");
+		}
+		return sbl.toString();
+	}
+
+	public static String FROM(String... tables) {
+		var sbl = new StringBuilder("FROM ");
+		int length = tables.length;
+		int lm1 = length - 1;
+		for (int i = 0; i < length; i++) {
+			sbl.append(tables[i]);
+			if (i < lm1) {
+				sbl.append(",");
+			}
+			sbl.append(" ");
+		}
+		return sbl.toString();
+	}
+
+	public static String WHERE(String boolStr) {
+		return "WHERE " + boolStr + " ";
+	}
+
+	// TODO JOIN, WHERE, ...
 
 }

@@ -2,7 +2,7 @@ package planespotter;
 
 import java.util.concurrent.TimeUnit;
 
-import planespotter.model.Paralel;
+import planespotter.model.nio.Paralel;
 
 public class TestMain {
 

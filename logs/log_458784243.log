@@ -1,0 +1,147 @@
+> [12.05.2022, 11:36:46@Controller] initializing Controller...
+> [12.05.2022, 11:36:46@Controller] initializing Executors...
+> [12.05.2022, 11:36:46@Controller] Executors initialized sucsessfully!
+> [12.05.2022, 11:36:46@Controller] Controller initialized sucsessfully!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard0@31 created!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard1@32 created!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard2@33 created!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard0@31: loaded data in 0.0175305 seconds!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard1@32: loaded data in 0.0078703 seconds!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard3@35 created!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard2@34 created!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard4@37 created!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard3@36 created!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard2@33: loaded data in 0.0135256 seconds!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard4@37: loaded data in 0.2698277 seconds!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard3@35: loaded data in 0.27574 seconds!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard2@34: loaded data in 0.2858315 seconds!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard3@36: loaded data in 0.2905031 seconds!
+> [12.05.2022, 11:36:46@Controller] loaded Live-Data in 0.3365529 seconds!
+> [12.05.2022, 11:36:46@Controller] -> completed: 7, active: 0, largestPoolSize: 7
+> [12.05.2022, 11:36:46@GUI] initialising GUI...
+> [12.05.2022, 11:36:46@GUI] GUI initialized sucsessfully!
+> [12.05.2022, 11:36:46@Controller] Display-Package initialized sucsessfully!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard0@36 created!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard1@34 created!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard0@36: loaded data in 0.0035199 seconds!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard2@35 created!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard3@33 created!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard1@34: loaded data in 0.0032103 seconds!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard2@37 created!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard4@32 created!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard2@35: loaded data in 0.007845 seconds!
+> [12.05.2022, 11:36:46@OutputWizard] thread output-wizard3@36 created!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard3@33: loaded data in 0.1088161 seconds!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard4@32: loaded data in 0.1176369 seconds!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard2@37: loaded data in 0.1302029 seconds!
+> [12.05.2022, 11:36:46@OutputWizard] output-wizard3@36: loaded data in 0.1463816 seconds!
+> [12.05.2022, 11:36:46@Controller] loaded Live-Data in 0.1588936 seconds!
+> [12.05.2022, 11:36:46@Controller] -> completed: 15, active: 0, largestPoolSize: 7
+> [12.05.2022, 11:36:53@WatchDog] WARNING: Controller loading for 7 seconds, Timeout expected!
+> [12.05.2022, 11:36:56@OutputWizard] thread output-wizard0@40 created!
+> [12.05.2022, 11:36:56@OutputWizard] thread output-wizard1@41 created!
+> [12.05.2022, 11:36:56@OutputWizard] thread output-wizard2@42 created!
+> [12.05.2022, 11:36:56@OutputWizard] output-wizard0@40: loaded data in 0.008688 seconds!
+> [12.05.2022, 11:36:56@OutputWizard] thread output-wizard4@46 created!
+> [12.05.2022, 11:36:56@OutputWizard] thread output-wizard3@45 created!
+> [12.05.2022, 11:36:56@OutputWizard] output-wizard2@42: loaded data in 0.0082923 seconds!
+> [12.05.2022, 11:36:56@OutputWizard] thread output-wizard3@44 created!
+> [12.05.2022, 11:36:56@OutputWizard] thread output-wizard2@43 created!
+> [12.05.2022, 11:36:56@OutputWizard] output-wizard1@41: loaded data in 0.0035522 seconds!
+> [12.05.2022, 11:36:56@OutputWizard] output-wizard4@46: loaded data in 0.0795375 seconds!
+> [12.05.2022, 11:36:56@OutputWizard] output-wizard3@44: loaded data in 0.0933003 seconds!
+> [12.05.2022, 11:36:56@OutputWizard] output-wizard3@45: loaded data in 0.0913246 seconds!
+> [12.05.2022, 11:36:56@OutputWizard] output-wizard2@43: loaded data in 0.1083053 seconds!
+> [12.05.2022, 11:36:56@Controller] loaded Live-Data in 0.1283503 seconds!
+> [12.05.2022, 11:36:56@Controller] -> completed: 22, active: 0, largestPoolSize: 7
+> [12.05.2022, 11:36:58@WatchDog] WARNING: Controller loading for 12 seconds, Timeout expected!
+> [12.05.2022, 11:37:01@WatchDog] WARNING: Controller loading for 15 seconds, Timeout expected!
+> [12.05.2022, 11:37:03@WatchDog] WARNING: Controller loading for 17 seconds, Timeout expected!
+> [12.05.2022, 11:37:04@WatchDog] WARNING: Controller loading for 18 seconds, Timeout expected!
+> [12.05.2022, 11:37:04@WatchDog] Timed out! Loaded over 18 seconds!
+> [12.05.2022, 11:37:04@Scheduler] All tasks cancelled!
+> [12.05.2022, 11:37:04@Scheduler] FAIL!
+> [12.05.2022, 11:37:06@OutputWizard] thread output-wizard0@48 created!
+> [12.05.2022, 11:37:06@OutputWizard] output-wizard0@48: loaded data in 0.0072879 seconds!
+> [12.05.2022, 11:37:06@OutputWizard] thread output-wizard2@50 created!
+> [12.05.2022, 11:37:06@OutputWizard] thread output-wizard1@49 created!
+> [12.05.2022, 11:37:06@OutputWizard] thread output-wizard4@51 created!
+> [12.05.2022, 11:37:06@OutputWizard] output-wizard2@50: loaded data in 0.0031196 seconds!
+> [12.05.2022, 11:37:06@OutputWizard] thread output-wizard3@48 created!
+> [12.05.2022, 11:37:06@OutputWizard] thread output-wizard3@53 created!
+> [12.05.2022, 11:37:06@OutputWizard] thread output-wizard2@52 created!
+> [12.05.2022, 11:37:06@OutputWizard] output-wizard1@49: loaded data in 0.0047319 seconds!
+> [12.05.2022, 11:37:06@OutputWizard] output-wizard4@51: loaded data in 0.0750469 seconds!
+> [12.05.2022, 11:37:06@OutputWizard] output-wizard3@53: loaded data in 0.0786681 seconds!
+> [12.05.2022, 11:37:06@OutputWizard] output-wizard2@52: loaded data in 0.0972989 seconds!
+> [12.05.2022, 11:37:06@OutputWizard] output-wizard3@48: loaded data in 0.1003307 seconds!
+> [12.05.2022, 11:37:06@Controller] loaded Live-Data in 0.1181508 seconds!
+> [12.05.2022, 11:37:06@Controller] -> completed: 29, active: 0, largestPoolSize: 7
+> [12.05.2022, 11:37:16@OutputWizard] thread output-wizard0@54 created!
+> [12.05.2022, 11:37:16@OutputWizard] output-wizard0@54: loaded data in 0.0071724 seconds!
+> [12.05.2022, 11:37:16@OutputWizard] thread output-wizard2@56 created!
+> [12.05.2022, 11:37:16@OutputWizard] thread output-wizard1@55 created!
+> [12.05.2022, 11:37:16@OutputWizard] thread output-wizard4@57 created!
+> [12.05.2022, 11:37:16@OutputWizard] output-wizard2@56: loaded data in 0.0026762 seconds!
+> [12.05.2022, 11:37:16@OutputWizard] thread output-wizard3@54 created!
+> [12.05.2022, 11:37:16@OutputWizard] thread output-wizard3@59 created!
+> [12.05.2022, 11:37:16@OutputWizard] thread output-wizard2@58 created!
+> [12.05.2022, 11:37:16@OutputWizard] output-wizard1@55: loaded data in 0.0035748 seconds!
+> [12.05.2022, 11:37:16@OutputWizard] output-wizard4@57: loaded data in 0.0815869 seconds!
+> [12.05.2022, 11:37:16@OutputWizard] output-wizard3@59: loaded data in 0.0808587 seconds!
+> [12.05.2022, 11:37:16@OutputWizard] output-wizard2@58: loaded data in 0.0892698 seconds!
+> [12.05.2022, 11:37:16@OutputWizard] output-wizard3@54: loaded data in 0.0951231 seconds!
+> [12.05.2022, 11:37:16@Controller] loaded Live-Data in 0.1089814 seconds!
+> [12.05.2022, 11:37:16@Controller] -> completed: 36, active: 0, largestPoolSize: 7
+> [12.05.2022, 11:37:26@OutputWizard] thread output-wizard0@60 created!
+> [12.05.2022, 11:37:26@OutputWizard] output-wizard0@60: loaded data in 0.0078568 seconds!
+> [12.05.2022, 11:37:26@OutputWizard] thread output-wizard2@62 created!
+> [12.05.2022, 11:37:26@OutputWizard] thread output-wizard1@61 created!
+> [12.05.2022, 11:37:26@OutputWizard] thread output-wizard4@63 created!
+> [12.05.2022, 11:37:26@OutputWizard] output-wizard2@62: loaded data in 6.95E-4 seconds!
+> [12.05.2022, 11:37:26@OutputWizard] thread output-wizard3@60 created!
+> [12.05.2022, 11:37:26@OutputWizard] thread output-wizard3@65 created!
+> [12.05.2022, 11:37:26@OutputWizard] thread output-wizard2@64 created!
+> [12.05.2022, 11:37:26@OutputWizard] output-wizard1@61: loaded data in 0.0028833 seconds!
+> [12.05.2022, 11:37:26@OutputWizard] output-wizard4@63: loaded data in 0.0681099 seconds!
+> [12.05.2022, 11:37:26@OutputWizard] output-wizard3@65: loaded data in 0.075861 seconds!
+> [12.05.2022, 11:37:26@OutputWizard] output-wizard3@60: loaded data in 0.0831763 seconds!
+> [12.05.2022, 11:37:26@OutputWizard] output-wizard2@64: loaded data in 0.0839066 seconds!
+> [12.05.2022, 11:37:26@Controller] loaded Live-Data in 0.0987761 seconds!
+> [12.05.2022, 11:37:26@Controller] -> completed: 43, active: 0, largestPoolSize: 7
+> [12.05.2022, 11:37:36@OutputWizard] thread output-wizard0@66 created!
+> [12.05.2022, 11:37:36@OutputWizard] output-wizard0@66: loaded data in 0.002141 seconds!
+> [12.05.2022, 11:37:36@OutputWizard] thread output-wizard2@68 created!
+> [12.05.2022, 11:37:36@OutputWizard] thread output-wizard1@67 created!
+> [12.05.2022, 11:37:36@OutputWizard] thread output-wizard4@69 created!
+> [12.05.2022, 11:37:36@OutputWizard] output-wizard2@68: loaded data in 0.0068201 seconds!
+> [12.05.2022, 11:37:36@OutputWizard] thread output-wizard3@66 created!
+> [12.05.2022, 11:37:36@OutputWizard] thread output-wizard3@71 created!
+> [12.05.2022, 11:37:36@OutputWizard] thread output-wizard2@70 created!
+> [12.05.2022, 11:37:36@OutputWizard] output-wizard1@67: loaded data in 0.0076244 seconds!
+> [12.05.2022, 11:37:36@OutputWizard] output-wizard4@69: loaded data in 0.0718761 seconds!
+> [12.05.2022, 11:37:36@OutputWizard] output-wizard3@71: loaded data in 0.0807072 seconds!
+> [12.05.2022, 11:37:36@OutputWizard] output-wizard3@66: loaded data in 0.0849202 seconds!
+> [12.05.2022, 11:37:36@OutputWizard] output-wizard2@70: loaded data in 0.0902771 seconds!
+> [12.05.2022, 11:37:36@Controller] loaded Live-Data in 0.1023138 seconds!
+> [12.05.2022, 11:37:36@Controller] -> completed: 50, active: 0, largestPoolSize: 7
+> [12.05.2022, 11:37:45@Controller] view loaded!
+> [12.05.2022, 11:37:46@FileMaster] saving config...
+> [12.05.2022, 11:37:46@FileMaster] configuration.cfg saved sucsessfully!
+> [12.05.2022, 11:37:46@OutputWizard] thread output-wizard0@90 created!
+> [12.05.2022, 11:37:46@OutputWizard] output-wizard0@90: loaded data in 0.0010017 seconds!
+> [12.05.2022, 11:37:46@OutputWizard] thread output-wizard1@91 created!
+> [12.05.2022, 11:37:46@OutputWizard] thread output-wizard2@90 created!
+> [12.05.2022, 11:37:46@OutputWizard] thread output-wizard3@93 created!
+> [12.05.2022, 11:37:46@OutputWizard] thread output-wizard2@92 created!
+> [12.05.2022, 11:37:46@OutputWizard] output-wizard1@91: loaded data in 5.888E-4 seconds!
+> [12.05.2022, 11:37:46@OutputWizard] output-wizard2@92: loaded data in 0.0015558 seconds!
+> [12.05.2022, 11:37:46@OutputWizard] thread output-wizard3@94 created!
+> [12.05.2022, 11:37:46@OutputWizard] thread output-wizard4@95 created!
+> [12.05.2022, 11:37:46@OutputWizard] output-wizard3@93: loaded data in 0.103695 seconds!
+> [12.05.2022, 11:37:46@OutputWizard] output-wizard4@95: loaded data in 0.1120552 seconds!
+> [12.05.2022, 11:37:46@OutputWizard] output-wizard2@90: loaded data in 0.1286292 seconds!
+> [12.05.2022, 11:37:46@OutputWizard] output-wizard3@94: loaded data in 0.1298211 seconds!
+> [12.05.2022, 11:37:46@Controller] loaded Live-Data in 0.1391516 seconds!
+> [12.05.2022, 11:37:46@Controller] -> completed: 57, active: 0, largestPoolSize: 7
+> 
