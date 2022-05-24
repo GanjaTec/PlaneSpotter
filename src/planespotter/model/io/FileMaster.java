@@ -4,7 +4,7 @@ import planespotter.constants.Paths;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.MapData;
-import planespotter.display.UserSettings;
+import planespotter.constants.UserSettings;
 import planespotter.throwables.DataNotFoundException;
 
 import javax.swing.*;

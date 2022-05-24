@@ -1,4 +1,4 @@
-package planespotter.controller;
+package planespotter.util;
 
 import org.jetbrains.annotations.Nullable;
 import planespotter.model.io.FileMaster;
@@ -33,8 +33,6 @@ public class Logger extends JFrame implements ComponentListener {
     /**
      * true when logger is logging (writing to text pane)
      */
-    private boolean writing;
-
     public Logger (@Nullable Object ref) {
         super();
         this.mainref = Objects.requireNonNullElse(ref, this);
@@ -74,7 +72,6 @@ public class Logger extends JFrame implements ComponentListener {
         super.add(this.scrollPane);
         super.setVisible(true);
         this.sign(2);
-        this.writing = false;
     }
 
     /**

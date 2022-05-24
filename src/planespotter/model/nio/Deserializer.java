@@ -5,6 +5,7 @@ import planespotter.dataclasses.Frame;
 
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Deserializer {
@@ -30,8 +31,7 @@ public class Deserializer {
 		String respdata = resp.body();
 		String[] array = respdata.split(",", 3);
 
-		List<String> datalist = new ArrayList<String>(); // TODO  man könnte hier new ArrayList<String>(array) benutzen
-		for (String a : array) datalist.add(a);
+		List<String> datalist = new ArrayList<>(Arrays.asList(array));
 
 		// Remove fr24 internal version info and such
 		datalist.remove(1);
@@ -44,8 +44,7 @@ public class Deserializer {
 		data = data.replaceAll("]\n,\"........\"", "\n"); // TODO hier kann man data.replaceAll(...).replaceAll(...).replaceAll(...) machen (untereinander)
 		data = data.replaceAll("]", "");
 		array = data.split(":");
-		for (String a : array)
-			datalist.add(a);
+		datalist.addAll(Arrays.asList(array));
 
 		// remove last unneeded entrys from list
 		datalist.remove(1);
@@ -58,7 +57,7 @@ public class Deserializer {
 	
 	//Convert Json to Frame-Objects
 	public List<Frame> deserializeJSON(List<String> data) {
-		List<Frame> frames = new ArrayList<Frame>();
+		List<Frame> frames = new ArrayList<>();
 		Gson gson = new Gson();
 		for(String s : data) {
 			Frame frame = gson.fromJson(s, Frame.class);
@@ -69,7 +68,7 @@ public class Deserializer {
 	
 	//Convert String to Frame-Objects
 	public List<Frame> deserialize(HttpResponse<String> resp) {
-		List<Frame> frames = new ArrayList<Frame>();
+		List<Frame> frames = new ArrayList<>();
 		for(String row : stringMagic(resp)) {
 			String[] r = row.split(",");
 			

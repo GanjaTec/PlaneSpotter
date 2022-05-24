@@ -1,4 +1,4 @@
-package planespotter.display;
+package planespotter.constants;
 
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;

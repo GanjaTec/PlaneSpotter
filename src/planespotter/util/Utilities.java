@@ -1,4 +1,4 @@
-package planespotter.model;
+package planespotter.util;
 
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;

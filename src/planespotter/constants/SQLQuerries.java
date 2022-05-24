@@ -1,6 +1,6 @@
 package planespotter.constants;
 
-import planespotter.model.Utilities;
+import planespotter.util.Utilities;
 
 import java.util.ArrayDeque;
 

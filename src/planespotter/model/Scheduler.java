@@ -1,7 +1,7 @@
-package planespotter.controller;
+package planespotter.model;
 
 import org.jetbrains.annotations.NotNull;
-import planespotter.model.ThreadMaker;
+import planespotter.controller.Controller;
 
 import java.util.Arrays;
 import java.util.concurrent.*;

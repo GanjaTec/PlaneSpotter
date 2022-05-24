@@ -4,7 +4,7 @@ import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
 import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
 import planespotter.constants.Paths;
-import planespotter.controller.Controller;
+import planespotter.constants.UserSettings;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -372,8 +372,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     public void actionPerformed(ActionEvent e) {
         var src = e.getSource();
         if (src instanceof JButton bt) { // TODO: 22.05.2022 in Controller auslagern, dort den thread erzeugen (oder Listener Klasse)
-            var gsl = new GUISlave();
-            Controller.getScheduler().exec(() -> gsl.buttonClicked(bt), "GUI-EventThread", false, 5, true);
+            new GUIAdapter().buttonClicked(bt);
         }
     }
 
@@ -383,7 +382,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
 
     @Override
     public void keyPressed(KeyEvent e) {
-        new GUISlave().keyPressed(e);
+        new GUIAdapter().keyPressed(e);
     }
 
     @Override
@@ -403,7 +402,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
      */
     @Override
     public void componentResized(ComponentEvent e) {
-        var gsl = new GUISlave();
+        var gsl = new GUIAdapter();
         gsl.windowResized();
         gsl.update();
     }
@@ -427,11 +426,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
 
     @Override
     public void mousePressed(MouseEvent e) {
-        int button = e.getButton();
-        var ctrl = Controller.getInstance();
-        if (button == MouseEvent.BUTTON1 && ctrl.currentViewType != null) {
-            ctrl.mapClicked(e.getPoint());
-        }
+        new GUIAdapter().mapClicked(e);
     }
 
     @Override
@@ -450,7 +445,7 @@ public class GUI implements ActionListener, KeyListener, JMapViewerEventListener
     public void itemStateChanged(ItemEvent e) {
         var item = e.getItem();
         if (e.getSource() == this.searchFor_cmbBox) {
-            var gsl = new GUISlave();
+            var gsl = new GUIAdapter();
             gsl.clearSearch();
             gsl.loadSearch((String) item);
         } else if (e.getSource() == this.settings_mapTypeCmbBox) {

@@ -3,7 +3,7 @@ package planespotter.display;
 import org.jetbrains.annotations.NotNull;
 import planespotter.constants.Paths;
 import planespotter.dataclasses.*;
-import planespotter.model.Utilities;
+import planespotter.util.Utilities;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -45,7 +45,7 @@ public final class TreePlantation {
         // initialisation new JTree
         var tree = this.defaultTree(treeNode);
         tree.setVisible(true);
-        new GUISlave().recieveTree(tree);
+        new GUIAdapter().recieveTree(tree);
     }
 
     /**
@@ -56,7 +56,7 @@ public final class TreePlantation {
     public void createFlightInfo(Flight flight) {
         JTree tree = this.defaultTree(this.flightInfoTreeNode(flight));
         tree.setVisible(true);
-        new GUISlave().recieveInfoTree(tree, null);
+        new GUIAdapter().recieveInfoTree(tree, null);
     }
 
     /**
@@ -67,7 +67,7 @@ public final class TreePlantation {
     public void createDataPointInfo(Flight flight, DataPoint dp) {
         var flightInfo = this.defaultTree(this.flightInfoTreeNode(flight));
         var dpInfo = this.defaultTree(this.dataPointInfoTreeNode(dp));
-        new GUISlave().recieveInfoTree(flightInfo, dpInfo);
+        new GUIAdapter().recieveInfoTree(flightInfo, dpInfo);
         dpInfo.setVisible(true);
     }
 

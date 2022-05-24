@@ -3,9 +3,9 @@ package planespotter.model.io;
 import planespotter.constants.SQLQuerries;
 import planespotter.dataclasses.*;
 import planespotter.dataclasses.Frame;
-import planespotter.display.UserSettings;
+import planespotter.constants.UserSettings;
 import planespotter.model.nio.Deserializer;
-import planespotter.model.Utilities;
+import planespotter.util.Utilities;
 import planespotter.throwables.DataNotFoundException;
 
 import java.sql.*;
@@ -64,8 +64,7 @@ public class DBOut extends SupperDB {
 			processedCoords.add(Double.parseDouble(s));
 		}
 
-		var p = new Position(processedCoords.get(0), processedCoords.get(1));
-		return p;
+		return new Position(processedCoords.get(0), processedCoords.get(1));
 	}
 
 	/**
@@ -378,7 +377,6 @@ public class DBOut extends SupperDB {
 	 * see errorlog "hs_err_pid30296.log" in the projects root directory
 	 *
 	 * @return List<Flight> containing all Flight Objects
-	 * @throws Exception
 	 */
 	public List<Flight> getAllFlights () {  // TODO between
 		var flights = new ArrayList<Flight>();
@@ -405,7 +403,6 @@ public class DBOut extends SupperDB {
 	/**
 	 * @param callsign
 	 * @return
-	 * @throws Exception
 	 */
 	public ArrayDeque<Integer> getFlightIDsByCallsign (String callsign) {
 		callsign = Utilities.packString(callsign);
@@ -429,7 +426,6 @@ public class DBOut extends SupperDB {
 
 	/**
 	 * @return
-	 * @throws Exception
 	 */
 	public int getLastFlightID () {
 		try {
@@ -454,7 +450,6 @@ public class DBOut extends SupperDB {
 	 * @param f
 	 * @param planeid
 	 * @return
-	 * @throws Exception
 	 */
 	public int checkFlightInDB (Frame f, int planeid) {
 		try {
@@ -618,8 +613,10 @@ public class DBOut extends SupperDB {
 			}
 			rs.close();
 			if (ids.size() < 1) {
-				throw new DataNotFoundException("No plane found for tailnumber " + tailNr + "!");
+				throw new DataNotFoundException();
 			}
+		} catch (DataNotFoundException dnfe) {
+			throw new DataNotFoundException("No plane found for tailnumber " + tailNr + "!");
 		} catch (Exception e) { // FIXME: 03.05.2022 sollte querryDB eine Exception werfen? oder eine SQLException?
 			e.printStackTrace();
 		}
@@ -793,9 +790,10 @@ public class DBOut extends SupperDB {
 				dps.add(dp);
 			}
 			if (dps.isEmpty()) {
-				throw new DataNotFoundException("No flights found with airport tag " + tag + "!", true);
+				throw new DataNotFoundException();
 			}
-		} catch (DataNotFoundException ignored) {
+		} catch (DataNotFoundException dnfe) {
+			throw new DataNotFoundException("No flights found with airport tag " + tag + "!", true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
