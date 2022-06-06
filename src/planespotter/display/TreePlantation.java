@@ -13,8 +13,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import static planespotter.constants.GUIConstants.*;
-import static planespotter.constants.GUIConstants.DefaultColor.DEFAULT_BG_COLOR;
-import static planespotter.constants.GUIConstants.DefaultColor.DEFAULT_SEARCH_ACCENT_COLOR;
+import static planespotter.constants.DefaultColor.DEFAULT_BG_COLOR;
+import static planespotter.constants.DefaultColor.DEFAULT_SEARCH_ACCENT_COLOR;
 
 /**
  * @name TreePlantation
@@ -41,11 +41,11 @@ public final class TreePlantation {
      *
      * @param treeNode is the root node of the given tree
      */
-    public  void createTree(DefaultMutableTreeNode treeNode) {
+    public void createTree(DefaultMutableTreeNode treeNode, GUIAdapter guiAdapter) {
         // initialisation new JTree
         var tree = this.defaultTree(treeNode);
         tree.setVisible(true);
-        new GUIAdapter().recieveTree(tree);
+        guiAdapter.recieveTree(tree);
     }
 
     /**
@@ -53,10 +53,10 @@ public final class TreePlantation {
      *
      * @param flight is the flight to show
      */
-    public void createFlightInfo(Flight flight) {
+    public void createFlightInfo(Flight flight, GUIAdapter guiAdapter) {
         JTree tree = this.defaultTree(this.flightInfoTreeNode(flight));
         tree.setVisible(true);
-        new GUIAdapter().recieveInfoTree(tree, null);
+        guiAdapter.recieveInfoTree(tree, null);
     }
 
     /**
@@ -64,10 +64,10 @@ public final class TreePlantation {
      *
      * @param dp is the data point to show
      */
-    public void createDataPointInfo(Flight flight, DataPoint dp) {
+    public void createDataPointInfo(Flight flight, DataPoint dp, GUIAdapter guiAdapter) {
         var flightInfo = this.defaultTree(this.flightInfoTreeNode(flight));
         var dpInfo = this.defaultTree(this.dataPointInfoTreeNode(dp));
-        new GUIAdapter().recieveInfoTree(flightInfo, dpInfo);
+        guiAdapter.recieveInfoTree(flightInfo, dpInfo);
         dpInfo.setVisible(true);
     }
 

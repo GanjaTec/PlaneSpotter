@@ -30,5 +30,10 @@ public final class Paths {
      */
     public static final String LIBS_PATH = "src\\libs\\";
 
+    /**
+     * code path
+     */
+    public static final String CODE_PATH = SRC_PATH + "planespotter\\";
+
 
 }

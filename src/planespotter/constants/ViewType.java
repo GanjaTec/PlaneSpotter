@@ -9,7 +9,7 @@ public enum ViewType {
     MAP_FROMSEARCH,
     MAP_TRACKING_NP,
     MAP_TRACKING,
-    MAP_SIGNIFICANCE
+    MAP_HEATMAP, MAP_SIGNIFICANCE
     // TODO weitere
     // map ansichten
 }

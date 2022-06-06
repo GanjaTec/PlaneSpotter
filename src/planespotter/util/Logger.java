@@ -14,8 +14,8 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.util.Objects;
 
 import static planespotter.constants.GUIConstants.*;
-import static planespotter.constants.GUIConstants.DefaultColor.*;
-import static planespotter.constants.GUIConstants.Images.PAPER_PLANE_ICON;
+import static planespotter.constants.DefaultColor.*;
+import static planespotter.constants.Images.PAPER_PLANE_ICON;
 
 /**
  * @name Logger

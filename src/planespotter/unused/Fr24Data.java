@@ -2,6 +2,7 @@ package planespotter.unused;
 
 import planespotter.dataclasses.Frame;
 
+@Deprecated
 public class Fr24Data {
 	private int count;
 	private int version;

@@ -1,9 +1,6 @@
 package planespotter.model.io;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 
 /**
  * This class is used to recude redundant in the DB subclasses. It also prepares you a nice, warm supper.
@@ -34,8 +31,6 @@ public class SupperDB {
 
 		return rs;
 	}
-	
-	
 	
 	/**
 	 * @deprecated
