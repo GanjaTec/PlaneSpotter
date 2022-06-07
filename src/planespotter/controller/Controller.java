@@ -32,6 +32,8 @@ import java.util.concurrent.TimeoutException;
 import static planespotter.constants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
 import static planespotter.constants.Sound.SOUND_DEFAULT;
 import static planespotter.constants.ViewType.*;
+import static planespotter.util.Time.elapsedSeconds;
+import static planespotter.util.Time.nowMillis;
 
 /**
  * @name Controller
@@ -144,14 +146,12 @@ public class Controller {
      * opens a new GUI window as a thread
      */
     private synchronized void openWindow() {
-        //this.gui = new GUI();
-        gui.getContainer("window").setVisible(true);
         this.loading = true;
         logger.log("initialising GUI...", gui);
         scheduler.exec(gui, "Planespotter-GUI", false, Scheduler.MID_PRIO, false);
         logger.sucsessLog("GUI initialized sucsessfully!", gui);
-        logger.sucsessLog("Display-Package initialized sucsessfully!", this);
         this.done();
+        gui.getContainer("window").setVisible(true);
     }
 
     /**
@@ -160,19 +160,20 @@ public class Controller {
      */
     public synchronized void loadLiveData() {
         if (!this.loading) {
-            long startTime = System.nanoTime();
             this.loading = true;
-            int startID = 0;
-            int endID = UserSettings.getMaxLoadedData();
-            int dataPerTask = 12500; // testen!
+            final long startTime = nowMillis();
+            final int startID = 0;
+            final int endID = UserSettings.getMaxLoadedData();
+            final int dataPerTask = 12500; // testen!
             this.liveData = new Vector<>();
+
             var outputWizard = new OutputWizard(scheduler, startID, endID, dataPerTask, 0);
             scheduler.exec(outputWizard, "Output-Wizard", true, 9, true);
+
             this.waitForFinish();
             this.done();
-            double elapsed = (System.nanoTime() - startTime) / Math.pow(1000, 3);
-            logger.sucsessLog("loaded Live-Data in " + elapsed +
-                                 " seconds!", this);
+
+            logger.sucsessLog("loaded Live-Data in " + elapsedSeconds(startTime) + " seconds!", this);
             logger.infoLog("-> completed: " + scheduler.completed() + ", active: " + scheduler.active() +
                               ", largestPoolSize: " + scheduler.largestPoolSize(), this);
             if (gui.getCurrentViewType() != null) {
@@ -209,6 +210,7 @@ public class Controller {
      */
     public void done() {
         this.loading = false;
+        this.notify(); // test
         if (gui != null) {
             var gad = this.guiAdapter;
             gad.stopProgressBar();
