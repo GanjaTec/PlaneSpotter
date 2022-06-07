@@ -4,6 +4,7 @@ import com.google.gson.*;
 import org.jetbrains.annotations.TestOnly;
 import planespotter.constants.ANSIColor;
 import planespotter.constants.Paths;
+import planespotter.controller.Scheduler;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Frame;
 import planespotter.dataclasses.Position;
@@ -12,6 +13,7 @@ import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.model.io.DBOut;
 import planespotter.model.io.BitmapIO;
+import planespotter.model.nio.proto.*;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.Fr24Exception;
 import planespotter.util.Utilities;
@@ -24,6 +26,7 @@ import java.io.*;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static planespotter.util.Time.*;
@@ -37,13 +40,13 @@ public class Test {
     public static void main(String[] args) throws Exception {
         //final long startTime =  nowMillis();
 
-/*
+
         var scheduler = new Scheduler();
         var supplier = new ProtoSupplier(new ProtoDeserializer(), new ProtoKeeper(1200L)); // TODO best threshold time?
         scheduler.schedule(supplier, 0, (int) TimeUnit.MINUTES.toSeconds(3));
-*/
 
-        System.out.println("linesCode = " + linesCode(Paths.CODE_PATH));
+
+        //System.out.println("linesCode = " + linesCode(Paths.CODE_PATH));
 
 
        /* byte b1= Integer.valueOf(5).byteValue();

@@ -88,8 +88,7 @@ public class OutputWizard extends DBOut implements Runnable {
         log.log("thread Output-Wizard@" + this.threadID + " created!", this);
         try {
             this.loadLiveTrackingBtwn(this.from, this.to);
-        } catch (DataNotFoundException e) {
-            this.controller.handleException(e);
+        } catch (DataNotFoundException ignored) {
         }
         log.sucsessLog("OW@" + this.threadID + ": loaded data in " + elapsedSeconds(startMillis) + " seconds!", this);
     }

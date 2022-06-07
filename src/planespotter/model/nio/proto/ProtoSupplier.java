@@ -63,23 +63,7 @@ public class ProtoSupplier extends DBManager implements Runnable {
             exe.execute(this.keeper);
             exe.shutdown();
             running = false;
-        } /*else {
-            try {
-                int sec = 0;
-                while (running) {
-                    synchronized (lock) {
-                        lock.wait(1000);
-                        sec++;
-                    }
-                }
-                lock.notify(); // woanders
-                if (sec < 60) {
-                    this.run();
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }*/
+        }
     }
 
     public void writeToDB(Deque<Frame> frames, DBOut dbOut) {
@@ -137,9 +121,9 @@ public class ProtoSupplier extends DBManager implements Runnable {
                     }
                 }
                 try {
+                    planeTableSize[0]++;
+                    flightTableSize[0]++;
                     if (!containsPlane) {
-                        planeTableSize[0]++;
-                        flightTableSize[0]++;
                         // adding plane insert queries
                         synchronized (this) {
                             planeQuery.setString(1, f.getIcaoAdr());
