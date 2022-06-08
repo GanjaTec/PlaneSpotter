@@ -91,6 +91,7 @@ public class Search {
         return new Vector<>(out.getLastTrackingsByFlightIDs(fids)); // working???
     }
 
+    // TODO: 25.05.2022 Airport suche mit Start und Ziel Airport
     public Vector<DataPoint> verifyAirport (String[] inputs) throws DataNotFoundException {
         var id = inputs[0];
         var tag = inputs[1];

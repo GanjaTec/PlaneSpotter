@@ -9,12 +9,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * @name WatchDog
  * @author jml04
- * @version 1.0
+ * @version 1.1
  *
  * class watch dog is used to watch thread activities
  * @indev
  * TODO evtl. umfunktionieren-> soll statistiken über das programm anzeigen, nicht mehr threads beobachten (nicht mehr benötigt)
  */
+@Deprecated(since="1.1")
 public class WatchDog implements Runnable {
 
     private final ConcurrentLinkedQueue<Thread> watchQueue;

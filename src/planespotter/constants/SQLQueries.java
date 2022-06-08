@@ -3,6 +3,7 @@ package planespotter.constants;
 import planespotter.util.Utilities;
 
 import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * 
@@ -16,7 +17,7 @@ import java.util.ArrayDeque;
  * @author Lukas
  * 
  */
-public final class SQLQuerries {
+public final class SQLQueries {
 	
 	//insert Querrys
 	public static final String planequerry = "INSERT INTO planes(icaonr, tailnr, registration, type, airline) VALUES(?,?,?,?,?)";
@@ -64,22 +65,21 @@ public final class SQLQuerries {
 	 * @param inThis
 	 * @return
 	 */ // TODO zu einer Methode machen mit Wildcards
-	public static String IN_INT (final ArrayDeque<Integer> inThis) {
+	public static String IN_INT (final Deque<Integer> inThis) {
 		var out = new StringBuilder("IN (");
 		for (int i : inThis) {
 			out.append(i).append(",");
 		}
 		return out.substring(0, out.length()-2) + ")";
 	}
-	public static String IN_STR (final ArrayDeque<String> inThis) {
+	public static String IN_STR (final Deque<String> inThis) {
 		var out = new StringBuilder("IN (");
 		int counter = 0;
 		int last = inThis.size() - 1;
-		boolean eq = (counter == last);
 		for (var s : inThis) {
 			var packedStr = Utilities.packString(s);
 			out.append(packedStr);
-			if (!eq) {
+			if (counter != last) {
 				out.append(",");
 			}
 			counter++;

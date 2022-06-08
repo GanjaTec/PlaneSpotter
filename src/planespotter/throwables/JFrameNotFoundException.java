@@ -1,14 +1,15 @@
 package planespotter.throwables;
 
+// TODO: 31.05.2022 wird die benötigt???
 public class JFrameNotFoundException extends Exception {
 
-    private static final String message = "FrameNotFoundException: Frame coldn't be found!";
+    private static final String MESSAGE = "FrameNotFoundException: Frame coldn't be found!";
 
     public JFrameNotFoundException () {
-        super(message);
+        super(MESSAGE);
     }
 
     public String getMessage() {
-        return message;
+        return MESSAGE;
     }
 }

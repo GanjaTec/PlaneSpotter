@@ -1,6 +1,6 @@
 package planespotter.model.io;
 
-import planespotter.constants.SQLQuerries;
+import planespotter.constants.SQLQueries;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,7 +16,7 @@ public class DBIn extends SupperDB {
 		Connection conn = SupperDB.getDBConnection();
 		//TODO Airline ID anfrage
 		// insert into planes
-		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.planequerry, Statement.RETURN_GENERATED_KEYS);
+		PreparedStatement pstmt = conn.prepareStatement(SQLQueries.planequerry, Statement.RETURN_GENERATED_KEYS);
 		pstmt.setString(1, f.getIcaoAdr());
 		pstmt.setString(2, f.getTailnr());
 		pstmt.setString(3, f.getRegistration());
@@ -37,7 +37,7 @@ public class DBIn extends SupperDB {
 
 	public int insertFlight(Frame f, int planeID) throws Exception {
 		Connection conn = getDBConnection();
-		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.flightquerry, Statement.RETURN_GENERATED_KEYS);
+		PreparedStatement pstmt = conn.prepareStatement(SQLQueries.flightquerry, Statement.RETURN_GENERATED_KEYS);
 
 		pstmt.setInt(1, planeID);
 		pstmt.setString(2, f.getSrcAirport());
@@ -61,7 +61,7 @@ public class DBIn extends SupperDB {
 		Connection conn = SupperDB.getDBConnection();
 
 		// insert into tracking
-		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.trackingquerry);
+		PreparedStatement pstmt = conn.prepareStatement(SQLQueries.trackingquerry);
 		pstmt.setInt(1, id);
 		pstmt.setDouble(2, f.getLat());
 		pstmt.setDouble(3, f.getLon());
@@ -77,7 +77,7 @@ public class DBIn extends SupperDB {
 	public void updateFlightEnd(int id, long timestamp) throws Exception {
 		Connection conn = SupperDB.getDBConnection();
 
-		PreparedStatement pstmt = conn.prepareStatement(SQLQuerries.updateFlightEnd);
+		PreparedStatement pstmt = conn.prepareStatement(SQLQueries.updateFlightEnd);
 		pstmt.setInt(2, id);
 		pstmt.setLong(1, timestamp);
 		pstmt.executeUpdate();

@@ -1,7 +1,6 @@
-package planespotter.model;
+package planespotter.controller;
 
 import org.jetbrains.annotations.NotNull;
-import planespotter.controller.Controller;
 
 import java.util.Arrays;
 import java.util.concurrent.*;
@@ -22,6 +21,8 @@ public class Scheduler {
     public static final int MID_PRIO = 5;
     public static final int HIGH_PRIO = 9;
 
+    // thread maker (thread factory)
+    private static final ThreadMaker threadMaker;
     // ThreadPoolExecutor for (parallel) execution of different threads
     private static final ThreadPoolExecutor exe;
     // ScheduledExecutorService for scheduled execution at a fixed rate
@@ -29,10 +30,11 @@ public class Scheduler {
 
     // static constructor
     static {
+        threadMaker = new ThreadMaker();
         exe = new ThreadPoolExecutor(CORE_POOLSIZE, MAX_THREADPOOL_SIZE,
                                      KEEP_ALIVE_TIME, TimeUnit.SECONDS,
-                                     new SynchronousQueue<>(), new ThreadMaker());
-        scheduled_exe = Executors.newScheduledThreadPool(0);
+                                     new SynchronousQueue<>(), threadMaker);
+        scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker);
     }
 
     // hash code
@@ -54,9 +56,9 @@ public class Scheduler {
      */
     public void schedule(@NotNull Runnable task, int initDelay, int period) {
         if (initDelay < 0) {
-            throw new IllegalArgumentException("init delay must be 0 or higher!");
+            throw new IllegalArgumentException("init delay out of range! must be 0 or higher!");
         } if (period < 1) {
-            throw new IllegalArgumentException("period must be 1 or higher!");
+            throw new IllegalArgumentException("period out of range! must be 1 or higher!");
         }
         scheduled_exe.scheduleAtFixedRate(task, initDelay, period, TimeUnit.SECONDS);
     }
@@ -92,9 +94,9 @@ public class Scheduler {
         if (withTimeout) {
             var currentThread = new AtomicReference<Thread>();
             CompletableFuture.runAsync(target, exe)
-                    .orTimeout(10, TimeUnit.SECONDS)
+                    .orTimeout(15, TimeUnit.SECONDS)
                     .exceptionally(e -> {
-                        e.printStackTrace();
+                        Controller.getInstance().handleException(e);
                         this.interruptThread(currentThread.get());
                         // FIXME: 22.05.2022 interrupt läuft noch nicht
                         return null;
@@ -142,6 +144,13 @@ public class Scheduler {
     }
 
     /**
+     * @return the thread maker which contains a method to add thread properties
+     */
+    public ThreadMaker getThreadFactory() {
+        return threadMaker;
+    }
+
+    /**
      * @return active thread count from exe-ThreadPoolExecutor,
      *         not from the scheduled executor
      */
@@ -173,4 +182,71 @@ public class Scheduler {
         return this.hashCode;
     }
 
+    /**
+     * @name ThreadMaker
+     * @author jml04
+     * @version 1.0
+     *
+     * ThreadMaker is a custom ThreadFactory which is able to set
+     * thread properties like name, daemon or priority
+     */
+    private static class ThreadMaker implements ThreadFactory {
+
+        // thread name
+        private volatile String name;
+        // daemon thread?
+        private volatile boolean daemon = false;
+        // thread priority
+        private volatile int priority = -1;
+
+        /**
+         * creates a new thread with custom properties
+         * and a custom UncaughtExceptionHandler
+         *
+         * @param r is the thread target (the executed action)
+         * @return new Thread with custom properties
+         */
+        @Override
+        public Thread newThread(@NotNull Runnable r) {
+            var thread = new Thread(r);
+            this.setThreadProperties(thread);
+            thread.setUncaughtExceptionHandler((t, e) -> { // t is the thread, e is the exception
+                e.printStackTrace();
+                Controller.getLogger().errorLog("Exception " + e.getMessage() +
+                                " occured in thread " + t.getName(),
+                                Controller.getInstance());
+            });
+            return thread;
+        }
+
+        /**
+         * adds thread properties parameters to the class fields
+         *
+         * @param name is the thread name
+         * @param daemon should the thread be a daemon thread?
+         * @param prio is the thread priority
+         */
+        public synchronized void addThreadProperties(@NotNull String name, boolean daemon, int prio) {
+            if (prio < 1 || prio > 10) {
+                throw new IllegalArgumentException("Thread priority out of range! (1-10)");
+            }
+            this.name = name;
+            this.daemon = daemon;
+            this.priority = prio;
+        }
+
+        /**
+         * sets the thread properties on a certain thread, if they are valid
+         *
+         * @param target is the target thread on which properties are set
+         */
+        private synchronized void setThreadProperties(@NotNull Thread target) {
+            if (this.name != null) {
+                target.setName(this.name);
+            } if (this.priority != -1) {
+                target.setPriority(this.priority);
+            }
+            target.setDaemon(this.daemon);
+        }
+    }
 }

@@ -12,6 +12,7 @@ import java.util.HashMap;
     DefaultObject is the default given object when an object of "dataclasses" should be null or
     when an Exception is thrown
  */
+@Deprecated(since="exceptions", forRemoval = false)
 public final class DefaultObject {
 
     /**

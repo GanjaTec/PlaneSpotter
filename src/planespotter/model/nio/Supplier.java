@@ -89,7 +89,6 @@ public class Supplier implements Runnable{
 	 *  ASSUMING that there are no references to the same object stored anywhere."
 	 *
 	 *  -> es müssen irgendwo noch Referenzen sein
-	 *  TODO finalize einbauen
 	 ***********************************************************************************/
 
 	public synchronized void writeToDB(List<Frame> frames) {

@@ -1,4 +1,4 @@
-package planespotter;
+package planespotter.a_test;
 
 import java.util.concurrent.TimeUnit;
 

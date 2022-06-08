@@ -1,6 +1,6 @@
 package planespotter.model.io;
 
-import planespotter.constants.SQLQuerries;
+import planespotter.constants.SQLQueries;
 import planespotter.dataclasses.*;
 import planespotter.dataclasses.Frame;
 import planespotter.constants.UserSettings;
@@ -39,11 +39,12 @@ public class DBOut extends SupperDB {
 	 * @return ResultSet containing the querried Data
 	 */
 
-	public ResultSet querryDB(String querry) throws Exception {
+	public ResultSet querryDB(String querry) throws Exception { // TODO wir sollten die Exception hier catchen, weil sonst catchen wir woanders versehentlich auch andere exceptions
 		ResultSet rs;
 		var conn = SupperDB.getDBConnection();
 		var stmt = conn.createStatement();
 		rs = stmt.executeQuery(querry);
+		// TODO: könnte man hier ein stmt.closeOnCompletion() einfügen?
 
 		return rs;
 	}
@@ -80,7 +81,7 @@ public class DBOut extends SupperDB {
 		Airline a = null;
 		try {
 			tag = Utilities.stripString(tag);
-			var rs = querryDB(SQLQuerries.getAirlineByTag + tag); // ist leer TODO fixen
+			var rs = querryDB(SQLQueries.getAirlineByTag + tag); // ist leer TODO fixen
 			if (rs.next()) {
 				a = new Airline(rs.getInt("ID"), rs.getString("iatatag"), rs.getString("name"));
 			} else {
@@ -101,7 +102,7 @@ public class DBOut extends SupperDB {
 			var ds = new Deserializer();
 			tag = ds.stripString(tag);
 			tag = "'" + tag + "'";
-			var rs = querryDB(SQLQuerries.getAirlineIDByTag + tag);
+			var rs = querryDB(SQLQueries.getAirlineIDByTag + tag);
 			if(rs.next()) {
 				id = rs.getInt(1);
 			rs.close();
@@ -127,8 +128,8 @@ public class DBOut extends SupperDB {
 	public List<Airport> getAirports (String srcAirport, String destAirport) { // TODO man könnte return array machen (länge ist immer 2)
 		var aps = new ArrayList<Airport>();
 		try {
-			var rsSrc = querryDB(SQLQuerries.getAirportByTag + Utilities.packString(srcAirport));
-			var rsDst = querryDB(SQLQuerries.getAirportByTag + Utilities.packString(destAirport));
+			var rsSrc = querryDB(SQLQueries.getAirportByTag + Utilities.packString(srcAirport));
+			var rsDst = querryDB(SQLQueries.getAirportByTag + Utilities.packString(destAirport));
 
 			if (rsSrc.next()) {
 				var srcAp = new Airport(rsSrc.getInt("ID"), rsSrc.getString("iatatag"), rsSrc.getString("name"), convertCoords(rsSrc.getString("coords")));
@@ -170,7 +171,7 @@ public class DBOut extends SupperDB {
 		icao = Utilities.packString(icao);
 		var ids = new ArrayDeque<Integer>();
 		try {
-			var rs = querryDB(SQLQuerries.getPlaneIDsByICAO + icao);
+			var rs = querryDB(SQLQueries.getPlaneIDsByICAO + icao);
 			while (rs.next()) {
 				int id = rs.getInt("ID");
 				ids.add(id);
@@ -194,7 +195,7 @@ public class DBOut extends SupperDB {
 	public Plane getPlaneByID (int id) throws DataNotFoundException {
 		Plane p = null;
 		try {
-			var rs = querryDB(SQLQuerries.getPlaneByID + id);
+			var rs = querryDB(SQLQueries.getPlaneByID + id);
 			if (rs.next()) {
 				var a = new Airline(-1, "BIA", "BUFU Int. Airlines");
 				//Airline a = getAirlineByTag(rs.getString("airline"));
@@ -300,9 +301,11 @@ public class DBOut extends SupperDB {
 	}
 
 
-	public long getLastTimestempByFlightID (int id) {
+	public long getLastTimestempByFlightID(int id) {
 		long timestamp = -1;
-		var getLastTracking = "SELECT timestamp FROM tracking WHERE flightid == "+ id +" ORDER BY ID DESC LIMIT 1";
+		// TODO eventuell ist das neue schneller
+		var getLastTracking = "SELECT max(timestamp) FROM tracking WHERE flightid = " + id;
+		//var getLastTracking = "SELECT timestamp FROM tracking WHERE flightid == "+ id +" ORDER BY ID DESC LIMIT 1";
 		try {
 			var rs = this.querryDB(getLastTracking);
 
@@ -381,7 +384,7 @@ public class DBOut extends SupperDB {
 	public List<Flight> getAllFlights () {  // TODO between
 		var flights = new ArrayList<Flight>();
 		try {
-			var rs = super.querryDB(SQLQuerries.getFlights);
+			var rs = super.querryDB(SQLQueries.getFlights);
 			int counter = 0;
 			while (rs.next() && counter <= this.maxLoadedFlights) { // counter: max flights -> to limit the incoming data (prevents a crash)
 				var dps = this.getCompleteTrackingByFlight(rs.getInt("ID"));
@@ -408,7 +411,7 @@ public class DBOut extends SupperDB {
 		callsign = Utilities.packString(callsign);
 		var ids = new ArrayDeque<Integer>();
 		try {
-			var rs = querryDB(SQLQuerries.getFlightIDsByCallsign + callsign);
+			var rs = querryDB(SQLQueries.getFlightIDsByCallsign + callsign);
 			while (rs.next()) {
 				ids.add(rs.getInt("ID"));
 			}
@@ -427,9 +430,9 @@ public class DBOut extends SupperDB {
 	/**
 	 * @return
 	 */
-	public int getLastFlightID () {
+	public int getLastFlightID() {
 		try {
-			var rs = this.querryDB(SQLQuerries.getLastFlightID);
+			var rs = this.querryDB(SQLQueries.getLastFlightID);
 			int flightid;
 			if (rs.next()) {
 				flightid = rs.getInt("ID");
@@ -451,7 +454,7 @@ public class DBOut extends SupperDB {
 	 * @param planeid
 	 * @return
 	 */
-	public int checkFlightInDB (Frame f, int planeid) {
+	public int checkFlightInDB(Frame f, int planeid) {
 		try {
 			var rs = this.querryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
 			int flightID;
@@ -470,10 +473,10 @@ public class DBOut extends SupperDB {
 		return -9999; // weil es -1 schon gibt -> zum besseren debuggen
 	}
 
-	public List<Integer> checkEnded () {
+	public List<Integer> checkEnded() {
 		var flightIDs = new ArrayList<Integer>();
 		try {
-			var rs = this.querryDB(SQLQuerries.checkEndOfFlight);
+			var rs = this.querryDB(SQLQueries.checkEndOfFlight);
 
 			while (rs.next()) {
 				flightIDs.add(rs.getInt(1));
@@ -487,11 +490,11 @@ public class DBOut extends SupperDB {
 		return flightIDs;
 	}
 
-	public Flight getFlightByID (int id)
+	public Flight getFlightByID(int id)
 			throws DataNotFoundException {
 		Flight f = null;
 		try {
-			ResultSet rs = super.querryDB(SQLQuerries.getFlightByID + id);
+			ResultSet rs = super.querryDB(SQLQueries.getFlightByID + id);
 
 			if (rs.next()) {
 				var airports = this.getAirports(rs.getString("src"), rs.getString("dest")).toArray();
@@ -553,7 +556,7 @@ public class DBOut extends SupperDB {
 		var flights = new ArrayDeque<Integer>();
 		try {
 			String querry = "SELECT ID FROM flights " +
-							"WHERE plane " + SQLQuerries.IN_INT(ids);
+							"WHERE plane " + SQLQueries.IN_INT(ids);
 			var rs = super.querryDB(querry);
 			while (rs.next())  {
 				int id = rs.getInt("ID");
@@ -580,7 +583,7 @@ public class DBOut extends SupperDB {
 		try {
 			var querry = 	"SELECT f.ID FROM flights f " +
 							"JOIN planes p ON ((p.ID = f.plane) AND (f.endTime IS NULL))" +
-							"WHERE p.type " + SQLQuerries.IN_STR(planetypes);
+							"WHERE (p.type " + SQLQueries.IN_STR(planetypes) + ")";
 			var rs = super.querryDB(querry);
 			while (rs.next()) {
 				var id = rs.getInt("ID");
@@ -602,11 +605,13 @@ public class DBOut extends SupperDB {
 	 * @return plane with tailNr
 	 * @throws DataNotFoundException if there was no plane found
 	 */
-	public ArrayDeque<Integer> getPlaneIDsByTailNr (String tailNr) throws DataNotFoundException {
+	public ArrayDeque<Integer> getPlaneIDsByTailNr(String tailNr)
+			throws DataNotFoundException {
+
 		tailNr = Utilities.packString(tailNr);
 		var ids = new ArrayDeque<Integer>();
 		try {
-			var rs = super.querryDB(SQLQuerries.getPlaneIDByTailNr + tailNr);
+			var rs = super.querryDB(SQLQueries.getPlaneIDByTailNr + tailNr);
 			while (rs.next()) {
 				int id = rs.getInt("ID");
 				ids.add(id);
@@ -626,10 +631,10 @@ public class DBOut extends SupperDB {
 	/**
 	 * @return list of all planetypes
 	 */
-	public ArrayDeque<String> getAllPlanetypesLike (final String planetype) {
+	public ArrayDeque<String> getAllPlanetypesLike(final String planetype) {
 		var allTypes = new ArrayDeque<String>();
 		try {
-			var querry = "SELECT type FROM planes WHERE type LIKE '_" + planetype + "%' GROUP BY type";
+			var querry = "SELECT type FROM planes WHERE type LIKE '" + planetype + "%' GROUP BY type";
 			var rs = super.querryDB(querry);
 			while (rs.next()) {
 				allTypes.add(rs.getString("type"));
@@ -645,10 +650,10 @@ public class DBOut extends SupperDB {
 	/**
 	 * @return list of all callsigns
 	 */
-	public ArrayDeque<String> getAllCallsignsLike (String callsign) {
+	public ArrayDeque<String> getAllCallsignsLike(final String callsign) {
 		var allCallsigns = new ArrayDeque<String>();
 		try {
-			var rs = super.querryDB("SELECT DISTINCT callsign FROM flights WHERE callsign LIKE '_" + callsign + "%'");
+			var rs = super.querryDB("SELECT DISTINCT callsign FROM flights WHERE callsign LIKE '" + callsign + "%'");
 			while (rs.next()) {
 				allCallsigns.add(rs.getString("callsign"));
 			}
@@ -663,7 +668,7 @@ public class DBOut extends SupperDB {
 	/**
 	 * @return list of all callsigns
 	 */ // FIXME: 05.05.2022 HIER IST EIN FEHLER !!
-	public ArrayDeque<Integer> getAirportIDsLike (String airport) {
+	public ArrayDeque<Integer> getAirportIDsLike(String airport) {
 		var aids = new ArrayDeque<Integer>();
 		try {
 			var rs = super.querryDB(	"SELECT DISTINCT ID FROM airports " +
@@ -685,12 +690,12 @@ public class DBOut extends SupperDB {
 	 * @param flightIDs are the flight ids
 	 * @return last tracking point for each flight id
 	 */ // TODO braucht noch ewig!! -> fixen
-	public final ArrayDeque<DataPoint> getLastTrackingsByFlightIDs (final ArrayDeque<Integer> flightIDs) {
+	public final Deque<DataPoint> getLastTrackingsByFlightIDs (final Deque<Integer> flightIDs) {
 		var dps = new ArrayDeque<DataPoint>();
 		try {
 			var querry = 	"SELECT max(t.ID) AS ID, t.flightid, t.latitude, t.longitude, t.altitude, t.groundspeed, t.heading, t.squawk, t.timestamp " +
 							"FROM tracking t " +
-							"WHERE flightid " + SQLQuerries.IN_INT(flightIDs) + " GROUP BY flightid";
+							"WHERE flightid " + SQLQueries.IN_INT(flightIDs) + " GROUP BY flightid";
 			var rs = super.querryDB(querry);
 			while (rs.next()) {
 				var p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
@@ -707,16 +712,18 @@ public class DBOut extends SupperDB {
 		return dps;
 	}
 
-	public final ArrayDeque<DataPoint> getLastTrackingsBetweenFlightIDs(final int from, final int to) {
+	public final Deque<DataPoint> getLastTrackingsBetweenFlightIDs(final int from, final int to)
+			throws DataNotFoundException {
+
 		var dps = new ArrayDeque<DataPoint>();
 		try {
 			//var querry = "SELECT f.*, t1.* FROM flights f JOIN tracking t1 ON (f.ID = t1.flightid) LEFT OUTER JOIN tracking t2 ON (f.ID = t2.flightid AND (t1.ID < t2.ID)) WHERE t2.ID IS NULL AND f.ID BETWEEN " + from + " AND " + to; //group by flightid
-			var querry = 	"SELECT f.ID, f.endTime, max(t.ID), t.ID, flightid, latitude, " +
-									"longitude, squawk, groundspeed, heading, altitude, timestamp " +
-							"FROM flights f, tracking t " +
-							"WHERE (f.endTime IS NULL) " +
-							"AND (f.ID = t.flightid) " +
-							"AND flightid BETWEEN " + from + " and " + to + " GROUP BY flightid "; // evtl JOIN ?? läuft aber gut, schneller als die obere querry
+			var querry = "SELECT f.ID, f.endTime, max(t.ID), t.ID, flightid, latitude, " +
+					"longitude, squawk, groundspeed, heading, altitude, timestamp " +
+					"FROM flights f, tracking t " +
+					"WHERE (f.endTime IS NULL) " +
+					"AND (f.ID = t.flightid) " +
+					"AND flightid BETWEEN " + from + " and " + to + " GROUP BY flightid "; // evtl JOIN ?? läuft aber gut, schneller als die obere querry
 			/*var querry = 	"SELECT t.*, max(t.ID) FROM tracking t " +
 							"JOIN flights f ON ((f.ID = t.flightid) " +
 							"AND (f.endTime IS NULL)) " +
@@ -729,15 +736,17 @@ public class DBOut extends SupperDB {
 				dps.add(dp);
 			}
 			if (dps.isEmpty()) {
-				throw new DataNotFoundException("No live flights found between " + from + "-" + to + " !", true);
+				throw new DataNotFoundException();
 			}
+		} catch (DataNotFoundException dnf) {
+			throw new DataNotFoundException("No live flights found between " + from + "-" + to + " !", true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return dps;
 	}
 
-	public final ArrayDeque<Integer> getLiveFlightIDs (final int from, final int to) {
+	public final Deque<Integer> getLiveFlightIDs(final int from, final int to) {
 		var ids = new ArrayDeque<Integer>();
 		try {
 			var rs = super.querryDB(	"SELECT ID FROM flights WHERE endTime IS NOT NULL AND ID BETWEEN "
@@ -761,7 +770,9 @@ public class DBOut extends SupperDB {
 	 * @param to
 	 * @return
 	 */
-	public final Vector<DataPoint> getLiveTrackingBetween (final int from, final int to) {
+	public final Vector<DataPoint> getLiveTrackingBetween (final int from, final int to)
+			throws DataNotFoundException {
+
 		var liveTracking = this.getLastTrackingsBetweenFlightIDs(from, to);
 		return new Vector<>(liveTracking);
 	}
@@ -772,14 +783,15 @@ public class DBOut extends SupperDB {
 	 * @return
 	 * @throws DataNotFoundException
 	 */
-	public final ArrayDeque<DataPoint> getTrackingsWithAirportTag (String tag)
+	public final Deque<DataPoint> getTrackingsWithAirportTag(String tag)
 			throws DataNotFoundException { // TODO IN
+
 		var dps = new ArrayDeque<DataPoint>();
 		try {
 			var querry = "SELECT t.* FROM tracking t " + // TODO!!! threaden!, viele daten!
 					"JOIN flights f ON ((f.ID = t.flightid) " +
-					"AND ((f.src LIKE '_" + tag + "_') " +
-					"OR (f.dest LIKE '_" + tag + "_')))";
+					"AND ((f.src LIKE '" + tag + "') " +
+					"OR (f.dest LIKE '" + tag + "')))"; // eventuell vor/hinterher _ einfügen
 			var rs = super.querryDB(querry);
 			DataPoint dp;
 			while (rs.next()) {
@@ -804,11 +816,11 @@ public class DBOut extends SupperDB {
 	 * @return array deque off all airports which have flights
 	 * @throws DataNotFoundException if there was no airport found
 	 */
-	public ArrayDeque<Airport> getAllAirports() throws DataNotFoundException {
+	public final Deque<Airport> getAllAirports() throws DataNotFoundException {
 		var aps = new ArrayDeque<Airport>();
 		try {
-			var querry = 	SQLQuerries.SELECT(false, "f.src", "f.dest") +
-							SQLQuerries.FROM("flights f");
+			var querry = 	SQLQueries.SELECT(false, "f.src", "f.dest") +
+							SQLQueries.FROM("flights f");
 			var rs = super.querryDB(querry);
 			int counter = 0;
 			while (rs.next() && counter < 5000) { // TODO remove counter for all airports // could take a little time
@@ -829,6 +841,128 @@ public class DBOut extends SupperDB {
 			e.printStackTrace();
 		}
 		return aps;
+	}
+
+	public final Vector<Position> getAllTrackingPositions() {
+		var positions = new Vector<Position>();
+		try {
+			//var querry = "SELECT f.*, t1.* FROM flights f JOIN tracking t1 ON (f.ID = t1.flightid) LEFT OUTER JOIN tracking t2 ON (f.ID = t2.flightid AND (t1.ID < t2.ID)) WHERE t2.ID IS NULL AND f.ID BETWEEN " + from + " AND " + to; //group by flightid
+			var querry = "SELECT latitude, longitude " +
+						 "FROM tracking ";
+						 //"GROUP BY flightid"; // evtl JOIN ?? läuft aber gut, schneller als die obere querry
+			var rs = super.querryDB(querry);
+			while (rs.next()) {
+				var pos = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
+				positions.add(pos);
+			}
+			if (positions.isEmpty()) {
+				throw new DataNotFoundException("No trackings found!");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return positions;
+	}
+
+	protected HashMap<Position, Integer> speedMap(final int from, final int to)
+			throws DataNotFoundException {
+
+		var speedMap = new HashMap<Position, Integer>();
+		var querry = "SELECT t.latitude, t.longitude, t.groundspeed " +
+					 "FROM tracking t " +
+					 "WHERE (t.ID BETWEEN " + from + " AND " + to + ")";
+		try {
+			var rs = super.querryDB(querry);
+			Position pos;
+			int speed;
+			while (rs.next()) {
+				pos = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
+				speed = rs.getInt("groundspeed");
+				speedMap.put(pos, speed);
+			}
+			rs.close();
+		} catch (Exception e) { // TODO es sollte keine Exception bis hier geworfen werden
+			e.printStackTrace();
+		}
+		if (speedMap.isEmpty()) {
+			throw new DataNotFoundException("No Speed Data found in the DB!");
+		}
+		return speedMap;
+	}
+
+	public List<Integer> getAllFlightIDs() throws DataNotFoundException {
+		var ids = new ArrayList<Integer>();
+		try {
+			var query = "SELECT ID FROM flights";
+			var rs = super.querryDB(query);
+			while (rs.next()) {
+				ids.add(rs.getInt("ID"));
+			}
+			rs.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if (ids.isEmpty()) {
+			throw new DataNotFoundException("Couldn't find any plane! This is unusual!");
+		}
+		return ids;
+	}
+
+	public Map<String, int[]> icaoIDMap() {
+		var map = new HashMap<String, int[]>();
+		try {
+			var query = "SELECT p.icaonr AS icao, p.ID AS pid, f.ID AS fid FROM planes p " +
+						"JOIN flights f ON (f.plane = p.ID) AND (f.endTime IS NULL)";
+			var rs = super.querryDB(query);
+			while (rs.next()) {
+				int[] values = {
+					rs.getInt("pid"),
+					rs.getInt("fid")
+				};
+				map.put(rs.getString("icao"), values);
+			}
+			rs.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return map;
+	}
+
+	public Map<Integer, Long> getLiveFlightIDsWithTimestamp() {
+		var map = new HashMap<Integer, Long>();
+		try {
+			var query = "SELECT t.flightid AS fid, max(t.timestamp) AS ts FROM tracking t " +
+						"JOIN flights f ON (f.ID = t.flightid) AND (f.endTime IS NULL)" +
+						"GROUP BY t.flightid";
+			var rs = super.querryDB(query);
+			while (rs.next()) {
+				map.put(rs.getInt("fid"), rs.getLong("ts"));
+			}
+			rs.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return map;
+	}
+
+	public int getTableSize(final String table) throws DataNotFoundException {
+		int size = -1;
+		try {
+			var query = "SELECT count(ID) AS size FROM " + table;
+			var rs = super.querryDB(query);
+			if (rs.next()) {
+				size = rs.getInt("size");
+			}
+			rs.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if (size == -1) {
+			throw new DataNotFoundException("Table not found!");
+		}
+		return size;
 	}
 
 	// TODO public ArrayDeque<Integer> getPlaneIDsWhereTypeLike (String input) // sollte schneller sein

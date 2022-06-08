@@ -1,4 +1,4 @@
-package planespotter.model.nio;
+package test;
 
 import org.junit.jupiter.api.Test;
 

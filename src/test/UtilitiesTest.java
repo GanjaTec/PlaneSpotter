@@ -1,7 +1,7 @@
 package test;
 
 import org.junit.jupiter.api.Test;
-import planespotter.constants.GUIConstants;
+import planespotter.constants.Sound;
 import planespotter.util.Utilities;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,7 +10,7 @@ public class UtilitiesTest {
 
     @Test
     public void soundTest() {
-        boolean soundPlayed = Utilities.playSound(GUIConstants.Sound.SOUND_DEFAULT.get());
+        boolean soundPlayed = Utilities.playSound(Sound.SOUND_DEFAULT.get());
         assertTrue(soundPlayed, "Utilities-Sound tested sucsessfully!");
     }
 

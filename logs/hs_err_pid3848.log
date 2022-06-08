@@ -16,10 +16,10 @@
 
 ---------------  S U M M A R Y ------------
 
-Command Line: -Xms512m -Xmx4096m -Dfile.encoding=UTF-8 --module-path=C:\Users\Lukas\git\PlaneSpotter\src\libs\gson-2.8.6.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\JMapViewer.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\mysql-connector-java-8.0.28.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\sqlite-jdbc-3.34.0.jar -XX:+ShowCodeDetailsInExceptionMessages planespotter.TestMain
+Command Line: -Xms512m -Xmx4096m -Dfile.encoding=UTF-8 --module-path=C:\Users\Lukas\git\PlaneSpotter\src\libs\gson-2.8.6.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\JMapViewer.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\mysql-connector-java-8.0.28.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\sqlite-jdbc-3.34.0.jar -XX:+ShowCodeDetailsInExceptionMessages planespotter.a_test.TestMain
 
 Host: AMD Ryzen 7 3800X 8-Core Processor             , 16 cores, 31G,  Windows 10 , 64 bit Build 19041 (10.0.19041.1202)
-Time: Thu Apr 14 15:30:46 2022 Mitteleuropäische Sommerzeit elapsed time: 2418.819374 seconds (0d 0h 40m 18s)
+Time: Thu Apr 14 15:30:46 2022 Mitteleuropï¿½ische Sommerzeit elapsed time: 2418.819374 seconds (0d 0h 40m 18s)
 
 ---------------  T H R E A D  ---------------
 
