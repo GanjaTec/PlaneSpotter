@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.openstreetmap.gui.jmapviewer.Coordinate;
+import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import planespotter.constants.UserSettings;
@@ -26,6 +27,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Vector;
 import java.util.concurrent.TimeoutException;
 
@@ -43,27 +45,26 @@ import static planespotter.util.Time.nowMillis;
  * @version 1.1
  *
  * main controller - responsible for connection between model and view
- * has static controller, scheduler, watchDog and logger instances
+ * has static controller, scheduler, gui, action handler and logger instance
  */
 public class Controller {
     // ONLY Controller instance
     private static final Controller mainController;
-    /**
-     * executor services / thread pools
-     */
+    // scheduler, contains executor services / thread pools
     private static final Scheduler scheduler;
     // only GUI instance
     private static final GUI gui;
-    // logger for whole program
-    private static Logger logger;
     // gui action handler (contains listeners)
     private static final ActionHandler actionHandler;
+    // logger for whole program
+    private static Logger logger;
     // gui adapter
     private GUIAdapter guiAdapter;
     // boolean loading is true when something is loading (volatile?)
     public volatile boolean loading;
     // boolean loggerOn is true when the logger is visible
-    public boolean loggerOn;
+    // boolean isLive shows if the live map is shown at the moment
+    public boolean loggerOn, isLive;
     // lists for live flights and loaded flights
     public volatile Vector<DataPoint> liveData, loadedData;
 
@@ -75,12 +76,13 @@ public class Controller {
     }
 
     // hash code
-    private final int hashCode = System.identityHashCode(mainController);
+    private final int hashCode;
 
     /**
      * constructor - private -> only ONE instance ( getter: Controller.getInstance() )
      */
     private Controller() {
+        this.hashCode = System.identityHashCode(mainController);
     }
 
     /**
@@ -97,7 +99,6 @@ public class Controller {
         logger = new Logger(this);
         logger.log("initializing Controller...", this);
         this.guiAdapter = new GUIAdapter(gui);
-        Thread.currentThread().setName("Planespotter-Main");
         logger.sucsessLog("Controller initialized sucsessfully!", this);
     }
 
@@ -107,15 +108,22 @@ public class Controller {
      */
     private void startExecutors() {
         logger.log("initializing Executors...", this);
+
+        scheduler.exec(this::loadLiveData, "Live-Data PreLoader");
+        scheduler.exec(DataLoader::load, "Data Loader", true, 2, false);
+
         scheduler.schedule(new FileMaster()::saveConfig, 60, 300);
         scheduler.schedule(() -> {
             System.gc();
             logger.log("Calling Garbage Collector...", this);
         }, 10, 10);
         scheduler.schedule(() -> {
-            Thread.currentThread().setName("Output-Wizard-LiveLoader");
-            this.loadLiveData();
-        }, 0, 20); // -> live data from db to view
+            if (this.isLive) {
+                Thread.currentThread().setName("Output-Wizard-LiveLoader");
+                this.loadLiveData();
+            }
+        }, 0, 2); // -> live data from db to view
+
         // FIXME: 04.06.2022 MACHT NOCH NICHTS
         //var supplier = new ProtoSupplier(new ProtoDeserializer(), new ProtoKeeper(1200L)); // TODO best threshold time?
         //scheduler.schedule(supplier, 0, 80);
@@ -155,32 +163,48 @@ public class Controller {
     }
 
     /**
-     * reloads the data ( static -> able to executed by scheduled_exe )
-     * used for live map
+     * loads the live data from Fr24 directly into the View
+     * @indev
      */
     public synchronized void loadLiveData() {
-        if (!this.loading) {
-            this.loading = true;
-            final long startTime = nowMillis();
-            final int startID = 0;
-            final int endID = UserSettings.getMaxLoadedData();
-            final int dataPerTask = 12500; // testen!
-            this.liveData = new Vector<>();
+        this.loading = true;
 
-            var outputWizard = new OutputWizard(scheduler, startID, endID, dataPerTask, 0);
-            scheduler.exec(outputWizard, "Output-Wizard", true, 9, true);
+        this.liveData = LiveMap.directLiveData(scheduler);
+        var map = gui.getMap();
+        var markers = new ArrayList<MapMarker>();
+        this.liveData.stream()
+                .filter(Objects::nonNull)
+                .map(dp -> new MapMarkerDot(new Coordinate(dp.pos().lat(), dp.pos().lon())))
+                .forEach(m -> {
+                    m.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
+                    markers.add(m);
+                });
+        map.removeAllMapMarkers();
+        map.setMapMarkerList(markers);
+        this.done();
+    }
 
-            this.waitForFinish();
-            this.done();
+    @Deprecated(since = "1.2/liveMap")
+    private void liveDataFromDB() {
+        final long startTime = nowMillis();
+        final int startID = 0;
+        final int endID = UserSettings.getMaxLoadedData();
+        final int dataPerTask = 12500; // testen!
+        this.liveData = new Vector<>();
 
-            logger.sucsessLog("loaded Live-Data in " + elapsedSeconds(startTime) + " seconds!", this);
-            logger.infoLog("-> completed: " + scheduler.completed() + ", active: " + scheduler.active() +
-                              ", largestPoolSize: " + scheduler.largestPoolSize(), this);
-            if (gui.getCurrentViewType() != null) {
-                switch (gui.getCurrentViewType()) {
-                    case MAP_ALL, MAP_TRACKING, MAP_TRACKING_NP, MAP_FROMSEARCH -> {
-                        // TODO reload map -> neue methode
-                    }
+        var outputWizard = new OutputWizard(scheduler, startID, endID, dataPerTask, 0);
+        scheduler.exec(outputWizard, "Output-Wizard", true, 9, true);
+
+        this.waitForFinish();
+        this.done();
+
+        logger.sucsessLog("loaded Live-Data in " + elapsedSeconds(startTime) + " seconds!", this);
+        logger.infoLog("-> completed: " + scheduler.completed() + ", active: " + scheduler.active() +
+                          ", largestPoolSize: " + scheduler.largestPoolSize(), this);
+        if (gui.getCurrentViewType() != null) {
+            switch (gui.getCurrentViewType()) {
+                case MAP_ALL, MAP_TRACKING, MAP_TRACKING_NP, MAP_FROMSEARCH -> {
+                    // TODO reload map -> neue methode
                 }
             }
         }
@@ -210,7 +234,7 @@ public class Controller {
      */
     public void done() {
         this.loading = false;
-        this.notify(); // test
+        //this.notify(); // test
         if (gui != null) {
             var gad = this.guiAdapter;
             gad.stopProgressBar();
@@ -490,10 +514,12 @@ public class Controller {
             this.guiAdapter.warning(Warning.NO_DATA_FOUND, thr.getMessage());
         } else if (thr instanceof SQLException) {
             this.guiAdapter.warning(Warning.SQL_ERROR);
+            thr.printStackTrace();
         } else if (thr instanceof TimeoutException) {
             this.guiAdapter.warning(Warning.TIMEOUT);
         } else {
             this.guiAdapter.warning(Warning.UNKNOWN_ERROR, thr.getMessage());
+            thr.printStackTrace();
         }
     }
 
@@ -533,7 +559,7 @@ public class Controller {
 
     // private methods
 
-    private void  showRasterHeatMap(String heatText, BlackBeardsNavigator bbn, DBOut dbOut) {
+    private void  showRasterHeatMap(String heatText, MapManager bbn, DBOut dbOut) {
         var positions = dbOut.getAllTrackingPositions();
         var viewer = gui.getMap();
         var img = new RasterHeatMap(1f) // TODO replace durch addHeatMap
@@ -543,7 +569,7 @@ public class Controller {
                 .recieveMap(viewer, heatText);
     }
 
-    private void showCircleHeatMap(String headText, BlackBeardsNavigator bbn, DBOut dbOut) {
+    private void showCircleHeatMap(String headText, MapManager bbn, DBOut dbOut) {
         //var liveTrackingBetween = dbOut.getLiveTrackingBetween(10000, 25000);
         //var positions = Utilities.parsePositionVector(liveTrackingBetween);
         //var positionHeatMap = new Statistics().positionHeatMap(positions);
@@ -556,7 +582,7 @@ public class Controller {
         bbn.recieveMap(viewer, headText);
     }
 
-    private void showSignificanceMap(String headText, BlackBeardsNavigator bbn, DBOut dbOut) {
+    private void showSignificanceMap(String headText, MapManager bbn, DBOut dbOut) {
         try {
             var aps = dbOut.getAllAirports();
             var signifMap = new Statistics().airportSignificance(aps);
@@ -568,7 +594,7 @@ public class Controller {
         }
     }
 
-    private void showTrackingMapNoPoints(String headText, BlackBeardsNavigator bbn, @Nullable String[] data) {
+    private void showTrackingMapNoPoints(String headText, MapManager bbn, @Nullable String[] data) {
         try {
             loadedData = new Vector<>();
             var out = new DBOut();
@@ -595,7 +621,7 @@ public class Controller {
         }
     }
 
-    private void showTrackingMap(String headText, BlackBeardsNavigator bbn, DBOut dbOut, @Nullable String[] data) {
+    private void showTrackingMap(String headText, MapManager bbn, DBOut dbOut, @Nullable String[] data) {
         try {
             int flightID = -1;
             if (data.length == 1) {
@@ -623,13 +649,15 @@ public class Controller {
         }
     }
 
-    private void showSearchMap(String headText, BlackBeardsNavigator bbn) {
+    private void showSearchMap(String headText, MapManager bbn) {
         var data = Utilities.parsePositionVector(this.loadedData);
         var viewer = bbn.createLiveMap(data, gui.getMap());
         bbn.recieveMap(viewer, headText);
     }
 
-    private void showLiveMap(String headText, BlackBeardsNavigator bbn) {
+    private void showLiveMap(String headText, MapManager mapManager) {
+        //LiveMap.newLiveMap(scheduler, gui.getMap(), mapManager);
+        this.isLive = true;
         if (this.liveData == null || this.liveData.isEmpty()) {
             this.guiAdapter.warning(Warning.LIVE_DATA_NOT_FOUND);
             return;
@@ -639,8 +667,8 @@ public class Controller {
             throw new InvalidDataException("loadedData is empty!");
         }
         var data = Utilities.parsePositionVector(this.loadedData);
-        var viewer = bbn.createLiveMap(data, gui.getMap());
-        bbn.recieveMap(viewer, headText);
+        var viewer = mapManager.createLiveMap(data, gui.getMap());
+        mapManager.recieveMap(viewer, headText);
     }
 
     private void showFlightList(DBOut dbOut) {

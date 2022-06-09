@@ -102,12 +102,25 @@ public class Scheduler {
                         return null;
                     });
         } else {
-            var thread = new Thread(target);
-            thread.setName(tName);
-            thread.setPriority(prio);
-            thread.setDaemon(daemon);
-            thread.start();
+            this.runThread(target, tName, daemon, prio);
         }
+    }
+
+    /**
+     *
+     *
+     * @param target
+     * @param tName
+     * @param daemon
+     * @param prio
+     */
+    public Thread runThread(@NotNull Runnable target, String tName, boolean daemon, int prio) {
+        var thread = new Thread(target);
+        thread.setName(tName);
+        thread.setPriority(prio);
+        thread.setDaemon(daemon);
+        thread.start();
+        return thread;
     }
 
     /**
@@ -129,7 +142,7 @@ public class Scheduler {
      *
      * @param target is the thread to interrupt
      */
-    public void interruptThread(@NotNull Thread target) {
+    public synchronized void interruptThread(@NotNull Thread target) {
         var log = Controller.getLogger();
         if (target.isAlive()) {
             target.interrupt();

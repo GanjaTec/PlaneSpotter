@@ -2,8 +2,8 @@ package planespotter.util;
 
 import org.jetbrains.annotations.NotNull;
 import planespotter.constants.Paths;
-import planespotter.dataclasses.DataPoint;
-import planespotter.dataclasses.Position;
+import planespotter.dataclasses.*;
+import planespotter.dataclasses.Frame;
 import planespotter.throwables.OutOfRangeException;
 
 import javax.swing.*;
@@ -13,9 +13,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -77,11 +75,27 @@ public abstract class Utilities {
     }
 
     /**
+     * strips a string to the right format
+     * Example: from ' "Hello" ' to ' Hello '
+     *
      * @param in is the string to strip
      * @return input-string, but without the "s
      */
     public static String stripString(@NotNull String in) {
         return in.replaceAll("\"", "");
+    }
+
+    /**
+     * checks a string for illegal characters
+     *
+     * @param check is the (sql) string to check
+     * @return string, without illegal characters
+     */
+    public static String checkString(@NotNull String check) {
+        if (check.contains(";")) {
+            check = check.substring(0, check.indexOf(';'));
+        }
+        return check.replaceAll("%", "");
     }
 
     /**
@@ -99,7 +113,7 @@ public abstract class Utilities {
      * @param dps
      * @return
      */
-    public static Vector<Position> parsePositionVector (Vector<DataPoint> dps) {
+    public static Vector<Position> parsePositionVector(final Vector<DataPoint> dps) {
         if (dps == null || dps.isEmpty()) {
             throw new IllegalArgumentException("input cannot be null / empty! \n" +
                                                "the data vector is probably empty!");
@@ -107,6 +121,16 @@ public abstract class Utilities {
          return dps.stream()
                  .map(DataPoint::pos)
                  .collect(Collectors.toCollection(Vector::new));
+    }
+
+    /**
+     *
+     * @param array
+     * @param <T>
+     * @return
+     */
+    public static <T> Deque<T> parseDeque(T[] array) {
+        return new ArrayDeque<>(Arrays.asList(array));
     }
 
     /**
@@ -179,14 +203,18 @@ public abstract class Utilities {
         return new ImageIcon(scaled);
     }
 
-    public static int linesCode(String rootPath) {
+    public static int linesCode(final String rootPath) {
         var linesCode = new AtomicInteger(0);
         var files = allJavaFiles(rootPath);
         while (!files.isEmpty()) {
             try {
                 var fr = new FileReader(files.poll());
                 var br = new BufferedReader(fr);
-                br.lines().forEach(l -> linesCode.getAndIncrement());
+                br.lines().forEach(l -> {
+                    if (!l.isBlank()) {
+                        linesCode.getAndIncrement();
+                    }
+                });
                 br.close();
                 fr.close();
             } catch (IOException e) {
@@ -209,6 +237,17 @@ public abstract class Utilities {
             e.printStackTrace();
         }
         return files;
+    }
+
+    // prototype //
+    public static DataPoint parseDataPoint(Frame frame) {
+        return new DataPoint(-1, -1,
+                new Position(frame.getLat(), frame.getLon()),
+                frame.getTimestamp(),
+                frame.getSquawk(),
+                frame.getGroundspeed(),
+                frame.getHeading(),
+                frame.getAltitude());
     }
 
 }

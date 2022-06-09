@@ -40,10 +40,11 @@ public class Test {
     public static void main(String[] args) throws Exception {
         //final long startTime =  nowMillis();
 
-
+/*
         var scheduler = new Scheduler();
         var supplier = new ProtoSupplier(new ProtoDeserializer(), new ProtoKeeper(1200L)); // TODO best threshold time?
         scheduler.schedule(supplier, 0, (int) TimeUnit.MINUTES.toSeconds(3));
+*/
 
 
         //System.out.println("linesCode = " + linesCode(Paths.CODE_PATH));

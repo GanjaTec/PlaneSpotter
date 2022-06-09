@@ -69,7 +69,7 @@ public record ActionHandler()
         } else if (button.getName().equals("loadMap")) {
             // TODO search type abfragen, bzw. ComboBox SelectedItem
             var inputs = guiAdapter.searchInput();
-            ctrl.search(inputs, 1);
+            ctrl.search(inputs, 1); // TODO button könnte 2 action listener haben
         } else if (button.getName().equals("open")) {
             Controller.getInstance().loadFile();
         } else if (button.getName().equals("save")) {
@@ -119,6 +119,8 @@ public record ActionHandler()
                     case VK_END -> viewer.moveMap(10, 0);
                     case VK_PAGE_DOWN -> viewer.moveMap(0, -10);
                 }
+            } else if (source == gui.getContainer("searchPanel")) {
+                this.buttonClicked((JButton) gui.getContainer("mapButton"), Controller.getInstance(), gui, guiAdapter);
             }
         } catch (NumberFormatException ex) {
             var settingsMaxLoadTxtField = (JTextField) gui.getContainer("settingsMaxLoadTxtField");
@@ -229,10 +231,12 @@ public record ActionHandler()
     @Override
     public void keyPressed(KeyEvent e) {
         var src = e.getSource();
-        int key = e.getKeyCode();
         var gui = Controller.getGUI();
-        var guiAdapter = new GUIAdapter(gui);
-        this.keyEntered(src, key, gui, guiAdapter);
+        if (src == gui.getContainer("searchPanel")) {
+            int key = e.getKeyCode();
+            var guiAdapter = new GUIAdapter(gui);
+            this.keyEntered(src, key, gui, guiAdapter);
+        }
     }
 
     /**

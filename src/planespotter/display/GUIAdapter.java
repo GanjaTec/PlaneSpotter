@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import planespotter.constants.SearchType;
 import planespotter.constants.Warning;
 import planespotter.controller.Controller;
+import planespotter.model.LiveMap;
 
 import javax.swing.*;
 import java.util.List;
@@ -223,6 +224,8 @@ public final class GUIAdapter {
         viewHeadTxtLabel.setText(DEFAULT_HEAD_TEXT); // TODO EXTRA methode
         gui.setCurrentViewType(null);
         gui.getMap().setHeatMap(null);
+        //LiveMap.close();
+        Controller.getInstance().isLive = false;
     }
 
     public void setViewHeadBtVisible(boolean b) {
