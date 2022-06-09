@@ -90,7 +90,7 @@ public class Scheduler {
         if (prio < 1 || prio > 10) {
             throw new IllegalArgumentException("priority must be between 1 and 10!");
         }
-        ((ThreadMaker) exe.getThreadFactory()).addThreadProperties(tName, daemon, prio);
+        this.getThreadFactory().addThreadProperties(tName, daemon, prio);
         if (withTimeout) {
             var currentThread = new AtomicReference<Thread>();
             CompletableFuture.runAsync(target, exe)
@@ -102,7 +102,7 @@ public class Scheduler {
                         return null;
                     });
         } else {
-            this.runThread(target, tName, daemon, prio);
+            CompletableFuture.runAsync(target, exe);
         }
     }
 
@@ -154,6 +154,22 @@ public class Scheduler {
         } else {
             log.infoLog("Thread " + target.getName() + " is already dead!", this);
         }
+    }
+
+    /**
+     * shuts down the Scheduler
+     *
+     * @return true if the shutdown was successfully
+     */
+    public synchronized boolean shutdown() {
+        try {
+            exe.shutdown();
+            scheduled_exe.shutdown();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     /**
@@ -261,5 +277,6 @@ public class Scheduler {
             }
             target.setDaemon(this.daemon);
         }
+
     }
 }

@@ -6,15 +6,16 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 /**
- * 
+ * @name SQLQueries
+ * @author Bennet
+ * @author Lukas
+ * @author jml04
  *
  *
  * This Class is used to hold All SQL Querries that we need to use
  * Please insert your Querry depending on what they do, Mainly Insertion and Selection
  * 
  * TODO Sort Querrys by Table
- * 
- * @author Lukas
  * 
  */
 public final class SQLQueries {

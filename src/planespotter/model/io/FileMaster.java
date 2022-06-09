@@ -27,7 +27,7 @@ public class FileMaster {
     /**
      * saves the config as a .cfg file
      */
-    public Runnable saveConfig () {
+    public static void saveConfig() {
         var fileWizard = new FileMaster();
         // saving / loading at the monment ?
         try {
@@ -45,7 +45,6 @@ public class FileMaster {
         } finally {
             Controller.getLogger().sucsessLog("configuration.cfg saved sucsessfully!", fileWizard);
         }
-        return this::saveConfig;
     }
 
     /**

@@ -2,9 +2,9 @@ package planespotter.model;
 
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.DataPoint;
+import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Frame;
 import planespotter.model.nio.proto.ProtoDeserializer;
-import planespotter.throwables.NoAccessException;
 import planespotter.util.Utilities;
 
 import java.util.Queue;
@@ -21,12 +21,13 @@ public class LiveMap {
         insertLater = new ConcurrentLinkedQueue<>();
     }
 
-    public static Vector<DataPoint> directLiveData(Scheduler scheduler) {
+    public static Vector<Flight> directLiveData(Scheduler scheduler) {
         var deserializer = new ProtoDeserializer();
         var frames = deserializer.runSuppliers(deserializer.getAllAreas(), scheduler);
         insertLater.addAll(frames);
+        var id = new AtomicInteger(0);
         return frames.stream()
-                .map(Utilities::parseDataPoint)
+                .map(f -> Utilities.frameToFlight(f, id.getAndIncrement()))
                 .collect(Collectors.toCollection(Vector::new));
     }
 
@@ -36,16 +37,20 @@ public class LiveMap {
      *         if true, another Method gets ac
      */
     protected static boolean canInsert() {
-        return (insertLater.size() > 999);
+        return insertLater.size() > 200;
     }
 
-    protected static Queue<Frame> pollFromQueue() {
+    protected static boolean isReady() {
+        return insertLater.size() > 0;
+    }
+
+    protected static Queue<Frame> pollFromQueue(final int count) {
         var counter = new AtomicInteger();
         var frames = new ConcurrentLinkedQueue<Frame>();
 
         insertLater.parallelStream()
                 .forEach(frame -> {
-                    if (counter.get() <= 1000) {
+                    if (counter.get() < count) {
                         frames.add(insertLater.poll());
                         counter.getAndIncrement();
                     }

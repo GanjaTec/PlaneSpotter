@@ -13,7 +13,8 @@ public record Flight(int id,
                      String callsign,
                      Plane plane,
                      String flightNr,
-                     HashMap<Integer, DataPoint> dataPoints) {
+                     HashMap<Integer, DataPoint> dataPoints)
+        implements Data {
 }
 
 /*public class Flight implements Data {

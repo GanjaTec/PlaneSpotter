@@ -92,7 +92,9 @@ public final class MapManager {
                 viewer.setMapMarkerList(markers);
             }
             viewer.setMapPolygonList(polys);
-            new TreePlantation().createFlightInfo(flight, guiAdapter);
+            if (dataPoints.size() == 1) {
+                new TreePlantation().createFlightInfo(flight, guiAdapter);
+            }
         } else throw new DataNotFoundException("Couldn't create Flight Route for this flightID!");
         return viewer;
     }

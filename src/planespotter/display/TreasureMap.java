@@ -34,7 +34,9 @@ public class TreasureMap extends JMapViewer {
      */
     @Override
     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+        synchronized (this) {
+            super.paintComponent(g);
+        }
         /*if (this.heatMap != null) {
             var g2d = (Graphics2D) g;
             g2d.drawImage(this.heatMap, 0, 0, super.getWidth(), super.getHeight(), null);

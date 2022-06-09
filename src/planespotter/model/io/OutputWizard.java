@@ -99,14 +99,14 @@ public class OutputWizard extends DBOut implements Runnable {
      * @param fromID is the src-id,
      * @param toID is the (exclusive) end-id
      */
+    @Deprecated(since = "1.2/liveMap", forRemoval = true)
     public void loadLiveTrackingBtwn(int fromID, int toID)
             throws DataNotFoundException {
 
         int toLoad = toID - fromID;
         if (toLoad <= this.dataPerTask) {
             var dps = super.getLiveTrackingBetween(fromID, toID);
-            controller.liveData.addAll(dps);
-            //dataQueue.add(dps);
+            //controller.liveData.addAll(dps); // must be flights
         } else {
             int newEndID = to-(toLoad/2);
             var out0 = new OutputWizard(this.scheduler, fromID, newEndID, this.dataPerTask, this.dataType);
