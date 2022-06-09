@@ -48,7 +48,7 @@ public class Supplier implements Runnable{
 		try {
 			Deserializer ds = new Deserializer();
 			System.out.println("Starting Thread \"" + this.ThreadName + "\"");
-			writeToDB(ds.deserialize(fr24get()));
+			writeToDB(ds.deserialize(fr24get()), dbo, dbi);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -91,7 +91,7 @@ public class Supplier implements Runnable{
 	 *  -> es müssen irgendwo noch Referenzen sein
 	 ***********************************************************************************/
 
-	public synchronized void writeToDB(List<Frame> frames) {
+	public static synchronized void writeToDB(List<Frame> frames, DBOut dbo, DBIn dbi) {
 		try {
 			long ts1 = System.nanoTime();
 			for (Frame f : frames) {
@@ -125,7 +125,7 @@ public class Supplier implements Runnable{
 			long ts2 = System.nanoTime();
 			long tdiff = ts2 - ts1;
 			double tdiffSec = (double) tdiff / 1_000_000_000;
-			System.out.println(this.ThreadName + "      | filled DB in " + tdiffSec + " seconds");
+			System.out.println("filled DB in " + tdiffSec + " seconds");
 			
 			System.gc();
 		

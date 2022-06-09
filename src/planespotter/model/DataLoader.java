@@ -2,6 +2,8 @@ package planespotter.model;
 
 import planespotter.controller.Controller;
 import planespotter.controller.Scheduler;
+import planespotter.model.io.DBIn;
+import planespotter.model.io.DBOut;
 import planespotter.model.nio.Supplier;
 
 import static planespotter.model.LiveMap.*;
@@ -31,7 +33,7 @@ public class DataLoader {
             if (canInsert()) {
                 // insert live data with normal writeToDB
                 var frames = pollFromQueue(200).stream().toList();
-                new Supplier(0, null).writeToDB(frames);
+                Supplier.writeToDB(frames, new DBOut(), new DBIn());
                 inserted += 200;
             }
             log.log("Inserted " + inserted + " frames!", instance);
@@ -46,10 +48,9 @@ public class DataLoader {
             log.log("Trying to insert last live data...", instance);
             //var gui = Controller.getGUI();
             //gui.getContainer("window").setVisible(false);
-            final var supplier = new Supplier(0, null);
             while (isReady()) {
                 var frames = pollFromQueue(500).stream().toList();
-                scheduler.exec(() -> supplier.writeToDB(frames),
+                scheduler.exec(() -> Supplier.writeToDB(frames, new DBOut(), new DBIn()),
                                 "Inserter", false, 9, false);
                 inserted += 500;
             }
