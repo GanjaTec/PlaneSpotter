@@ -1,7 +1,12 @@
 package planespotter.constants;
 
 /**
+ * @name SearchType
+ * @author jml04
+ * @version 1.0
  *
+ * enum SearchType contains all search types, with string-names
+ * has a static method byItem() to get an item by string
  */
 public enum SearchType {
     AIRLINE("Airline"),
@@ -11,7 +16,7 @@ public enum SearchType {
     AREA("Area");
     // item string
     private final String item;
-    // constructor
+    // private enum constructor
     SearchType(String item) {
         this.item = item;
     }
@@ -19,10 +24,10 @@ public enum SearchType {
     /**
      * returns a specific SearchType by string, if there is one
      *
-     * @param item
-     * @return
+     * @param item is the input item string
+     * @return enum constant by item if one exists, else null
      */
-    public static SearchType byItem(String item) {
+    public static SearchType byItemString(String item) {
         return switch (item) {
             case "Flight" -> FLIGHT;
             case "Plane" -> PLANE;

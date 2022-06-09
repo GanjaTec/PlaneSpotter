@@ -4,6 +4,7 @@ import com.google.gson.*;
 import org.jetbrains.annotations.TestOnly;
 import planespotter.constants.ANSIColor;
 import planespotter.constants.Paths;
+import planespotter.controller.Scheduler;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Frame;
 import planespotter.dataclasses.Position;
@@ -12,6 +13,7 @@ import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.model.io.DBOut;
 import planespotter.model.io.BitmapIO;
+import planespotter.model.nio.proto.*;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.Fr24Exception;
 import planespotter.util.Utilities;
@@ -24,6 +26,7 @@ import java.io.*;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static planespotter.util.Time.*;
@@ -37,13 +40,17 @@ public class Test {
     public static void main(String[] args) throws Exception {
         //final long startTime =  nowMillis();
 
+        var test = new Test();
+        test.printSystemEnvironment();
+
 /*
         var scheduler = new Scheduler();
         var supplier = new ProtoSupplier(new ProtoDeserializer(), new ProtoKeeper(1200L)); // TODO best threshold time?
         scheduler.schedule(supplier, 0, (int) TimeUnit.MINUTES.toSeconds(3));
 */
 
-        System.out.println("linesCode = " + linesCode(Paths.CODE_PATH));
+
+        //System.out.println("linesCode = " + linesCode(Paths.CODE_PATH));
 
 
        /* byte b1= Integer.valueOf(5).byteValue();
@@ -231,99 +238,6 @@ public class Test {
                 .split(",");
         Arrays.stream(split)
                 .forEach(System.out::println);
-    }
-
-
-
-    /**
-     * deserializes incoming http response
-     * from json to frame ArrayDeque
-     *
-     * @param response is the HttpResponse to deserialize
-     * @return ArrayDeque of frames
-     *
-     * @indev
-     */
-    public Deque<Frame> deserialize(HttpResponse<String> response) {
-        var jsa = this.parseJsonArray(response);
-        var frames = new ArrayDeque<Frame>();
-        var it = jsa.iterator();
-        var gson = new Gson();
-        Frame frame;
-        for (JsonElement j; it.hasNext();) {
-            j = it.next();
-            frame = gson.fromJson(j, Frame.class);
-            frames.add(frame);
-        }
-        return frames;
-    }
-
-    private JsonArray parseJsonArray(HttpResponse<String> resp) {
-        var jsa = new JsonArray();
-        resp.body().lines()
-                .filter(x -> x.length() != 1)
-                .map(this::unwrap)
-                .map(this::parseJsonObject)
-                .forEach(jsa::add);
-        return jsa;
-    }
-
-    //TODO check o.getAsJsonArray für ganzes objekt
-    private JsonObject parseJsonObject(String line) {
-        if (line.isBlank()) {
-            throw new IllegalArgumentException("line may not be blank / null!");
-        }
-        var cols = line.split(",");
-        var o = new JsonObject();
-        try {
-            o.addProperty("icaoaddr", cols[0]);
-            o.addProperty("lat", this.parseOrDefault(cols[1], double.class));
-            o.addProperty("lon", this.parseOrDefault(cols[2], double.class));
-            o.addProperty("heading", this.parseOrDefault(cols[3], int.class));
-            o.addProperty("altitude", this.parseOrDefault(cols[4], int.class));
-            o.addProperty("groundspeed", this.parseOrDefault(cols[5], int.class));
-            o.addProperty("squawk", 40401);
-            o.addProperty("tailnumber", cols[7]);
-            o.addProperty("planetype", cols[8]);
-            o.addProperty("registration", cols[9]);
-            o.addProperty("timestamp", this.parseOrDefault(cols[10], int.class));
-            o.addProperty("srcairport", cols[11]);
-            o.addProperty("destairport", cols[12]);
-            o.addProperty("flightnumber", cols[13]);
-            o.addProperty("unknown1", cols[14]);
-            o.addProperty("unknown2", cols[15]);
-            o.addProperty("callsign", cols[16]);
-            o.addProperty("unknown3", cols[17]);
-            o.addProperty("airline", cols[18]);
-        } catch (NumberFormatException | ArrayIndexOutOfBoundsException ignored) {
-        }
-        return o;
-    }
-
-    private Number parseOrDefault(String toParse, Class<? extends Number> target) {
-        boolean notBlank = !toParse.isBlank();
-        if (target == Integer.class || target == int.class) {
-            return notBlank ? Integer.parseInt(toParse) : -1;
-        } else if (target == Double.class || target == double.class) {
-            return notBlank ? Double.parseDouble(toParse) : -1.0;
-        }
-        return null;
-    }
-
-    private String unwrap(String line) {
-        String out;
-        try {
-            if (line.startsWith("{")) {
-                out = line.substring(43);
-            } else {
-                out = line.substring(12);
-            }
-        } catch (StringIndexOutOfBoundsException e) {
-            throw new Fr24Exception("Invalid Fr24-Data! caused by:\n" + e.getMessage());
-        }
-        return out.replaceAll("\\[", "")
-                .replaceAll("]", "")
-                .replaceAll("\"", "");
     }
 
 }

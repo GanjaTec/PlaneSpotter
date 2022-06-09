@@ -1,15 +1,20 @@
 package planespotter.model.nio.proto;
 
 import planespotter.constants.SQLQueries;
+import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Frame;
 import planespotter.model.io.DBOut;
+import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.InvalidArrayException;
 import planespotter.unused.DefaultObject;
+import planespotter.util.Utilities;
 
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static planespotter.util.Time.*;
 
@@ -48,7 +53,7 @@ public class ProtoSupplier extends DBManager implements Runnable {
             // collecting all areas
             var areas = this.deserializer.getAllAreas();
             // grabbing data from Fr24 and deserializing to Frames
-            var frames = this.deserializer.runSuppliers(areas, exe);
+            var frames = this.deserializer.runSuppliers(areas, new Scheduler());
             // writing the frames to DB
             this.writeToDB(frames, new DBOut());
             try {
@@ -63,23 +68,7 @@ public class ProtoSupplier extends DBManager implements Runnable {
             exe.execute(this.keeper);
             exe.shutdown();
             running = false;
-        } /*else {
-            try {
-                int sec = 0;
-                while (running) {
-                    synchronized (lock) {
-                        lock.wait(1000);
-                        sec++;
-                    }
-                }
-                lock.notify(); // woanders
-                if (sec < 60) {
-                    this.run();
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }*/
+        }
     }
 
     public void writeToDB(Deque<Frame> frames, DBOut dbOut) {
@@ -90,6 +79,10 @@ public class ProtoSupplier extends DBManager implements Runnable {
             writing = true;
             try {
                 var conn = connect();
+                /*var newPlanes = this.insertPlanes(conn, frames, dbOut);
+                var newFlights = this.insertFlights(conn, frames, dbOut, newPlanes);
+                this.insertTracking(conn, frames, dbOut, newFlights);
+                conn.close();*/
                 var stmts = this.createWriteStatements(conn, frames, dbOut);
                 assert stmts != null;
                 executeSQL(conn, stmts);
@@ -111,8 +104,131 @@ public class ProtoSupplier extends DBManager implements Runnable {
         }
         System.out.println();
         System.out.println("DB filled in " + elapsedSeconds(writeStartMillis) + " seconds!");
-
     }
+
+    public HashMap<String, Integer> insertPlanes(Connection conn, Deque<Frame> frames, DBOut dbo) {
+        var map = new HashMap<String, Integer>();
+        try {
+            final var planeQuery = conn.prepareStatement(SQLQueries.planequerry);
+            final var icaoIDMap = dbo.icaoIDMap(); //TODO andere Methode / ohne FlightIDs
+
+            frames.forEach(f -> {
+                boolean containsPlane;
+                assert icaoIDMap != null;
+                if (!icaoIDMap.isEmpty()) {
+                    containsPlane = icaoIDMap.containsKey(f.getIcaoAdr());
+                    if (!containsPlane) {
+                        try {
+                            planeQuery.setString(1, f.getIcaoAdr());
+                            planeQuery.setString(2, f.getTailnr());
+                            planeQuery.setString(3, f.getRegistration());
+                            planeQuery.setString(4, f.getPlanetype());
+                            planeQuery.setString(5, DefaultObject.DEFAULT_AIRLINE.iataTag());
+                            planeQuery.addBatch();
+                            planeQuery.clearParameters();
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+            var newIDs = Arrays.stream(executeQuery(planeQuery))
+                    .boxed()
+                    .collect(Collectors.toCollection(ArrayDeque::new));
+
+            var ids = dbo.getAllPlaneIDs();
+
+            var icaosByPlaneIDs = dbo.getICAOsByPlaneIDs(ids);
+
+            while (!newIDs.isEmpty()) {
+                map.put(icaosByPlaneIDs.poll(), newIDs.poll());
+            }
+            return map;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        throw new NullPointerException();
+    }
+
+    public HashMap<String, Integer> insertFlights(Connection conn, Deque<Frame> frames, DBOut dbo, HashMap<String, Integer> icaosPlaneIDs) {
+        try {
+            var flightQuery = conn.prepareStatement(SQLQueries.flightquerry);
+            var fnrsAndPids = dbo.getFlightNRsWithFlightIDs();
+            //var icaoIdMap = dbo.icaoIDMap();
+
+            frames.forEach(f -> {
+                boolean containsFlight;
+                assert fnrsAndPids != null;
+                if (!fnrsAndPids.isEmpty()) {
+                    containsFlight = fnrsAndPids.containsKey(f.getFlightnumber());
+                    if (!containsFlight) {
+                        try {
+                            int planeID = icaosPlaneIDs.get(f.getIcaoAdr()); // changed
+                            flightQuery.setInt(1, planeID);
+                            flightQuery.setString(2, f.getSrcAirport());
+                            flightQuery.setString(3, f.getDestAirport());
+                            flightQuery.setString(4, f.getFlightnumber());
+                            flightQuery.setString(5, f.getCallsign());
+                            flightQuery.setLong(6, f.getTimestamp());
+                            flightQuery.addBatch();
+                            flightQuery.clearParameters();
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+            var newIDs = Arrays.stream(executeQuery(flightQuery))
+                    .boxed()
+                    .collect(Collectors.toCollection(ArrayDeque::new));
+
+            var allFlightIDs = dbo.getAllFlightIDs();
+            allFlightIDs.addAll(newIDs);
+
+            return dbo.getFlightNRsWithFlightIDs(allFlightIDs);
+
+        } catch (SQLException | DataNotFoundException e) {
+            e.printStackTrace();
+        }
+        throw new NullPointerException();
+    }
+
+    public int[] insertTracking(Connection conn, Deque<Frame> frames, DBOut dbo, HashMap<String, Integer> fnrsWithIDs) {
+        try {
+            var trackingQuery = conn.prepareStatement(SQLQueries.trackingquerry);
+            var icaoIdMap = dbo.icaoIDMap();
+
+            frames.forEach(f -> {
+                int flightID = -1;
+                var fnr = f.getFlightnumber();
+                if (fnrsWithIDs.containsKey(fnr)) {
+                    flightID = fnrsWithIDs.get(fnr);
+                } else System.out.println("ERROR");
+                try {
+                    trackingQuery.setInt(1, flightID); // changed
+                    trackingQuery.setDouble(2, f.getLat());
+                    trackingQuery.setDouble(3, f.getLon());
+                    trackingQuery.setInt(4, f.getAltitude());
+                    trackingQuery.setInt(5, f.getGroundspeed());
+                    trackingQuery.setInt(6, f.getHeading());
+                    trackingQuery.setInt(7, f.getSquawk());
+                    trackingQuery.setLong(8, f.getTimestamp());
+                    trackingQuery.addBatch();
+                    trackingQuery.clearParameters();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            });
+            return executeQuery(trackingQuery);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        throw new NullPointerException();
+    }
+
+
 
     public PreparedStatement[] createWriteStatements(Connection conn, Deque<Frame> frames, DBOut dbo) {
         try {
@@ -137,9 +253,9 @@ public class ProtoSupplier extends DBManager implements Runnable {
                     }
                 }
                 try {
+                    planeTableSize[0]++;
+                    flightTableSize[0]++;
                     if (!containsPlane) {
-                        planeTableSize[0]++;
-                        flightTableSize[0]++;
                         // adding plane insert queries
                         synchronized (this) {
                             planeQuery.setString(1, f.getIcaoAdr());

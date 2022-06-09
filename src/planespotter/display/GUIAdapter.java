@@ -5,8 +5,12 @@ import org.jetbrains.annotations.Nullable;
 import planespotter.constants.SearchType;
 import planespotter.constants.Warning;
 import planespotter.controller.Controller;
+import planespotter.model.LiveMap;
+import planespotter.throwables.IllegalInputException;
+import planespotter.util.Utilities;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 
 import static planespotter.constants.GUIConstants.*;
@@ -223,6 +227,8 @@ public final class GUIAdapter {
         viewHeadTxtLabel.setText(DEFAULT_HEAD_TEXT); // TODO EXTRA methode
         gui.setCurrentViewType(null);
         gui.getMap().setHeatMap(null);
+        //LiveMap.close();
+        Controller.getInstance().isLive = false;
     }
 
     public void setViewHeadBtVisible(boolean b) {
@@ -237,29 +243,31 @@ public final class GUIAdapter {
         }
     }
 
-    public String[] searchInput() {
+    public String[] searchInput() throws IllegalInputException {
+        var inputFields = new String[0];
         switch (gui.getCurrentSearchType()) {
-            case FLIGHT -> {
-                return new String[] {
-                        gui.search_flightID.getText(),
-                        gui.search_callsign.getText()
-                };
-            } case PLANE -> {
-                return new String[] {
-                        gui.search_planeID.getText(),
-                        gui.search_planetype.getText(),
-                        gui.search_icao.getText(),
-                        gui.search_tailNr.getText()
-                };
-            } case AIRPORT -> {
-                return new String[] {
-                        gui.search_airpID.getText(),
-                        gui.search_airpTag.getText(),
-                        gui.search_airpName.getText()
-                };
-            }
+            case FLIGHT -> inputFields = new String[] {
+                    gui.search_flightID.getText(),
+                    gui.search_callsign.getText()
+            };
+            case PLANE -> inputFields = new String[] {
+                    gui.search_planeID.getText(),
+                    gui.search_planetype.getText(),
+                    gui.search_icao.getText(),
+                    gui.search_tailNr.getText()
+            };
+            case AIRPORT -> inputFields = new String[] {
+                    gui.search_airpID.getText(),
+                    gui.search_airpTag.getText(),
+                    gui.search_airpName.getText()
+            };
         }
-        return null;
+
+        int length = inputFields.length;
+        for (int i = 0; i < length; i++) {
+            inputFields[i] = Utilities.checkString(inputFields[i]);
+        }
+        return inputFields;
     }
 
     public void clearSearch() {

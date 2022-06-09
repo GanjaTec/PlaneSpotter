@@ -90,7 +90,7 @@ public class Scheduler {
         if (prio < 1 || prio > 10) {
             throw new IllegalArgumentException("priority must be between 1 and 10!");
         }
-        ((ThreadMaker) exe.getThreadFactory()).addThreadProperties(tName, daemon, prio);
+        this.getThreadFactory().addThreadProperties(tName, daemon, prio);
         if (withTimeout) {
             var currentThread = new AtomicReference<Thread>();
             CompletableFuture.runAsync(target, exe)
@@ -102,12 +102,25 @@ public class Scheduler {
                         return null;
                     });
         } else {
-            var thread = new Thread(target);
-            thread.setName(tName);
-            thread.setPriority(prio);
-            thread.setDaemon(daemon);
-            thread.start();
+            CompletableFuture.runAsync(target, exe);
         }
+    }
+
+    /**
+     *
+     *
+     * @param target
+     * @param tName
+     * @param daemon
+     * @param prio
+     */
+    public Thread runThread(@NotNull Runnable target, String tName, boolean daemon, int prio) {
+        var thread = new Thread(target);
+        thread.setName(tName);
+        thread.setPriority(prio);
+        thread.setDaemon(daemon);
+        thread.start();
+        return thread;
     }
 
     /**
@@ -129,7 +142,7 @@ public class Scheduler {
      *
      * @param target is the thread to interrupt
      */
-    public void interruptThread(@NotNull Thread target) {
+    public synchronized void interruptThread(@NotNull Thread target) {
         var log = Controller.getLogger();
         if (target.isAlive()) {
             target.interrupt();
@@ -141,6 +154,22 @@ public class Scheduler {
         } else {
             log.infoLog("Thread " + target.getName() + " is already dead!", this);
         }
+    }
+
+    /**
+     * shuts down the Scheduler
+     *
+     * @return true if the shutdown was successfully
+     */
+    public synchronized boolean shutdown() {
+        try {
+            exe.shutdown();
+            scheduled_exe.shutdown();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     /**
@@ -248,5 +277,6 @@ public class Scheduler {
             }
             target.setDaemon(this.daemon);
         }
+
     }
 }

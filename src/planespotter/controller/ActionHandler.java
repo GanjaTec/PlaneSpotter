@@ -8,6 +8,7 @@ import planespotter.constants.UserSettings;
 import planespotter.constants.ViewType;
 import planespotter.display.GUI;
 import planespotter.display.GUIAdapter;
+import planespotter.throwables.IllegalInputException;
 import planespotter.util.Utilities;
 
 import javax.swing.*;
@@ -17,8 +18,16 @@ import java.awt.event.*;
 import static java.awt.event.KeyEvent.*;
 import static java.awt.event.KeyEvent.VK_PAGE_DOWN;
 import static planespotter.constants.ViewType.LIST_FLIGHT;
-import static planespotter.constants.ViewType.MAP_ALL;
+import static planespotter.constants.ViewType.MAP_LIVE;
 
+/**
+ * @name ActionHandler
+ * @author jml04
+ * @author Bennet
+ * @version 1.0
+ *
+ * record ActionHandler handles GUI-User-Interactions and calls the Controller
+ */
 public record ActionHandler()
         implements ActionListener, KeyListener, JMapViewerEventListener,
                    ComponentListener, MouseListener, ItemListener, WindowListener {
@@ -37,7 +46,7 @@ public record ActionHandler()
             ctrl.show(LIST_FLIGHT, "");
         } else if (button == gui.getContainer("mapButton")) {
             guiAdapter.startProgressBar();
-            ctrl.show(MAP_ALL, "Live-Map");
+            ctrl.show(MAP_LIVE, "Live-Map");
         } else if (button == gui.getContainer("closeViewButton")) {
             guiAdapter.disposeView();
             ctrl.loadedData = null;
@@ -67,9 +76,12 @@ public record ActionHandler()
             ctrl.show(ViewType.MAP_HEATMAP, "Heat Map");
             //this.guiAdapter.ctrl.show(MAP_SIGNIFICANCE, "Significance Map");
         } else if (button.getName().equals("loadMap")) {
-            // TODO search type abfragen, bzw. ComboBox SelectedItem
-            var inputs = guiAdapter.searchInput();
-            ctrl.search(inputs, 1);
+            try {
+                var inputs = guiAdapter.searchInput();
+                ctrl.search(inputs, 1);
+            } catch (IllegalInputException e) {
+                ctrl.handleException(e);
+            }
         } else if (button.getName().equals("open")) {
             Controller.getInstance().loadFile();
         } else if (button.getName().equals("save")) {
@@ -119,6 +131,8 @@ public record ActionHandler()
                     case VK_END -> viewer.moveMap(10, 0);
                     case VK_PAGE_DOWN -> viewer.moveMap(0, -10);
                 }
+            } else if (source == gui.getContainer("searchPanel")) {
+                this.buttonClicked((JButton) gui.getContainer("mapButton"), Controller.getInstance(), gui, guiAdapter);
             }
         } catch (NumberFormatException ex) {
             var settingsMaxLoadTxtField = (JTextField) gui.getContainer("settingsMaxLoadTxtField");
@@ -193,7 +207,7 @@ public record ActionHandler()
         if (source == gui.getContainer("searchForCmbBox")) {
             var guiAdapter = new GUIAdapter(gui);
             guiAdapter.clearSearch();
-            guiAdapter.loadSearch(SearchType.byItem(item));
+            guiAdapter.loadSearch(SearchType.byItemString(item));
         } else if (source == gui.getContainer("settingsMapTypeCmbBox")) {
             var usrSettings = new UserSettings();
             if (item.equals("Bing Map")) {
@@ -229,10 +243,12 @@ public record ActionHandler()
     @Override
     public void keyPressed(KeyEvent e) {
         var src = e.getSource();
-        int key = e.getKeyCode();
         var gui = Controller.getGUI();
-        var guiAdapter = new GUIAdapter(gui);
-        this.keyEntered(src, key, gui, guiAdapter);
+        if (src == gui.getContainer("searchPanel")) {
+            int key = e.getKeyCode();
+            var guiAdapter = new GUIAdapter(gui);
+            this.keyEntered(src, key, gui, guiAdapter);
+        }
     }
 
     /**
@@ -261,11 +277,7 @@ public record ActionHandler()
 
     @Override
     public void windowClosing(WindowEvent e) {
-        int option = JOptionPane.showConfirmDialog(e.getWindow(), "Do you really want to exit PlaneSpotter?",
-                                               "Exit", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-        if (option == JOptionPane.YES_OPTION) {
-            System.exit(0);
-        }
+        Controller.getInstance().onExit(e);
     }
 
 

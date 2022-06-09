@@ -154,7 +154,7 @@ public final class TreePlantation {
      * creates only ONE flight tree node
      * @return DefaultMutableTreeNode, represents a flight (as a tree)
      */
-    public DefaultMutableTreeNode flightInfoTreeNode (@NotNull Flight f) {
+    public DefaultMutableTreeNode flightInfoTreeNode(@NotNull Flight f) {
         String strToStrip;
             var plane = f.plane();
             var airline = plane.airline();

@@ -24,7 +24,7 @@ public class GUI implements Runnable {
     // action  handler
     private final ActionHandler actionHandler;
     // map manager
-    private BlackBeardsNavigator mapManager;
+    private MapManager mapManager;
     // current loaded search
     private SearchType currentSearchType;
     // current view type ( in action )
@@ -98,7 +98,7 @@ public class GUI implements Runnable {
         this.addContainer("mapPanel", mapPanel);
 
         // initializing map viewer
-        this.mapManager = new BlackBeardsNavigator(this, mapPanel, this.actionHandler);
+        this.mapManager = new MapManager(this, mapPanel, this.actionHandler);
 
         /*this.mapViewer().addKeyListener(this.actionHandler);
         this.mapViewer().addMouseListener(this.actionHandler);
@@ -202,7 +202,7 @@ public class GUI implements Runnable {
         var menubar = this.getContainer("menuBar");
         menubar.add(this.getContainer("listButton"));
         menubar.add(this.getContainer("mapButton"));
-        menubar.add(this.getContainer("settingsButton"));
+        menubar.add(this.getContainer("settingsButton")); // TODO gehört das nicht alles in SearchPanel
         menubar.add(this.getContainer("searchTxtField"));
         menubar.add(this.getContainer("searchButton"));
         menubar.add(this.getContainer("progressBar")); // TODO alles so wie hier
@@ -212,15 +212,12 @@ public class GUI implements Runnable {
         searchPanel.add(this.getContainer("searchForCmbBox"));
         searchPanel.add(this.getContainer("searchSeperator"));
         searchPanel.add(this.getContainer("searchMessage"));
+        searchPanel.addKeyListener(this.actionHandler);
         for (var comps : this.allSearchModels()) {
             if (comps != null) {
                 for (var c : comps) {
                     if (c instanceof JLabel) {
                         c.setOpaque(false);
-                    } else if (c instanceof JButton bt) {
-                        bt.addActionListener(this.actionHandler);
-                    } else if (c instanceof JTextField) {
-                        c.addKeyListener(this.actionHandler);
                     }
                     searchPanel.add(c);
                 }
@@ -305,7 +302,7 @@ public class GUI implements Runnable {
         return this.mapManager.getMapViewer();
     }
 
-    public final BlackBeardsNavigator getMapManager() {
+    public final MapManager getMapManager() {
         assert this.mapManager != null;
         return this.mapManager;
     }

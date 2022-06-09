@@ -28,7 +28,7 @@ import static planespotter.constants.GUIConstants.LINE_BORDER;
  *
  *  manages the map data and contains methods which are executed on the mapView
  */
-public final class BlackBeardsNavigator {
+public final class MapManager {
 
     private final GUI gui;
 
@@ -37,7 +37,7 @@ public final class BlackBeardsNavigator {
     /**
      * constructor
      */
-    public BlackBeardsNavigator (GUI gui, JPanel defaultMapPanel, ActionHandler listener) {
+    public MapManager(GUI gui, JPanel defaultMapPanel, ActionHandler listener) {
         this.gui = gui;
         this.mapViewer = this.defaultMapViewer(defaultMapPanel);
         this.mapViewer.addKeyListener(listener);
@@ -92,7 +92,9 @@ public final class BlackBeardsNavigator {
                 viewer.setMapMarkerList(markers);
             }
             viewer.setMapPolygonList(polys);
-            new TreePlantation().createFlightInfo(flight, guiAdapter);
+            if (dataPoints.size() == 1) {
+                new TreePlantation().createFlightInfo(flight, guiAdapter);
+            }
         } else throw new DataNotFoundException("Couldn't create Flight Route for this flightID!");
         return viewer;
     }
@@ -146,7 +148,7 @@ public final class BlackBeardsNavigator {
         return viewer;
     }
 
-    public BlackBeardsNavigator createRasterHeatMap(final BufferedImage heatMapImg, final TreasureMap viewer) {
+    public MapManager createRasterHeatMap(final BufferedImage heatMapImg, final TreasureMap viewer) {
         var rect = new HeatMapRectangle(heatMapImg, viewer);
         viewer.addMapRectangle(rect);
         return this;
@@ -208,11 +210,13 @@ public final class BlackBeardsNavigator {
      *
      * @param map is the map to be set
      */
-    public void recieveMap (TreasureMap map, String text) {
+    public void recieveMap(TreasureMap map, String text) {
         // adding MapViewer to panel (needed?)
         this.mapViewer = map;
         var mapPanel = gui.getContainer("mapPanel");
-        mapPanel.add(this.mapViewer);
+        if (mapPanel.getComponentCount() == 0) {
+            mapPanel.add(this.mapViewer);
+        }
         var viewHeadTxt = (JLabel) gui.getContainer("viewHeadTxtLabel");
         viewHeadTxt.setText(DEFAULT_HEAD_TEXT + "Map-Viewer > " + text);
         // revalidating window frame to refresh everything

@@ -30,11 +30,13 @@ public class TreasureMap extends JMapViewer {
      * paints the map, if a this.heatMap is not null,
      * the heat map is also painted
      *
-     * @param g
+     * @param g is the given graphics object, i don't know where it comes from
      */
     @Override
     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+        synchronized (this) {
+            super.paintComponent(g);
+        }
         /*if (this.heatMap != null) {
             var g2d = (Graphics2D) g;
             g2d.drawImage(this.heatMap, 0, 0, super.getWidth(), super.getHeight(), null);

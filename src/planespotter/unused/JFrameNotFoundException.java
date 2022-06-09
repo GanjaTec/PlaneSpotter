@@ -1,4 +1,4 @@
-package planespotter.throwables;
+package planespotter.unused;
 
 // TODO: 31.05.2022 wird die benötigt???
 public class JFrameNotFoundException extends Exception {

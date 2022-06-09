@@ -1,6 +1,7 @@
 package planespotter.model.nio;
 
 import planespotter.constants.Areas;
+import planespotter.model.nio.proto.ProtoKeeper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,8 +11,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import static planespotter.util.Time.elapsedSeconds;
+import static planespotter.util.Time.nowMillis;
+
 public class Paralel {
-	private int poolsize = 4;
+	private int poolsize = 8;
 	private ThreadPoolExecutor exe =  (ThreadPoolExecutor) Executors.newFixedThreadPool(poolsize);
 	private ScheduledExecutorService ses = Executors.newScheduledThreadPool(poolsize);
 	
@@ -24,6 +28,7 @@ public class Paralel {
 			Supplier s = new Supplier(i, areay[i]);
 			ses.scheduleAtFixedRate(s, 10+(i*5), 60, TimeUnit.SECONDS);
 		}
+
 		KeeperOfTheArchives bofh = new KeeperOfTheArchives(areay.length, 1200L);
 		ses.scheduleAtFixedRate(bofh, 0, 20, TimeUnit.MINUTES);
 	}
@@ -47,7 +52,7 @@ public class Paralel {
 			executor.execute(new Supplier(i, s));
 			i += 1;
 	    }
-		
+
 		KeeperOfTheArchives bofh = new KeeperOfTheArchives(resultList.size(), 1200L);
 		executor.execute(bofh);
 		executor.shutdown();

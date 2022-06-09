@@ -1,9 +1,10 @@
 package planespotter.util;
 
 import org.jetbrains.annotations.NotNull;
-import planespotter.constants.Paths;
-import planespotter.dataclasses.DataPoint;
-import planespotter.dataclasses.Position;
+import planespotter.dataclasses.*;
+import planespotter.dataclasses.Frame;
+import planespotter.throwables.IllegalInputException;
+import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.OutOfRangeException;
 
 import javax.swing.*;
@@ -13,9 +14,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -77,11 +76,38 @@ public abstract class Utilities {
     }
 
     /**
+     * strips a string to the right format
+     * Example: from ' "Hello" ' to ' Hello '
+     *
      * @param in is the string to strip
      * @return input-string, but without the "s
      */
     public static String stripString(@NotNull String in) {
         return in.replaceAll("\"", "");
+    }
+
+    /**
+     * checks a string for illegal characters or expressions
+     *
+     * @param check is the (sql) string to check
+     * @return string, without illegal characters/expressions
+     */
+    public static String checkString(@NotNull String check)
+        throws IllegalInputException {
+
+        if (check.contains(";")) {
+            check = check.substring(0, check.indexOf(';'));
+            throw new IllegalInputException();
+        }
+        if (check.contains("*") || check.contains("SELECT") || check.contains("select")
+            || check.contains("JOIN") || check.contains("join")
+            || check.contains("DROP") || check.contains("drop")
+            || check.contains("INSERT") || check.contains("insert")
+            || check.contains("TABLE")
+            || check.contains("FROM") || check.contains("from")) {
+            throw new IllegalInputException();
+        }
+        return check.replaceAll("%", "");
     }
 
     /**
@@ -96,17 +122,53 @@ public abstract class Utilities {
     /**
      * parses a vector of data points to a vector of positions
      *
-     * @param dps
+     * @param toParse is the Data Vector to parse
+     * @return Vector of Positions
+     */
+    public static <T extends Data> Vector<Position> parsePositionVector(@NotNull final Vector<T> toParse) {
+        if (toParse.isEmpty()) {
+            throw new IllegalArgumentException("input may not be empty!");
+        }
+        var firstElement = toParse.get(0);
+        if (firstElement instanceof DataPoint) {
+            return toParse.stream()
+                    .map(data -> ((DataPoint) data).pos())
+                    .collect(Collectors.toCollection(Vector::new));
+        } else if (firstElement instanceof Flight) {
+            return toParse.stream()
+                    .map(flight -> {
+                        var dps = ((Flight) flight).dataPoints();
+                        return dps.get(dps.size() - 1).pos();
+                    })
+                    .collect(Collectors.toCollection(Vector::new));
+        }
+        throw new InvalidDataException("Invalid input data, Must be a Vector of DataPoints or Flights!");
+    }
+
+    /**
+     * parses a flight vector to a data point vector
+     *
+     * @param flights are the flights to parse
+     * @return vector of data points
+     */
+    public static Vector<DataPoint> parseDataPointVector(@NotNull final Vector<Flight> flights) {
+        if (flights.isEmpty()) {
+            throw new IllegalArgumentException("input may not be empty!");
+        }
+        var dataPoints = new Vector<DataPoint>();
+        flights.parallelStream()
+                .forEach(flight -> dataPoints.addAll(flight.dataPoints().values()));
+        return dataPoints;
+    }
+
+    /**
+     *
+     * @param array
+     * @param <T>
      * @return
      */
-    public static Vector<Position> parsePositionVector (Vector<DataPoint> dps) {
-        if (dps == null || dps.isEmpty()) {
-            throw new IllegalArgumentException("input cannot be null / empty! \n" +
-                                               "the data vector is probably empty!");
-        }
-         return dps.stream()
-                 .map(DataPoint::pos)
-                 .collect(Collectors.toCollection(Vector::new));
+    public static <T> Deque<T> parseDeque(T[] array) {
+        return new ArrayDeque<>(Arrays.asList(array));
     }
 
     /**
@@ -179,14 +241,18 @@ public abstract class Utilities {
         return new ImageIcon(scaled);
     }
 
-    public static int linesCode(String rootPath) {
+    public static int linesCode(final String rootPath) {
         var linesCode = new AtomicInteger(0);
         var files = allJavaFiles(rootPath);
         while (!files.isEmpty()) {
             try {
                 var fr = new FileReader(files.poll());
                 var br = new BufferedReader(fr);
-                br.lines().forEach(l -> linesCode.getAndIncrement());
+                br.lines().forEach(l -> {
+                    if (!l.isBlank()) {
+                        linesCode.getAndIncrement();
+                    }
+                });
                 br.close();
                 fr.close();
             } catch (IOException e) {
@@ -209,6 +275,30 @@ public abstract class Utilities {
             e.printStackTrace();
         }
         return files;
+    }
+
+    // prototype //
+    public static Flight frameToFlight(final Frame frame, final int id) {
+        var dataPoints = new HashMap<Integer, DataPoint>();
+        // putting first data point to map
+        dataPoints.put(0, new DataPoint(0, -1,
+                new Position(frame.getLat(),
+                        frame.getLon()),
+                frame.getTimestamp(),
+                frame.getSquawk(),
+                frame.getGroundspeed(),
+                frame.getHeading(),
+                frame.getAltitude()));
+        // returning new flight object
+        return new Flight(id,
+                new Airport(-1, frame.getSrcAirport(), "unknown", null),
+                new Airport(-1, frame.getSrcAirport(), "unknown", null),
+                frame.getCallsign(),
+                new Plane(-1, frame.getIcaoAdr(), frame.getTailnr(),
+                        frame.getPlanetype(), frame.getRegistration(),
+                        new Airline(-1, frame.getAirline(), "unknown")),
+                frame.getFlightnumber(),
+                dataPoints);
     }
 
 }

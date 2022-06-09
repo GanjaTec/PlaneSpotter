@@ -1,5 +1,12 @@
 package planespotter.constants;
 
+/**
+ * @name Areas
+ * @author Lukas
+ * @version 1.0
+ *
+ * class areas contains all map areas as complicated coordinate-strings
+ */
 public final class Areas { // TODO zu Enum machen (die einzel Strings) mit String area Bsp.: URKAINE("...").get() oder so
 	
 	//Ukraine War

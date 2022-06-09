@@ -890,8 +890,8 @@ public class DBOut extends SupperDB {
 		return speedMap;
 	}
 
-	public List<Integer> getAllFlightIDs() throws DataNotFoundException {
-		var ids = new ArrayList<Integer>();
+	public Deque<Integer> getAllFlightIDs() throws DataNotFoundException {
+		var ids = new ArrayDeque<Integer>();
 		try {
 			var query = "SELECT ID FROM flights";
 			var rs = super.querryDB(query);
@@ -908,11 +908,15 @@ public class DBOut extends SupperDB {
 		return ids;
 	}
 
+	/**
+	 *
+	 * @return Hash Map: (Key = icao, value[0] = planeID, value[1] = flightID )
+	 */
 	public Map<String, int[]> icaoIDMap() {
 		var map = new HashMap<String, int[]>();
 		try {
 			var query = "SELECT p.icaonr AS icao, p.ID AS pid, f.ID AS fid FROM planes p " +
-						"JOIN flights f ON (f.plane = p.ID) AND (f.endTime IS NULL)";
+						"JOIN flights f ON (f.plane = p.ID)";
 			var rs = super.querryDB(query);
 			while (rs.next()) {
 				int[] values = {
@@ -936,7 +940,56 @@ public class DBOut extends SupperDB {
 						"GROUP BY t.flightid";
 			var rs = super.querryDB(query);
 			while (rs.next()) {
-				map.put(rs.getInt("fid"), rs.getLong("ts"));
+				map.put(rs.getInt(1), rs.getLong(2));
+			}
+			rs.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return map;
+	}
+
+	public HashMap<String, Integer> getFlightNRsWithPlaneIDs() {
+		var map = new HashMap<String, Integer>();
+		try {
+			var query = "SELECT plane, flightnr FROM flights WHERE endTime IS NULL";
+			var rs = super.querryDB(query);
+			while (rs.next()) {
+				map.put(rs.getString(2), rs.getInt(1));
+			}
+			rs.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return map;
+	}
+
+	public HashMap<String, Integer> getFlightNRsWithFlightIDs() {
+		var map = new HashMap<String, Integer>();
+		try {
+			var query = "SELECT ID, flightnr FROM flights WHERE (endTime IS NULL)";
+			var rs = super.querryDB(query);
+			while (rs.next()) {
+				map.put(rs.getString(2), rs.getInt(1));
+			}
+			rs.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return map;
+	}
+
+	public HashMap<String, Integer> getFlightNRsWithFlightIDs(Deque<Integer> flightIDs) {
+		var map = new HashMap<String, Integer>();
+		try {
+			var query = "SELECT ID, flightnr FROM flights WHERE (ID " + SQLQueries.IN_INT(flightIDs) + ") AND (endTime IS NULL)";
+			var rs = super.querryDB(query);
+			while (rs.next()) {
+				var fnr = rs.getString(2);
+				int id = rs.getInt(1);
+				if (!fnr.isBlank()) {
+					map.put(fnr, id);
+				}
 			}
 			rs.close();
 		} catch (Exception e) {
@@ -963,6 +1016,36 @@ public class DBOut extends SupperDB {
 			throw new DataNotFoundException("Table not found!");
 		}
 		return size;
+	}
+
+	public Deque<String> getICAOsByPlaneIDs(Deque<Integer> planeIDs) {
+		var icaos = new ArrayDeque<String>();
+		try {
+			var query = "SELECT icaonr FROM planes WHERE ID " + SQLQueries.IN_INT(planeIDs);
+			var rs = super.querryDB(query);
+			while (rs.next()) {
+				icaos.add(rs.getString(1));
+			}
+			rs.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return icaos;
+	}
+
+	public Deque<Integer> getAllPlaneIDs() {
+		var ids = new ArrayDeque<Integer>();
+		try {
+			var query = "SELECT ID FROM planes";
+			var rs = super.querryDB(query);
+			while (rs.next()) {
+				ids.add(rs.getInt(1));
+			}
+			rs.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return ids;
 	}
 
 	// TODO public ArrayDeque<Integer> getPlaneIDsWhereTypeLike (String input) // sollte schneller sein
