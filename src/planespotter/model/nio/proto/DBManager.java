@@ -34,34 +34,6 @@ public abstract class DBManager extends SupperDB {
         return null;
     }
 
-    public static int[] executeQuery(PreparedStatement pstmt)
-            throws SQLException {
 
-        var ids = new int[0];
-        pstmt.setFetchSize(1000);
-        pstmt.executeBatch();
-        var generatedKeys = pstmt.getGeneratedKeys();
-        int rowID;
-        while (generatedKeys.next()) {
-            rowID = generatedKeys.getInt(1);
-            int length = ids.length;
-            ids = Arrays.copyOf(ids, length + 1);
-            ids[length] = rowID;
-        }
-        generatedKeys.close();
-        pstmt.close();
-        return ids;
-    }
-
-    public static void executeSQL(Connection conn, PreparedStatement... stmts)
-            throws SQLException {
-
-        for (var stmt : stmts) {
-            stmt.setFetchSize(2000); // TODO beste?
-            stmt.executeBatch();
-            stmt.closeOnCompletion();
-        }
-        conn.close();
-    }
 
 }

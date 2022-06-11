@@ -4,6 +4,7 @@ import planespotter.dataclasses.Frame;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.DBOut;
 import planespotter.model.nio.Deserializer;
+import planespotter.model.nio.proto.ProtoDeserializer;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -36,7 +37,7 @@ public class Supplier implements Runnable{
 	public String getThreadName() {
 		return this.ThreadName;
 	}
-	
+
 	public Supplier(int threadNumber, String area) {
 		this.threadNumber = threadNumber;
 		this.ThreadName = "SupplierThread-" + threadNumber;
@@ -48,7 +49,12 @@ public class Supplier implements Runnable{
 		try {
 			Deserializer ds = new Deserializer();
 			System.out.println("Starting Thread \"" + this.ThreadName + "\"");
-			writeToDB(ds.deserialize(fr24get()), dbo, dbi);
+
+			HttpResponse<String> response = this.fr24get();
+			List<Frame> frames = new ProtoDeserializer().deserialize(response).stream().toList();
+			// use Proto-deserialize instead of ds.deserialize(...) for right-way-deserialized frames (no "" anymore)
+			// old: ds.deserialize(response)
+			writeToDB(frames, this.dbo, this.dbi);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

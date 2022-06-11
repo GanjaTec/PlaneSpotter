@@ -37,8 +37,7 @@ import java.util.concurrent.TimeoutException;
 import static planespotter.constants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
 import static planespotter.constants.Sound.SOUND_DEFAULT;
 import static planespotter.constants.ViewType.*;
-import static planespotter.util.Time.elapsedSeconds;
-import static planespotter.util.Time.nowMillis;
+import static planespotter.util.Time.*;
 
 /**
  * @name Controller
@@ -128,7 +127,7 @@ public class Controller {
                 var current = Thread.currentThread();
                 current.setName("Data Inserter");
                 current.setPriority(2);
-                DataLoader.load();
+                DataLoader.insert(scheduler, 250);
             }
         }, 20, 20);
         scheduler.schedule(() -> {
@@ -177,6 +176,7 @@ public class Controller {
         gui.getContainer("window").setVisible(true);
     }
 
+    // TODO evtl. move to ActionHandler
     public synchronized void onExit(WindowEvent event) {
         int option = JOptionPane.showConfirmDialog(event.getWindow(),
                 "Do you really want to exit PlaneSpotter?",
@@ -186,7 +186,8 @@ public class Controller {
             this.isLive = false;
             this.loading = true;
             FileMaster.saveConfig();
-            DataLoader.insertRemaining(scheduler);
+            //DataLoader.insertRemaining(scheduler);
+            DataLoader.setEnabled(false);
             while (scheduler.active() > 0) {
                 try {
                     this.wait(1000);
@@ -196,8 +197,9 @@ public class Controller {
                 this.notifyAll();
             }
             this.done();
+            logger.close();
+            scheduler.shutdown();
             System.exit(0);
-            //scheduler.shutdown();
 
         }
     }
@@ -209,15 +211,15 @@ public class Controller {
     public synchronized void loadLiveData() {
         this.loading = true;
 
-        this.liveData = LiveMap.directLiveData(scheduler);
+        this.liveData = LiveData.directLiveData(scheduler);
         var map = gui.getMap();
         var markers = new ArrayList<MapMarker>();
         this.liveData.stream()
-                .filter(Objects::nonNull)
+                //.filter(Objects::nonNull)
                 .map(flight -> {
-                    final var dp = flight.dataPoints().get(0);
-                    final double lat = dp.pos().lat(),
-                                 lon = dp.pos().lon();
+                    final var pos = flight.dataPoints().get(0).pos();
+                    final double lat = pos.lat(),
+                                 lon = pos.lon();
                     return new MapMarkerDot(new Coordinate(lat, lon));
                 })
                 .forEach(m -> {
@@ -305,9 +307,10 @@ public class Controller {
      * @param type is the ViewType, sets the content type for the
      *             created view (e.g. different List-View-Types)
      */
-    public synchronized void show(@NotNull ViewType type, String headText, @Nullable String... data) {
-        // TODO verschiedene Möglichkeiten (für große Datenmengen)
-        var bbn = gui.getMapManager();
+    public synchronized void show(@NotNull ViewType type,
+                                  @NotNull final String headText,
+                                  @Nullable String... data) {
+        var mapManager = gui.getMapManager();
         this.loading = true;
         var dbOut = new DBOut();
         // TODO ONLY HERE: dispose GUI view(s)
@@ -315,12 +318,12 @@ public class Controller {
         gui.setCurrentViewType(type);
         switch (type) {
             case LIST_FLIGHT -> this.showFlightList(dbOut);
-            case MAP_LIVE -> this.showLiveMap(headText, bbn);
-            case MAP_FROMSEARCH -> this.showSearchMap(headText, bbn);
-            case MAP_TRACKING -> this.showTrackingMap(headText, bbn, dbOut, data);
-            case MAP_TRACKING_NP -> this.showTrackingMapNoPoints(headText, bbn, data);
-            case MAP_SIGNIFICANCE -> this.showSignificanceMap(headText, bbn, dbOut);
-            case MAP_HEATMAP -> this.showRasterHeatMap(headText, bbn, dbOut);
+            case MAP_LIVE -> this.showLiveMap(headText, mapManager);
+            case MAP_FROMSEARCH -> this.showSearchMap(headText, mapManager);
+            case MAP_TRACKING -> this.showTrackingMap(headText, mapManager, dbOut, data);
+            case MAP_TRACKING_NP -> this.showTrackingMapNoPoints(headText, mapManager, data);
+            case MAP_SIGNIFICANCE -> this.showSignificanceMap(headText, mapManager, dbOut);
+            case MAP_HEATMAP -> this.showRasterHeatMap(headText, mapManager, dbOut);
         }
         this.done();
         logger.sucsessLog("view loaded!", this);
@@ -393,7 +396,7 @@ public class Controller {
     public void enterText(String text) {
         if (!text.isBlank()) {
             if (text.startsWith("exit")) {
-                this.exit();
+                System.exit(2);
             } else if (text.startsWith("loadlist")) {
                 this.show(LIST_FLIGHT, "");
             } else if (text.startsWith("loadmap")) {
@@ -523,7 +526,8 @@ public class Controller {
                 marker.setBackColor(Color.RED);
                 var flight = this.liveData.get(counter);
                 menuPanel.setVisible(false);
-                treePlantation.createFlightInfo(flight, this.guiAdapter);
+                var dps = flight.dataPoints();
+                treePlantation.createDataPointInfo(flight, dps.get(0), this.guiAdapter);
             }
         }
     }
@@ -639,14 +643,6 @@ public class Controller {
         return actionHandler;
     }
 
-    /**
-     * program exit method
-     */
-    public synchronized void exit() {
-        logger.close();
-        System.exit(0);
-    }
-
     // private methods
 
     private void  showRasterHeatMap(String heatText, MapManager bbn, DBOut dbOut) {
@@ -745,15 +741,15 @@ public class Controller {
         bbn.recieveMap(viewer, headText);
     }
 
-    private void showLiveMap(String headText, MapManager mapManager) {
-        //LiveMap.newLiveMap(scheduler, gui.getMap(), mapManager);
-        this.isLive = true;
+    private void showLiveMap(final String headText, @NotNull final MapManager mapManager) {
         if (this.liveData == null || this.liveData.isEmpty()) {
             this.guiAdapter.warning(Warning.LIVE_DATA_NOT_FOUND);
             return;
         }
         var data = Utilities.parsePositionVector(this.liveData);
         var viewer = mapManager.createLiveMap(data, gui.getMap());
+
+        this.isLive = true;
         mapManager.recieveMap(viewer, headText);
     }
 

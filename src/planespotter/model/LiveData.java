@@ -1,7 +1,7 @@
 package planespotter.model;
 
+import planespotter.constants.Areas;
 import planespotter.controller.Scheduler;
-import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Frame;
 import planespotter.model.nio.proto.ProtoDeserializer;
@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class LiveMap {
+public abstract class LiveData {
     // frames, which will be inserted later (first loaded into the view)
     private static final ConcurrentLinkedQueue<Frame> insertLater;
     // static initializer
@@ -21,14 +21,31 @@ public class LiveMap {
         insertLater = new ConcurrentLinkedQueue<>();
     }
 
-    public static Vector<Flight> directLiveData(Scheduler scheduler) {
+    public static void addLiveData() {
+
+    }
+
+    public static Vector<Flight> directLiveData(final Scheduler scheduler) {
         var deserializer = new ProtoDeserializer();
-        var frames = deserializer.runSuppliers(deserializer.getAllAreas(), scheduler);
-        insertLater.addAll(frames);
+        var world = Areas.getWorldAreas();
+        var frames = deserializer.getFr24Frames(world, scheduler);
+        // termorary if // daten gehen verloren
+        if (mayLoad()) {
+            insertLater.addAll(frames);
+        }
         var id = new AtomicInteger(0);
         return frames.stream()
-                .map(f -> Utilities.frameToFlight(f, id.getAndIncrement()))
+                .map(frame -> Flight.parseFlight(frame, id.getAndIncrement()))
                 .collect(Collectors.toCollection(Vector::new));
+    }
+
+    /**
+     *
+     *
+     * @return
+     */
+    protected static boolean mayLoad() {
+        return insertLater.size() < 10000;
     }
 
     /**
@@ -36,15 +53,15 @@ public class LiveMap {
      * @return true, if insertLater.size() is greater or equals 1000, else false
      *         if true, another Method gets ac
      */
-    protected static boolean canInsert() {
-        return insertLater.size() > 200;
+    protected static boolean canInsert(final int count) {
+        return insertLater.size() > count;
     }
 
-    protected static boolean isReady() {
-        return insertLater.size() > 0;
+    protected static boolean isEmpty() {
+        return insertLater.size() == 0;
     }
 
-    protected static Queue<Frame> pollFromQueue(final int count) {
+    public static Queue<Frame> pollFromQueue(final int count) {
         var counter = new AtomicInteger();
         var frames = new ConcurrentLinkedQueue<Frame>();
 

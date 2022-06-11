@@ -49,6 +49,21 @@ public class Scheduler {
     }
 
     /**
+     * executed a thread with a certain name
+     *
+     * @param tName is the thread name
+     * @param task is the Runnable to execute in period
+     * @param initDelay is the src delay in seconds, must be 1 or higher
+     * @param period is the period in seconds, must be 0 or higher
+     */
+    public void schedule(@NotNull Runnable task, @NotNull String tName, int initDelay, int period) {
+        this.schedule(() -> {
+            Thread.currentThread().setName(tName);
+            task.run();
+        }, initDelay, period);
+    }
+
+    /**
      *
      * @param task is the Runnable to execute in period
      * @param initDelay is the src delay in seconds, must be 1 or higher

@@ -8,7 +8,8 @@ package planespotter.dataclasses;
  */
 public record Airline (int id,
 					   String iataTag,
-					   String name) {
+					   String name,
+					   String country) {
 }
 /*public class Airline implements Data {
 	private int id;

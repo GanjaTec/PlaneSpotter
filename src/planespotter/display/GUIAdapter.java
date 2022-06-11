@@ -5,16 +5,13 @@ import org.jetbrains.annotations.Nullable;
 import planespotter.constants.SearchType;
 import planespotter.constants.Warning;
 import planespotter.controller.Controller;
-import planespotter.model.LiveMap;
 import planespotter.throwables.IllegalInputException;
 import planespotter.util.Utilities;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.List;
 
 import static planespotter.constants.GUIConstants.*;
-import static planespotter.constants.SearchType.*;
 
 /**
  * @name GUIAdapter
@@ -97,6 +94,7 @@ public final class GUIAdapter {
     public void recieveInfoTree(@NotNull final JTree flightTree,
                                 @Nullable final JTree dpInfoTree) {
         var infoPanel = gui.getContainer("infoPanel");
+        infoPanel.removeAll();
         int width = infoPanel.getWidth();
         int height = infoPanel.getHeight() / 2;
         gui.getContainer("menuPanel").setVisible(false);

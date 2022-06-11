@@ -26,30 +26,6 @@ import java.util.*;
 public class DBOut extends SupperDB {
 
 	/**
-	 * test: max loaded flights
-	 */
-	private final int maxLoadedFlights = UserSettings.getMaxLoadedData();
-
-
-	/**
-	 * This method is used to querry the DB
-	 * it takes a String and returns a ResultSet
-	 * 
-	 * @param querry String to use for the Querry
-	 * @return ResultSet containing the querried Data
-	 */
-
-	public ResultSet querryDB(String querry) throws Exception { // TODO wir sollten die Exception hier catchen, weil sonst catchen wir woanders versehentlich auch andere exceptions
-		ResultSet rs;
-		var conn = SupperDB.getDBConnection();
-		var stmt = conn.createStatement();
-		rs = stmt.executeQuery(querry);
-		// TODO: könnte man hier ein stmt.closeOnCompletion() einfügen?
-
-		return rs;
-	}
-
-	/**
 	 * This method is a quick botch because i messed up the Airports Table in the DB
 	 * It takes A string containing the Coordinates received from the DB and converts it
 	 * into a Position Object
@@ -81,11 +57,11 @@ public class DBOut extends SupperDB {
 		Airline a = null;
 		try {
 			tag = Utilities.stripString(tag);
-			var rs = querryDB(SQLQueries.getAirlineByTag + tag); // ist leer TODO fixen
+			var rs = queryDB(SQLQueries.getAirlineByTag + tag); // ist leer TODO fixen
 			if (rs.next()) {
-				a = new Airline(rs.getInt("ID"), rs.getString("iatatag"), rs.getString("name"));
+				a = new Airline(rs.getInt("ID"), rs.getString("iatatag"), rs.getString("name"), rs.getString("country"));
 			} else {
-				a = new Airline(-1, "None", "None");
+				a = new Airline(-1, "None", "None", "None");
 			}
 			rs.close();
 		} catch (SQLException e) {
@@ -102,7 +78,7 @@ public class DBOut extends SupperDB {
 			var ds = new Deserializer();
 			tag = ds.stripString(tag);
 			tag = "'" + tag + "'";
-			var rs = querryDB(SQLQueries.getAirlineIDByTag + tag);
+			var rs = queryDB(SQLQueries.getAirlineIDByTag + tag);
 			if(rs.next()) {
 				id = rs.getInt(1);
 			rs.close();
@@ -128,8 +104,8 @@ public class DBOut extends SupperDB {
 	public List<Airport> getAirports (String srcAirport, String destAirport) { // TODO man könnte return array machen (länge ist immer 2)
 		var aps = new ArrayList<Airport>();
 		try {
-			var rsSrc = querryDB(SQLQueries.getAirportByTag + Utilities.packString(srcAirport));
-			var rsDst = querryDB(SQLQueries.getAirportByTag + Utilities.packString(destAirport));
+			var rsSrc = queryDB(SQLQueries.getAirportByTag + Utilities.packString(srcAirport));
+			var rsDst = queryDB(SQLQueries.getAirportByTag + Utilities.packString(destAirport));
 
 			if (rsSrc.next()) {
 				var srcAp = new Airport(rsSrc.getInt("ID"), rsSrc.getString("iatatag"), rsSrc.getString("name"), convertCoords(rsSrc.getString("coords")));
@@ -171,7 +147,7 @@ public class DBOut extends SupperDB {
 		icao = Utilities.packString(icao);
 		var ids = new ArrayDeque<Integer>();
 		try {
-			var rs = querryDB(SQLQueries.getPlaneIDsByICAO + icao);
+			var rs = queryDB(SQLQueries.getPlaneIDsByICAO + icao);
 			while (rs.next()) {
 				int id = rs.getInt("ID");
 				ids.add(id);
@@ -192,16 +168,17 @@ public class DBOut extends SupperDB {
 	 * @param id is the plane id
 	 * @return plane with the given id
 	 */
-	public Plane getPlaneByID (int id) throws DataNotFoundException {
+	public Plane getPlaneByID(int id) throws DataNotFoundException {
 		Plane p = null;
 		try {
-			var rs = querryDB(SQLQueries.getPlaneByID + id);
+			var rs = queryDB(SQLQueries.getPlaneByID + id);
 			if (rs.next()) {
-				var a = new Airline(-1, "BIA", "BUFU Int. Airlines");
+				//var a = new Airline(-1, "BIA", "BUFU Int. Airlines");
 				//Airline a = getAirlineByTag(rs.getString("airline"));
-				p = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailnr"), rs.getString("type"), rs.getString("registration"), a);
+				var airline = this.getAirlineByID(rs.getInt("airline"));
+				p = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailnr"), rs.getString("type"), rs.getString("registration"), airline);
 			} else {
-				var a = new Airline(-1, "None", "None");
+				var a = new Airline(-1, "None", "None", "None");
 				p = new Plane(-1, "None", "None", "None", "None", a);
 				throw new DataNotFoundException();
 			}
@@ -214,6 +191,36 @@ public class DBOut extends SupperDB {
 		return p;
 	}
 
+	public Airline getAirlineByID(final int id)
+			throws DataNotFoundException {
+
+		try {
+			var query = "SELECT * FROM airlines a " +
+					"JOIN planes p " +
+					"ON ((p.airline = a.ID) " +
+					"AND (p.ID = " + id + "))";
+			var rs = super.queryDB(query);
+			Airline airline = null;
+			if (rs.next()) {
+				final int airlineID = rs.getInt("ID");
+				final String tag = rs.getString("icaotag"),
+						name = rs.getString("name"),
+						country = rs.getString("country");
+				airline = new Airline(airlineID, tag, name, country);
+			}
+			rs.close();
+			if (airline == null) {
+				throw new DataNotFoundException();
+			}
+			return airline;
+		} catch (DataNotFoundException dnf) {
+			throw new DataNotFoundException("airline with ID " + id + " not found!");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	/**
 	 * @param icao
 	 * @return
@@ -222,7 +229,7 @@ public class DBOut extends SupperDB {
 	public int checkPlaneInDB (String icao) {
 		var planeFilter = "SELECT ID FROM planes WHERE icaonr = '" + icao + "' LIMIT 1";
 		try {
-			var rs = this.querryDB(planeFilter);
+			var rs = this.queryDB(planeFilter);
 			int id;
 			if (rs.next()) {
 				id = rs.getInt(1);
@@ -254,7 +261,7 @@ public class DBOut extends SupperDB {
 		var dps = new Vector<DataPoint>();
 		//var flight_id = Utilities.packString(flightID);
 		try {
-			var rs = querryDB("SELECT * FROM tracking WHERE flightid = " + flightID);
+			var rs = queryDB("SELECT * FROM tracking WHERE flightid = " + flightID);
 			while (rs.next()) {
 				// TODO: IF STATEMENT
 				var p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
@@ -279,7 +286,7 @@ public class DBOut extends SupperDB {
 		var dps = new HashMap<Integer, DataPoint>();
 		//var flight_id = Utilities.packString(flightID);
 		try {
-			var rs = querryDB("SELECT * FROM tracking WHERE flightid = " + flightID);
+			var rs = queryDB("SELECT * FROM tracking WHERE flightid = " + flightID);
 			while (rs.next()) {
 				// TODO: IF STATEMENT
 				var p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
@@ -307,7 +314,7 @@ public class DBOut extends SupperDB {
 		var getLastTracking = "SELECT max(timestamp) FROM tracking WHERE flightid = " + id;
 		//var getLastTracking = "SELECT timestamp FROM tracking WHERE flightid == "+ id +" ORDER BY ID DESC LIMIT 1";
 		try {
-			var rs = this.querryDB(getLastTracking);
+			var rs = this.queryDB(getLastTracking);
 
 			while (rs.next()) {
 				timestamp = rs.getLong(1);
@@ -326,7 +333,7 @@ public class DBOut extends SupperDB {
 		DataPoint dp = null;
 		var getLastTrackingByFlightID =  "SELECT * FROM tracking WHERE flightid = '"+ id +"' ORDER BY ID DESC LIMIT 1";
 		try {
-			var rs = querryDB(getLastTrackingByFlightID);
+			var rs = queryDB(getLastTrackingByFlightID);
 			while (rs.next()) {
 				var p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
 				dp = new DataPoint(rs.getInt("ID"), id, p, rs.getInt("timestamp"),
@@ -350,7 +357,7 @@ public class DBOut extends SupperDB {
 		int tid = -1;
 		var getLastTrackingByFlightID =  "SELECT ID FROM tracking WHERE flightid = '"+ flightID +"' ORDER BY ID DESC LIMIT 1";
 		try {
-			var rs = querryDB(getLastTrackingByFlightID);
+			var rs = queryDB(getLastTrackingByFlightID);
 			if (rs.next()) {
 				tid = rs.getInt("ID");
 			}
@@ -384,9 +391,9 @@ public class DBOut extends SupperDB {
 	public List<Flight> getAllFlights () {  // TODO between
 		var flights = new ArrayList<Flight>();
 		try {
-			var rs = super.querryDB(SQLQueries.getFlights);
+			var rs = super.queryDB(SQLQueries.getFlights);
 			int counter = 0;
-			while (rs.next() && counter <= this.maxLoadedFlights) { // counter: max flights -> to limit the incoming data (prevents a crash)
+			while (rs.next() && counter <= UserSettings.getMaxLoadedData()) { // counter: max flights -> to limit the incoming data (prevents a crash)
 				var dps = this.getCompleteTrackingByFlight(rs.getInt("ID"));
 				var aps = this.getAirports(rs.getString("src"), rs.getString("dest"));
 				var plane = this.getPlaneByID(rs.getInt("plane"));
@@ -411,7 +418,7 @@ public class DBOut extends SupperDB {
 		callsign = Utilities.packString(callsign);
 		var ids = new ArrayDeque<Integer>();
 		try {
-			var rs = querryDB(SQLQueries.getFlightIDsByCallsign + callsign);
+			var rs = queryDB(SQLQueries.getFlightIDsByCallsign + callsign);
 			while (rs.next()) {
 				ids.add(rs.getInt("ID"));
 			}
@@ -432,7 +439,7 @@ public class DBOut extends SupperDB {
 	 */
 	public int getLastFlightID() {
 		try {
-			var rs = this.querryDB(SQLQueries.getLastFlightID);
+			var rs = this.queryDB(SQLQueries.getLastFlightID);
 			int flightid;
 			if (rs.next()) {
 				flightid = rs.getInt("ID");
@@ -456,7 +463,7 @@ public class DBOut extends SupperDB {
 	 */
 	public int checkFlightInDB(Frame f, int planeid) {
 		try {
-			var rs = this.querryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
+			var rs = this.queryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
 			int flightID;
 			if (rs.next()) {
 				flightID = rs.getInt("ID");
@@ -476,7 +483,7 @@ public class DBOut extends SupperDB {
 	public List<Integer> checkEnded() {
 		var flightIDs = new ArrayList<Integer>();
 		try {
-			var rs = this.querryDB(SQLQueries.checkEndOfFlight);
+			var rs = this.queryDB(SQLQueries.checkEndOfFlight);
 
 			while (rs.next()) {
 				flightIDs.add(rs.getInt(1));
@@ -494,7 +501,7 @@ public class DBOut extends SupperDB {
 			throws DataNotFoundException {
 		Flight f = null;
 		try {
-			ResultSet rs = super.querryDB(SQLQueries.getFlightByID + id);
+			ResultSet rs = super.queryDB(SQLQueries.getFlightByID + id);
 
 			if (rs.next()) {
 				var airports = this.getAirports(rs.getString("src"), rs.getString("dest")).toArray();
@@ -517,7 +524,7 @@ public class DBOut extends SupperDB {
 	public List<Flight> getAllFlightsBetween (int start_id, int end_id) {
 		var flights = new ArrayList<Flight>();
 		try {
-			var rs = super.querryDB(	"SELECT * FROM flights " +
+			var rs = super.queryDB(	"SELECT * FROM flights " +
 												"WHERE (ID BETWEEN " + start_id + " AND " + end_id + ") " +
 												"AND endTime IS NULL");
 			int counter = 0;
@@ -544,7 +551,7 @@ public class DBOut extends SupperDB {
 	 */
 	public int getEntriesByFlightID (String table, int flightID) {
 		try {
-			var lengthRS = super.querryDB("SELECT count(*) FROM " + table + " WHERE flightid == " + flightID);
+			var lengthRS = super.queryDB("SELECT count(*) FROM " + table + " WHERE flightid == " + flightID);
 			return lengthRS.getInt(1); // no rs.close needed
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -557,7 +564,7 @@ public class DBOut extends SupperDB {
 		try {
 			String querry = "SELECT ID FROM flights " +
 							"WHERE plane " + SQLQueries.IN_INT(ids);
-			var rs = super.querryDB(querry);
+			var rs = super.queryDB(querry);
 			while (rs.next())  {
 				int id = rs.getInt("ID");
 				flights.add(id);
@@ -584,7 +591,7 @@ public class DBOut extends SupperDB {
 			var querry = 	"SELECT f.ID FROM flights f " +
 							"JOIN planes p ON ((p.ID = f.plane) AND (f.endTime IS NULL))" +
 							"WHERE (p.type " + SQLQueries.IN_STR(planetypes) + ")";
-			var rs = super.querryDB(querry);
+			var rs = super.queryDB(querry);
 			while (rs.next()) {
 				var id = rs.getInt("ID");
 				ids.add(id);
@@ -611,7 +618,7 @@ public class DBOut extends SupperDB {
 		tailNr = Utilities.packString(tailNr);
 		var ids = new ArrayDeque<Integer>();
 		try {
-			var rs = super.querryDB(SQLQueries.getPlaneIDByTailNr + tailNr);
+			var rs = super.queryDB(SQLQueries.getPlaneIDByTailNr + tailNr);
 			while (rs.next()) {
 				int id = rs.getInt("ID");
 				ids.add(id);
@@ -635,7 +642,7 @@ public class DBOut extends SupperDB {
 		var allTypes = new ArrayDeque<String>();
 		try {
 			var querry = "SELECT type FROM planes WHERE type LIKE '" + planetype + "%' GROUP BY type";
-			var rs = super.querryDB(querry);
+			var rs = super.queryDB(querry);
 			while (rs.next()) {
 				allTypes.add(rs.getString("type"));
 			}
@@ -653,7 +660,7 @@ public class DBOut extends SupperDB {
 	public ArrayDeque<String> getAllCallsignsLike(final String callsign) {
 		var allCallsigns = new ArrayDeque<String>();
 		try {
-			var rs = super.querryDB("SELECT DISTINCT callsign FROM flights WHERE callsign LIKE '" + callsign + "%'");
+			var rs = super.queryDB("SELECT DISTINCT callsign FROM flights WHERE callsign LIKE '" + callsign + "%'");
 			while (rs.next()) {
 				allCallsigns.add(rs.getString("callsign"));
 			}
@@ -671,7 +678,7 @@ public class DBOut extends SupperDB {
 	public ArrayDeque<Integer> getAirportIDsLike(String airport) {
 		var aids = new ArrayDeque<Integer>();
 		try {
-			var rs = super.querryDB(	"SELECT DISTINCT ID FROM airports " +
+			var rs = super.queryDB(	"SELECT DISTINCT ID FROM airports " +
 											 	"WHERE ((iatatag LIKE '%" + airport + "%') " +
 												"OR (name LIKE '%" + airport + "%'))");
 			while (rs.next()) {
@@ -696,7 +703,7 @@ public class DBOut extends SupperDB {
 			var querry = 	"SELECT max(t.ID) AS ID, t.flightid, t.latitude, t.longitude, t.altitude, t.groundspeed, t.heading, t.squawk, t.timestamp " +
 							"FROM tracking t " +
 							"WHERE flightid " + SQLQueries.IN_INT(flightIDs) + " GROUP BY flightid";
-			var rs = super.querryDB(querry);
+			var rs = super.queryDB(querry);
 			while (rs.next()) {
 				var p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
 				var dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"), p, rs.getInt("timestamp"),
@@ -728,7 +735,7 @@ public class DBOut extends SupperDB {
 							"JOIN flights f ON ((f.ID = t.flightid) " +
 							"AND (f.endTime IS NULL)) " +
 							"WHERE (t.flightid BETWEEN " + from + " AND " + to + ")";*/
-			var rs = super.querryDB(querry);
+			var rs = super.queryDB(querry);
 			while (rs.next()) {
 				var p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
 				var dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"), p, rs.getInt("timestamp"),
@@ -749,7 +756,7 @@ public class DBOut extends SupperDB {
 	public final Deque<Integer> getLiveFlightIDs(final int from, final int to) {
 		var ids = new ArrayDeque<Integer>();
 		try {
-			var rs = super.querryDB(	"SELECT ID FROM flights WHERE endTime IS NOT NULL AND ID BETWEEN "
+			var rs = super.queryDB(	"SELECT ID FROM flights WHERE endTime IS NOT NULL AND ID BETWEEN "
 												+ from + " AND " + to);
 			while (rs.next()) {
 				ids.add(rs.getInt("ID"));
@@ -792,7 +799,7 @@ public class DBOut extends SupperDB {
 					"JOIN flights f ON ((f.ID = t.flightid) " +
 					"AND ((f.src LIKE '" + tag + "') " +
 					"OR (f.dest LIKE '" + tag + "')))"; // eventuell vor/hinterher _ einfügen
-			var rs = super.querryDB(querry);
+			var rs = super.queryDB(querry);
 			DataPoint dp;
 			while (rs.next()) {
 				dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"),
@@ -821,7 +828,7 @@ public class DBOut extends SupperDB {
 		try {
 			var querry = 	SQLQueries.SELECT(false, "f.src", "f.dest") +
 							SQLQueries.FROM("flights f");
-			var rs = super.querryDB(querry);
+			var rs = super.queryDB(querry);
 			int counter = 0;
 			while (rs.next() && counter < 5000) { // TODO remove counter for all airports // could take a little time
 				var src = Utilities.stripString(rs.getString("src"));
@@ -850,7 +857,7 @@ public class DBOut extends SupperDB {
 			var querry = "SELECT latitude, longitude " +
 						 "FROM tracking ";
 						 //"GROUP BY flightid"; // evtl JOIN ?? läuft aber gut, schneller als die obere querry
-			var rs = super.querryDB(querry);
+			var rs = super.queryDB(querry);
 			while (rs.next()) {
 				var pos = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
 				positions.add(pos);
@@ -872,7 +879,7 @@ public class DBOut extends SupperDB {
 					 "FROM tracking t " +
 					 "WHERE (t.ID BETWEEN " + from + " AND " + to + ")";
 		try {
-			var rs = super.querryDB(querry);
+			var rs = super.queryDB(querry);
 			Position pos;
 			int speed;
 			while (rs.next()) {
@@ -894,7 +901,7 @@ public class DBOut extends SupperDB {
 		var ids = new ArrayDeque<Integer>();
 		try {
 			var query = "SELECT ID FROM flights";
-			var rs = super.querryDB(query);
+			var rs = super.queryDB(query);
 			while (rs.next()) {
 				ids.add(rs.getInt("ID"));
 			}
@@ -917,7 +924,7 @@ public class DBOut extends SupperDB {
 		try {
 			var query = "SELECT p.icaonr AS icao, p.ID AS pid, f.ID AS fid FROM planes p " +
 						"JOIN flights f ON (f.plane = p.ID)";
-			var rs = super.querryDB(query);
+			var rs = super.queryDB(query);
 			while (rs.next()) {
 				int[] values = {
 					rs.getInt("pid"),
@@ -938,7 +945,7 @@ public class DBOut extends SupperDB {
 			var query = "SELECT t.flightid AS fid, max(t.timestamp) AS ts FROM tracking t " +
 						"JOIN flights f ON (f.ID = t.flightid) AND (f.endTime IS NULL)" +
 						"GROUP BY t.flightid";
-			var rs = super.querryDB(query);
+			var rs = super.queryDB(query);
 			while (rs.next()) {
 				map.put(rs.getInt(1), rs.getLong(2));
 			}
@@ -953,7 +960,7 @@ public class DBOut extends SupperDB {
 		var map = new HashMap<String, Integer>();
 		try {
 			var query = "SELECT plane, flightnr FROM flights WHERE endTime IS NULL";
-			var rs = super.querryDB(query);
+			var rs = super.queryDB(query);
 			while (rs.next()) {
 				map.put(rs.getString(2), rs.getInt(1));
 			}
@@ -968,7 +975,7 @@ public class DBOut extends SupperDB {
 		var map = new HashMap<String, Integer>();
 		try {
 			var query = "SELECT ID, flightnr FROM flights WHERE (endTime IS NULL)";
-			var rs = super.querryDB(query);
+			var rs = super.queryDB(query);
 			while (rs.next()) {
 				map.put(rs.getString(2), rs.getInt(1));
 			}
@@ -983,7 +990,7 @@ public class DBOut extends SupperDB {
 		var map = new HashMap<String, Integer>();
 		try {
 			var query = "SELECT ID, flightnr FROM flights WHERE (ID " + SQLQueries.IN_INT(flightIDs) + ") AND (endTime IS NULL)";
-			var rs = super.querryDB(query);
+			var rs = super.queryDB(query);
 			while (rs.next()) {
 				var fnr = rs.getString(2);
 				int id = rs.getInt(1);
@@ -1002,7 +1009,7 @@ public class DBOut extends SupperDB {
 		int size = -1;
 		try {
 			var query = "SELECT count(ID) AS size FROM " + table;
-			var rs = super.querryDB(query);
+			var rs = super.queryDB(query);
 			if (rs.next()) {
 				size = rs.getInt("size");
 			}
@@ -1022,7 +1029,7 @@ public class DBOut extends SupperDB {
 		var icaos = new ArrayDeque<String>();
 		try {
 			var query = "SELECT icaonr FROM planes WHERE ID " + SQLQueries.IN_INT(planeIDs);
-			var rs = super.querryDB(query);
+			var rs = super.queryDB(query);
 			while (rs.next()) {
 				icaos.add(rs.getString(1));
 			}
@@ -1037,12 +1044,12 @@ public class DBOut extends SupperDB {
 		var ids = new ArrayDeque<Integer>();
 		try {
 			var query = "SELECT ID FROM planes";
-			var rs = super.querryDB(query);
+			var rs = super.queryDB(query);
 			while (rs.next()) {
 				ids.add(rs.getInt(1));
 			}
 			rs.close();
-		} catch (Exception e) {
+		} catch (DataNotFoundException | SQLException e) {
 			e.printStackTrace();
 		}
 		return ids;

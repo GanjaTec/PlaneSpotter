@@ -277,28 +277,4 @@ public abstract class Utilities {
         return files;
     }
 
-    // prototype //
-    public static Flight frameToFlight(final Frame frame, final int id) {
-        var dataPoints = new HashMap<Integer, DataPoint>();
-        // putting first data point to map
-        dataPoints.put(0, new DataPoint(0, -1,
-                new Position(frame.getLat(),
-                        frame.getLon()),
-                frame.getTimestamp(),
-                frame.getSquawk(),
-                frame.getGroundspeed(),
-                frame.getHeading(),
-                frame.getAltitude()));
-        // returning new flight object
-        return new Flight(id,
-                new Airport(-1, frame.getSrcAirport(), "unknown", null),
-                new Airport(-1, frame.getSrcAirport(), "unknown", null),
-                frame.getCallsign(),
-                new Plane(-1, frame.getIcaoAdr(), frame.getTailnr(),
-                        frame.getPlanetype(), frame.getRegistration(),
-                        new Airline(-1, frame.getAirline(), "unknown")),
-                frame.getFlightnumber(),
-                dataPoints);
-    }
-
 }

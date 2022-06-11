@@ -19,7 +19,7 @@ public final class DefaultObject {
      *  constant default objects for dataclasses-objects
      */
     // default airline
-    public static final Airline DEFAULT_AIRLINE = new Airline(-1, "None", "None");
+    public static final Airline DEFAULT_AIRLINE = new Airline(-1, "None", "None", "None");
     // default position
     public static final Position DEFAULT_POSITION = new Position(0d, 0d);
     // default airport
