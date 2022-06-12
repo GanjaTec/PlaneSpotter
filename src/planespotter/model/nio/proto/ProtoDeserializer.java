@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * It converts the HttpResponse to a Collection of Frames,
  * which can be used to create further dataclasses like flights, planes, etc...
  */
-public class ProtoDeserializer extends DBManager implements AbstractDeserializer {
+public class ProtoDeserializer implements AbstractDeserializer {
 
     /**
      * gets HttpResponse's for specific areas and deserializes its data to Frames

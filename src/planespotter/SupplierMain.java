@@ -32,11 +32,11 @@ public abstract class SupplierMain {
         final var keeper = new ProtoKeeper(1200L);
 
         scheduler.schedule(() -> {
-            supplier0.run();
-            supplier1.run();
-            keeper.run();
-            Runtime.getRuntime().gc();
-        }, "Supplier-Main", 0, 420);
+            scheduler.exec(supplier0, "Supplier-0", true, 2, false)
+                     .exec(supplier1, "Supplier-1", true, 2, false);
+        }, "Supplier-Main", 0, 300)
+                .schedule(keeper, "Keeper", 100, 400)
+                .schedule(System::gc, "GC Caller", 30, 20);
     }
 
 }

@@ -2,6 +2,7 @@ package planespotter.model.nio.proto;
 
 import planespotter.model.io.DBIn;
 import planespotter.model.io.DBOut;
+import planespotter.model.io.SupperDB;
 import planespotter.model.nio.Keeper;
 
 import static planespotter.util.Time.*;
@@ -23,7 +24,7 @@ import static planespotter.util.Time.*;
  * @see planespotter.model.nio.Keeper
  * @see planespotter.model.io.SupperDB
  */
-public class ProtoKeeper extends DBManager implements Keeper {
+public class ProtoKeeper extends SupperDB implements Keeper {
     // threshold milliseconds
     private final long thresholdMillis;
     // DB-In/Out for database communication
@@ -53,7 +54,7 @@ public class ProtoKeeper extends DBManager implements Keeper {
         int rowsUpdated = 0;
         try {
             var fIDsAndTimestamps = dbo.getLiveFlightIDsWithTimestamp();
-            if (fIDsAndTimestamps != null) {
+            if (!fIDsAndTimestamps.isEmpty()) {
                 var fids = fIDsAndTimestamps.keySet();
                 long ts;
                 for (int id : fids) {

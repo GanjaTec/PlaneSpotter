@@ -56,11 +56,12 @@ public class Scheduler {
      * @param initDelay is the src delay in seconds, must be 1 or higher
      * @param period is the period in seconds, must be 0 or higher
      */
-    public void schedule(@NotNull Runnable task, @NotNull String tName, int initDelay, int period) {
+    public final Scheduler schedule(@NotNull Runnable task, @NotNull String tName, int initDelay, int period) {
         this.schedule(() -> {
             Thread.currentThread().setName(tName);
             task.run();
         }, initDelay, period);
+        return this;
     }
 
     /**
@@ -69,13 +70,14 @@ public class Scheduler {
      * @param initDelay is the src delay in seconds, must be 1 or higher
      * @param period is the period in seconds, must be 0 or higher
      */
-    public void schedule(@NotNull Runnable task, int initDelay, int period) {
+    public final Scheduler schedule(@NotNull Runnable task, int initDelay, int period) {
         if (initDelay < 0) {
             throw new IllegalArgumentException("init delay out of range! must be 0 or higher!");
         } if (period < 1) {
             throw new IllegalArgumentException("period out of range! must be 1 or higher!");
         }
         scheduled_exe.scheduleAtFixedRate(task, initDelay, period, TimeUnit.SECONDS);
+        return this;
     }
 
     /**
@@ -86,8 +88,8 @@ public class Scheduler {
      * @param target is the Runnable to execute
      * @param tName is the Thread-Name
      */
-    public void exec(Runnable target, String tName) {
-        this.exec(target, tName, false, 5, true);
+    public final Scheduler exec(@NotNull Runnable target, @NotNull String tName) {
+        return this.exec(target, tName, false, 5, true);
     }
 
     /**
@@ -101,7 +103,7 @@ public class Scheduler {
      * @param prio is the priority from 1-10
      * @param withTimeout if the task should have a timeout
      */
-    public void exec(@NotNull Runnable target, String tName, boolean daemon, int prio, boolean withTimeout) {
+    public final Scheduler exec(@NotNull Runnable target, @NotNull String tName, boolean daemon, int prio, boolean withTimeout) {
         if (prio < 1 || prio > 10) {
             throw new IllegalArgumentException("priority must be between 1 and 10!");
         }
@@ -119,6 +121,7 @@ public class Scheduler {
         } else {
             CompletableFuture.runAsync(target, exe);
         }
+        return this;
     }
 
     /**

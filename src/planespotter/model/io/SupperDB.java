@@ -13,6 +13,9 @@ import java.util.Arrays;
  */
 public class SupperDB {
 
+	// writing boolean, true when writing
+	protected static volatile boolean writing = false;
+
 	protected static Connection getDBConnection()
 			throws ClassNotFoundException, SQLException {
 

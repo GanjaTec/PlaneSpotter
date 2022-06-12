@@ -646,13 +646,17 @@ public class Controller {
     // private methods
 
     private void  showRasterHeatMap(String heatText, MapManager bbn, DBOut dbOut) {
-        var positions = dbOut.getAllTrackingPositions();
-        var viewer = gui.getMap();
-        var img = new RasterHeatMap(1f) // TODO replace durch addHeatMap
-                .heat(positions)
-                .createImage();
-        bbn.createRasterHeatMap(img, viewer)
-                .recieveMap(viewer, heatText);
+        try {
+            var positions = dbOut.getAllTrackingPositions();
+            var viewer = gui.getMap();
+            var img = new RasterHeatMap(1f) // TODO replace durch addHeatMap
+                    .heat(positions)
+                    .createImage();
+            bbn.createRasterHeatMap(img, viewer)
+                    .recieveMap(viewer, heatText);
+        } catch (DataNotFoundException e) {
+            this.handleException(e);
+        }
     }
 
     private void showCircleHeatMap(String headText, MapManager bbn, DBOut dbOut) {
@@ -660,12 +664,17 @@ public class Controller {
         //var positions = Utilities.parsePositionVector(liveTrackingBetween);
         //var positionHeatMap = new Statistics().positionHeatMap(positions);
         //var map = bbn.createPrototypeHeatMap(positionHeatMap)
-        var positions = dbOut.getAllTrackingPositions();
-        var viewer = gui.getMap();
-        viewer.setHeatMap(new RasterHeatMap(1f) // TODO: 26.05.2022 addHeatMap
-                .heat(positions)
-                .createImage());
-        bbn.recieveMap(viewer, headText);
+        Vector<Position> positions = null;
+        try {
+            positions = dbOut.getAllTrackingPositions();
+            var viewer = gui.getMap();
+            viewer.setHeatMap(new RasterHeatMap(1f) // TODO: 26.05.2022 addHeatMap
+                    .heat(positions)
+                    .createImage());
+            bbn.recieveMap(viewer, headText);
+        } catch (DataNotFoundException e) {
+            this.handleException(e);
+        }
     }
 
     private void showSignificanceMap(String headText, MapManager bbn, DBOut dbOut) {
@@ -759,25 +768,17 @@ public class Controller {
             return;
         }
         var flights = new ArrayList<Flight>();
-        Flight flight;
-        int flightID;
-        var fids = dbOut.getLiveFlightIDs(10000, 25000);
-        for (int id : fids) {
-            try {
-                flights.add(dbOut.getFlightByID(id));
-            } catch (DataNotFoundException e) {
-                logger.errorLog("flight with  ID " + id + " doesn't exist!", this);
+        int flightID = -1;
+        try {
+            var fids = dbOut.getLiveFlightIDs(10000, 25000);
+            while (!fids.isEmpty()) {
+                flightID = fids.poll();
+                flights.add(dbOut.getFlightByID(flightID));
             }
+        } catch (DataNotFoundException e) {
+            logger.errorLog("flight with  ID " + flightID + " doesn't exist!", this);
+            this.handleException(e);
         }
-        /*for (int i = 0; i < 100; i++) {  // TODO anders machen! dauert zu lange, zu viele Anfragen!
-            flightID = loadedData.get(i).flightID();
-            try {
-                flight = dbOut.getFlightByID(flightID);
-                flights.add(flight);
-            } catch (DataNotFoundException e) {
-                logger.errorLog("flight with the ID " + flightID + " doesn't exist!", this);
-            }
-        }*/
         var treePlant = new TreePlantation();
         treePlant.createTree(treePlant.allFlightsTreeNode(flights), this.guiAdapter);
     }

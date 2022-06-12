@@ -88,7 +88,7 @@ public class Test {
                 ));
     }
 
-    private void bitmapWriteTest(File file) {
+    private void bitmapWriteTest(File file) throws DataNotFoundException {
         var positions = new DBOut().getAllTrackingPositions();
         var heat = new RasterHeatMap(0.01f)
                 .heat(positions);
@@ -161,7 +161,7 @@ public class Test {
         return null;
     }
 
-    private void printRectHeatMap() {
+    private void printRectHeatMap() throws DataNotFoundException {
         long startTime = System.currentTimeMillis();
         System.out.println("Loading heat map...");
         System.out.println();
