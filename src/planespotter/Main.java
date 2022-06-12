@@ -15,8 +15,7 @@ public abstract class Main {
      * Project Main-Method
      * @param args -> can be ignored
      */
-
-    public static void main (String[] args) {
+    public static void main(String[] args) {
 
         final var control = Controller.getInstance();
 
