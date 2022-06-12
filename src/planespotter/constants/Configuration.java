@@ -5,22 +5,14 @@ package planespotter.constants;
  * @author jml04
  * @version 1.0
  *
- * class Configuration is the planespotter configuration
- * // TODO setting kommen entweder hier rein oder in eine extra Klasse für "User-Settings"
- * // TODO dir could be changed in the future ( i'm not safe )
+ * abstract class Configuration contains the internal planespotter-configuration
  */
-public final class Configuration {
-
-    /**
-     * private constructor
-     */
-    private Configuration () {
-    }
+public abstract class Configuration {
 
     // max thread pool size
     public static final int MAX_THREADPOOL_SIZE = 40;
     // thread keep-alive-time
-    public static final long KEEP_ALIVE_TIME = 6L;
+    public static final long KEEP_ALIVE_TIME = 4L;
     // core pool size (threads that are running constantly)
     public static final int CORE_POOLSIZE = 0;
 

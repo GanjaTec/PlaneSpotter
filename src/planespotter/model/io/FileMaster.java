@@ -27,7 +27,7 @@ public class FileMaster {
     /**
      * saves the config as a .cfg file
      */
-    public Runnable saveConfig () {
+    public static void saveConfig() {
         var fileWizard = new FileMaster();
         // saving / loading at the monment ?
         try {
@@ -45,7 +45,6 @@ public class FileMaster {
         } finally {
             Controller.getLogger().sucsessLog("configuration.cfg saved sucsessfully!", fileWizard);
         }
-        return this::saveConfig;
     }
 
     /**
@@ -70,21 +69,18 @@ public class FileMaster {
     /**
      * saves a flight route in a .psp (.planespotter) file
      */
-    public void savePlsFile (JFileChooser chooser) {
-        var ctrl = Controller.getInstance();
+    public void savePlsFile (File file, Controller ctrl) {
         try {
-            var file = chooser.getSelectedFile();
             if (!file.exists()) {
                 file.createNewFile();
             }
             if (!ctrl.loadedData.isEmpty()) {
-                MapData mapData = new MapData(ctrl.loadedData, ctrl.currentViewType, ctrl.currentVisibleRect);
+                var mapData = new MapData(ctrl.loadedData, Controller.getGUI().getCurrentViewType(), Controller.getGUI().getCurrentVisibleRect());
                 this.writeMapData(file, mapData);
             } else {
                 throw new DataNotFoundException("Couldn't save flight route, loaded data is empty!");
             }
-        } catch (
-                IOException | DataNotFoundException e) {
+        } catch (IOException | DataNotFoundException e) {
             e.printStackTrace();
         } finally {
             ctrl.done();

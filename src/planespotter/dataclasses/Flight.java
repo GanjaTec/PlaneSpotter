@@ -13,89 +13,30 @@ public record Flight(int id,
                      String callsign,
                      Plane plane,
                      String flightNr,
-                     HashMap<Integer, DataPoint> dataPoints) {
+                     HashMap<Integer, DataPoint> dataPoints)
+        implements Data {
+
+    public static Flight parseFlight(final Frame frame, final int id) {
+        var dataPoints = new HashMap<Integer, DataPoint>();
+        // putting first data point to map
+        dataPoints.put(0, new DataPoint(0, id,
+                new Position(frame.getLat(),
+                        frame.getLon()),
+                frame.getTimestamp(),
+                frame.getSquawk(),
+                frame.getGroundspeed(),
+                frame.getHeading(),
+                frame.getAltitude()));
+        // returning new flight object
+        return new Flight(id,
+                new Airport(-1, frame.getSrcAirport(), null, null),
+                new Airport(-1, frame.getDestAirport(), null, null),
+                frame.getCallsign(),
+                new Plane(-1, frame.getIcaoAdr(), frame.getTailnr(),
+                        frame.getPlanetype(), frame.getRegistration(),
+                        new Airline(-1, frame.getAirline(), null,  null)),
+                frame.getFlightnumber(),
+                dataPoints);
+    }
+
 }
-
-/*public class Flight implements Data {
-    private int id;
-    private Airport src;
-    private Airport dest;
-    private String callsign;
-    private String flightnr;
-    private Plane plane;
-    private HashMap<Integer, DataPoint> datapoints;
-
-    *//**
-     * Constructor
-     * 
-     * @param id int Database ID
-     * @param src Airport Starting Airport
-     * @param dest Airport Destination Airport
-     * @param callsign String Callsign of the Flight
-     * @param plane Plane a single Plane
-     * @param flightnr String Flightnumber, not the FlightID
-     * @param datapoints HashMap<Integer, DataPoint> Hashmap containing all Datapoint keyed by Timestamp
-     *//*
-    public Flight (int id, Airport src, Airport dest, String callsign, Plane plane, String flightnr, HashMap<Integer, DataPoint> datapoints) {
-        this.id = id;
-        this.src = src;
-        this.dest = dest;
-        this.callsign = callsign;
-        this.plane = plane;
-        this.flightnr = flightnr;
-        this.datapoints = datapoints;
-    }
-
-    *//**
-     * getter
-     * TODO: return the Flight attribute
-     *//*
-    *//**
-     * @return int Database ID
-     *//*
-    public int getID() {
-    	return this.id;
-    	}
-
-    *//**
-     * @return Airport Starting Airport
-     *//*
-    public Airport getStart() {
-    	return this.src;
-    	}
-
-    *//**
-     * @return Airport Destination Airport
-     *//*
-    public Airport getDest() {
-    	return this.dest;
-    	}
-    
-    *//**
-     * @return String Callsign of the Flight
-     *//*
-    public String getCallsign() {
-    	return this.callsign;
-    }
-
-    *//**
-     * @return Plane Plane used for the Flight
-     *//*
-    public Plane getPlane(){
-    	return this.plane;
-    	}
-
-    *//**
-     * @return String Flightnumber, !Important! do not confuse with FlightID
-     *//*
-    public String getFlightnr() {
-    	return this.flightnr;
-    	}
-
-    *//**
-     * @return HashMap<Long, DataPoint> All of the Tracking Data of the Flight
-     *//*
-    public HashMap<Integer, DataPoint> getDataPoints() {
-    	return this.datapoints;
-    }
-}*/

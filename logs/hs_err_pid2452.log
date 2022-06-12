@@ -27,10 +27,10 @@
 
 ---------------  S U M M A R Y ------------
 
-Command Line: -Xms512m -Xmx4096m -Dfile.encoding=UTF-8 --module-path=C:\Users\Lukas\git\PlaneSpotter\src\libs\gson-2.8.6.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\JMapViewer.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\mysql-connector-java-8.0.28.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\sqlite-jdbc-3.34.0.jar -XX:+ShowCodeDetailsInExceptionMessages planespotter.TestMain
+Command Line: -Xms512m -Xmx4096m -Dfile.encoding=UTF-8 --module-path=C:\Users\Lukas\git\PlaneSpotter\src\libs\gson-2.8.6.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\JMapViewer.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\mysql-connector-java-8.0.28.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\sqlite-jdbc-3.34.0.jar -XX:+ShowCodeDetailsInExceptionMessages planespotter.a_test.TestMain
 
 Host: AMD Ryzen 7 3800X 8-Core Processor             , 16 cores, 31G,  Windows 10 , 64 bit Build 19041 (10.0.19041.1202)
-Time: Fri Apr 15 13:02:11 2022 Mitteleuropäische Sommerzeit elapsed time: 1524.817462 seconds (0d 0h 25m 24s)
+Time: Fri Apr 15 13:02:11 2022 Mitteleuropï¿½ische Sommerzeit elapsed time: 1524.817462 seconds (0d 0h 25m 24s)
 
 ---------------  T H R E A D  ---------------
 
@@ -839,7 +839,7 @@ symbol engine: initialized successfully - sym options: 0x614 - pdb path: .;C:\Us
 
 VM Arguments:
 jvm_args: -Xms512m -Xmx4096m -Dfile.encoding=UTF-8 --module-path=C:\Users\Lukas\git\PlaneSpotter\src\libs\gson-2.8.6.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\JMapViewer.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\mysql-connector-java-8.0.28.jar;C:\Users\Lukas\git\PlaneSpotter\src\libs\sqlite-jdbc-3.34.0.jar -XX:+ShowCodeDetailsInExceptionMessages 
-java_command: planespotter.TestMain
+java_command: planespotter.a_test.TestMain
 java_class_path (initial): C:\Users\Lukas\git\PlaneSpotter\bin;C:\Users\Lukas\.p2\pool\plugins\org.junit.jupiter.api_5.7.1.v20210222-1948.jar;C:\Users\Lukas\.p2\pool\plugins\org.junit.jupiter.engine_5.7.1.v20210222-1948.jar;C:\Users\Lukas\.p2\pool\plugins\org.junit.jupiter.migrationsupport_5.7.1.v20210222-1948.jar;C:\Users\Lukas\.p2\pool\plugins\org.junit.jupiter.params_5.7.1.v20210222-1948.jar;C:\Users\Lukas\.p2\pool\plugins\org.junit.platform.commons_1.7.1.v20210222-1948.jar;C:\Users\Lukas\.p2\pool\plugins\org.junit.platform.engine_1.7.1.v20210222-1948.jar;C:\Users\Lukas\.p2\pool\plugins\org.junit.platform.launcher_1.7.1.v20210222-1948.jar;C:\Users\Lukas\.p2\pool\plugins\org.junit.platform.runner_1.7.1.v20210222-1948.jar;C:\Users\Lukas\.p2\pool\plugins\org.junit.platform.suite.api_1.7.1.v20210222-1948.jar;C:\Users\Lukas\.p2\pool\plugins\org.junit.vintage.engine_5.7.1.v20210222-1948.jar;C:\Users\Lukas\.p2\pool\plugins\org.opentest4j_1.2.0.v20190826-0900.jar;C:\Users\Lukas\.p2\pool\plugins\org.apiguardian_1.1.0.v20190826-0900.jar;C:\Users\Lukas\.p2\pool\plugins\org.junit_4.13.0.v20200204-1500.jar;C:\Users\Lukas\.p2\pool\plugins\org.hamcrest.core_1.3.0.v20180420-1519.jar
 Launcher Type: SUN_STANDARD
 

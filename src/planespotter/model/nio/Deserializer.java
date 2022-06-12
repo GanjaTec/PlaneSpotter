@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Deserializer {
+public class Deserializer implements AbstractDeserializer {
 	
 	public Deserializer() {
 	}
@@ -67,6 +67,7 @@ public class Deserializer {
 	}
 	
 	//Convert String to Frame-Objects
+	@Override
 	public List<Frame> deserialize(HttpResponse<String> resp) {
 		List<Frame> frames = new ArrayList<>();
 		for(String row : stringMagic(resp)) {

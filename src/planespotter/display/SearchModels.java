@@ -1,14 +1,16 @@
 package planespotter.display;
 
 import libs.UWPButton;
+import planespotter.controller.ActionHandler;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
 import static planespotter.constants.GUIConstants.*;
-import static planespotter.constants.GUIConstants.DefaultColor.*;
+import static planespotter.constants.DefaultColor.*;
 
 /**
  * @name SearchModels
@@ -22,13 +24,14 @@ public final class SearchModels {
     /**
      * radio buttons
      */
-    JComboBox<String> searchFor_cmbBox (JPanel parent) {
-        // TODO: setting up "search for" combo box
-        var searchFor = new JComboBox<>(new SearchModels().searchBoxItems());
+    JComboBox<String> searchFor_cmbBox(JPanel parent, ItemListener listener) {
+        // setting up "search for" combo box
+        var searchFor = new JComboBox<>(this.searchBoxItems());
         searchFor.setBounds(parent.getWidth()/2, 10, (parent.getWidth()-20)/2, 25);
         searchFor.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         searchFor.setForeground(DEFAULT_MAP_ICON_COLOR.get());
         searchFor.setFont(FONT_MENU);
+        searchFor.addItemListener(listener);
 
         return searchFor;
     }
@@ -37,11 +40,12 @@ public final class SearchModels {
      * @param parent is the panel where the combo-box is in
      * @return menu combobox-text-label
      */
-    JLabel cmbBoxLabel (JPanel parent) {
+    JLabel cmbBoxLabel(JPanel parent) {
         var boxLabel = new JLabel("Search for:");
         boxLabel.setBounds(10, 10, (parent.getWidth()-20)/2, 25);
         boxLabel.setForeground(DEFAULT_MAP_ICON_COLOR.get());
         boxLabel.setFont(FONT_MENU);
+        boxLabel.setOpaque(false);
 
         return boxLabel;
     }
@@ -49,18 +53,20 @@ public final class SearchModels {
     /**
      * @return search combo-box items (array of Strings)
      */
-    private String[] searchBoxItems () {
-        return new String[] {  "Plane",
+    private String[] searchBoxItems() {
+        return new String[] {
                 "Flight",
+                "Plane",
                 "Airline",
                 "Airport",
-                "Area"};
+                "Area"
+        };
     }
 
     /**
      * @return panel for exact search settings
      */
-    JSeparator searchSeperator (JPanel parent) {
+    JSeparator searchSeperator(JPanel parent) {
         // TODO: setting up exact search panel
         var seperator = new JSeparator(JSeparator.HORIZONTAL);
         seperator.setBounds(10, 43, parent.getWidth()-20, 2);
@@ -73,7 +79,7 @@ public final class SearchModels {
      * @param parent is the parent panel where the message label is shown in
      * @return the search message text area
      */
-    JTextArea searchMessage (JPanel parent) {
+    JTextArea searchMessage(JPanel parent) {
         var message = "Es muss mindestens eins der Felder ausgefüllt sein!";
         var headMessage = new JTextArea(message);
         headMessage.setBounds(10, parent.getHeight()-80, parent.getWidth()-20, 35);
@@ -83,6 +89,7 @@ public final class SearchModels {
         headMessage.setEditable(false);
         headMessage.setLineWrap(true);
         headMessage.setWrapStyleWord(true);
+        headMessage.setOpaque(false);
         var font = new Font(FONT_MENU.getFontName(), Font.PLAIN, 12);
         headMessage.setFont(font);
 
@@ -93,7 +100,7 @@ public final class SearchModels {
      * @param parent is the parent panel component
      * @return list of JLabels (the search field names)
      */
-    List<JComponent> flightSearch (JPanel parent, GUI gui) {
+    List<JComponent> flightSearch(JPanel parent, GUI gui, ActionHandler listener) {
         var components = new ArrayList<JComponent>();
         components.add(new JLabel("ID:"));
         var id = new JTextField();
@@ -116,24 +123,27 @@ public final class SearchModels {
                 c.setBounds(10, y, width, 25);
                 c.setBackground(DEFAULT_BG_COLOR.get());
                 c.setForeground(DEFAULT_MAP_ICON_COLOR.get());
+                c.setOpaque(false);
             } else if (c instanceof JTextField) {
                 c.setBounds(parent.getWidth()/2, y, width, 25);
                 c.setBackground(DEFAULT_FONT_COLOR.get());
                 c.setForeground(DEFAULT_FG_COLOR.get());
                 c.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
+                c.addKeyListener(listener);
                 y += 35;
-            } else if (c instanceof JButton) {
-                var buttonText = ((JButton) c).getText();
+            } else if (c instanceof JButton bt) {
+                var buttonText = bt.getText();
                 if (buttonText.equals("Load List")) {
-                    c.setBounds(10, parent.getHeight()-35, width-5, 25);
-                    c.setName("loadList");
+                    bt.setBounds(10, parent.getHeight()-35, width-5, 25);
+                    bt.setName("loadList");
                 } else if (buttonText.equals("Load Map")) {
-                    c.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
-                    c.setName("loadMap");
+                    bt.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
+                    bt.setName("loadMap");
                 }
-                c.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-                c.setForeground(DEFAULT_FONT_COLOR.get());
-                c.setBorder(MENU_BORDER);
+                bt.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                bt.setForeground(DEFAULT_FONT_COLOR.get());
+                bt.setBorder(MENU_BORDER);
+                bt.addActionListener(listener);
             }
             c.setFont(FONT_MENU);
             c.setVisible(false);
@@ -145,7 +155,7 @@ public final class SearchModels {
      * @param parent is the parent panel component
      * @return list of JLabels (the search field names)
      */
-    List<JComponent> planeSearch (JPanel parent, GUI gui) {
+    List<JComponent> planeSearch(JPanel parent, GUI gui, ActionHandler listener) {
         var components = new ArrayList<JComponent>();
         components.add(new JLabel("ID:"));
         var id = new JTextField();
@@ -176,24 +186,27 @@ public final class SearchModels {
                 c.setBounds(10, y, width, 25);
                 c.setBackground(DEFAULT_BG_COLOR.get());
                 c.setForeground(DEFAULT_MAP_ICON_COLOR.get());
+                c.setOpaque(false);
             } else if (c instanceof JTextField) {
                 c.setBounds(parent.getWidth()/2, y, width, 25);
                 c.setBackground(DEFAULT_FONT_COLOR.get());
                 c.setForeground(DEFAULT_FG_COLOR.get());
                 c.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
+                c.addKeyListener(listener);
                 y += 35;
-            } else if (c instanceof JButton) {
-                var buttonText = ((JButton) c).getText();
+            } else if (c instanceof JButton bt) {
+                var buttonText = bt.getText();
                 if (buttonText.equals("Load List")) {
-                    c.setBounds(10, parent.getHeight()-35, width-5, 25);
-                    c.setName("loadList");
+                    bt.setBounds(10, parent.getHeight()-35, width-5, 25);
+                    bt.setName("loadList");
                 } else if (buttonText.equals("Load Map")) {
-                    c.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
-                    c.setName("loadMap");
+                    bt.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
+                    bt.setName("loadMap");
                 }
-                c.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-                c.setForeground(DEFAULT_FONT_COLOR.get());
-                c.setBorder(MENU_BORDER);
+                bt.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                bt.setForeground(DEFAULT_FONT_COLOR.get());
+                bt.setBorder(MENU_BORDER);
+                bt.addActionListener(listener);
             }
             c.setFont(FONT_MENU);
             c.setVisible(false);
@@ -201,7 +214,7 @@ public final class SearchModels {
         return components;
     }
 
-    public ArrayList<JComponent> airportSearch (JPanel parent, GUI gui) {
+    public ArrayList<JComponent> airportSearch(JPanel parent, GUI gui, ActionHandler listener) {
         var components = new ArrayList<JComponent>();
         components.add(new JLabel("ID:"));
         var id = new JTextField();
@@ -228,39 +241,32 @@ public final class SearchModels {
                 c.setBounds(10, y, width, 25);
                 c.setBackground(DEFAULT_BG_COLOR.get());
                 c.setForeground(DEFAULT_MAP_ICON_COLOR.get());
+                c.setOpaque(false);
             } else if (c instanceof JTextField) {
                 c.setBounds(parent.getWidth()/2, y, width, 25);
                 c.setBackground(DEFAULT_FONT_COLOR.get());
                 c.setForeground(DEFAULT_FG_COLOR.get());
                 c.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
+                c.addKeyListener(listener);
                 y += 35;
-            } else if (c instanceof JButton) {
-                var buttonText = ((JButton) c).getText();
+            } else if (c instanceof JButton bt) {
+                var buttonText = bt.getText();
                 if (buttonText.equals("Load List")) {
-                    c.setBounds(10, parent.getHeight()-35, width-5, 25);
-                    c.setName("loadList");
+                    bt.setBounds(10, parent.getHeight()-35, width-5, 25);
+                    bt.setName("loadList");
                 } else if (buttonText.equals("Load Map")) {
-                    c.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
-                    c.setName("loadMap");
+                    bt.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
+                    bt.setName("loadMap");
                 }
-                c.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-                c.setForeground(DEFAULT_FONT_COLOR.get());
-                c.setBorder(MENU_BORDER);
+                bt.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                bt.setForeground(DEFAULT_FONT_COLOR.get());
+                bt.setBorder(MENU_BORDER);
+                bt.addActionListener(listener);
             }
             c.setFont(FONT_MENU);
             c.setVisible(false);
         }
         return components;
-    }
-
-    /**
-     * displays on the screen if there is e.g. an error
-     *
-     * @param msg is the error message
-     * @return option pane with a error message
-     */
-    public JOptionPane errorMsgPane (String msg) {
-        return new JOptionPane(msg, JOptionPane.ERROR_MESSAGE);
     }
 
 }

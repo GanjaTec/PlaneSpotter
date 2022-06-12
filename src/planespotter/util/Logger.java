@@ -14,8 +14,8 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.util.Objects;
 
 import static planespotter.constants.GUIConstants.*;
-import static planespotter.constants.GUIConstants.DefaultColor.*;
-import static planespotter.constants.GUIConstants.Images.PAPER_PLANE_ICON;
+import static planespotter.constants.DefaultColor.*;
+import static planespotter.constants.Images.PAPER_PLANE_ICON;
 
 /**
  * @name Logger
@@ -156,7 +156,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param text
      * @param color
      */
-    private void text (String text, Color color) {
+    private void text(String text, Color color) {
         var doc = this.out.getStyledDocument();
         var style = out.addStyle("new", null);
         StyleConstants.setForeground(style, color);
@@ -167,7 +167,7 @@ public class Logger extends JFrame implements ComponentListener {
         }
     }
 
-    public void close () {
+    public void close() {
         var loggedText = out.getText();
         new FileMaster().saveLogFile(loggedText);
         this.dispose();

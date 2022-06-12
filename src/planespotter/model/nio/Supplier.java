@@ -4,6 +4,7 @@ import planespotter.dataclasses.Frame;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.DBOut;
 import planespotter.model.nio.Deserializer;
+import planespotter.model.nio.proto.ProtoDeserializer;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -14,7 +15,10 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Deque;
 import java.util.List;
+
+import static planespotter.util.Time.*;
 
 /**
  * @author Lukas
@@ -36,7 +40,7 @@ public class Supplier implements Runnable{
 	public String getThreadName() {
 		return this.ThreadName;
 	}
-	
+
 	public Supplier(int threadNumber, String area) {
 		this.threadNumber = threadNumber;
 		this.ThreadName = "SupplierThread-" + threadNumber;
@@ -48,7 +52,12 @@ public class Supplier implements Runnable{
 		try {
 			Deserializer ds = new Deserializer();
 			System.out.println("Starting Thread \"" + this.ThreadName + "\"");
-			writeToDB(ds.deserialize(fr24get()));
+
+			HttpResponse<String> response = this.fr24get();
+			Deque<Frame> frames = new ProtoDeserializer().deserialize(response);
+			// use Proto-deserialize instead of ds.deserialize(...) for right-way-deserialized frames (no "" anymore)
+			// old: ds.deserialize(response)
+			writeToDB(frames, this.dbo, this.dbi);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -89,51 +98,42 @@ public class Supplier implements Runnable{
 	 *  ASSUMING that there are no references to the same object stored anywhere."
 	 *
 	 *  -> es müssen irgendwo noch Referenzen sein
-	 *  TODO finalize einbauen
 	 ***********************************************************************************/
 
-	public synchronized void writeToDB(List<Frame> frames) {
-		try {
-			long ts1 = System.nanoTime();
-			for (Frame f : frames) {
-				
-				// insert into planes
-				int airlineID = dbo.getAirlineIDByTag(f.getAirline());
-				int planeID = dbo.checkPlaneInDB(f.getIcaoAdr());
-				boolean checkPlane =  planeID > -1;
-				
-				if(!checkPlane) {
-					planeID = dbi.insertPlane(f, airlineID);
-				}
-				
-				
-				// insert into flights
-				int flightID = dbo.checkFlightInDB(f, planeID);
-				boolean checkFlight = flightID > -1;
-				
-				if(!checkFlight) {
-					flightID = dbi.insertFlight(f, planeID);
-				}
-				
-				
-				// insert into tracking
-				dbi.insertTracking(f, flightID);
-				
-				f = null;
+	public static synchronized void writeToDB(Deque<Frame> frames, DBOut dbo, DBIn dbi) {
+		// TODO: 12.06.2022 mindestens die dbo-Anfragen aus der Schleife raus, alles vorher schon in je eine Collection und darin abfragen
+		long ts1 = nowMillis();
+		while (!frames.isEmpty()) {
+			Frame frame = frames.poll();
+
+			// insert into planes
+			int airlineID = dbo.getAirlineIDByTag(frame.getAirline());
+			int planeID = dbo.checkPlaneInDB(frame.getIcaoAdr());
+			boolean checkPlane = planeID > -1;
+
+			if (!checkPlane) {
+				planeID = dbi.insertPlane(frame, airlineID);
 			}
-			
-			frames = null;	
-			long ts2 = System.nanoTime();
-			long tdiff = ts2 - ts1;
-			double tdiffSec = (double) tdiff / 1_000_000_000;
-			System.out.println(this.ThreadName + "      | filled DB in " + tdiffSec + " seconds");
-			
-			System.gc();
-		
-		} catch (Exception e) {
-			e.printStackTrace();
-			// conn.rollback();
+
+			// insert into flights
+			int flightID = dbo.checkFlightInDB(frame, planeID);
+			boolean checkFlight = flightID > -1;
+
+			if (!checkFlight) {
+				flightID = dbi.insertFlight(frame, planeID);
+			}
+
+			// insert into tracking
+			dbi.insertTracking(frame, flightID);
+
+			frame = null;
 		}
+
+		frames = null;
+
+		System.out.println("filled DB in " + elapsedSeconds(ts1) + " seconds!");
+
+		System.gc();
 
 	}
 

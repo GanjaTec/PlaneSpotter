@@ -2,13 +2,13 @@ package planespotter.constants;
 
 /**
  * @name Paths
- * @author @all
+ * @author jml04
+ * @author Bennet
+ * @author Lukas
  * @version 1.0
  *
  * Contains all (absolute) paths to various ressources,
  * root directory is the project directory
- * 
- * FIXME: 18.04.2022 files cannot be reached with these paths
  */
 public final class Paths {
 
@@ -29,6 +29,11 @@ public final class Paths {
      * contains all external libraries
      */
     public static final String LIBS_PATH = "src\\libs\\";
+
+    /**
+     * code path
+     */
+    public static final String CODE_PATH = SRC_PATH + "planespotter\\";
 
 
 }

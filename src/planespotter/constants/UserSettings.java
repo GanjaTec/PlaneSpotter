@@ -15,12 +15,13 @@ import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
  */
 public class UserSettings {
     // max loaded data
-    private static int maxLoadedData = 20000;
+    private static int maxLoadedData = 50000;
     // current tile source
     private static TileSource currentMapSource = new UserSettings().tmstMap;
     // default map base url
     private final String baseUrl = "https://a.tile.openstreetmap.de";
     // map types
+    // TODO: 06.06.2022 static ??
     public final TileSource    bingMap = new BingAerialTileSource(),
                                transportMap = new OsmTileSource.TransportMap(),
                                tmstMap = new TMSTileSource(new TileSourceInfo("neu", baseUrl, "0"));

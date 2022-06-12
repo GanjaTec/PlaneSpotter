@@ -6,12 +6,12 @@ import planespotter.controller.Controller;
 public class DataNotFoundException extends Exception {
 
     // exception message
-    final String MESSAGE = "db-data couldn't be found!";
+    private final String MESSAGE = "db-data couldn't be found!";
 
     /**
      * constructor, is called when this exception is thrown
      */
-    public DataNotFoundException () {
+    public DataNotFoundException() {
         this(null, false);
     }
 
@@ -20,7 +20,7 @@ public class DataNotFoundException extends Exception {
      *
      * @param msg is the error message
      */
-    public DataNotFoundException (String msg) {
+    public DataNotFoundException(String msg) {
         this(msg, false);
     }
 
@@ -31,33 +31,18 @@ public class DataNotFoundException extends Exception {
      * @param msg is the exception message
      * @param doLog says if the exception should be logged in the console
      */
-    public DataNotFoundException (String msg, boolean doLog) {
+    public DataNotFoundException(String msg, boolean doLog) {
+        super(msg);
         if (doLog) {
             var ctrl = Controller.getInstance();
             if (ctrl != null) {
-                ctrl.getLogger().errorLog(MESSAGE + "\n" + msg, this);
-            }
-        } else {
-            if (msg == null) {
-                this.printStackTrace();
+                Controller.getLogger().errorLog(MESSAGE + "\n" + msg, this);
             }
         }
-        /*var errorMsgPane = new SearchModels().errorMsgPane(msg);
-        errorMsgPane.setVisible(true);*/
     }
 
-    @Override
-    public void printStackTrace () {
-        var stringBuilder = new StringBuilder();
-        var stackTrace = super.getStackTrace();
-        stringBuilder.append(MESSAGE);
-        for (var el : stackTrace) {
-            stringBuilder.append("\n at ").append(el);
-        }
-        var logger = Controller.getLogger();
-        var out = stringBuilder.toString();
-        logger.errorLog(out, this);
-        super.printStackTrace();
+    public DataNotFoundException(DataNotFoundException cause) {
+        super(cause);
     }
 
     @Override

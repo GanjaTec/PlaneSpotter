@@ -6,9 +6,12 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyListener;
 
 import static planespotter.constants.GUIConstants.*;
-import static planespotter.constants.GUIConstants.DefaultColor.*;
+import static planespotter.constants.DefaultColor.*;
 
 /**
  * @name MenuModels
@@ -22,7 +25,7 @@ public final class MenuModels {
     /**
      * menubar (contains the other menu components)
      */
-    JMenuBar menuBar (JPanel parent) {
+    JMenuBar menuBar(JPanel parent) {
         // setting up menubar
         var menubar = new JMenuBar();
         menubar.setBackground(DEFAULT_BG_COLOR.get());
@@ -30,6 +33,7 @@ public final class MenuModels {
         menubar.setBounds(0, 0, parent.getWidth(), parent.getHeight());
         menubar.setBorder(LINE_BORDER);
         menubar.setLayout(null);
+        menubar.setOpaque(false);
 
         return menubar;
     }
@@ -37,7 +41,7 @@ public final class MenuModels {
     /**
      * list button
      */
-    JButton listButton (JMenuBar parent) {
+    JButton listButton(JMenuBar parent, ActionListener listener) {
         // setting up list button
         var list = new UWPButton();
         list.setText("List-View");
@@ -45,6 +49,7 @@ public final class MenuModels {
         list.setForeground(DEFAULT_FONT_COLOR.get());
         list.setBounds(10, 15, ((parent.getWidth()-20)/2)-5, 25);
         list.setFont(FONT_MENU);
+        list.addActionListener(listener);
 
         return list;
     }
@@ -52,7 +57,7 @@ public final class MenuModels {
     /**
      * map button
      */
-    JButton mapButton (JMenuBar parent) {
+    JButton mapButton(JMenuBar parent, ActionListener listener) {
         // setting up list button
         var map = new UWPButton();
         map.setText("Live-Map");
@@ -60,6 +65,7 @@ public final class MenuModels {
         map.setForeground(DEFAULT_FONT_COLOR.get());
         map.setBounds(145, 15, ((parent.getWidth()-20)/2)-5, 25);
         map.setFont(FONT_MENU);
+        map.addActionListener(listener);
 
         return map;
     }
@@ -67,7 +73,7 @@ public final class MenuModels {
     /**
      * settings button
      */
-    JButton settingsButton (JMenuBar parent) {
+    JButton settingsButton(JMenuBar parent, ActionListener listener) {
         // setting up settings menu
         var settings = new UWPButton();
         settings.setText("Settings");
@@ -75,6 +81,7 @@ public final class MenuModels {
         settings.setForeground(DEFAULT_FONT_COLOR.get());
         settings.setFont(FONT_MENU);
         settings.setBounds(10, 55, parent.getWidth()-20, 25);
+        settings.addActionListener(listener);
 
         return settings;
     }
@@ -82,7 +89,7 @@ public final class MenuModels {
     /**
      * search-filter button
      */
-    JButton searchButton (JMenuBar parent) {
+    JButton searchButton(JMenuBar parent, ActionListener listener) {
         // setting up search-settings menu
         var search_settings = new UWPButton();
         search_settings.setText("Search");
@@ -90,6 +97,7 @@ public final class MenuModels {
         search_settings.setForeground(DEFAULT_FONT_COLOR.get());
         search_settings.setFont(FONT_MENU);
         search_settings.setBounds(10, parent.getHeight()-15, parent.getWidth()-20, 25);
+        search_settings.addActionListener(listener);
 
         return search_settings;
     }
@@ -97,7 +105,7 @@ public final class MenuModels {
     /**
      *
      */
-    JProgressBar progressBar (JMenuBar parent) {
+    JProgressBar progressBar(JMenuBar parent) {
         // seting up progress bar
         var progressbar = new JProgressBar();
         progressbar.setBorder(LINE_BORDER);
@@ -114,7 +122,7 @@ public final class MenuModels {
     /**
      * search text field
      */
-    JTextField searchTextField (JMenuBar parent) {
+    JTextField searchTextField(JMenuBar parent, KeyListener listener) {
         // setting up search text field
         var search = new JTextField();
         search.setToolTipText("Search");
@@ -122,6 +130,7 @@ public final class MenuModels {
         search.setBackground(Color.WHITE);
         search.setFont(FONT_MENU);
         search.setBorder(LINE_BORDER);
+        search.addKeyListener(listener);
 
         return search;
     }
@@ -129,7 +138,7 @@ public final class MenuModels {
     /**
      * close view button
      */
-    JButton fileButton (JDesktopPane parent) {
+    JButton fileButton(JDesktopPane parent, ActionListener listener) {
         // setting up view close button
         var file = new UWPButton();
         file.setText("File");
@@ -137,6 +146,7 @@ public final class MenuModels {
         file.setForeground(DEFAULT_FONT_COLOR.get());
         file.setBounds(parent.getWidth()-184, 4, 80, 16);
         file.setFont(new Font("DialogInput", Font.PLAIN, 14));
+        file.addActionListener(listener);
 
         return file;
     }
@@ -144,7 +154,7 @@ public final class MenuModels {
     /**
      * close view button
      */
-    JButton closeViewButton (JDesktopPane parent) {
+    JButton closeViewButton(JDesktopPane parent, ActionListener listener) {
         // setting up view close button
         var closeView = new UWPButton();
         closeView.setText("Close");
@@ -152,6 +162,7 @@ public final class MenuModels {
         closeView.setForeground(DEFAULT_FONT_COLOR.get());
         closeView.setBounds(parent.getWidth()-85, 4, 80, 16);
         closeView.setFont(new Font("DialogInput", Font.PLAIN, 14));
+        closeView.addActionListener(listener);
 
         return closeView;
     }
@@ -159,7 +170,7 @@ public final class MenuModels {
     /**
      * @return settings option pane (which pops up)
      */
-    JDialog settingsDialog (JFrame parent) {
+    JDialog settingsDialog(JFrame parent) {
             var maxLoadLbl = new JLabel("Max. loaded Data:");
             maxLoadLbl.setBounds(20, 20, 180, 30);
             maxLoadLbl.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
@@ -188,36 +199,39 @@ public final class MenuModels {
     /**
      * settings opt. pane max-load text field
      */
-    JTextField settings_maxLoadTxtField () {
+    JTextField settings_maxLoadTxtField(KeyListener listener) {
         var maxLoadTxtfield = new JTextField();
         maxLoadTxtfield.setBounds(200, 20, 50, 30);
         maxLoadTxtfield.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR.get()));
         maxLoadTxtfield.setBackground(DEFAULT_BG_COLOR.get());
         maxLoadTxtfield.setForeground(DEFAULT_MAP_ICON_COLOR.get());
         maxLoadTxtfield.setFont(FONT_MENU);
+        maxLoadTxtfield.addKeyListener(listener);
 
         return maxLoadTxtfield;
     }
 
-    JButton[] settingsButtons (JDialog parent) {
+    JButton[] settingsButtons(JDialog parent, ActionListener listener) {
         int mid = parent.getWidth() / 2;
         int height = parent.getHeight() - 80;
         var cancel = new UWPButton("Cancel");
             cancel.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
             cancel.setForeground(DEFAULT_FONT_COLOR.get());
             cancel.setFont(FONT_MENU);
-        cancel.setBounds(mid - 140, height, 120, 30);
+            cancel.setBounds(mid - 140, height, 120, 30);
+            cancel.addActionListener(listener);
         var confirm = new UWPButton("Confirm");
-        confirm.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-        confirm.setForeground(DEFAULT_FONT_COLOR.get());
-        confirm.setFont(FONT_MENU);
-        confirm.setBounds(mid + 20, height, 120, 30);
+            confirm.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+            confirm.setForeground(DEFAULT_FONT_COLOR.get());
+            confirm.setFont(FONT_MENU);
+            confirm.setBounds(mid + 20, height, 120, 30);
+            confirm.addActionListener(listener);
         return new UWPButton[] {
                 cancel, confirm
         };
     }
 
-    JComboBox<String> settings_mapTypeCmbBox () {
+    JComboBox<String> settings_mapTypeCmbBox(ItemListener listener) {
         var mapTypeCmbBox = new JComboBox<>(new String[]{
                 "Bing Map",
                 "Default Map",
@@ -228,6 +242,7 @@ public final class MenuModels {
         mapTypeCmbBox.setBackground(DEFAULT_BG_COLOR.get());
         mapTypeCmbBox.setForeground(DEFAULT_MAP_ICON_COLOR.get());
         mapTypeCmbBox.setFont(FONT_MENU);
+        mapTypeCmbBox.addItemListener(listener);
 
         return mapTypeCmbBox;
     }
@@ -235,7 +250,7 @@ public final class MenuModels {
     /**
      * @return file chooser for file dialog
      */
-    public JFileChooser fileSaver (JFrame parent) {
+    public JFileChooser fileSaver(JFrame parent) {
         var home = FileSystemView.getFileSystemView().getHomeDirectory();
         var fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);
@@ -249,7 +264,7 @@ public final class MenuModels {
     /**
      * @return file chooser for file dialog
      */
-    public JFileChooser fileLoader (JFrame parent) {
+    public JFileChooser fileLoader(JFrame parent) {
         var home = FileSystemView.getFileSystemView().getHomeDirectory();
         var fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);
@@ -260,7 +275,7 @@ public final class MenuModels {
         return fileChooser;
     }
 
-    JButton[] fileMenu (JPanel parent) {
+    JButton[] fileMenu(JPanel parent, ActionListener listener) {
         var components = new JButton[] {
                 new UWPButton("Back"),
                 new UWPButton("Save"),
@@ -273,6 +288,7 @@ public final class MenuModels {
             comp.setForeground(DEFAULT_FONT_COLOR.get());
             comp.setFont(new Font("DialogInput", Font.PLAIN, 14));
             comp.setVisible(false);
+            comp.addActionListener(listener);
             minus += 84;
         }
         return components;

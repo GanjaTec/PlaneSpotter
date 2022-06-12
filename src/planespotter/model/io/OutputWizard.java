@@ -1,13 +1,18 @@
 package planespotter.model.io;
 
 import planespotter.controller.Controller;
-import planespotter.model.Scheduler;
+import planespotter.controller.Scheduler;
 import planespotter.dataclasses.DataPoint;
+import planespotter.dataclasses.Position;
+import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.ThreadOverheadError;
 
+import java.util.HashMap;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.RejectedExecutionException;
+
+import static planespotter.util.Time.*;
 
 /**
  * @name OutputWizard
@@ -22,7 +27,7 @@ public class OutputWizard extends DBOut implements Runnable {
     // ints: src-/end-id, max flights per one task, @Nullable flightID
     private final int from;
     private final int to;
-    private final int flightsPerTask;
+    private final int dataPerTask;
     private final int dataType;
     // thread id
     private long threadID;
@@ -59,7 +64,7 @@ public class OutputWizard extends DBOut implements Runnable {
         this.scheduler = scheduler;
         this.from = from;
         this.to = to;
-        this.flightsPerTask = dataPerTask;
+        this.dataPerTask = dataPerTask;
         this.controller = Controller.getInstance();
         this.dataType = dataType;
     }
@@ -78,14 +83,14 @@ public class OutputWizard extends DBOut implements Runnable {
     }
 
     private void run_liveData() {
-        long start = System.nanoTime();
+        long startMillis = nowMillis();
         var log = Controller.getLogger();
         log.log("thread Output-Wizard@" + this.threadID + " created!", this);
-        this.loadLiveTrackingBtwn(from, to);
-        double elapsed = (System.nanoTime() - start) / Math.pow(1000, 3);
-        log.sucsessLog("Output-Wizard@" + this.threadID +
-                                                ": loaded data in " + elapsed +
-                                                " seconds!", this);
+        try {
+            this.loadLiveTrackingBtwn(this.from, this.to);
+        } catch (DataNotFoundException ignored) {
+        }
+        log.sucsessLog("OW@" + this.threadID + ": loaded data in " + elapsedSeconds(startMillis) + " seconds!", this);
     }
 
     /**
@@ -94,22 +99,34 @@ public class OutputWizard extends DBOut implements Runnable {
      * @param fromID is the src-id,
      * @param toID is the (exclusive) end-id
      */
-    public void loadLiveTrackingBtwn (int fromID, int toID) {
-        int flightsToLoad = toID - fromID;
-        if (flightsToLoad <= this.flightsPerTask) {
+    @Deprecated(since = "1.2/liveMap", forRemoval = true)
+    public void loadLiveTrackingBtwn(int fromID, int toID)
+            throws DataNotFoundException {
+
+        int toLoad = toID - fromID;
+        if (toLoad <= this.dataPerTask) {
             var dps = super.getLiveTrackingBetween(fromID, toID);
-            controller.liveData.addAll(dps);
-            //dataQueue.add(dps);
+            //controller.liveData.addAll(dps); // must be flights
         } else {
-            int newEndID = to-(flightsToLoad/2);
-            var out0 = new OutputWizard(this.scheduler, fromID, newEndID, this.flightsPerTask, this.dataType);
-            var out1 = new OutputWizard(this.scheduler, newEndID, toID, this.flightsPerTask, this.dataType);
+            int newEndID = to-(toLoad/2);
+            var out0 = new OutputWizard(this.scheduler, fromID, newEndID, this.dataPerTask, this.dataType);
+            var out1 = new OutputWizard(this.scheduler, newEndID, toID, this.dataPerTask, this.dataType);
             try {
                 this.scheduler.exec(out0, "Output-Wizard", true, 9, true);
                 this.scheduler.exec(out1, "Output-Wizard", true, 9, true);
             } catch (RejectedExecutionException e) {
                 throw new ThreadOverheadError();
             }
+        }
+    }
+
+    public HashMap<Position, Integer> loadSpeedMap(final int from, final int to)
+            throws DataNotFoundException {
+        // wird evtl. noch erweitert mit threading
+        try {
+            return super.speedMap(from, to);
+        } catch (DataNotFoundException e) {
+            throw new DataNotFoundException(e.getMessage(), true);
         }
     }
 

@@ -2,58 +2,67 @@ package planespotter.display;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.openstreetmap.gui.jmapviewer.JMapViewer;
-import planespotter.constants.UserSettings;
-import planespotter.controller.Controller;
+import planespotter.constants.SearchType;
+import planespotter.constants.Warning;
+import planespotter.model.LiveData;
+import planespotter.throwables.IllegalInputException;
+import planespotter.util.Utilities;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.util.List;
 
-import static java.awt.event.KeyEvent.*;
-import static java.awt.event.KeyEvent.VK_PAGE_DOWN;
 import static planespotter.constants.GUIConstants.*;
-import static planespotter.constants.SearchType.*;
-import static planespotter.constants.ViewType.*;
 
 /**
- * @name GUIWorker
+ * @name GUIAdapter
  * @author jml04
- * @version 1.0
+ * @version 1.1
  *
- * class GUIWorker contains methods to do some actions for the GUI (that the GUI class is not too full)
+ * class GUIAdapter contains methods to do some actions for the GUI (that the GUI class is not too full)
  */
 public final class GUIAdapter {
-
     // only gui instance
     private final GUI gui;
-    // controller instance
-    private final Controller ctrl;
+
+    private static boolean warningShown = false;
 
     /**
      * empty constructor
      */
-    public GUIAdapter() {
-        this.ctrl = Controller.getInstance();
-        this.gui = this.ctrl.gui();
+    public GUIAdapter(GUI gui) {
+        this.gui = gui;
     }
 
     /**
-     * sets the JMapViewer in mapViewer
+     * shows a specific warning dialog
      *
-     * @param map is the map to be set
+     * @param type is the warning type which contains the warning message
      */
-    public void recieveMap (JMapViewer map, String text) {
-        gui.mapViewer = map;
-        // TODO: adding MapViewer to panel
-        gui.pMap.add(gui.mapViewer);
-        gui.viewHeadText.setText(DEFAULT_HEAD_TEXT + "Map-Viewer > " + text);
-        // revalidating window frame to refresh everything
-        gui.pMap.setVisible(true);
-        gui.mapViewer.setVisible(true);
-        this.requestComponentFocus(gui.mapViewer);
+    public void showWarning(Warning type) {
+        this.showWarning(type, null);
+    }
+
+    /**
+     * shows a specific warning dialog
+     *
+     * @param type is the warning type which contains the warning message
+     */
+    public void showWarning(Warning type, @Nullable String addTxt) {
+        if (!warningShown) {
+            var message = type.message();
+            if (addTxt != null) {
+                message += "\n" + addTxt;
+            }
+            warningShown = true;
+            JOptionPane.showOptionDialog(
+                    gui.getContainer("window"),
+                    message,
+                    "Warning",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.WARNING_MESSAGE,
+                    null, null, null); // TODO: 06.06.2022 warning icon
+            warningShown = false;
+        }
     }
 
     /**
@@ -61,15 +70,18 @@ public final class GUIAdapter {
      *
      * @param tree is the tree to set
      */
-    public void recieveTree (JTree tree) {
-        tree.setBounds(0, 0, gui.pList.getWidth(), gui.pList.getHeight());
-        gui.listView = tree;
-        gui.spList = gui.listScrollPane(gui.listView);
-        gui.spList.setOpaque(false);
-        gui.pList.add(gui.spList);
-        gui.dpright.moveToFront(gui.pList);
-        gui.pList.setVisible(true);
-        gui.viewHeadText.setText(DEFAULT_HEAD_TEXT + "Flight-List"); // TODO: 21.05.2022 add text
+    public void recieveTree(JTree tree) {
+        var listPanel = (JPanel) gui.getContainer("listPanel");
+        tree.setBounds(0, 0, listPanel.getWidth(), listPanel.getHeight());
+        //gui.listView = tree;
+        gui.addContainer("listScrollPane", new PaneModels().listScrollPane(tree, listPanel));
+        var listScrollPane = gui.getContainer("listScrollPane");
+        gui.getContainer("listPanel").add(listScrollPane);
+        var rightDP = (JDesktopPane) gui.getContainer("rightDP");
+        rightDP.moveToFront(listPanel);
+        listPanel.setVisible(true);
+        var viewHeadText = (JTextField) gui.getContainer("viewHeadText");
+        viewHeadText.setText(DEFAULT_HEAD_TEXT + "Flight-List"); // TODO: 21.05.2022 add text
         // revalidate window -> making the tree visible
         this.requestComponentFocus(gui.listView);
     }
@@ -79,39 +91,44 @@ public final class GUIAdapter {
      * @param flightTree is the flight tree to set
      * @param dpInfoTree is the @Nullable data point info tree
      */
-    public void recieveInfoTree(JTree flightTree, @Nullable JTree dpInfoTree) {
-        int width = gui.pInfo.getWidth();
-        int height = (gui.pInfo.getHeight() / 2);
-        gui.pMenu.setVisible(false);
-        gui.infoTree = flightTree;
-        gui.infoTree.setBounds(0, 0, width, height + 50);
-        gui.infoTree.setMaximumSize(gui.pInfo.getSize());
-        gui.infoTree.setBorder(LINE_BORDER);
-        gui.infoTree.setFont(FONT_MENU.deriveFont(12f));
-        gui.pInfo.add(gui.infoTree);
+    public void recieveInfoTree(@NotNull final JTree flightTree,
+                                @Nullable final JTree dpInfoTree) {
+        var infoPanel = gui.getContainer("infoPanel");
+        infoPanel.removeAll();
+        int width = infoPanel.getWidth();
+        int height = infoPanel.getHeight() / 2;
+        gui.getContainer("menuPanel").setVisible(false);
+        flightTree.setBounds(0, 0, width, height + 50);
+        flightTree.setMaximumSize(infoPanel.getSize());
+        flightTree.setBorder(LINE_BORDER);
+        flightTree.setFont(FONT_MENU.deriveFont(12f));
+        infoPanel.add(flightTree);
+        gui.addContainer("flightInfoTree", flightTree);
         if (dpInfoTree != null) {
             this.recieveDataPointInfoTree(dpInfoTree, width, height);
         }
-        gui.dpleft.moveToFront(gui.pInfo);
-        gui.pInfo.setVisible(true);
+        var leftDP = (JDesktopPane) gui.getContainer("leftDP");
+        leftDP.moveToFront(infoPanel);
+        infoPanel.setVisible(true);
     }
 
     private void recieveDataPointInfoTree(@NotNull JTree dpInfoTree, int width, int height) {
-        gui.dpInfoTree = dpInfoTree;
-        gui.dpInfoTree.setBounds(0, height + 50, width, height - 50);
-        gui.dpInfoTree.setBorder(LINE_BORDER);
-        gui.dpInfoTree.setFont(FONT_MENU.deriveFont(12f));
-        gui.pInfo.add(gui.dpInfoTree);
+        dpInfoTree.setBounds(0, height + 50, width, height - 50);
+        dpInfoTree.setBorder(LINE_BORDER);
+        dpInfoTree.setFont(FONT_MENU.deriveFont(12f));
+        gui.getContainer("infoPanel").add(dpInfoTree);
+        gui.addContainer("dpInfoTree", dpInfoTree);
     }
 
     /**
      * starts a indeterminate progressBar
      */
     public void startProgressBar() {
-        this.stopProgressBar();
-        gui.progressbar.setIndeterminate(true);
-        gui.progressbar.setString("Loading data...");
-        gui.progressbar.setStringPainted(true);
+        var progressBar = (JProgressBar) gui.getContainer("progressBar");
+        progressBar.setVisible(true);
+        progressBar.setIndeterminate(true);
+        progressBar.setString("Loading data...");
+        progressBar.setStringPainted(true);
     }
 
     /**
@@ -119,14 +136,14 @@ public final class GUIAdapter {
      *
      */
     public void stopProgressBar() {
-        gui.progressbar.setVisible(false);
+        gui.getContainer("progressBar").setVisible(false);
     }
 
     /**
      * revalidates all swing components
      */
     public void update() {
-        gui.window.revalidate();
+        gui.getContainer("window").revalidate();
     }
 
     /**
@@ -134,37 +151,24 @@ public final class GUIAdapter {
      *
      * @param comp is the component that requests the focus
      */
-    void requestComponentFocus(Component comp) {
+    public void requestComponentFocus(JComponent comp) {
         comp.requestFocus();
     }
 
     /**
      * loads all search components for a certain search type
      *
-     * @param forItem is the search type
+     * @param type is the search type
      */
-    public void loadSearch(String forItem) {
-        switch (forItem) {
-            case "Flight" -> {
-                this.showSearch(gui.flightSearch);
-                ctrl.currentSearchType = FLIGHT;
-            }
-            case "Plane" -> {
-                this.showSearch(gui.planeSearch);
-                ctrl.currentSearchType = PLANE;
-            }
-            case "Airline" -> {
-                this.showSearch(gui.airlineSearch);
-                ctrl.currentSearchType = AIRLINE;
-            }
-            case "Airport" -> {
-                this.showSearch(gui.airportSearch);
-                ctrl.currentSearchType = AIRPORT;
-            }
-            case "Area" -> {
-                this.showSearch(gui.areaSearch);
-                ctrl.currentSearchType = AREA;
-            }
+    public void loadSearch(SearchType type) {
+        gui.setCurrentSearchType(type);
+        switch (type) {
+            case FLIGHT -> this.showSearch(gui.flightSearch);
+            case PLANE -> this.showSearch(gui.planeSearch);
+            case AIRLINE -> this.showSearch(gui.airlineSearch);
+            case AIRPORT -> this.showSearch(gui.airportSearch);
+            // @deprecated, TODO remove
+            case AREA -> this.showSearch(gui.areaSearch);
         }
     }
 
@@ -190,220 +194,81 @@ public final class GUIAdapter {
      * if no other view is opened, nothing is done
      */
     public synchronized void disposeView() {
-        if (gui.pStartScreen != null) {
-            gui.pStartScreen.setVisible(false);
-        } if (gui.listView != null) {
-            gui.pList.remove(gui.listView);
-            gui.listView.setVisible(false);
-            gui.listView = null;
-            gui.pList.setVisible(false);
-        } if (this.mapViewer() != null) {
-            this.mapViewer().removeAllMapMarkers();
-            this.mapViewer().removeAllMapPolygons();
-            gui.pMap.remove(this.mapViewer());
-            this.mapViewer().setVisible(false);
-            gui.pMap.setVisible(false);
-            this.mapViewer().removeAllMapMarkers();
-        } if (gui.infoTree != null) {
-            gui.infoTree.setVisible(false);
-            gui.infoTree = null;
-            gui.pInfo.setVisible(false);
+        if (gui.hasContainer("startPanel")) {
+            gui.getContainer("startPanel").setVisible(false);
+        } if (gui.hasContainer("listView")) {
+            final var listPanel = gui.getContainer("listPanel");
+            var listView = gui.getContainer("listView");
+            listPanel.remove(listView);
+            listView.setVisible(false);
+            listView = null;
+            listPanel.setVisible(false);
+        } if (gui.getMap() != null) {
+            final var viewer = gui.getMap();
+            final var mapPanel = gui.getContainer("mapPanel");
+            viewer.removeAllMapMarkers();
+            viewer.removeAllMapPolygons();
+            viewer.setVisible(false);
+            mapPanel.remove(viewer);
+            mapPanel.setVisible(false);
+        } if (gui.hasContainer("flightInfoTree")) {
+            var flightInfo = gui.getContainer("flightInfoTree");
+            flightInfo.setVisible(false);
+            flightInfo = null;
+            gui.getContainer("infoPanel").setVisible(false);
         }
-        gui.pMenu.setVisible(true);
-        gui.dpleft.moveToFront(gui.pMenu);
-        gui.viewHeadText.setText(DEFAULT_HEAD_TEXT);
-        ctrl.currentViewType = null;
-        this.update();
+        var menuPanel = gui.getContainer("menuPanel");
+        menuPanel.setVisible(true);
+        var leftDP = (JDesktopPane) gui.getContainer("leftDP");
+        leftDP.moveToFront(menuPanel);
+        var viewHeadTxtLabel = (JLabel) gui.getContainer("viewHeadTxtLabel");
+        viewHeadTxtLabel.setText(DEFAULT_HEAD_TEXT); // TODO EXTRA methode
+        gui.setCurrentViewType(null);
+        gui.getMap().setHeatMap(null);
+        //LiveMap.close();
+        LiveData.setLive(false);
     }
 
-    void windowResized() {
-        gui.mainpanel.setBounds(0, 0, gui.window.getWidth()-14, gui.window.getHeight()-37);
-        gui.pTitle.setBounds(0, 0, gui.mainpanel.getWidth(), 70);
-
-        int width = gui.pTitle.getWidth();
-        int height = gui.pTitle.getHeight();
-        gui.title_bground.setBounds(0, 0, width, height);
-        var img = Images.TITLE.get();
-        gui.title_bground.setIcon(this.scaledImage(img, width, height));
-
-        gui.dpright.setBounds(280, 70, gui.mainpanel.getWidth() - 280, gui.mainpanel.getHeight() - 70);
-        gui.dpleft.setBounds(0, 70, 280, gui.mainpanel.getHeight() - 70);
-
-        gui.pViewHead.setBounds(0, 0, gui.dpright.getWidth(), 24);
-        gui.pStartScreen.setBounds(0, 24, gui.dpright.getWidth(), gui.dpright.getHeight() - 24);
-        gui.pList.setBounds(0, 24, gui.dpright.getWidth(), gui.dpright.getHeight() - 24);
-        gui.pMap.setBounds(0, 24, gui.dpright.getWidth(), gui.dpright.getHeight() - 24);
-        gui.pMenu.setBounds(0, 0, gui.dpleft.getWidth(), gui.dpleft.getHeight());
-        gui.pInfo.setBounds(0, 0, gui.dpleft.getWidth(), gui.dpleft.getHeight());
-
-        gui.bground.setBounds(0, 0, gui.dpright.getWidth(), gui.dpright.getHeight());
-        gui.menu_bground.setBounds(0, 0, gui.dpleft.getWidth(), gui.dpleft.getHeight());
-
-        gui.title_bground.setBounds(gui.pTitle.getBounds());
-        gui.title.setBounds(gui.pTitle.getWidth() / 2 - 200, 0, 400, 70);
-        gui.closeView.setBounds(gui.pViewHead.getWidth() - 85, 4, 80, 16);
-        gui.btFile.setBounds(gui.pViewHead.getWidth() - 168, 4, 80, 16);
-        gui.lblStartScreen.setBounds(0, 0, gui.pStartScreen.getWidth(), gui.pStartScreen.getHeight());
-        gui.mapViewer.setBounds(0, 0, gui.pMap.getWidth(), gui.pMap.getHeight());
-        gui.menubar.setBounds(gui.pMenu.getBounds());
-        gui.tfSearch.setBounds(10, gui.menubar.getHeight() - 80, 255, 25);
-        gui.searchButton.setBounds(10, gui.menubar.getHeight() - 40, 255, 25);
-        if (gui.spList != null && gui.listView != null) {
-            gui.spList.setBounds(0, 0, gui.pList.getWidth(), gui.pList.getHeight());
-            gui.listView.setBounds(gui.spList.getBounds());
-        }
-        if (gui.infoTree != null) {
-            gui.infoTree.setBounds(gui.pInfo.getBounds());
-        }
-        if (gui.fileMenu != null) {
-            int minus = 84;
-            var fileMenu = gui.fileMenu;
-            for (var bt : fileMenu) {
-                bt.setBounds(gui.pViewHead.getWidth() - minus, 4, 80, 16);
-                minus += 84;
-            }
-        }
+    public void setViewHeadBtVisible(boolean b) {
+        gui.getContainer("fileButton").setVisible(b);
+        gui.getContainer("closeViewButton").setVisible(b);
     }
 
-    /**
-     * executed when a button is clicked
-     * 
-     * @param button is the clicked button
-     */
-    public synchronized void buttonClicked(JButton button) {
-        Controller.getScheduler().exec(() -> {
-            if (button == gui.btFile) {
-                this.setViewHeadBtVisible(false);
-                this.setFileMenuVisible(true);
-            } else if (button == gui.btList) {
-                this.startProgressBar();
-                this.ctrl.show(LIST_FLIGHT, "");
-            } else if (button == gui.btMap) {
-                this.startProgressBar();
-                this.ctrl.show(MAP_ALL, "");
-            } else if (button == gui.closeView) {
-                this.disposeView();
-                ctrl.loadedData = null;
-                this.gui.pStartScreen.setVisible(true);
-                this.gui.dpright.moveToFront(gui.pStartScreen);
-            } else if (button == gui.settings) {
-                this.gui.settingsDialog.setVisible(true);
-                this.gui.settings_maxLoadTf.setCaretColor(Color.YELLOW);
-                this.requestComponentFocus(this.gui.settings_maxLoadTf);
-            } else if (button == gui.searchButton) {
-                this.gui.pSearch.setVisible(!gui.pSearch.isVisible());
-                this.gui.tfSearch.setVisible(!gui.pSearch.isVisible());
-                this.loadSearch("Plane");
-            } else if (button == gui.settingsButtons[0]) {
-                this.gui.settingsDialog.setVisible(false);
-            } else if (button == gui.settingsButtons[1]) {
-                this.ctrl.confirmSettings(gui.settings_maxLoadTf.getText(), (String) gui.settings_mapTypeCmbBox.getSelectedItem());
-                this.gui.settingsDialog.setVisible(false);
-            } else if (button.getName().equals("loadList")) {
-                // future
-                this.ctrl.show(MAP_SIGNIFICANCE, "Significance Map");
-            } else if (button.getName().equals("loadMap")) {
-                // TODO search type abfragen, bzw. ComboBox SelectedItem
-                var inputs = this.searchInput();
-                this.ctrl.search(inputs, 1);
-            } else if (button.getName().equals("open")) {
-                Controller.getInstance().loadFile();
-            } else if (button.getName().equals("save")) {
-                Controller.getInstance().saveFile();
-            } else if (button.getName().equals("back")) {
-                this.setFileMenuVisible(false);
-                this.setViewHeadBtVisible(true);
-            }
-        }, "GUI-Adapter", false, 5, true);
-    }
-
-    public void mapClicked(MouseEvent clickEvent) {
-        int button = clickEvent.getButton();
-        var ctrl = Controller.getInstance();
-        if (button == MouseEvent.BUTTON1 && ctrl.currentViewType != null) {
-            ctrl.mapClicked(clickEvent.getPoint());
-        }
-    }
-
-    private void setViewHeadBtVisible(boolean b) {
-        gui.btFile.setVisible(b);
-        gui.closeView.setVisible(b);
-    }
-
-    private void setFileMenuVisible (boolean b) {
-        var fileMenu = gui.fileMenu;
-        for (var bt : fileMenu) {
+    public void setFileMenuVisible(boolean b) {
+        assert gui.fileMenu != null;
+        for (var bt : gui.fileMenu) {
             bt.setVisible(b);
         }
     }
 
-    /**
-     * executed when a key is pressed
-     */
-    void keyPressed (KeyEvent e) {
-        var src = e.getSource();
-        int key = e.getKeyCode();
-        try {
-            if (src == gui.tfSearch) {
-                if (key == KeyEvent.VK_ENTER) {
-                    if (gui.tfSearch.hasFocus())
-                        new GUIAdapter().enterText();
-                }
-            } else if (src == gui.settings_maxLoadTf) {
-                if (key == KeyEvent.VK_ENTER) {
-                    // TODO fixen: settings fenster schließt erst nach loading
-                    if (Integer.parseInt(gui.settings_maxLoadTf.getText()) >= 4) {
-                        this.startProgressBar();
-                        new UserSettings().setMaxLoadedData(Integer.parseInt(gui.settings_maxLoadTf.getText()));
-                        gui.settings_maxLoadTf.setText("");
-                        gui.settingsDialog.setVisible(false);
-                    }
-                }
-            } else if (src == this.mapViewer()) {
-                switch (key) {
-                    case VK_PAGE_UP -> this.mapViewer().moveMap(0, 10);
-                    case VK_HOME -> this.mapViewer().moveMap(-10, 0);
-                    case VK_END -> this.mapViewer().moveMap(10, 0);
-                    case VK_PAGE_DOWN -> this.mapViewer().moveMap(0, -10);
-                }
-            }
-        } catch (NumberFormatException ex) {
-                    gui.settings_maxLoadTf.setText("Error");
-        } catch (Exception ex){
-            ex.printStackTrace();
+    public String[] searchInput() throws IllegalInputException {
+        var inputFields = new String[0];
+        switch (gui.getCurrentSearchType()) {
+            case FLIGHT -> inputFields = new String[] {
+                    gui.search_flightID.getText(),
+                    gui.search_callsign.getText()
+            };
+            case PLANE -> inputFields = new String[] {
+                    gui.search_planeID.getText(),
+                    gui.search_planetype.getText(),
+                    gui.search_icao.getText(),
+                    gui.search_tailNr.getText()
+            };
+            case AIRPORT -> inputFields = new String[] {
+                    gui.search_airpID.getText(),
+                    gui.search_airpTag.getText(),
+                    gui.search_airpName.getText()
+            };
         }
-    }
 
-    public JMapViewer mapViewer () {
-        return gui.mapViewer;
-    }
-
-    private String[] searchInput () {
-        switch (ctrl.currentSearchType) {
-            case FLIGHT -> {
-                return new String[] {
-                        gui.search_flightID.getText(),
-                        gui.search_callsign.getText()
-                };
-            } case PLANE -> {
-                return new String[] {
-                        gui.search_planeID.getText(),
-                        gui.search_planetype.getText(),
-                        gui.search_icao.getText(),
-                        gui.search_tailNr.getText()
-                };
-            } case AIRPORT -> {
-                return new String[] {
-                        gui.search_airpID.getText(),
-                        gui.search_airpTag.getText(),
-                        gui.search_airpName.getText()
-                };
-            }
+        int length = inputFields.length;
+        for (int i = 0; i < length; i++) {
+            inputFields[i] = Utilities.checkString(inputFields[i]);
         }
-        return null;
+        return inputFields;
     }
 
-    void clearSearch () {
+    public void clearSearch() {
         var comps = new JTextField[] {
                 gui.search_planetype,
                 gui.search_tailNr,
@@ -416,47 +281,6 @@ public final class GUIAdapter {
             c.setText("");
         }
 
-    }
-
-    /**
-     * enters the text in the textfield (use for key listener)
-     */
-    private void enterText() {
-        var text = gui.tfSearch.getText().toLowerCase();
-        if (!text.isBlank()) {
-            if (text.startsWith("exit")) {
-                ctrl.exit();
-            } else if (text.startsWith("loadlist")) {
-                ctrl.show(LIST_FLIGHT, "");
-            } else if (text.startsWith("loadmap")) {
-                ctrl.show(MAP_ALL, "");
-            } else if (text.startsWith("maxload")) {
-                var args = text.split(" ");
-                try {
-                    int max = Integer.parseInt(args[1]);
-                    if (max <= 10000) {
-                        new UserSettings().setMaxLoadedData(max);
-                        Controller.getLogger().log("maxload changed to " + args[1] + " !", gui);
-                    } else {
-                        Controller.getLogger().log("Failed! Maximum is 10000!", gui);
-                    }
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
-                }
-            } else if (text.startsWith("flightroute") || text.startsWith("fl")) {
-                var args = text.split(" ");
-                if (args.length > 1) {
-                    var id = args[1];
-                    ctrl.show(MAP_TRACKING, id);
-                }
-            }
-        }
-        gui.tfSearch.setText("");
-    }
-
-    public ImageIcon scaledImage(ImageIcon input, int width, int height) {
-        var scaled = input.getImage().getScaledInstance(width, height, 4);
-        return new ImageIcon(scaled);
     }
 
 }

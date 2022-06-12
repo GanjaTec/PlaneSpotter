@@ -14,7 +14,7 @@ import java.util.List;
  * @author Lukas
  *
  */
-public class KeeperOfTheArchives implements Runnable{
+public class KeeperOfTheArchives implements Runnable{ // TODO: 11.06.2022 can implement Keeper
 	private final long threshold;
 	private final int threadNumber;
 	private final String threadName;
