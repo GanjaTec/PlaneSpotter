@@ -25,6 +25,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
+import java.time.Clock;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,13 +36,11 @@ import static planespotter.util.Utilities.*;
 @TestOnly
 public class Test {
     // TEST-MAIN
-    // FIXME: 04.05.2022 callsigns und planetypes sind beide noch in "" (Bsp: "A320" statt A320)
-    // FIXME: 05.05.2022 planetypes werden in getAllPlanetypes doppelt ausgegeben!
     public static void main(String[] args) throws Exception {
         //final long startTime =  nowMillis();
 
         var test = new Test();
-        test.printSystemEnvironment();
+        System.out.println(linesCode(Paths.CODE_PATH));
 
 /*
         var scheduler = new Scheduler();

@@ -17,6 +17,8 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 
+import static planespotter.util.Time.*;
+
 /**
  * @author Lukas
  *
@@ -98,8 +100,9 @@ public class Supplier implements Runnable{
 	 ***********************************************************************************/
 
 	public static synchronized void writeToDB(List<Frame> frames, DBOut dbo, DBIn dbi) {
+		// TODO: 12.06.2022 mindestens die dbo-Anfragen aus der Schleife raus, alles vorher schon in je eine Collection und darin abfragen
 		try {
-			long ts1 = System.nanoTime();
+			long ts1 = nowMillis();
 			for (Frame f : frames) {
 				
 				// insert into planes
@@ -127,15 +130,13 @@ public class Supplier implements Runnable{
 				f = null;
 			}
 			
-			frames = null;	
-			long ts2 = System.nanoTime();
-			long tdiff = ts2 - ts1;
-			double tdiffSec = (double) tdiff / 1_000_000_000;
-			System.out.println("filled DB in " + tdiffSec + " seconds");
+			frames = null;
+
+			System.out.println("filled DB in " + elapsedSeconds(ts1) + " seconds!");
 			
 			System.gc();
 		
-		} catch (Exception e) {
+		} catch (Exception e) { // TODO: 12.06.2022 do not throw Exception, too unspecific and overwriting every other exception
 			e.printStackTrace();
 			// conn.rollback();
 		}

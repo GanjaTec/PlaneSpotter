@@ -5,8 +5,8 @@ import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Frame;
 import planespotter.model.nio.proto.ProtoDeserializer;
-import planespotter.util.Utilities;
 
+import java.util.Collection;
 import java.util.Queue;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -21,8 +21,11 @@ public abstract class LiveData {
         insertLater = new ConcurrentLinkedQueue<>();
     }
 
-    public static void addLiveData() {
+    // boolean isLive shows if the live map is shown at the moment
+    private static boolean live;
 
+    public static void insertLater(Collection<Frame> data) {
+        insertLater.addAll(data);
     }
 
     public static Vector<Flight> directLiveData(final Scheduler scheduler) {
@@ -31,7 +34,7 @@ public abstract class LiveData {
         var frames = deserializer.getFr24Frames(world, scheduler);
         // termorary if // daten gehen verloren
         if (mayLoad()) {
-            insertLater.addAll(frames);
+            insertLater(frames);
         }
         var id = new AtomicInteger(0);
         return frames.stream()
@@ -61,7 +64,7 @@ public abstract class LiveData {
         return insertLater.size() == 0;
     }
 
-    public static Queue<Frame> pollFromQueue(final int count) {
+    public static Queue<Frame> pollFrames(final int count) {
         var counter = new AtomicInteger();
         var frames = new ConcurrentLinkedQueue<Frame>();
 
@@ -73,6 +76,14 @@ public abstract class LiveData {
                     }
                 });
         return frames;
+    }
+
+    public static boolean isLive() {
+        return live;
+    }
+
+    public static void setLive(boolean b) {
+        live = b;
     }
 
 }

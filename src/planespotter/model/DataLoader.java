@@ -12,6 +12,7 @@ public abstract class DataLoader {
     // 'data loader enabled' flag
     private static boolean enabled;
 
+
     static {
         enabled = true;
     }
@@ -26,7 +27,7 @@ public abstract class DataLoader {
             log.log("Trying to insert frames...", DataLoader.class);
             if (canInsert(count)) {
                 // insert live data with normal writeToDB
-                var frames = pollFromQueue(count).stream().toList();
+                var frames = pollFrames(count).stream().toList();
                 scheduler.exec(() -> Supplier.writeToDB(frames, new DBOut(), new DBIn()),
                         "DB-LiveData Writer", true, 2, true);
                 insertCount += count;
@@ -48,7 +49,7 @@ public abstract class DataLoader {
             //var gui = Controller.getGUI();
             //gui.getContainer("window").setVisible(false);
             while (!isEmpty()) {
-                var frames = pollFromQueue(500).stream().toList();
+                var frames = pollFrames(500).stream().toList();
                 scheduler.exec(() -> Supplier.writeToDB(frames, dbOut, dbIn),
                         "Inserter", false, 9, false);
                 inserted += 500;

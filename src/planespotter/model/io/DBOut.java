@@ -75,7 +75,11 @@ public class DBOut extends SupperDB {
 	public final int getAirlineIDByTag(String tag)
 			throws DataNotFoundException {
 
-		int id = 1;
+		int id = -1;
+		if (tag == null) { // vorrübergehende Notlösung
+			return id;
+		}
+
 		try {
 			/*var ds = new Deserializer();
 			tag = ds.stripString(tag);*/

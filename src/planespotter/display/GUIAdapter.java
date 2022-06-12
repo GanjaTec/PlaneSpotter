@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.constants.SearchType;
 import planespotter.constants.Warning;
-import planespotter.controller.Controller;
+import planespotter.model.LiveData;
 import planespotter.throwables.IllegalInputException;
 import planespotter.util.Utilities;
 
@@ -38,8 +38,8 @@ public final class GUIAdapter {
      *
      * @param type is the warning type which contains the warning message
      */
-    public void warning(Warning type) {
-        this.warning(type, null);
+    public void showWarning(Warning type) {
+        this.showWarning(type, null);
     }
 
     /**
@@ -47,7 +47,7 @@ public final class GUIAdapter {
      *
      * @param type is the warning type which contains the warning message
      */
-    public void warning(Warning type, @Nullable String addTxt) {
+    public void showWarning(Warning type, @Nullable String addTxt) {
         if (!warningShown) {
             var message = type.message();
             if (addTxt != null) {
@@ -226,7 +226,7 @@ public final class GUIAdapter {
         gui.setCurrentViewType(null);
         gui.getMap().setHeatMap(null);
         //LiveMap.close();
-        Controller.getInstance().isLive = false;
+        LiveData.setLive(false);
     }
 
     public void setViewHeadBtVisible(boolean b) {

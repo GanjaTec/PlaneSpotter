@@ -29,7 +29,6 @@ import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.Vector;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -54,32 +53,29 @@ public class Controller {
     private static final Controller mainController;
     // scheduler, contains executor services / thread pools
     private static final Scheduler scheduler;
-    // only GUI instance
-    private static final GUI gui;
     // gui action handler (contains listeners)
     private static final ActionHandler actionHandler;
+    // only GUI instance
+    private static final GUI gui;
+    // gui adapter
+    private static final GUIAdapter guiAdapter;
     // logger for whole program
     private static Logger logger;
-    // gui adapter
-    private GUIAdapter guiAdapter;
-    // boolean loading is true when something is loading (volatile?)
-    public volatile boolean loading;
-    // boolean loggerOn is true when the logger is visible
-    // boolean isLive shows if the live map is shown at the moment
-    public boolean loggerOn, isLive;
-    // collections for live flights and loaded flights
-    public volatile Vector<DataPoint> loadedData;
-    public volatile Vector<Flight> liveData;
-    // already-clicking flag
-    private boolean clicking;
 
     static {
         scheduler = new Scheduler();
         mainController = new Controller();
         actionHandler = new ActionHandler();
         gui = new GUI(actionHandler);
+        guiAdapter = new GUIAdapter(gui);
     }
-
+    // boolean loading is true when something is loading
+    private volatile boolean loading;
+    // collections for live flights and loaded flights
+    public volatile Vector<DataPoint> loadedData;
+    public volatile Vector<Flight> liveData;
+    // already-clicking flag
+    private boolean clicking;
     // hash code
     private final int hashCode;
 
@@ -104,7 +100,6 @@ public class Controller {
     private void initialize() {
         logger = new Logger(this);
         logger.log("initializing Controller...", this);
-        this.guiAdapter = new GUIAdapter(gui);
         logger.sucsessLog("Controller initialized sucsessfully!", this);
     }
 
@@ -116,31 +111,30 @@ public class Controller {
         logger.log("initializing Executors...", this);
 
         scheduler.exec(() -> {
-            if (!this.loading) this.loadLiveData();
-        }, "Live-Data PreLoader");
-
-        scheduler.schedule(() -> {
-            if (!this.loading) FileMaster.saveConfig();
-        }, 60, 300);
-        scheduler.schedule(() -> {
-            if (!this.loading) {
-                var current = Thread.currentThread();
-                current.setName("Data Inserter");
-                current.setPriority(2);
-                DataLoader.insert(scheduler, 250);
-            }
-        }, 20, 20);
-        scheduler.schedule(() -> {
-            System.gc();
-            logger.log("Calling Garbage Collector...", this);
-        }, 10, 10);
-        // loading live date if live map is open
-        scheduler.schedule(() -> {
-            if (this.isLive && !this.loading) {
-                Thread.currentThread().setName("Output-Wizard-LiveLoader");
-                this.loadLiveData();
-            }
-        }, 0, 5);
+                    if (!this.loading) this.loadLiveData();
+                }, "Live-Data PreLoader")
+                .schedule(() -> {
+                    if (!this.loading) FileMaster.saveConfig();
+                }, 60, 300)
+                .schedule(() -> {
+                    if (!this.loading) {
+                        var current = Thread.currentThread();
+                        current.setName("Data Inserter");
+                        current.setPriority(2);
+                        DataLoader.insert(scheduler, 250);
+                    }
+                }, 20, 20)
+                .schedule(() -> {
+                    System.gc();
+                    logger.log("Calling Garbage Collector...", this);
+                }, 10, 10)
+                // loading live date if live map is open
+                .schedule(() -> {
+                    if (LiveData.isLive() && !this.isLoading()) {
+                        Thread.currentThread().setName("Live Loader");
+                        this.loadLiveData();
+                    }
+                }, 0, 5);
 
         logger.sucsessLog("Executors initialized sucsessfully!", this);
     }
@@ -183,8 +177,8 @@ public class Controller {
                     "Exit", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (option == JOptionPane.YES_OPTION) {
             logger.infoLog("Shutting down program, please wait...", this);
-            this.isLive = false;
-            this.loading = true;
+            LiveData.setLive(false);
+            this.setLoading(true);
             FileMaster.saveConfig();
             //DataLoader.insertRemaining(scheduler);
             DataLoader.setEnabled(false);
@@ -427,7 +421,7 @@ public class Controller {
     }
 
     private void onLiveClick(ICoordinate clickedCoord) {
-        if (!this.clicking && this.isLive) {
+        if (!this.clicking && LiveData.isLive()) {
             this.clicking = true;
             var map = gui.getMap();
             var markers = map.getMapMarkerList();
@@ -601,46 +595,20 @@ public class Controller {
      */
     public void handleException(final Throwable thr) {
         if (thr instanceof DataNotFoundException) {
-            this.guiAdapter.warning(Warning.NO_DATA_FOUND, thr.getMessage());
+            this.guiAdapter.showWarning(Warning.NO_DATA_FOUND, thr.getMessage());
         } else if (thr instanceof SQLException) {
-            this.guiAdapter.warning(Warning.SQL_ERROR);
+            this.guiAdapter.showWarning(Warning.SQL_ERROR);
             thr.printStackTrace();
         } else if (thr instanceof TimeoutException) {
-            this.guiAdapter.warning(Warning.TIMEOUT);
+            this.guiAdapter.showWarning(Warning.TIMEOUT);
         } else if (thr instanceof RejectedExecutionException) {
-            this.guiAdapter.warning(Warning.REJECTED_EXECUTION);
+            this.guiAdapter.showWarning(Warning.REJECTED_EXECUTION);
         } else if (thr instanceof IllegalInputException) {
-            this.guiAdapter.warning(Warning.ILLEGAL_INPUT);
+            this.guiAdapter.showWarning(Warning.ILLEGAL_INPUT);
         } else {
-            this.guiAdapter.warning(Warning.UNKNOWN_ERROR, thr.getMessage());
+            this.guiAdapter.showWarning(Warning.UNKNOWN_ERROR, thr.getMessage());
             thr.printStackTrace();
         }
-    }
-
-        /**
-     * @return main logger
-     */
-    public static Logger getLogger() {
-        return logger;
-    }
-
-    /**
-     * @return main scheduler
-     */
-    public static Scheduler getScheduler() {
-        return scheduler;
-    }
-
-    /**
-     * @return main gui
-     */
-    public static GUI getGUI() {
-        return gui;
-    }
-
-    public static ActionHandler getActionHandler() {
-        assert actionHandler != null;
-        return actionHandler;
     }
 
     // private methods
@@ -752,19 +720,19 @@ public class Controller {
 
     private void showLiveMap(final String headText, @NotNull final MapManager mapManager) {
         if (this.liveData == null || this.liveData.isEmpty()) {
-            this.guiAdapter.warning(Warning.LIVE_DATA_NOT_FOUND);
+            guiAdapter.showWarning(Warning.LIVE_DATA_NOT_FOUND);
             return;
         }
         var data = Utilities.parsePositionVector(this.liveData);
         var viewer = mapManager.createLiveMap(data, gui.getMap());
 
-        this.isLive = true;
+        LiveData.setLive(true);
         mapManager.recieveMap(viewer, headText);
     }
 
     private void showFlightList(DBOut dbOut) {
         if (this.loadedData == null || this.loadedData.isEmpty()) {
-            this.guiAdapter.warning(Warning.NO_DATA_FOUND);
+            guiAdapter.showWarning(Warning.NO_DATA_FOUND);
             return;
         }
         var flights = new ArrayList<Flight>();
@@ -855,6 +823,46 @@ public class Controller {
         if (button == 1) {
             this.show(ViewType.MAP_TRACKING_NP, "Flight Search Results", ids);
         }
+    }
+
+    /**
+     * @return loading flag, true if Controller is loading something
+     */
+    public final boolean isLoading() {
+        return this.loading;
+    }
+
+    public void setLoading(boolean b) {
+        this.loading = b;
+    }
+
+    /**
+     * @return main logger
+     */
+    public static Logger getLogger() {
+        return logger;
+    }
+
+    /**
+     * @return main scheduler
+     */
+    public static Scheduler getScheduler() {
+        return scheduler;
+    }
+
+    /**
+     * @return main gui
+     */
+    public static GUI getGUI() {
+        return gui;
+    }
+
+    /**
+     * @return main ActionHandler
+     */
+    public static ActionHandler getActionHandler() {
+        assert actionHandler != null;
+        return actionHandler;
     }
 
     /**
