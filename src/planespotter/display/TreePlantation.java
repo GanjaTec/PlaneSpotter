@@ -178,6 +178,7 @@ public final class TreePlantation {
         root.add(new DefaultMutableTreeNode("Airline-ID: " + airline.id()));
         root.add(new DefaultMutableTreeNode("Airline-Tag: " + airline.iataTag()));
         root.add(new DefaultMutableTreeNode("Airline-Name: " + airline.name()));
+        root.add(new DefaultMutableTreeNode("Airline-Country: " + airline.country()));
         // src airport
         Airport startAirport = f.src();
         var start = new DefaultMutableTreeNode("Start-Airport");

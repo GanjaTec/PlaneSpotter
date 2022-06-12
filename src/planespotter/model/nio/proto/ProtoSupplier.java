@@ -1,13 +1,14 @@
 package planespotter.model.nio.proto;
 
+import org.jetbrains.annotations.TestOnly;
+import planespotter.constants.Areas;
 import planespotter.constants.SQLQueries;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Frame;
 import planespotter.model.io.DBOut;
+import planespotter.model.io.SupperDB;
 import planespotter.throwables.DataNotFoundException;
-import planespotter.throwables.InvalidArrayException;
 import planespotter.unused.DefaultObject;
-import planespotter.util.Utilities;
 
 import java.sql.*;
 import java.util.*;
@@ -32,7 +33,9 @@ import static planespotter.util.Time.*;
  *       the String-magic is no 'magic' anymore, working with fromJson
  */
 // FIXME: 04.06.2022 Daten werden eventuell noch mit falschen IDs eingefügt, checken!
-public class ProtoSupplier extends DBManager implements Runnable {
+
+@TestOnly
+public class ProtoSupplier extends SupperDB implements Runnable {
 
     private static volatile boolean running = false;
 
@@ -51,9 +54,9 @@ public class ProtoSupplier extends DBManager implements Runnable {
             var exe = (ThreadPoolExecutor) Executors.newFixedThreadPool(50);
             exe.setKeepAliveTime(4L, TimeUnit.SECONDS);
             // collecting all areas
-            var areas = this.deserializer.getAllAreas();
+            var areas = Areas.getAllAreas();
             // grabbing data from Fr24 and deserializing to Frames
-            var frames = this.deserializer.runSuppliers(areas, new Scheduler());
+            var frames = this.deserializer.getFr24Frames(areas, new Scheduler());
             // writing the frames to DB
             this.writeToDB(frames, new DBOut());
             try {
@@ -78,7 +81,7 @@ public class ProtoSupplier extends DBManager implements Runnable {
         var writerThread = new Thread(() -> {
             writing = true;
             try {
-                var conn = connect();
+                var conn = getDBConnection();
                 /*var newPlanes = this.insertPlanes(conn, frames, dbOut);
                 var newFlights = this.insertFlights(conn, frames, dbOut, newPlanes);
                 this.insertTracking(conn, frames, dbOut, newFlights);
@@ -86,7 +89,7 @@ public class ProtoSupplier extends DBManager implements Runnable {
                 var stmts = this.createWriteStatements(conn, frames, dbOut);
                 assert stmts != null;
                 executeSQL(conn, stmts);
-            } catch (Exception e) { // TODO ACHTUNG, auch SQLException
+            } catch (SQLException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
             writing = false;
@@ -114,7 +117,6 @@ public class ProtoSupplier extends DBManager implements Runnable {
 
             frames.forEach(f -> {
                 boolean containsPlane;
-                assert icaoIDMap != null;
                 if (!icaoIDMap.isEmpty()) {
                     containsPlane = icaoIDMap.containsKey(f.getIcaoAdr());
                     if (!containsPlane) {
@@ -132,7 +134,7 @@ public class ProtoSupplier extends DBManager implements Runnable {
                     }
                 }
             });
-            var newIDs = Arrays.stream(executeQuery(planeQuery))
+            var newIDs = Arrays.stream(executeSQL(planeQuery))
                     .boxed()
                     .collect(Collectors.toCollection(ArrayDeque::new));
 
@@ -145,7 +147,7 @@ public class ProtoSupplier extends DBManager implements Runnable {
             }
             return map;
 
-        } catch (SQLException e) {
+        } catch (SQLException | DataNotFoundException e) {
             e.printStackTrace();
         }
         throw new NullPointerException();
@@ -179,7 +181,7 @@ public class ProtoSupplier extends DBManager implements Runnable {
                     }
                 }
             });
-            var newIDs = Arrays.stream(executeQuery(flightQuery))
+            var newIDs = Arrays.stream(executeSQL(flightQuery))
                     .boxed()
                     .collect(Collectors.toCollection(ArrayDeque::new));
 
@@ -220,9 +222,9 @@ public class ProtoSupplier extends DBManager implements Runnable {
                     e.printStackTrace();
                 }
             });
-            return executeQuery(trackingQuery);
+            return executeSQL(trackingQuery);
 
-        } catch (SQLException e) {
+        } catch (SQLException | DataNotFoundException e) {
             e.printStackTrace();
         }
         throw new NullPointerException();

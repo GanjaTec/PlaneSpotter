@@ -8,7 +8,11 @@ package planespotter.constants;
  * class areas contains all map areas as complicated coordinate-strings
  */
 public final class Areas { // TODO zu Enum machen (die einzel Strings) mit String area Bsp.: URKAINE("...").get() oder so
-	
+
+	// World Areas
+	public static final String AMERICA = "84.512%2C-66.357%2C-162.169%2C-23.303";
+	public static final String EURASIA = "85.052%2C-63.86%2C-41.935%2C-170.256";
+
 	//Ukraine War
 	public static final String UKRAINE = "52.567%2C45.909%2C17.843%2C45.967";
 	public static final String ROMANIA = "47.669%2C44.114%2C18.568%2C32.63";
@@ -62,7 +66,33 @@ public final class Areas { // TODO zu Enum machen (die einzel Strings) mit Strin
 	public static final String[] NAFC = {};
 
 
+	public static synchronized String[] getWorldAreas() {
+		return new String[] { AMERICA, EURASIA };
+	}
 
+	public static synchronized String[] getAllAreas() {
+		int eastLength = EASTERN_FRONT.length;
+		int gerLength = GERMANY.length;
+		int itaSwiAuLength = ITA_SWI_AU.length;
+		final int length = eastLength + gerLength + itaSwiAuLength;
+		var areas = new String[length];
+		int a = 0, b = 0, c = 0; // counter
+		for (int addIdx = 0; addIdx < length; addIdx++) {
+			if (a < eastLength) {
+				areas[addIdx] = EASTERN_FRONT[a];
+				a++;
+			}
+			if (b < gerLength) {
+				areas[addIdx] = GERMANY[b];
+				b++;
+			}
+			if (c < itaSwiAuLength) {
+				areas[addIdx] = ITA_SWI_AU[c];
+				c++;
+			}
+		}
+		return areas;
+	}
 
 }
 	

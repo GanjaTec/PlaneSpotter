@@ -365,3 +365,54 @@
                                 }
                             }
                         }
+
+
+
+
+                        @Deprecated(since = "1.2/liveMap")
+                            private void liveDataFromDB() {
+                                final long startTime = nowMillis();
+                                final int startID = 0;
+                                final int endID = UserSettings.getMaxLoadedData();
+                                final int dataPerTask = 12500; // testen!
+                                this.liveData = new Vector<>();
+
+                                var outputWizard = new OutputWizard(scheduler, startID, endID, dataPerTask, 0);
+                                scheduler.exec(outputWizard, "Output-Wizard", true, 9, true);
+
+                                this.waitForFinish();
+                                this.done();
+
+                                logger.sucsessLog("loaded Live-Data in " + elapsedSeconds(startTime) + " seconds!", this);
+                                logger.infoLog("-> completed: " + scheduler.completed() + ", active: " + scheduler.active() +
+                                                  ", largestPoolSize: " + scheduler.largestPoolSize(), this);
+                                if (gui.getCurrentViewType() != null) {
+                                    switch (gui.getCurrentViewType()) {
+                                        case MAP_LIVE, MAP_TRACKING, MAP_TRACKING_NP, MAP_FROMSEARCH -> {
+                                            // TODO reload map -> neue methode
+                                        }
+                                    }
+                                }
+                            }
+
+
+
+                            /**
+                                 * waits while data is loading and then adds all loaded data to the live data Flights list
+                                 * // active waiting
+                                 */
+                                @Deprecated(since = "1.2", forRemoval = true)
+                                synchronized void waitForFinish() {
+                                    // waits until there is no running thread, then breaks
+                                    /*while (true) { // FIXME: 29.05.2022 endlos schleife -> wait einbauen
+                                        if (scheduler.active() == 0 || !this.loading)
+                                            break;
+                                    }*/
+                                    while (scheduler.active() > 0 && this.loading) { // TODO: 29.05.2022 richtige Abbruchbedingung ! (nur loading?)
+                                        try {
+                                            this.wait();
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
