@@ -210,16 +210,20 @@ public record ActionHandler()
             guiAdapter.loadSearch(SearchType.byItemString(item));
         } else if (source == gui.getContainer("settingsMapTypeCmbBox")) {
             var usrSettings = new UserSettings();
-            if (item.equals("Bing Map")) {
-                usrSettings.setCurrentMapSource(usrSettings.bingMap);
-            } else if (item.equals("Default Map")) {
-                usrSettings.setCurrentMapSource(usrSettings.tmstMap);
-            } else if (item.equals("Transport Map")) {
-                usrSettings.setCurrentMapSource(usrSettings.transportMap);
+            switch (item) {
+                case "Bing Map" -> usrSettings.setCurrentMapSource(usrSettings.bingMap);
+                case "Default Map" -> usrSettings.setCurrentMapSource(usrSettings.tmstMap);
+                case "Transport Map" -> usrSettings.setCurrentMapSource(usrSettings.transportMap);
             }
         }
     }
 
+    /**
+     * overwritten actionPerformed() method is executed when an action is performed by
+     * a component which has this ActionHandler as its ActionListener
+     *
+     * @param e is the ActionEvent which is performed
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
         var src = e.getSource();

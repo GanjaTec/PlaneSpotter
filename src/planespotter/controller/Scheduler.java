@@ -1,6 +1,7 @@
 package planespotter.controller;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Range;
 
 import java.util.Arrays;
 import java.util.concurrent.*;
@@ -83,7 +84,6 @@ public class Scheduler {
     /**
      * executes a single thread with custom name
      * created thread will be watched by the WatchDog
-     * @update timeout is implemented in invokeAny()
      *
      * @param target is the Runnable to execute
      * @param tName is the Thread-Name
@@ -127,14 +127,14 @@ public class Scheduler {
     /**
      *
      *
-     * @param target
-     * @param tName
-     * @param daemon
-     * @param prio
+     * @param target is the target runnable to execute
+     * @param tName is the thread name
+     * @param daemon is the daemon flag
+     * @param prio is the priority from 1-10
      */
-    public Thread runThread(@NotNull Runnable target, String tName, boolean daemon, int prio) {
+    public Thread runThread(@NotNull Runnable target, String tName, boolean daemon, @Range(from = 1, to = 10) int prio) {
         var thread = new Thread(target);
-        thread.setName(tName);
+        thread.setName(String.valueOf(tName));
         thread.setPriority(prio);
         thread.setDaemon(daemon);
         thread.start();
