@@ -1,6 +1,7 @@
 package planespotter.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Range;
 import planespotter.dataclasses.*;
 import planespotter.dataclasses.Frame;
 import planespotter.throwables.IllegalInputException;
@@ -31,7 +32,7 @@ public abstract class Utilities {
      * plays a sound from the default toolkit
      * @param sound is the sound to be played (see: {@link planespotter.constants.GUIConstants})
      */
-    public static boolean playSound(@NotNull String sound) {
+    public static boolean playSound(@NotNull final String sound) {
         var sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(sound);
         if (sound2 != null) {
             sound2.run();
@@ -44,10 +45,7 @@ public abstract class Utilities {
      * @param feet is the input, in feet (ft)
      * @return a feet value in meters
      */
-    public static int feetToMeters(int feet) {
-        if (feet < 0) {
-            throw new IllegalArgumentException("number must be higher or equals 0!");
-        }
+    public static int feetToMeters(@Range(from = 0, to = Integer.MAX_VALUE) int feet) {
         return (int) (feet/3.2808);
     }
 
@@ -55,10 +53,7 @@ public abstract class Utilities {
      * @param kn is the input, in knots (kn)
      * @return the knots in km per hour
      */
-    public static int knToKmh(int kn) {
-        if (kn < 0) {
-            throw new IllegalArgumentException("number must be higher or equals 0!");
-        }
+    public static int knToKmh(@Range(from = 0,to = Integer.MAX_VALUE) int kn) {
         return (int) Math.round(kn * 1.852);
     }
 
@@ -68,10 +63,7 @@ public abstract class Utilities {
      * @param input is the string to pack
      * @return packed input string with 's
      */
-    public static String packString(String input) {
-        if (input == null) {
-            throw new IllegalArgumentException("input cannot be null");
-        }
+    public static String packString(@NotNull String input) {
         return "'" + input + "'";
     }
 
@@ -95,16 +87,13 @@ public abstract class Utilities {
     public static String checkString(@NotNull String check)
         throws IllegalInputException {
 
-        if (check.contains(";")) {
-            check = check.substring(0, check.indexOf(';'));
-            throw new IllegalInputException();
-        }
-        if (check.contains("*") || check.contains("SELECT") || check.contains("select")
-            || check.contains("JOIN") || check.contains("join")
-            || check.contains("DROP") || check.contains("drop")
-            || check.contains("INSERT") || check.contains("insert")
-            || check.contains("TABLE")
-            || check.contains("FROM") || check.contains("from")) {
+        if (       check.contains("*")      || check.contains(";")
+                || check.contains("SELECT") || check.contains("select")
+                || check.contains("JOIN")   || check.contains("join")
+                || check.contains("DROP")   || check.contains("drop")
+                || check.contains("INSERT") || check.contains("insert")
+                || check.contains("FROM")   || check.contains("from")
+                || check.contains("TABLE")) {
             throw new IllegalInputException();
         }
         return check.replaceAll("%", "");

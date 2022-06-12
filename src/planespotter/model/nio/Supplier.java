@@ -15,6 +15,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Deque;
 import java.util.List;
 
 import static planespotter.util.Time.*;
@@ -53,7 +54,7 @@ public class Supplier implements Runnable{
 			System.out.println("Starting Thread \"" + this.ThreadName + "\"");
 
 			HttpResponse<String> response = this.fr24get();
-			List<Frame> frames = new ProtoDeserializer().deserialize(response).stream().toList();
+			Deque<Frame> frames = new ProtoDeserializer().deserialize(response);
 			// use Proto-deserialize instead of ds.deserialize(...) for right-way-deserialized frames (no "" anymore)
 			// old: ds.deserialize(response)
 			writeToDB(frames, this.dbo, this.dbi);
@@ -99,47 +100,40 @@ public class Supplier implements Runnable{
 	 *  -> es müssen irgendwo noch Referenzen sein
 	 ***********************************************************************************/
 
-	public static synchronized void writeToDB(List<Frame> frames, DBOut dbo, DBIn dbi) {
+	public static synchronized void writeToDB(Deque<Frame> frames, DBOut dbo, DBIn dbi) {
 		// TODO: 12.06.2022 mindestens die dbo-Anfragen aus der Schleife raus, alles vorher schon in je eine Collection und darin abfragen
-		try {
-			long ts1 = nowMillis();
-			for (Frame f : frames) {
-				
-				// insert into planes
-				int airlineID = dbo.getAirlineIDByTag(f.getAirline());
-				int planeID = dbo.checkPlaneInDB(f.getIcaoAdr());
-				boolean checkPlane =  planeID > -1;
-				
-				if(!checkPlane) {
-					planeID = dbi.insertPlane(f, airlineID);
-				}
-				
-				
-				// insert into flights
-				int flightID = dbo.checkFlightInDB(f, planeID);
-				boolean checkFlight = flightID > -1;
-				
-				if(!checkFlight) {
-					flightID = dbi.insertFlight(f, planeID);
-				}
-				
-				
-				// insert into tracking
-				dbi.insertTracking(f, flightID);
-				
-				f = null;
-			}
-			
-			frames = null;
+		long ts1 = nowMillis();
+		while (!frames.isEmpty()) {
+			Frame frame = frames.poll();
 
-			System.out.println("filled DB in " + elapsedSeconds(ts1) + " seconds!");
-			
-			System.gc();
-		
-		} catch (Exception e) { // TODO: 12.06.2022 do not throw Exception, too unspecific and overwriting every other exception
-			e.printStackTrace();
-			// conn.rollback();
+			// insert into planes
+			int airlineID = dbo.getAirlineIDByTag(frame.getAirline());
+			int planeID = dbo.checkPlaneInDB(frame.getIcaoAdr());
+			boolean checkPlane = planeID > -1;
+
+			if (!checkPlane) {
+				planeID = dbi.insertPlane(frame, airlineID);
+			}
+
+			// insert into flights
+			int flightID = dbo.checkFlightInDB(frame, planeID);
+			boolean checkFlight = flightID > -1;
+
+			if (!checkFlight) {
+				flightID = dbi.insertFlight(frame, planeID);
+			}
+
+			// insert into tracking
+			dbi.insertTracking(frame, flightID);
+
+			frame = null;
 		}
+
+		frames = null;
+
+		System.out.println("filled DB in " + elapsedSeconds(ts1) + " seconds!");
+
+		System.gc();
 
 	}
 

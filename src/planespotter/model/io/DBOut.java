@@ -72,8 +72,7 @@ public class DBOut extends SupperDB {
 		return a;
 	}
 	
-	public final int getAirlineIDByTag(String tag)
-			throws DataNotFoundException {
+	public final int getAirlineIDByTag(String tag) {
 
 		int id = -1;
 		if (tag == null) { // vorrübergehende Notlösung
@@ -229,8 +228,7 @@ public class DBOut extends SupperDB {
 	 * @return
 	 * @throws Exception
 	 */
-	public final int checkPlaneInDB(String icao)
-			throws DataNotFoundException {
+	public final int checkPlaneInDB(String icao) {
 
 		var planeFilter = "SELECT ID FROM planes WHERE icaonr = '" + icao + "' LIMIT 1";
 		try {
@@ -462,9 +460,7 @@ public class DBOut extends SupperDB {
 	 * @param planeid
 	 * @return
 	 */
-	public final int checkFlightInDB(Frame f, int planeid)
-			throws DataNotFoundException {
-
+	public final int checkFlightInDB(Frame f, int planeid) {
 		try {
 			var rs = this.queryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
 			int flightID;

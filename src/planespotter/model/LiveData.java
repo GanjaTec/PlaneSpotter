@@ -7,8 +7,9 @@ import planespotter.dataclasses.Frame;
 import planespotter.model.nio.proto.ProtoDeserializer;
 
 import java.util.Collection;
-import java.util.Queue;
+import java.util.Deque;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -24,10 +25,21 @@ public abstract class LiveData {
     // boolean isLive shows if the live map is shown at the moment
     private static boolean live;
 
-    public static void insertLater(Collection<Frame> data) {
+    /**
+     *
+     *
+     * @param data
+     */
+    public static void insertLater(final Collection<Frame> data) {
         insertLater.addAll(data);
     }
 
+    /**
+     *
+     *
+     * @param scheduler
+     * @return
+     */
     public static Vector<Flight> directLiveData(final Scheduler scheduler) {
         var deserializer = new ProtoDeserializer();
         var world = Areas.getWorldAreas();
@@ -60,13 +72,27 @@ public abstract class LiveData {
         return insertLater.size() > count;
     }
 
+    /**
+     *
+     * @return true if the insert-later-deque is empty, else false
+     */
     protected static boolean isEmpty() {
         return insertLater.size() == 0;
     }
 
-    public static Queue<Frame> pollFrames(final int count) {
+    /**
+     * polls a certain amount of frames from the
+     * insert-later-deque if
+     *
+     * @param count
+     * @return
+     */
+    public static Deque<Frame> pollFrames(final int count) {
+        if (isEmpty()) {
+            throw new NullPointerException("Insert-later-Deque is empty, use isEmpty() first!");
+        }
         var counter = new AtomicInteger();
-        var frames = new ConcurrentLinkedQueue<Frame>();
+        var frames = new ConcurrentLinkedDeque<Frame>();
 
         insertLater.parallelStream()
                 .forEach(frame -> {
@@ -78,10 +104,20 @@ public abstract class LiveData {
         return frames;
     }
 
+    /**
+     *
+     *
+     * @return
+     */
     public static boolean isLive() {
         return live;
     }
 
+    /**
+     *
+     *
+     * @param b
+     */
     public static void setLive(boolean b) {
         live = b;
     }

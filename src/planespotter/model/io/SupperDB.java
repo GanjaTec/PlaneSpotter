@@ -1,6 +1,7 @@
 package planespotter.model.io;
 
 import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.InvalidDataException;
 
 import java.sql.*;
 import java.util.Arrays;
@@ -31,8 +32,7 @@ public class SupperDB {
 	 * @param querry String to use for the Querry
 	 * @return ResultSet containing the querried Data
 	 */
-	protected ResultSet queryDB(final String querry)
-			throws DataNotFoundException {
+	protected ResultSet queryDB(final String querry) {
 
 		try {
 			Connection conn = getDBConnection();
@@ -41,7 +41,7 @@ public class SupperDB {
 		} catch (SQLException | ClassNotFoundException e) {
 			e.printStackTrace();
 		}
-		throw new DataNotFoundException("Couldn't find any Data or an error occured!");
+		throw new InvalidDataException("Couldn't find any Data or an error occured!");
 	}
 	
 	/**
