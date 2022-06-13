@@ -69,8 +69,10 @@ public final class MapManager {
             heading = dp.heading();
             markerColor = Utilities.colorByAltitude(altitude);
             if (counter > 0) {
+                double latDiff = lastdp.pos().lat() - dp.pos().lat();
                 if (dp.flightID() == lastdp.flightID() // check if the data points belong to eachother
-                        && dp.timestamp() >= lastdp.timestamp()) {
+                        && dp.timestamp() >= lastdp.timestamp()
+                        && latDiff < 350) {
                     coord1 = Position.toCoordinate(dpPos);
                     coord2 = Position.toCoordinate(lastdp.pos());
                     line = new MapPolygonImpl(coord1, coord2, coord1);

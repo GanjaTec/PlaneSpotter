@@ -279,7 +279,7 @@ Event: 1080.799 Thread 0x000001f511b10d50 nmethod 5923 0x000001f500c0c910 code [
 Event: 1080.799 Thread 0x000001f511b10d50 5924       1       java.lang.reflect.Field::getGenericSignature (5 bytes)
 Event: 1080.799 Thread 0x000001f511b10d50 nmethod 5924 0x000001f507b57010 code [0x000001f507b571a0, 0x000001f507b57278]
 Event: 1080.806 Thread 0x000001f511b0fc00 nmethod 5919 0x000001f507b16410 code [0x000001f507b166c0, 0x000001f507b17688]
-Event: 1080.806 Thread 0x000001f511b0fc00 5920   !   4       planespotter.model.nio.proto.ProtoDeserializer::unwrap (86 bytes)
+Event: 1080.806 Thread 0x000001f511b0fc00 5920   !   4       planespotter.model.nio.Fr24Deserializer::unwrap (86 bytes)
 Event: 1080.823 Thread 0x000001f511b0fc00 nmethod 5920 0x000001f507b13710 code [0x000001f507b139c0, 0x000001f507b14928]
 Event: 1083.278 Thread 0x000001f511b0fc00 5926   !   4       sun.rmi.transport.Transport::serviceCall (349 bytes)
 Event: 1083.343 Thread 0x000001f511b0fc00 nmethod 5926 0x000001f507b4c690 code [0x000001f507b4cac0, 0x000001f507b4f3b8]

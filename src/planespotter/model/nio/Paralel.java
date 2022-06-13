@@ -1,7 +1,6 @@
 package planespotter.model.nio;
 
 import planespotter.constants.Areas;
-import planespotter.model.nio.proto.ProtoKeeper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,9 +9,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import static planespotter.util.Time.elapsedSeconds;
-import static planespotter.util.Time.nowMillis;
 
 public class Paralel {
 	private int poolsize = 8;

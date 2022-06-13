@@ -3,7 +3,7 @@ package planespotter;
 import planespotter.constants.Areas;
 import planespotter.controller.Scheduler;
 import planespotter.model.nio.Supplier;
-import planespotter.model.nio.proto.ProtoKeeper;
+import planespotter.model.nio.FastKeeper;
 
 public abstract class SupplierMain {
     // monitor object
@@ -19,7 +19,7 @@ public abstract class SupplierMain {
         final var scheduler = new Scheduler();
         final var supplier0 = new Supplier(0, Areas.AMERICA);
         final var supplier1 = new Supplier(1, Areas.EURASIA);
-        final var keeper = new ProtoKeeper(1200L);
+        final var keeper = new FastKeeper(1200L);
 
         scheduler.schedule(() -> {
             // executing two suppliers to collect Fr24-Data

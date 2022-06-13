@@ -1,10 +1,10 @@
 package planespotter.model.nio;
 
 import org.jetbrains.annotations.NotNull;
+import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.DBOut;
-import planespotter.model.nio.proto.ProtoDeserializer;
 import planespotter.throwables.DataNotFoundException;
 
 import java.io.File;
@@ -19,14 +19,24 @@ import java.time.Instant;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static planespotter.util.Time.*;
 
 /**
+ * @name Supplier
  * @author Lukas
+ * @author jml04
  *
+ * Class Supplier is the Data-Supplier,
+ * it is able to collect different types of flight-data Frames (Fr24Frames),
+ * it contains methods to collect data and some to write data
+ * to the database.
  */
-public class Supplier implements Runnable{
+public class Supplier implements Runnable {
 	private final int threadNumber;
 	private final String ThreadName;
 	private final String area;
@@ -44,6 +54,10 @@ public class Supplier implements Runnable{
 		return this.ThreadName;
 	}
 
+	public Supplier() {
+		this(0, "");
+	}
+
 	public Supplier(int threadNumber, @NotNull String area) {
 		this.threadNumber = threadNumber;
 		this.ThreadName = "SupplierThread-" + threadNumber;
@@ -57,7 +71,7 @@ public class Supplier implements Runnable{
 			System.out.println("Starting Thread \"" + this.ThreadName + "\"");
 
 			HttpResponse<String> response = this.fr24get();
-			Deque<Fr24Frame> fr24Frames = new ProtoDeserializer().deserialize(response);
+			Deque<Fr24Frame> fr24Frames = new Fr24Deserializer().deserialize(response);
 			// use Proto-deserialize instead of ds.deserialize(...) for right-way-deserialized frames (no "" anymore)
 			// old: ds.deserialize(response)
 			writeToDB(fr24Frames, this.dbo, this.dbi);
@@ -94,6 +108,48 @@ public class Supplier implements Runnable{
 		return this.client.send(request, BodyHandlers.ofString());
 	}
 
+	/**
+	 * gets HttpResponse's for specific areas and deserializes its data to Frames
+	 *
+	 * @param areas are the Areas where data should be deserialized from
+	 * @param scheduler is the Scheduler to allow parallelism
+	 * @return Deque of deserialized Frames
+	 */
+	public synchronized Deque<Fr24Frame> getFr24Frames(String[] areas, final Fr24Deserializer deserializer, final Scheduler scheduler) {
+		var concurrentDeque = new ConcurrentLinkedDeque<Fr24Frame>();
+		System.out.println("Deserializing Fr24-Data...");
+
+		var ready = new AtomicBoolean(false);
+		var counter = new AtomicInteger(areas.length - 1);
+		for (var area : areas) {
+			scheduler.exec(() -> {
+				var supplier = new Supplier(0, area);
+				try {
+					var data = deserializer.deserialize(supplier.fr24get());
+					while (!data.isEmpty()) {
+						concurrentDeque.add(data.poll());
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				if (counter.get() == 0) {
+					ready.set(true);
+				}
+				counter.getAndDecrement();
+			}, "Fr24-Deserializer");
+		}
+		while (!ready.get()) {
+			System.out.print(":");
+			try {
+				TimeUnit.MILLISECONDS.sleep(25);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		System.out.println();
+		return concurrentDeque;
+	}
+
 	/***********************************************************************************
 	 * WICHTIG:
 	 *
@@ -104,16 +160,16 @@ public class Supplier implements Runnable{
 	 ***********************************************************************************/
 
 	public static synchronized void writeToDB(Deque<Fr24Frame> fr24Frames, DBOut dbo, DBIn dbi) {
-		// TODO: 12.06.2022 mindestens die dbo-Anfragen aus der Schleife raus, alles vorher schon in je eine Collection und darin abfragen
 		long ts1 = nowMillis();
 		var airlineTagsIDs = new HashMap<String, Integer>();
 		var planeIcaoIDs = new HashMap<String, Integer>();
 		var flightNRsIDs = new HashMap<String, Integer>();
 		try {
-			airlineTagsIDs = (HashMap<String, Integer>) dbo.getAirlineTagsIDs();
-			planeIcaoIDs = (HashMap<String, Integer>) dbo.getPlaneIcaosIDs();
+			airlineTagsIDs = dbo.getAirlineTagsIDs();
+			planeIcaoIDs = dbo.getPlaneIcaosIDs();
 			flightNRsIDs = dbo.getFlightNRsWithFlightIDs();
 		} catch (DataNotFoundException ignored) {
+			// something doesn't exist in the DB, this is no error!
 		}
 		while (!fr24Frames.isEmpty()) {
 				Fr24Frame fr24Frame = fr24Frames.poll();

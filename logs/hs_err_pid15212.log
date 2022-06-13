@@ -254,7 +254,7 @@ CodeHeap 'non-nmethods': size=5760Kb used=1210Kb max_used=1285Kb free=4549Kb
 
 Compilation events (20 events):
 Event: 943.617 Thread 0x000001ce9c782dc0 nmethod 3135 0x000001ce8f3d7a10 code [0x000001ce8f3d7ca0, 0x000001ce8f3d8cd0]
-Event: 943.617 Thread 0x000001ce9c782dc0 3129   !   4       planespotter.model.nio.proto.ProtoDeserializer::unwrap (93 bytes)
+Event: 943.617 Thread 0x000001ce9c782dc0 3129   !   4       planespotter.model.nio.Fr24Deserializer::unwrap (93 bytes)
 Event: 943.665 Thread 0x000001ce9c782dc0 nmethod 3129 0x000001ce8f3d9e90 code [0x000001ce8f3da1c0, 0x000001ce8f3dca80]
 Event: 964.741 Thread 0x000001ce9c782dc0 3136       4       java.util.ArrayList::clear (43 bytes)
 Event: 964.743 Thread 0x000001ce9c782dc0 nmethod 3136 0x000001ce8f3dda90 code [0x000001ce8f3ddc00, 0x000001ce8f3ddd78]
