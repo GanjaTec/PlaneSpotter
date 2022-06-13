@@ -30,7 +30,7 @@
 Command Line: -javaagent:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2021.3\lib\idea_rt.jar=50108:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2021.3\bin -Dfile.encoding=UTF-8 planespotter.SupplierMain
 
 Host: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz, 12 cores, 7G,  Windows 10 , 64 bit Build 22000 (10.0.22000.675)
-Time: Sat Jun 11 18:00:15 2022 Mitteleuropäische Sommerzeit elapsed time: 1038.002097 seconds (0d 0h 17m 18s)
+Time: Sat Jun 11 18:00:15 2022 Mitteleuropï¿½ische Sommerzeit elapsed time: 1038.002097 seconds (0d 0h 17m 18s)
 
 ---------------  T H R E A D  ---------------
 
@@ -428,13 +428,13 @@ Event: 1037.910 Thread 0x000001ce9dc067d0 Uncommon trap: reason=unstable_if acti
 Event: 1037.910 Thread 0x000001ce9dc067d0 DEOPT PACKING pc=0x000001ce8f31f018 sp=0x00000086f51feff0
 Event: 1037.910 Thread 0x000001ce9dc067d0 DEOPT UNPACKING pc=0x000001ce877823a3 sp=0x00000086f51fefb0 mode 2
 Event: 1037.967 Thread 0x000001ce9dc067d0 Uncommon trap: trap_request=0x00000032 fr.pc=0x000001ce8f3c8680 relative=0x0000000000002140
-Event: 1037.967 Thread 0x000001ce9dc067d0 Uncommon trap: reason=unloaded action=reinterpret pc=0x000001ce8f3c8680 method=planespotter.model.io.SupperDB.queryDB(Ljava/lang/String;)Ljava/sql/ResultSet; @ 24 c2
+Event: 1037.967 Thread 0x000001ce9dc067d0 Uncommon trap: reason=unloaded action=reinterpret pc=0x000001ce8f3c8680 method=planespotter.model.SupperDB.queryDB(Ljava/lang/String;)Ljava/sql/ResultSet; @ 24 c2
 Event: 1037.967 Thread 0x000001ce9dc067d0 DEOPT PACKING pc=0x000001ce8f3c8680 sp=0x00000086f51ff130
 Event: 1037.967 Thread 0x000001ce9dc067d0 DEOPT UNPACKING pc=0x000001ce877823a3 sp=0x00000086f51ff0a0 mode 2
 Event: 1037.996 Thread 0x000001ce9dc067d0 DEOPT PACKING pc=0x000001ce87e1b6be sp=0x00000086f51febb0
 Event: 1037.996 Thread 0x000001ce9dc067d0 DEOPT UNPACKING pc=0x000001ce87782b43 sp=0x00000086f51fe028 mode 0
 Event: 1037.996 Thread 0x000001ce9dc067d0 Uncommon trap: trap_request=0x00000032 fr.pc=0x000001ce8f376e4c relative=0x00000000000005cc
-Event: 1037.996 Thread 0x000001ce9dc067d0 Uncommon trap: reason=unloaded action=reinterpret pc=0x000001ce8f376e4c method=planespotter.model.io.SupperDB.queryDB(Ljava/lang/String;)Ljava/sql/ResultSet; @ 24 c2
+Event: 1037.996 Thread 0x000001ce9dc067d0 Uncommon trap: reason=unloaded action=reinterpret pc=0x000001ce8f376e4c method=planespotter.model.SupperDB.queryDB(Ljava/lang/String;)Ljava/sql/ResultSet; @ 24 c2
 Event: 1037.996 Thread 0x000001ce9dc067d0 DEOPT PACKING pc=0x000001ce8f376e4c sp=0x00000086f51ff100
 Event: 1037.996 Thread 0x000001ce9dc067d0 DEOPT UNPACKING pc=0x000001ce877823a3 sp=0x00000086f51ff0c8 mode 2
 
