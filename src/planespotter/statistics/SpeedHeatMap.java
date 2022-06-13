@@ -3,14 +3,10 @@ package planespotter.statistics;
 import org.jetbrains.annotations.NotNull;
 import planespotter.dataclasses.Position;
 import planespotter.throwables.OutOfRangeException;
-import planespotter.util.TaskWatchDog;
 import planespotter.util.Utilities;
 
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Vector;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SpeedHeatMap extends HeatMap {
 

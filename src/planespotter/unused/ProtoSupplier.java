@@ -1,4 +1,4 @@
-package planespotter.model.nio.proto;
+package planespotter.unused;
 
 import org.jetbrains.annotations.TestOnly;
 import planespotter.constants.Areas;
@@ -7,9 +7,11 @@ import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBOut;
 import planespotter.model.SupperDB;
+import planespotter.model.nio.Fr24Deserializer;
+import planespotter.model.nio.FastKeeper;
+import planespotter.model.nio.Supplier;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.NoAccessException;
-import planespotter.unused.DefaultObject;
 
 import java.sql.*;
 import java.util.*;
@@ -40,10 +42,10 @@ public class ProtoSupplier extends SupperDB implements Runnable {
 
     private static volatile boolean running = false;
 
-    private final ProtoDeserializer deserializer;
-    private final ProtoKeeper keeper;
+    private final Fr24Deserializer deserializer;
+    private final FastKeeper keeper;
 
-    public ProtoSupplier(ProtoDeserializer deserializer, ProtoKeeper keeper) {
+    public ProtoSupplier(Fr24Deserializer deserializer, FastKeeper keeper) {
         this.deserializer = deserializer;
         this.keeper = keeper;
     }
@@ -57,7 +59,7 @@ public class ProtoSupplier extends SupperDB implements Runnable {
             // collecting all areas
             var areas = Areas.getAllAreas();
             // grabbing data from Fr24 and deserializing to Frames
-            var frames = this.deserializer.getFr24Frames(areas, new Scheduler());
+            var frames = new Supplier().getFr24Frames(areas, this.deserializer, new Scheduler());
             // writing the frames to DB
             this.writeToDB(frames, new DBOut());
             try {

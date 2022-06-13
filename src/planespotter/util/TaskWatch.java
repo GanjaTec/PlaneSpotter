@@ -1,39 +1,39 @@
 package planespotter.util;
 
-public class TaskWatchDog {
+public class TaskWatch {
 
     // counters
     private long allocations, comparisons, arrays;
 
-    public TaskWatchDog() {
+    public TaskWatch() {
         this.allocations = 0;
         this.comparisons = 0;
         this.arrays = 0;
     }
 
-    public final TaskWatchDog allocation(final int count) {
+    public final TaskWatch allocation(final int count) {
         for (int i = 0; i < count; i++) {
             this.allocations++;
         }
         return this;
     }
 
-    public final TaskWatchDog allocation() {
+    public final TaskWatch allocation() {
         return this.allocation(1);
     }
 
-    public final TaskWatchDog comparison(final int count) {
+    public final TaskWatch comparison(final int count) {
         for (int i = 0; i < count; i++) {
             this.comparisons++;
         }
         return this;
     }
 
-    public final TaskWatchDog comparison() {
+    public final TaskWatch comparison() {
         return this.comparison(1);
     }
 
-    public final TaskWatchDog array() {
+    public final TaskWatch array() {
         this.arrays++;
         return this;
     }

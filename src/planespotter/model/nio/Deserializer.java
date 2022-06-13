@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Deprecated(since = "new Deserializer with correct data")
+/* @unused */												// could be turned into ADSBDeserializer
 public class Deserializer implements AbstractDeserializer {
 	
 	public Deserializer() {

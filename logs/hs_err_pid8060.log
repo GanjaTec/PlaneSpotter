@@ -56,8 +56,8 @@ J 2420 c2 planespotter.model.io.DBOut.querryDB(Ljava/lang/String;)Ljava/sql/Resu
 J 2480 c2 planespotter.model.io.DBOut.getLastTrackingIDByFlightID(I)I (84 bytes) @ 0x000001cde9f07ca0 [0x000001cde9f07860+0x0000000000000440]
 j  planespotter.model.io.DBOut.getLastTrackingsByFlightIDs(Ljava/util/ArrayDeque;)Ljava/util/ArrayDeque;+50
 j  planespotter.model.io.DBOut.getLiveTrackingBetween(II)Ljava/util/List;+7
-j  planespotter.model.io.OutputWizard.loadFlights(II)V+19
-j  planespotter.model.io.OutputWizard.run()V+47
+j  planespotter.unused.OutputWizard.loadFlights(II)V+19
+j  planespotter.unused.OutputWizard.run()V+47
 j  java.util.concurrent.ThreadPoolExecutor.runWorker(Ljava/util/concurrent/ThreadPoolExecutor$Worker;)V+92 java.base@17.0.1
 j  java.util.concurrent.ThreadPoolExecutor$Worker.run()V+5 java.base@17.0.1
 j  java.lang.Thread.run()V+11 java.base@17.0.1

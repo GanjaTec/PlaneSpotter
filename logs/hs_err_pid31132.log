@@ -54,8 +54,8 @@ v  ~UncommonTrapBlob
 J 3600 c2 org.sqlite.core.CoreStatement.exec()Z (127 bytes) @ 0x000002658f3cf350 [0x000002658f3ce7a0+0x0000000000000bb0]
 J 3634 c2 planespotter.model.io.DBOut.querryDB(Ljava/lang/String;)Ljava/sql/ResultSet; (23 bytes) @ 0x000002658f3f1938 [0x000002658f3f15c0+0x0000000000000378]
 J 3648 c2 planespotter.model.io.DBOut.checkFlightInDB(Lplanespotter/dataclasses/Frame;I)I (66 bytes) @ 0x000002658f3fbd78 [0x000002658f3fb800+0x0000000000000578]
-J 3649 c2 planespotter.model.nio.proto.ProtoSupplier.lambda$dbMultiInsert$2(Lplanespotter/model/io/DBOut;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lplanespotter/dataclasses/Frame;)V (174 bytes) @ 0x000002658f3ff810 [0x000002658f3fea80+0x0000000000000d90]
-J 3656 c2 planespotter.model.nio.proto.ProtoSupplier$$Lambda$2942+0x000000080100ec60.accept(Ljava/lang/Object;)V (24 bytes) @ 0x000002658f413100 [0x000002658f4130a0+0x0000000000000060]
+J 3649 c2 planespotter.unused.ProtoSupplier.lambda$dbMultiInsert$2(Lplanespotter/model/io/DBOut;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lplanespotter/dataclasses/Frame;)V (174 bytes) @ 0x000002658f3ff810 [0x000002658f3fea80+0x0000000000000d90]
+J 3656 c2 planespotter.unused.ProtoSupplier$$Lambda$2942+0x000000080100ec60.accept(Ljava/lang/Object;)V (24 bytes) @ 0x000002658f413100 [0x000002658f4130a0+0x0000000000000060]
 J 3424 c2 java.util.stream.ForEachOps$ForEachOp$OfRef.accept(Ljava/lang/Object;)V java.base@17.0.1 (11 bytes) @ 0x000002658f399dc4 [0x000002658f399d80+0x0000000000000044]
 J 3647 c1 java.util.Spliterators$ArraySpliterator.forEachRemaining(Ljava/util/function/Consumer;)V java.base@17.0.1 (68 bytes) @ 0x000002658831eb94 [0x000002658831e960+0x0000000000000234]
 J 2290 c1 java.util.stream.AbstractPipeline.copyInto(Ljava/util/stream/Sink;Ljava/util/Spliterator;)V java.base@17.0.1 (54 bytes) @ 0x000002658803fcb4 [0x000002658803f8c0+0x00000000000003f4]
@@ -527,9 +527,9 @@ Event: 113.388 Thread 0x000002659cccdfb0 3653       3       java.nio.ByteBuffer:
 Event: 113.582 Thread 0x000002659cccdfb0 nmethod 3653 0x000002658831f310 code [0x000002658831f4a0, 0x000002658831f618]
 Event: 118.433 Thread 0x000002659cccdfb0 3654       3       java.util.Spliterators$ArraySpliterator::estimateSize (11 bytes)
 Event: 118.433 Thread 0x000002659cccdfb0 nmethod 3654 0x000002658831f710 code [0x000002658831f8a0, 0x000002658831f9b8]
-Event: 150.436 Thread 0x000002659cccd600 3655       4       planespotter.model.nio.proto.ProtoSupplier::addToQuery (9 bytes)
+Event: 150.436 Thread 0x000002659cccd600 3655       4       planespotter.unused.ProtoSupplier::addToQuery (9 bytes)
 Event: 150.452 Thread 0x000002659cccd600 nmethod 3655 0x000002658f412310 code [0x000002658f4124c0, 0x000002658f4129b8]
-Event: 150.516 Thread 0x000002659cccd600 3656       4       planespotter.model.nio.proto.ProtoSupplier$$Lambda$2942/0x000000080100ec60::accept (24 bytes)
+Event: 150.516 Thread 0x000002659cccd600 3656       4       planespotter.unused.ProtoSupplier$$Lambda$2942/0x000000080100ec60::accept (24 bytes)
 Event: 150.536 Thread 0x000002659cccd600 nmethod 3656 0x000002658f412f10 code [0x000002658f4130a0, 0x000002658f4131a8]
 Event: 169.720 Thread 0x000002659cccdfb0 3658       1       java.util.concurrent.ConcurrentLinkedDeque$CLDSpliterator::estimateSize (4 bytes)
 Event: 169.735 Thread 0x000002659cccdfb0 nmethod 3658 0x000002658f413690 code [0x000002658f413820, 0x000002658f4138f8]

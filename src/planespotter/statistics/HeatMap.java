@@ -1,7 +1,7 @@
 package planespotter.statistics;
 
 import planespotter.throwables.InvalidArrayException;
-import planespotter.util.TaskWatchDog;
+import planespotter.util.TaskWatch;
 
 import java.awt.image.BufferedImage;
 
@@ -11,7 +11,7 @@ public abstract class HeatMap {
     protected final float gridSize;
     private int max;
 
-    protected final TaskWatchDog watchDog;
+    protected final TaskWatch watchDog;
 
     /**
      *
@@ -37,7 +37,7 @@ public abstract class HeatMap {
      * @param gridSize
      */
     protected HeatMap(final float gridSize) {
-        this.watchDog = new TaskWatchDog();
+        this.watchDog = new TaskWatch();
         this.gridSize = gridSize;
         this.createHeatMap();
         this.watchDog.allocation(2);

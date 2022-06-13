@@ -1,6 +1,17 @@
 package planespotter.dataclasses;
 
-public class Fr24Frame {
+/**
+ * @name Fr24Frame
+ * @author Lukas
+ * @author jml04
+ * @version 1.0
+ *
+ * class Fr24Frame is a Frame-class-child which represents
+ * a Frame with additional FlightRadar24-Data
+ */
+// TODO: 13.06.2022 move fields to superclass Frame
+// TODO: 13.06.2022 change to record
+public class Fr24Frame extends Frame {
 	private String icaoaddr;
 	private double lat;
 	private double lon;
