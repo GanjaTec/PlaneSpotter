@@ -119,7 +119,7 @@ public class Supplier implements Runnable{
 				Fr24Frame fr24Frame = fr24Frames.poll();
 
 				// insert into planes
-				int airlineID = airlineTagsIDs.getOrDefault(fr24Frame.getAirline(), -1);
+				int airlineID = airlineTagsIDs.getOrDefault(fr24Frame.getAirline(), 1);
 				int planeID = planeIcaoIDs.getOrDefault(fr24Frame.getIcaoAdr(), -1);
 				//int airlineID = dbo.getAirlineIDByTag(frame.getAirline());
 				//int planeID = dbo.checkPlaneInDB(frame.getIcaoAdr());
