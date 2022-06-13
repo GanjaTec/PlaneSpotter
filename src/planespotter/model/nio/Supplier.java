@@ -1,10 +1,12 @@
 package planespotter.model.nio;
 
+import org.jetbrains.annotations.NotNull;
 import planespotter.dataclasses.Frame;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.DBOut;
 import planespotter.model.nio.Deserializer;
 import planespotter.model.nio.proto.ProtoDeserializer;
+import planespotter.throwables.DataNotFoundException;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -25,9 +27,10 @@ import static planespotter.util.Time.*;
  *
  */
 public class Supplier implements Runnable{
-	private int threadNumber;
-	private String ThreadName;
-	private String area = "54.241%2C48.576%2C-14.184%2C13.94"; //Default OG value
+	private final int threadNumber;
+	private final String ThreadName;
+	private final String area;
+
 	HttpClient client = HttpClient.newHttpClient();
 	DBIn dbi = new DBIn();
 	DBOut dbo = new DBOut();
@@ -41,7 +44,7 @@ public class Supplier implements Runnable{
 		return this.ThreadName;
 	}
 
-	public Supplier(int threadNumber, String area) {
+	public Supplier(int threadNumber, @NotNull String area) {
 		this.threadNumber = threadNumber;
 		this.ThreadName = "SupplierThread-" + threadNumber;
 		this.area = area;
@@ -103,37 +106,48 @@ public class Supplier implements Runnable{
 	public static synchronized void writeToDB(Deque<Frame> frames, DBOut dbo, DBIn dbi) {
 		// TODO: 12.06.2022 mindestens die dbo-Anfragen aus der Schleife raus, alles vorher schon in je eine Collection und darin abfragen
 		long ts1 = nowMillis();
-		while (!frames.isEmpty()) {
-			Frame frame = frames.poll();
+		try {
+			var airlineTagsIDs = dbo.getAirlineTagsIDs();
+			var planeIcaoIDs = dbo.getPlaneIcaosIDs();
+			var flightNRsIDs = dbo.getFlightNRsWithFlightIDs();
 
-			// insert into planes
-			int airlineID = dbo.getAirlineIDByTag(frame.getAirline());
-			int planeID = dbo.checkPlaneInDB(frame.getIcaoAdr());
-			boolean checkPlane = planeID > -1;
+			while (!frames.isEmpty()) {
+				Frame frame = frames.poll();
 
-			if (!checkPlane) {
-				planeID = dbi.insertPlane(frame, airlineID);
+				// insert into planes
+				int airlineID = airlineTagsIDs.getOrDefault(frame.getAirline(), -1);
+				int planeID = planeIcaoIDs.getOrDefault(frame.getIcaoAdr(), -1);
+				//int airlineID = dbo.getAirlineIDByTag(frame.getAirline());
+				//int planeID = dbo.checkPlaneInDB(frame.getIcaoAdr());
+				boolean checkPlane = planeID > -1;
+
+				if (!checkPlane) {
+					planeID = dbi.insertPlane(frame, airlineID);
+				}
+
+				// insert into flights
+				int flightID = flightNRsIDs.getOrDefault(frame.getFlightnumber(), -1);
+				//int flightID = dbo.checkFlightInDB(frame, planeID);
+				boolean checkFlight = flightID > -1;
+
+				if (!checkFlight) {
+					flightID = dbi.insertFlight(frame, planeID);
+				}
+
+				// insert into tracking
+				dbi.insertTracking(frame, flightID);
+
+				frame = null;
 			}
 
-			// insert into flights
-			int flightID = dbo.checkFlightInDB(frame, planeID);
-			boolean checkFlight = flightID > -1;
+			frames = null;
 
-			if (!checkFlight) {
-				flightID = dbi.insertFlight(frame, planeID);
-			}
+			System.out.println("filled DB in " + elapsedSeconds(ts1) + " seconds!");
 
-			// insert into tracking
-			dbi.insertTracking(frame, flightID);
-
-			frame = null;
+			System.gc();
+		} catch (DataNotFoundException e) {
+			e.printStackTrace();
 		}
-
-		frames = null;
-
-		System.out.println("filled DB in " + elapsedSeconds(ts1) + " seconds!");
-
-		System.gc();
 
 	}
 

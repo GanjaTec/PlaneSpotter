@@ -6,8 +6,9 @@ import planespotter.constants.SQLQueries;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Frame;
 import planespotter.model.io.DBOut;
-import planespotter.model.io.SupperDB;
+import planespotter.model.SupperDB;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.NoAccessException;
 import planespotter.unused.DefaultObject;
 
 import java.sql.*;
@@ -60,7 +61,7 @@ public class ProtoSupplier extends SupperDB implements Runnable {
             // writing the frames to DB
             this.writeToDB(frames, new DBOut());
             try {
-                while (writing) {
+                while (sqlBusy.get()) {
                     synchronized (this) {
                         this.wait();
                     }
@@ -79,7 +80,6 @@ public class ProtoSupplier extends SupperDB implements Runnable {
         System.out.println("Writing DB-Data...");
 
         var writerThread = new Thread(() -> {
-            writing = true;
             try {
                 var conn = getDBConnection();
                 /*var newPlanes = this.insertPlanes(conn, frames, dbOut);
@@ -89,10 +89,10 @@ public class ProtoSupplier extends SupperDB implements Runnable {
                 var stmts = this.createWriteStatements(conn, frames, dbOut);
                 assert stmts != null;
                 executeSQL(conn, stmts);
-            } catch (SQLException | ClassNotFoundException e) {
+            } catch (SQLException | ClassNotFoundException | NoAccessException e) {
                 e.printStackTrace();
             }
-            writing = false;
+            sqlBusy.set(false);
         });
         writerThread.setName("DB-Writer");
         writerThread.setPriority(9);  // (?)

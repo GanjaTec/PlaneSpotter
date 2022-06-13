@@ -180,14 +180,15 @@ public class Scheduler {
      * @return true if the shutdown was successfully
      */
     public synchronized boolean shutdown() {
+        boolean success = false;
         try {
-            exe.shutdown();
-            scheduled_exe.shutdown();
-            return true;
+            success = exe.awaitTermination(10, TimeUnit.SECONDS);
+            success = scheduled_exe.awaitTermination(10, TimeUnit.SECONDS);
+            return success;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
+        return success;
     }
 
     /**

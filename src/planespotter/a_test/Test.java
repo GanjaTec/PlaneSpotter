@@ -1,37 +1,28 @@
 package planespotter.a_test;
 
-import com.google.gson.*;
 import org.jetbrains.annotations.TestOnly;
 import planespotter.constants.ANSIColor;
+import planespotter.constants.Images;
 import planespotter.constants.Paths;
-import planespotter.controller.Scheduler;
 import planespotter.dataclasses.DataPoint;
-import planespotter.dataclasses.Frame;
 import planespotter.dataclasses.Position;
-import planespotter.display.Diagram;
+import planespotter.display.*;
 import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.model.io.DBOut;
 import planespotter.model.io.BitmapIO;
-import planespotter.model.nio.proto.*;
 import planespotter.throwables.DataNotFoundException;
-import planespotter.throwables.Fr24Exception;
 import planespotter.util.Utilities;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.net.http.HttpResponse;
-import java.nio.file.Files;
-import java.time.Clock;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static planespotter.util.Time.*;
-import static planespotter.util.Utilities.*;
 
 @TestOnly
 public class Test {
@@ -40,7 +31,8 @@ public class Test {
         //final long startTime =  nowMillis();
 
         var test = new Test();
-        System.out.println(linesCode(Paths.CODE_PATH));
+
+        test.testAnimation(test);
 
 /*
         var scheduler = new Scheduler();
@@ -76,6 +68,45 @@ public class Test {
 
         //System.out.println();
         //System.out.println("Task finished in " + elapsedMillis(startTime) + " milliseconds!");
+    }
+
+    private void testAnimation(Test test) {
+        var size = new Dimension(800, 500);
+        ImageIcon bground = new ImageIcon(Paths.RESSOURCE_PATH + "ttowers.png");
+        ImageIcon enemy = Images.PAPER_PLANE_ICON.get();
+
+        AtomicInteger x = new AtomicInteger(10), y = new AtomicInteger(size.height-20);
+        final int[] xVelocity = {2};
+        final int[] yVelocity = {-1};
+
+        var myLabel = new JLabel(bground) {
+            @Override
+            public void paint(Graphics g) {
+                super.paint(g);
+                var g2d = (Graphics2D) g;
+                g2d.drawImage(enemy.getImage(), x.get(), y.get(), null);
+            }
+        };
+        myLabel.setSize(size);
+        var myPanel = new JPanel();
+        myPanel.add(myLabel);
+        myPanel.setSize(size);
+
+        Timer timer = new Timer(10, e -> {
+            if (x.get() >= size.width || x.get() <= 0) {
+                xVelocity[0] = xVelocity[0] * -1;
+            }
+            if (y.get() <= 0 || y.get() >= size.height) {
+                yVelocity[0] = yVelocity[0] * -1;
+            }
+            x.addAndGet(xVelocity[0]);
+            y.addAndGet(yVelocity[0]);
+
+            myLabel.repaint();
+        });
+
+        test.createTestJFrame(myPanel);
+        timer.start();
     }
 
     private void processHandleTest() {
@@ -147,6 +178,9 @@ public class Test {
             panel.setLayout(null);
             panel.setSize(dia.getSize());
             panel.add(dia);
+        } else if (source instanceof Component cmp){
+            panel.setSize(cmp.getSize());
+            panel.add(cmp);
         }
         var frame = new JFrame();
         frame.setSize(panel.getSize());
@@ -156,7 +190,11 @@ public class Test {
     }
 
     public final Vector<Position> testPosVector() {
-
+        try {
+            return new DBOut().getAllTrackingPositions();
+        } catch (DataNotFoundException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

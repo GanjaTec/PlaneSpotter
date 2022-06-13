@@ -195,8 +195,9 @@ public class Controller {
             }
             this.done();
             logger.close();
-            scheduler.shutdown();
-            System.exit(0);
+            boolean shutdown = scheduler.shutdown();
+            byte out = Utilities.boolToBinary(shutdown);
+            System.exit(out);
 
         }
     }
@@ -546,8 +547,9 @@ public class Controller {
     public void handleException(final Throwable thr) {
         if (thr instanceof DataNotFoundException) {
             guiAdapter.showWarning(Warning.NO_DATA_FOUND, thr.getMessage());
-        } else if (thr instanceof SQLException) {
-            guiAdapter.showWarning(Warning.SQL_ERROR);
+            thr.printStackTrace();
+        } else if (thr instanceof SQLException sql) {
+            guiAdapter.showWarning(Warning.SQL_ERROR, sql.getMessage() + "\n" + sql.getSQLState());
             thr.printStackTrace();
         } else if (thr instanceof TimeoutException) {
             guiAdapter.showWarning(Warning.TIMEOUT);
@@ -555,6 +557,12 @@ public class Controller {
             guiAdapter.showWarning(Warning.REJECTED_EXECUTION);
         } else if (thr instanceof IllegalInputException) {
             guiAdapter.showWarning(Warning.ILLEGAL_INPUT);
+        } else if (thr instanceof InvalidDataException ide) {
+            guiAdapter.showWarning(Warning.UNKNOWN_ERROR, ide.getMessage() + "\n" + ide.getCause().getMessage());
+            thr.printStackTrace();
+        } else if (thr instanceof ClassNotFoundException cnf) {
+            guiAdapter.showWarning(Warning.UNKNOWN_ERROR, cnf.getMessage());
+            thr.printStackTrace();
         } else {
             guiAdapter.showWarning(Warning.UNKNOWN_ERROR, thr.getMessage());
             thr.printStackTrace();
