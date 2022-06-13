@@ -39,7 +39,7 @@ Current thread (0x0000025b2b214c20):  VMThread "VM Thread" [stack: 0x000000abb1a
 Stack: [0x000000abb1a00000,0x000000abb1b00000]
 [error occurred during error reporting (printing stack bounds), id 0xc0000005, EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x0000025b0e9d10ad]
 
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x62ae9a]
 V  [jvm.dll+0x7817a9]
 V  [jvm.dll+0x782f03]

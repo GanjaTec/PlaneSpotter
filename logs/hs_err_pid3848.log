@@ -5,7 +5,7 @@
 #
 # JRE version: OpenJDK Runtime Environment (15.0.2+7) (build 15.0.2+7-27)
 # Java VM: OpenJDK 64-Bit Server VM (15.0.2+7-27, mixed mode, tiered, compressed oops, g1 gc, windows-amd64)
-# Problematic frame:
+# Problematic fr24Frame:
 # V  [jvm.dll+0x3513f3]
 #
 # No core dump will be written. Minidumps are not enabled by default on client versions of Windows
@@ -26,7 +26,7 @@ Time: Thu Apr 14 15:30:46 2022 Mitteleurop�ische Sommerzeit elapsed time: 2418
 Current thread (0x000002970cb230d0):  JavaThread "HttpClient-198-Worker-1" daemon [_thread_in_vm, id=22600, stack(0x000000a55d300000,0x000000a55d400000)]
 
 Stack: [0x000000a55d300000,0x000000a55d400000],  sp=0x000000a55d3ff0d0,  free space=1020k
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x3513f3]
 V  [jvm.dll+0x62adc2]
 V  [jvm.dll+0x351ed1]

@@ -256,12 +256,12 @@ instanceKlass jdk/internal/net/http/hpack/QuickHuffman$Writer
 instanceKlass jdk/internal/net/http/hpack/Huffman$Writer
 instanceKlass jdk/internal/net/http/hpack/BinaryRepresentationWriter
 instanceKlass jdk/internal/net/http/hpack/Encoder
-instanceKlass jdk/internal/net/http/frame/FramesDecoder$FrameProcessor
-instanceKlass jdk/internal/net/http/frame/FramesDecoder
+instanceKlass jdk/internal/net/http/fr24Frame/FramesDecoder$FrameProcessor
+instanceKlass jdk/internal/net/http/fr24Frame/FramesDecoder
 instanceKlass jdk/internal/net/http/Http2Connection$Http2TubeSubscriber
 instanceKlass jdk/internal/net/http/Http2Connection$FramesController
 instanceKlass jdk/internal/net/http/WindowController
-instanceKlass jdk/internal/net/http/frame/FramesEncoder
+instanceKlass jdk/internal/net/http/fr24Frame/FramesEncoder
 instanceKlass sun/security/ssl/CipherSuite$1
 instanceKlass com/sun/crypto/provider/GaloisCounterMode$GCTRGHASH
 instanceKlass sun/security/ssl/SSLBasicKeyDerivation$SecretSizeSpec
@@ -742,7 +742,7 @@ instanceKlass java/net/InetAddress$Addresses
 instanceKlass java/util/concurrent/ConcurrentSkipListMap$Iter
 instanceKlass java/lang/invoke/LambdaFormEditor$1
 instanceKlass jdk/internal/net/http/hpack/DecodingCallback
-instanceKlass jdk/internal/net/http/frame/Http2Frame
+instanceKlass jdk/internal/net/http/fr24Frame/Http2Frame
 instanceKlass jdk/internal/net/http/Http2Connection
 instanceKlass jdk/internal/net/http/HttpConnection
 instanceKlass jdk/internal/net/http/AuthenticationFilter$Cache

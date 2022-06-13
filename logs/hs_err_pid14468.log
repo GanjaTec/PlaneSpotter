@@ -37,7 +37,7 @@ Time: Thu Jun  2 10:18:02 2022 Mitteleurop�ische Sommerzeit elapsed time: 347.
 Current thread (0x000001d0fd232980):  JavaThread "pool-1-thread-29" [_thread_in_vm, id=6708, stack(0x0000002438800000,0x0000002438900000)]
 
 Stack: [0x0000002438800000,0x0000002438900000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x66fa1a]
 V  [jvm.dll+0x7ce5a4]
 V  [jvm.dll+0x7cfd4e]
@@ -63,7 +63,7 @@ V  [jvm.dll+0x23ae5e]
 V  [jvm.dll+0x37afce]
 C  0x000001d0e4c3b7f7
 
-Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+Java fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code)
 j  java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/String;)Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;+0 java.base@17.0.1
 j  java.sql.SQLException.<clinit>()V+6 java.sql@17.0.1
 v  ~StubRoutines::call_stub

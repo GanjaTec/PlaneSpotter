@@ -39,7 +39,7 @@ Current thread (0x0000025ee5260380):  VMThread "VM Thread" [stack: 0x000000f79d6
 Stack: [0x000000f79d600000,0x000000f79d700000]
 [error occurred during error reporting (printing stack bounds), id 0xc0000005, EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x0000025ec80f10ad]
 
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x62ae9a]
 V  [jvm.dll+0x7817a9]
 V  [jvm.dll+0x782f03]
@@ -506,9 +506,9 @@ Event: 3605.045 Thread 0x0000025ee52bf830 5918       3       java.util.concurren
 Event: 3605.045 Thread 0x0000025ee52bf830 nmethod 5918 0x0000025ec9481c90 code [0x0000025ec9481e40, 0x0000025ec9482028]
 Event: 3606.612 Thread 0x0000025ee52bc5c0 5919       4       jdk.internal.net.http.common.SubscriberWrapper::upstreamWindowUpdate (80 bytes)
 Event: 3606.652 Thread 0x0000025ee52bc5c0 nmethod 5919 0x0000025ecffcce10 code [0x0000025ecffcd100, 0x0000025ecffcf7c8]
-Event: 3607.798 Thread 0x0000025ee52bf830 5920       3       jdk.internal.net.http.frame.FramesDecoder::parseWindowUpdateFrame (37 bytes)
+Event: 3607.798 Thread 0x0000025ee52bf830 5920       3       jdk.internal.net.http.fr24Frame.FramesDecoder::parseWindowUpdateFrame (37 bytes)
 Event: 3607.799 Thread 0x0000025ee52bf830 nmethod 5920 0x0000025ec9482110 code [0x0000025ec9482300, 0x0000025ec9482788]
-Event: 3607.855 Thread 0x0000025ee52bf830 5921       3       jdk.internal.net.http.frame.FramesDecoder::parseHeadersFrame (166 bytes)
+Event: 3607.855 Thread 0x0000025ee52bf830 5921       3       jdk.internal.net.http.fr24Frame.FramesDecoder::parseHeadersFrame (166 bytes)
 Event: 3607.856 Thread 0x0000025ee52bf830 nmethod 5921 0x0000025ec9482990 code [0x0000025ec9482c40, 0x0000025ec94839f8]
 Event: 3610.255 Thread 0x0000025ee52bc5c0 5922       4       java.util.concurrent.SynchronousQueue$TransferStack::awaitFulfill (169 bytes)
 Event: 3610.259 Thread 0x0000025ee52bc5c0 nmethod 5922 0x0000025ecffd1310 code [0x0000025ecffd14a0, 0x0000025ecffd1ae8]

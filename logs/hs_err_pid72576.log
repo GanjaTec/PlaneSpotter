@@ -30,14 +30,14 @@
 Command Line: -javaagent:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2021.3\lib\idea_rt.jar=49206:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2021.3\bin -Dfile.encoding=UTF-8 planespotter.SupplierMain
 
 Host: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz, 12 cores, 7G,  Windows 10 , 64 bit Build 22000 (10.0.22000.675)
-Time: Fri Jun 10 01:33:34 2022 Mitteleuropäische Sommerzeit elapsed time: 1121.991915 seconds (0d 0h 18m 41s)
+Time: Fri Jun 10 01:33:34 2022 Mitteleuropï¿½ische Sommerzeit elapsed time: 1121.991915 seconds (0d 0h 18m 41s)
 
 ---------------  T H R E A D  ---------------
 
 Current thread (0x000001f5125b3c60):  JavaThread "Supplier" [_thread_in_vm, id=50852, stack(0x00000004ab200000,0x00000004ab300000)]
 
 Stack: [0x00000004ab200000,0x00000004ab300000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x66fa1a]
 V  [jvm.dll+0x7ce5a4]
 V  [jvm.dll+0x7cfd4e]
@@ -60,7 +60,7 @@ V  [jvm.dll+0x37f027]
 V  [jvm.dll+0x37e67f]
 C  0x000001f50001a5ec
 
-Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+Java fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code)
 j  org.sqlite.core.DB.newSQLException(ILjava/lang/String;)Lorg/sqlite/SQLiteException;+1
 j  org.sqlite.core.DB.newSQLException(I)Lorg/sqlite/SQLiteException;+5
 j  org.sqlite.core.DB.execute(Lorg/sqlite/core/CoreStatement;[Ljava/lang/Object;)Z+214

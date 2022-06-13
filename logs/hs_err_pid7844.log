@@ -41,7 +41,7 @@ Current CompileTask:
 C2:2134221 5418       4       java.util.regex.Pattern$BmpCharPredicate::lambda$union$2 (26 bytes)
 
 Stack: [0x0000003921b00000,0x0000003921c00000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x62ae9a]
 V  [jvm.dll+0x7817a9]
 V  [jvm.dll+0x782f03]

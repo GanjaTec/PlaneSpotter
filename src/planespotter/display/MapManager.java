@@ -219,7 +219,7 @@ public final class MapManager {
         }
         var viewHeadTxt = (JLabel) gui.getContainer("viewHeadTxtLabel");
         viewHeadTxt.setText(DEFAULT_HEAD_TEXT + "Map-Viewer > " + text);
-        // revalidating window frame to refresh everything
+        // revalidating window fr24Frame to refresh everything
         mapPanel.setVisible(true);
         this.mapViewer.setVisible(true);
         new GUIAdapter(this.gui).requestComponentFocus(this.mapViewer);
