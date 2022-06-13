@@ -1,6 +1,6 @@
 package planespotter.model.nio;
 
-import planespotter.model.nio.proto.ProtoDeserializer;
+import planespotter.dataclasses.Frame;
 
 import java.net.http.HttpResponse;
 import java.util.Collection;
@@ -11,7 +11,7 @@ import java.util.Collection;
  * @version 1.0
  *
  * Interface AbstractDeserializer repsesents an abstract Deserializer which has one deserialize-Method
- * @see ProtoDeserializer
+ * @see Fr24Deserializer
  * @see planespotter.model.nio.Deserializer
  * for implementations
  * @indev
@@ -19,5 +19,5 @@ import java.util.Collection;
 public interface AbstractDeserializer {
 
     // TODO: 11.06.2022 change to Type paremeter sth. like <F extends AbstractFrame> or sth like this
-    Collection<?> deserialize(HttpResponse<String> response);
+    Collection<? extends Frame> deserialize(HttpResponse<String> response);
 }

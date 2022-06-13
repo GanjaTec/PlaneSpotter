@@ -4,7 +4,8 @@ import planespotter.constants.Areas;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Fr24Frame;
-import planespotter.model.nio.proto.ProtoDeserializer;
+import planespotter.model.nio.Fr24Deserializer;
+import planespotter.model.nio.Supplier;
 
 import java.util.Collection;
 import java.util.Deque;
@@ -35,15 +36,19 @@ public abstract class LiveData {
     }
 
     /**
+     * loads live-data directly from Fr24 by running suppliers
+     * and turns them directly into Flight objects.
+     * This method doesn't load the data into the DB, but adds it
+     * to the insertLater-queue where the data is added from
      *
-     *
-     * @param scheduler
-     * @return
+     * @param scheduler is the Scheduler which executes tasks
+     * @return Vector of Flight objects, loaded directly by a supplier
      */
     public static Vector<Flight> directLiveData(final Scheduler scheduler) {
-        var deserializer = new ProtoDeserializer();
+        var supplier = new Supplier();
+        var deserializer = new Fr24Deserializer();
         var world = Areas.getWorldAreas();
-        var frames = deserializer.getFr24Frames(world, scheduler);
+        var frames = supplier.getFr24Frames(world, deserializer, scheduler);
         // termorary if // daten gehen verloren
         if (mayLoad()) {
             insertLater(frames);
@@ -55,16 +60,13 @@ public abstract class LiveData {
     }
 
     /**
-     *
-     *
-     * @return
+     * @return true if the insertLater-size is less than 10000, else false
      */
     protected static boolean mayLoad() {
         return insertLater.size() < 10000;
     }
 
     /**
-     *
      * @return true, if insertLater.size() is greater or equals 1000, else false
      *         if true, another Method gets ac
      */
@@ -73,7 +75,6 @@ public abstract class LiveData {
     }
 
     /**
-     *
      * @return true if the insert-later-deque is empty, else false
      */
     protected static boolean isEmpty() {

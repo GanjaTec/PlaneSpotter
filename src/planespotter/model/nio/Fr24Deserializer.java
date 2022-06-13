@@ -1,4 +1,4 @@
-package planespotter.model.nio.proto;
+package planespotter.model.nio;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -28,49 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * It converts the HttpResponse to a Collection of Frames,
  * which can be used to create further dataclasses like flights, planes, etc...
  */
-public class ProtoDeserializer implements AbstractDeserializer {
-
-    /**
-     * gets HttpResponse's for specific areas and deserializes its data to Frames
-     *
-     * @param areas are the Areas where data should be deserialized from
-     * @param scheduler is the Scheduler to allow parallelism
-     * @return Deque of deserialized Frames
-     */
-    public synchronized Deque<Fr24Frame> getFr24Frames(String[] areas, final Scheduler scheduler) {
-        var concurrentDeque = new ConcurrentLinkedDeque<Fr24Frame>();
-        System.out.println("Deserializing Fr24-Data...");
-
-        var ready = new AtomicBoolean(false);
-        var counter = new AtomicInteger(areas.length - 1);
-        for (var area : areas) {
-            scheduler.exec(() -> {
-                var supplier = new Supplier(0, area);
-                try {
-                    var data = this.deserialize(supplier.fr24get());
-                    while (!data.isEmpty()) {
-                        concurrentDeque.add(data.poll());
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (counter.get() == 0) {
-                    ready.set(true);
-                }
-                counter.getAndDecrement();
-            }, "Fr24-Deserializer");
-        }
-        while (!ready.get()) {
-            System.out.print(":");
-            try {
-                TimeUnit.MILLISECONDS.sleep(25);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        System.out.println();
-        return concurrentDeque;
-    }
+public class Fr24Deserializer implements AbstractDeserializer {
 
     /**
      * deserializes incoming http response

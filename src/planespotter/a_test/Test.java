@@ -2,11 +2,16 @@ package planespotter.a_test;
 
 import org.jetbrains.annotations.TestOnly;
 import planespotter.constants.ANSIColor;
+import planespotter.constants.Areas;
 import planespotter.constants.Images;
 import planespotter.constants.Paths;
 import planespotter.dataclasses.DataPoint;
+import planespotter.dataclasses.Fr24Frame;
+import planespotter.dataclasses.Frame;
 import planespotter.dataclasses.Position;
 import planespotter.display.*;
+import planespotter.model.nio.Fr24Deserializer;
+import planespotter.model.nio.Supplier;
 import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.model.io.DBOut;
@@ -24,6 +29,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static planespotter.util.Utilities.linesCode;
+
 @TestOnly
 public class Test {
     // TEST-MAIN
@@ -31,8 +38,9 @@ public class Test {
         //final long startTime =  nowMillis();
 
         var test = new Test();
+        System.out.println(linesCode(Paths.CODE_PATH));
 
-        test.testAnimation(test);
+        //test.testAnimation(test);
 
 /*
         var scheduler = new Scheduler();
@@ -72,14 +80,14 @@ public class Test {
 
     private void testAnimation(Test test) {
         var size = new Dimension(800, 500);
-        ImageIcon bground = new ImageIcon(Paths.RESSOURCE_PATH + "ttowers.png");
+        ImageIcon bground = Images.BGROUND_IMG.get(); // doesn't work with every image (???)
         ImageIcon enemy = Images.PAPER_PLANE_ICON.get();
 
         AtomicInteger x = new AtomicInteger(10), y = new AtomicInteger(size.height-20);
         final int[] xVelocity = {2};
         final int[] yVelocity = {-1};
 
-        var myLabel = new JLabel(bground) {
+        var myLabel = new JLabel() { // bground image?
             @Override
             public void paint(Graphics g) {
                 super.paint(g);

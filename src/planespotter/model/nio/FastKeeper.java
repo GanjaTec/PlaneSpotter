@@ -1,9 +1,8 @@
-package planespotter.model.nio.proto;
+package planespotter.model.nio;
 
 import planespotter.model.SupperDB;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.DBOut;
-import planespotter.model.nio.Keeper;
 
 import static planespotter.util.Time.*;
 
@@ -24,7 +23,7 @@ import static planespotter.util.Time.*;
  * @see planespotter.model.nio.Keeper
  * @see SupperDB
  */
-public class ProtoKeeper extends SupperDB implements Keeper {
+public class FastKeeper implements Keeper {
     // threshold milliseconds
     private final long thresholdMillis;
     // DB-In/Out for database communication
@@ -37,14 +36,15 @@ public class ProtoKeeper extends SupperDB implements Keeper {
      *
      * @param endThreshold is the end threshold in milliseconds
      */
-    public ProtoKeeper(final long endThreshold) {
+    public FastKeeper(final long endThreshold) {
         this.thresholdMillis = endThreshold;
         this.dbo = new DBOut();
         this.dbi = new DBIn();
     }
 
     /**
-     *
+     * keeps the database clean
+     * sorts out ended flights and updates them
      */
     @Override
     public void keep() {

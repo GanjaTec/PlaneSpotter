@@ -1155,7 +1155,7 @@ public class DBOut extends SupperDB {
 		return ids;
 	}
 
-	public final Map<String, Integer> getAirlineTagsIDs()
+	public final HashMap<String, Integer> getAirlineTagsIDs()
 			throws DataNotFoundException {
 
 		var map = new HashMap<String, Integer>();
@@ -1176,7 +1176,7 @@ public class DBOut extends SupperDB {
 		return map;
 	}
 
-	public final Map<String, Integer> getPlaneIcaosIDs()
+	public final HashMap<String, Integer> getPlaneIcaosIDs()
 			throws DataNotFoundException {
 
 		var map = new HashMap<String, Integer>();
