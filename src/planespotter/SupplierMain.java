@@ -25,7 +25,7 @@ public abstract class SupplierMain {
             // executing two suppliers to collect Fr24-Data
             scheduler.exec(supplier0, "Supplier-0", true, 2, false)
                      .exec(supplier1, "Supplier-1", true, 2, false);
-        }, "Supplier-Main", 0, 120)
+        }, "Supplier-Main", 0, 30)
                 // executing the keeper every 400 seconds
                 .schedule(keeper, "Keeper", 100, 400)
                 // executing the GC every 20 seconds
