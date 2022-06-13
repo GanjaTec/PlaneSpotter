@@ -34,7 +34,7 @@ public abstract class SupplierMain {
         scheduler.schedule(() -> {
             scheduler.exec(supplier0, "Supplier-0", true, 2, false)
                      .exec(supplier1, "Supplier-1", true, 2, false);
-        }, "Supplier-Main", 0, 300)
+        }, "Supplier-Main", 0, 120)
                 .schedule(keeper, "Keeper", 100, 400)
                 .schedule(System::gc, "GC Caller", 30, 20);
     }

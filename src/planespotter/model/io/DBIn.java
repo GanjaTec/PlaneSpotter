@@ -5,6 +5,8 @@ import planespotter.constants.SQLQueries;
 import java.sql.*;
 
 import planespotter.dataclasses.Frame;
+import planespotter.model.SupperDB;
+import planespotter.throwables.NoAccessException;
 
 
 public class DBIn extends SupperDB {
@@ -29,7 +31,7 @@ public class DBIn extends SupperDB {
 			}
 			conn.close();
 			return id;
-		} catch (SQLException | ClassNotFoundException e) {
+		} catch (SQLException | ClassNotFoundException | NoAccessException e) {
 			e.printStackTrace();
 		}
 		return -1;
@@ -55,7 +57,7 @@ public class DBIn extends SupperDB {
 			}
 			conn.close();
 			return id;
-		} catch (SQLException | ClassNotFoundException e) {
+		} catch (SQLException | ClassNotFoundException | NoAccessException e) {
 			e.printStackTrace();
 		}
 		return -1;
@@ -76,7 +78,7 @@ public class DBIn extends SupperDB {
 			pstmt.setLong(8, f.getTimestamp());
 			pstmt.executeUpdate();
 			conn.close();
-		} catch (SQLException | ClassNotFoundException e) {
+		} catch (SQLException | ClassNotFoundException | NoAccessException e) {
 			e.printStackTrace();
 		}
 	}

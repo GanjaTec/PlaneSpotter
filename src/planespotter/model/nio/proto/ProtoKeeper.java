@@ -1,8 +1,8 @@
 package planespotter.model.nio.proto;
 
+import planespotter.model.SupperDB;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.DBOut;
-import planespotter.model.io.SupperDB;
 import planespotter.model.nio.Keeper;
 
 import static planespotter.util.Time.*;
@@ -22,7 +22,7 @@ import static planespotter.util.Time.*;
  * even with big amount of data.
  * @see planespotter.model.nio.KeeperOfTheArchives
  * @see planespotter.model.nio.Keeper
- * @see planespotter.model.io.SupperDB
+ * @see SupperDB
  */
 public class ProtoKeeper extends SupperDB implements Keeper {
     // threshold milliseconds
@@ -49,7 +49,6 @@ public class ProtoKeeper extends SupperDB implements Keeper {
     @Override
     public void keep() {
         long startMillis = nowMillis();
-        writing = true;
         System.out.println("ProtoKeeper has started working...");
         int rowsUpdated = 0;
         try {
@@ -72,6 +71,6 @@ public class ProtoKeeper extends SupperDB implements Keeper {
         long elapsed = elapsedSeconds(startMillis);
         System.out.println("ProtoKeeper finished work on the DB in " + elapsed +
                 " seconds!\n" + rowsUpdated + " rows updated");
-        writing = false;
+        SupperDB.sqlReady();
     }
 }

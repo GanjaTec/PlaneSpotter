@@ -19,7 +19,7 @@ import static planespotter.constants.DefaultColor.*;
  *
  * class SearchModels contains different (gui-menu) search models
  */
-public final class SearchModels {
+final class SearchModels {
 
     /**
      * radio buttons
