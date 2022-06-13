@@ -41,7 +41,7 @@ Current CompileTask:
 C2:1522302 5272 %     4       sun.security.ec.XECOperations::pointMultiply @ 101 (383 bytes)
 
 Stack: [0x00000037a8e00000,0x00000037a8f00000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x62ae9a]
 V  [jvm.dll+0x7817a9]
 V  [jvm.dll+0x782f03]

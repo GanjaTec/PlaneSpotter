@@ -1,7 +1,7 @@
 package planespotter.model.nio;
 
 import com.google.gson.Gson;
-import planespotter.dataclasses.Frame;
+import planespotter.dataclasses.Fr24Frame;
 
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
@@ -56,20 +56,20 @@ public class Deserializer implements AbstractDeserializer {
 
 	
 	//Convert Json to Frame-Objects
-	public List<Frame> deserializeJSON(List<String> data) {
-		List<Frame> frames = new ArrayList<>();
+	public List<Fr24Frame> deserializeJSON(List<String> data) {
+		List<Fr24Frame> fr24Frames = new ArrayList<>();
 		Gson gson = new Gson();
 		for(String s : data) {
-			Frame frame = gson.fromJson(s, Frame.class);
-			frames.add(frame);
+			Fr24Frame fr24Frame = gson.fromJson(s, Fr24Frame.class);
+			fr24Frames.add(fr24Frame);
 		}
-		return frames;
+		return fr24Frames;
 	}
 	
 	//Convert String to Frame-Objects
 	@Override
-	public List<Frame> deserialize(HttpResponse<String> resp) {
-		List<Frame> frames = new ArrayList<>();
+	public List<Fr24Frame> deserialize(HttpResponse<String> resp) {
+		List<Fr24Frame> fr24Frames = new ArrayList<>();
 		for(String row : stringMagic(resp)) {
 			String[] r = row.split(",");
 			
@@ -78,10 +78,10 @@ public class Deserializer implements AbstractDeserializer {
 			field = field.replaceAll("\"\"", "40401");
 			r[6] = field;
 			
-			Frame frame = new Frame(r[0], Double.parseDouble(r[1]), Double.parseDouble(r[2]), Integer.parseInt(r[3]), Integer.parseInt(r[4]), Integer.parseInt(r[5]), Integer.parseInt(r[6]),
+			Fr24Frame fr24Frame = new Fr24Frame(r[0], Double.parseDouble(r[1]), Double.parseDouble(r[2]), Integer.parseInt(r[3]), Integer.parseInt(r[4]), Integer.parseInt(r[5]), Integer.parseInt(r[6]),
 					r[7], r[8], r[9], Integer.parseInt(r[10]), r[11], r[12], r[13], r[14], r[15], r[16], r[17], r[18]);
-			frames.add(frame);
+			fr24Frames.add(fr24Frame);
 		}
-		return frames;
+		return fr24Frames;
 	}
 }

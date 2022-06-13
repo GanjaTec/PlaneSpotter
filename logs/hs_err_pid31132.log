@@ -37,7 +37,7 @@ Time: Thu Jun  2 16:31:17 2022 Mitteleurop�ische Sommerzeit elapsed time: 235.
 Current thread (0x000002659efa1e20):  JavaThread "ForkJoinPool.commonPool-worker-4" daemon [_thread_in_Java, id=31376, stack(0x000000c5f0400000,0x000000c5f0500000)]
 
 Stack: [0x000000c5f0400000,0x000000c5f0500000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x66fa1a]
 V  [jvm.dll+0x7ce5a4]
 V  [jvm.dll+0x7cfd4e]
@@ -49,7 +49,7 @@ V  [jvm.dll+0x24f81d]
 V  [jvm.dll+0x25283c]
 C  0x000002658778232b
 
-Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+Java fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code)
 v  ~UncommonTrapBlob
 J 3600 c2 org.sqlite.core.CoreStatement.exec()Z (127 bytes) @ 0x000002658f3cf350 [0x000002658f3ce7a0+0x0000000000000bb0]
 J 3634 c2 planespotter.model.io.DBOut.querryDB(Ljava/lang/String;)Ljava/sql/ResultSet; (23 bytes) @ 0x000002658f3f1938 [0x000002658f3f15c0+0x0000000000000378]

@@ -37,7 +37,7 @@ Time: Sun Jun 12 13:30:12 2022 Mitteleurop�ische Sommerzeit elapsed time: 650.
 Current thread (0x000001f4cae4f810):  VMThread "VM Thread" [stack: 0x0000008e27a00000,0x0000008e27b00000] [id=19532]
 
 Stack: [0x0000008e27a00000,0x0000008e27b00000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x66fa1a]
 V  [jvm.dll+0x7ce5a4]
 V  [jvm.dll+0x7cfd4e]

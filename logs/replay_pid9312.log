@@ -375,9 +375,9 @@ instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$428+0x00000008001d7a
 instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$430+0x00000008001d7800
 instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$431+0x00000008001d75e0
 instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$429+0x00000008001d73c0
-instanceKlass jdk/internal/net/http/frame/FramesDecoder$FrameProcessor
-instanceKlass jdk/internal/net/http/frame/FramesDecoder$$Lambda$427+0x00000008001d6fa8
-instanceKlass jdk/internal/net/http/frame/FramesDecoder
+instanceKlass jdk/internal/net/http/fr24Frame/FramesDecoder$FrameProcessor
+instanceKlass jdk/internal/net/http/fr24Frame/FramesDecoder$$Lambda$427+0x00000008001d6fa8
+instanceKlass jdk/internal/net/http/fr24Frame/FramesDecoder
 instanceKlass jdk/internal/net/http/Http2Connection$Http2TubeSubscriber$$Lambda$424+0x00000008001d6440
 instanceKlass jdk/internal/net/http/Http2Connection$Http2TubeSubscriber$$Lambda$425+0x00000008001d6220
 instanceKlass jdk/internal/net/http/Http2Connection$Http2TubeSubscriber$$Lambda$426+0x00000008001d6000
@@ -386,7 +386,7 @@ instanceKlass jdk/internal/net/http/Http2Connection$Http2TubeSubscriber
 instanceKlass jdk/internal/net/http/Http2Connection$FramesController
 instanceKlass jdk/internal/net/http/WindowController$$Lambda$422+0x00000008001d5738
 instanceKlass jdk/internal/net/http/WindowController
-instanceKlass jdk/internal/net/http/frame/FramesEncoder
+instanceKlass jdk/internal/net/http/fr24Frame/FramesEncoder
 instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$421+0x00000008001d50f0
 instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$420+0x00000008001d4ed0
 instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$419+0x00000008001d4cb0
@@ -1118,7 +1118,7 @@ instanceKlass java/lang/invoke/LambdaForm$MH+0x000000080015f440
 instanceKlass java/lang/invoke/LambdaForm$MH+0x000000080015f040
 instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$156+0x00000008001627b0
 instanceKlass jdk/internal/net/http/hpack/DecodingCallback
-instanceKlass jdk/internal/net/http/frame/Http2Frame
+instanceKlass jdk/internal/net/http/fr24Frame/Http2Frame
 instanceKlass jdk/internal/net/http/Http2Connection
 instanceKlass jdk/internal/net/http/ExchangeImpl$$Lambda$155+0x0000000800160040
 instanceKlass jdk/internal/net/http/HttpConnection

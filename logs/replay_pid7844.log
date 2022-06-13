@@ -381,9 +381,9 @@ instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$441+0x0000000800200f
 instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$440+0x0000000800200d48
 instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$439+0x0000000800200b28
 instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$438+0x0000000800200908
-instanceKlass jdk/internal/net/http/frame/FramesDecoder$FrameProcessor
-instanceKlass jdk/internal/net/http/frame/FramesDecoder$$Lambda$437+0x00000008002004f0
-instanceKlass jdk/internal/net/http/frame/FramesDecoder
+instanceKlass jdk/internal/net/http/fr24Frame/FramesDecoder$FrameProcessor
+instanceKlass jdk/internal/net/http/fr24Frame/FramesDecoder$$Lambda$437+0x00000008002004f0
+instanceKlass jdk/internal/net/http/fr24Frame/FramesDecoder
 instanceKlass jdk/internal/net/http/Http2Connection$Http2TubeSubscriber$$Lambda$436+0x00000008001d75f8
 instanceKlass jdk/internal/net/http/Http2Connection$Http2TubeSubscriber$$Lambda$434+0x00000008001d7818
 instanceKlass jdk/internal/net/http/Http2Connection$Http2TubeSubscriber$$Lambda$435+0x00000008001d73d8
@@ -392,7 +392,7 @@ instanceKlass jdk/internal/net/http/Http2Connection$Http2TubeSubscriber
 instanceKlass jdk/internal/net/http/Http2Connection$FramesController
 instanceKlass jdk/internal/net/http/WindowController$$Lambda$432+0x00000008001d6b10
 instanceKlass jdk/internal/net/http/WindowController
-instanceKlass jdk/internal/net/http/frame/FramesEncoder
+instanceKlass jdk/internal/net/http/fr24Frame/FramesEncoder
 instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$431+0x00000008001d64c8
 instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$430+0x00000008001d62a8
 instanceKlass jdk/internal/net/http/Http2Connection$$Lambda$429+0x00000008001d6088

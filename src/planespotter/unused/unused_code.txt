@@ -3,30 +3,30 @@
      * creates DataPoint object from a Frame object
      * represents a flight at one point
      *
-     * (frame could be changed in the future)
+     * (fr24Frame could be changed in the future)
      */
     /*
-    public static DataPoint createDataPoint (Frame frame) {
+    public static DataPoint createDataPoint (Frame fr24Frame) {
         DataPoint point = new DataPoint(0001,
                                         22244,
-                                        new Position(frame.getLat(), frame.getLon()),
-                                        frame.getTimestamp(),
-                                        frame.getSquawk(),
-                                        frame.getGroundspeed(),
-                                        frame.getHeading(),
-                                        frame.getAltitude());
+                                        new Position(fr24Frame.getLat(), fr24Frame.getLon()),
+                                        fr24Frame.getTimestamp(),
+                                        fr24Frame.getSquawk(),
+                                        fr24Frame.getGroundspeed(),
+                                        fr24Frame.getHeading(),
+                                        fr24Frame.getAltitude());
         return point;
     }
     */
 
     /**
-     * @param frames is the Frame list to convert
+     * @param fr24Frames is the Frame list to convert
      * @return array of DataPoints
      */
     /*
-    private static DataPoint[] dataPointArray (List<Frame> frames) {
-        ListIterator<Frame> it = frames.listIterator();
-        DataPoint[] data = new DataPoint[frames.size()];
+    private static DataPoint[] dataPointArray (List<Frame> fr24Frames) {
+        ListIterator<Frame> it = fr24Frames.listIterator();
+        DataPoint[] data = new DataPoint[fr24Frames.size()];
         int i = 0;
         while (it.hasNext()) {
             data[i] = createDataPoint(it.next());
@@ -45,8 +45,8 @@
         try {
             Deserializer ds = new Deserializer();
             List<String> list = ds.stringMagic(fr24get());
-            List<Frame> frames = ds.deserialize(list);
-            return frames;
+            List<Frame> fr24Frames = ds.deserialize(list);
+            return fr24Frames;
         } catch (Exception e) {
             // Auto-generated catch block
             e.printStackTrace();

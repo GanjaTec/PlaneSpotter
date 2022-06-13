@@ -39,7 +39,7 @@ Current thread (0x000001d7db949c40):  JavaThread "pool-12-thread-3" [_thread_in_
 Stack: [0x000000818fa00000,0x000000818fb00000]
 [error occurred during error reporting (printing stack bounds), id 0xc0000005, EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x00007ffe7dfe53f5]
 
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x62ae9a]
 V  [jvm.dll+0x7817a9]
 V  [jvm.dll+0x782f03]
@@ -53,7 +53,7 @@ C  [ntdll.dll+0xa0bfe]
 V  [jvm.dll+0x6953f5]
 C  0x000001d7bd470bbe
 
-Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+Java fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code)
 v  ~UncommonTrapBlob
 J 2776 c2 java.util.regex.Pattern$BmpCharPredicate$$Lambda$30+0x0000000800085e88.is(I)Z java.base@15.0.2 (15 bytes) @ 0x000001d7c511230c [0x000001d7c51121a0+0x000000000000016c]
 j  java.util.regex.Pattern$BmpCharPredicate.lambda$union$2(Ljava/util/regex/Pattern$CharPredicate;I)Z+2 java.base@15.0.2
@@ -529,7 +529,7 @@ CodeHeap 'non-nmethods': size=7488Kb used=1207Kb max_used=2943Kb free=6280Kb
 Compilation events (20 events):
 Event: 2703.749 Thread 0x000001d7d9edc420 5560       4       java.util.stream.Sink$ChainedReference::end (10 bytes)
 Event: 2703.750 Thread 0x000001d7d9edc420 nmethod 5560 0x000001d7c532d710 code [0x000001d7c532d880, 0x000001d7c532d918]
-Event: 2704.836 Thread 0x000001d7d9edc420 5561       4       jdk.internal.net.http.frame.FramesDecoder::nextFrame (245 bytes)
+Event: 2704.836 Thread 0x000001d7d9edc420 5561       4       jdk.internal.net.http.fr24Frame.FramesDecoder::nextFrame (245 bytes)
 Event: 2704.855 Thread 0x000001d7d9edc420 nmethod 5561 0x000001d7c532da10 code [0x000001d7c532dca0, 0x000001d7c532ed08]
 Event: 2707.864 Thread 0x000001d7d9ede7a0 5562       3       java.lang.AbstractStringBuilder::appendChars (130 bytes)
 Event: 2707.874 Thread 0x000001d7d9ede7a0 nmethod 5562 0x000001d7be6fbf90 code [0x000001d7be6fc180, 0x000001d7be6fc708]

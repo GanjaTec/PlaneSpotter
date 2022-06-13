@@ -41,7 +41,7 @@ Current CompileTask:
 C1: 429847 3698   !   3       jdk.internal.loader.BuiltinClassLoader::defineClass (162 bytes)
 
 Stack: [0x0000003665800000,0x0000003665900000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x66fa1a]
 V  [jvm.dll+0x7ce5a4]
 V  [jvm.dll+0x7cfd4e]

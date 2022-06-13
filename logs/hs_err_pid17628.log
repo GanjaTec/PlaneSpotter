@@ -41,7 +41,7 @@ Current CompileTask:
 C2:13990195 6644       4       jdk.internal.net.http.hpack.HPACK$Logger::subLogger (23 bytes)
 
 Stack: [0x000000be3e400000,0x000000be3e500000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x62ae9a]
 V  [jvm.dll+0x7817a9]
 V  [jvm.dll+0x782f03]

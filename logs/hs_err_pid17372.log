@@ -41,7 +41,7 @@ Current CompileTask:
 C2: 458675 6201       4       java.util.ArrayList::grow (60 bytes)
 
 Stack: [0x00000085a2600000,0x00000085a2700000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x66fa1a]
 V  [jvm.dll+0x7ce5a4]
 V  [jvm.dll+0x7cfd4e]

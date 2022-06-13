@@ -1,17 +1,17 @@
 package planespotter.unused;
 
-import planespotter.dataclasses.Frame;
+import planespotter.dataclasses.Fr24Frame;
 
 @Deprecated
 public class Fr24Data {
 	private int count;
 	private int version;
-	private Frame frame;
+	private Fr24Frame fr24Frame;
 
-	private Fr24Data(int count, int ver, Frame f) {
+	private Fr24Data(int count, int ver, Fr24Frame f) {
 		this.count = count;
 		this.version = ver;
-		this.frame = f;
+		this.fr24Frame = f;
 		
 	}
 	
@@ -23,8 +23,8 @@ public class Fr24Data {
 		return this.version;
 	}
 	
-	public Frame getFrame() {
-		return this.frame;
+	public Fr24Frame getFrame() {
+		return this.fr24Frame;
 	}
 
 

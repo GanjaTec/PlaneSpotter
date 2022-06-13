@@ -2,7 +2,7 @@ package planespotter.model.io;
 
 import planespotter.constants.SQLQueries;
 import planespotter.dataclasses.*;
-import planespotter.dataclasses.Frame;
+import planespotter.dataclasses.Fr24Frame;
 import planespotter.constants.UserSettings;
 import planespotter.dataclasses.DBResult;
 import planespotter.model.SupperDB;
@@ -483,7 +483,7 @@ public class DBOut extends SupperDB {
 	 * @param planeid
 	 * @return
 	 */
-	public final int checkFlightInDB(Frame f, int planeid) {
+	public final int checkFlightInDB(Fr24Frame f, int planeid) {
 		try {
 			var result = this.queryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
 			var rs = result.resultSet();

@@ -3,7 +3,6 @@ package planespotter.util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import planespotter.dataclasses.*;
-import planespotter.dataclasses.Frame;
 import planespotter.throwables.IllegalInputException;
 import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.OutOfRangeException;

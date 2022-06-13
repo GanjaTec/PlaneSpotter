@@ -3,7 +3,7 @@ package planespotter.model;
 import planespotter.constants.Areas;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Flight;
-import planespotter.dataclasses.Frame;
+import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.nio.proto.ProtoDeserializer;
 
 import java.util.Collection;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public abstract class LiveData {
     // frames, which will be inserted later (first loaded into the view)
-    private static final ConcurrentLinkedQueue<Frame> insertLater;
+    private static final ConcurrentLinkedQueue<Fr24Frame> insertLater;
     // static initializer
     static {
         insertLater = new ConcurrentLinkedQueue<>();
@@ -30,7 +30,7 @@ public abstract class LiveData {
      *
      * @param data
      */
-    public static void insertLater(final Collection<Frame> data) {
+    public static void insertLater(final Collection<Fr24Frame> data) {
         insertLater.addAll(data);
     }
 
@@ -87,12 +87,12 @@ public abstract class LiveData {
      * @param count
      * @return
      */
-    public static Deque<Frame> pollFrames(final int count) {
+    public static Deque<Fr24Frame> pollFrames(final int count) {
         if (isEmpty()) {
             throw new NullPointerException("Insert-later-Deque is empty, use isEmpty() first!");
         }
         var counter = new AtomicInteger();
-        var frames = new ConcurrentLinkedDeque<Frame>();
+        var frames = new ConcurrentLinkedDeque<Fr24Frame>();
 
         insertLater.parallelStream()
                 .forEach(frame -> {
