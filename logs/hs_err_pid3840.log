@@ -41,7 +41,7 @@ Current CompileTask:
 C2:2138574 5389       4       java.util.stream.AbstractPipeline::<init> (55 bytes)
 
 Stack: [0x0000007128f00000,0x0000007129000000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x62ae9a]
 V  [jvm.dll+0x7817a9]
 V  [jvm.dll+0x782f03]

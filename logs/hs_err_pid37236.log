@@ -41,7 +41,7 @@ Current CompileTask:
 C2: 379181 3449 %     4       java.util.AbstractCollection::addAll @ 9 (42 bytes)
 
 Stack: [0x0000009ee2c00000,0x0000009ee2d00000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x66fa1a]
 V  [jvm.dll+0x7ce5a4]
 V  [jvm.dll+0x7cfd4e]

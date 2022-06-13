@@ -4,14 +4,14 @@ import planespotter.constants.SQLQueries;
 
 import java.sql.*;
 
-import planespotter.dataclasses.Frame;
+import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.SupperDB;
 import planespotter.throwables.NoAccessException;
 
 
 public class DBIn extends SupperDB {
 
-	public int insertPlane(Frame f, int airlineID) {
+	public int insertPlane(Fr24Frame f, int airlineID) {
 		try {
 			Connection conn = SupperDB.getDBConnection();
 			//TODO Airline ID anfrage
@@ -37,7 +37,7 @@ public class DBIn extends SupperDB {
 		return -1;
 	}
 
-	public int insertFlight(Frame f, int planeID) {
+	public int insertFlight(Fr24Frame f, int planeID) {
 		try {
 			Connection conn = getDBConnection();
 			PreparedStatement pstmt = conn.prepareStatement(SQLQueries.flightquerry, Statement.RETURN_GENERATED_KEYS);
@@ -63,7 +63,7 @@ public class DBIn extends SupperDB {
 		return -1;
 	}
 
-	public void insertTracking(Frame f, int id) {
+	public void insertTracking(Fr24Frame f, int id) {
 		try {
 			Connection conn = SupperDB.getDBConnection();
 			// insert into tracking

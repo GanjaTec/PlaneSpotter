@@ -192,7 +192,7 @@ public class GUI implements Runnable {
     }
 
     /**
-     * adds all components to the window frame
+     * adds all components to the window fr24Frame
      * -> called by initialize()
      */
     private void addAllToWinow() { // TODO: 28.05.2022 (evtl.) Components als paremeter
@@ -265,7 +265,7 @@ public class GUI implements Runnable {
         // adding desktop panes to mainpanel
         mainPanel.add(rightDP);
         mainPanel.add(leftDP);
-        // adding mainpanel to frame
+        // adding mainpanel to fr24Frame
     }
 
     public boolean hasContainer(String withName) {

@@ -37,7 +37,7 @@ Time: Thu May  5 19:42:56 2022 Mitteleurop�ische Sommerzeit elapsed time: 416.
 Current thread (0x000001cdfb277140):  JavaThread "output-wizard9" [_thread_in_vm, id=8644, stack(0x000000179dd00000,0x000000179de00000)]
 
 Stack: [0x000000179dd00000,0x000000179de00000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x66fa1a]
 V  [jvm.dll+0x7ce5a4]
 V  [jvm.dll+0x7cfd4e]
@@ -50,7 +50,7 @@ V  [jvm.dll+0x252a03]
 V  [jvm.dll+0x252825]
 C  0x000001cde22e232b
 
-Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+Java fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code)
 v  ~UncommonTrapBlob
 J 2420 c2 planespotter.model.io.DBOut.querryDB(Ljava/lang/String;)Ljava/sql/ResultSet; (23 bytes) @ 0x000001cde9eed454 [0x000001cde9eeb980+0x0000000000001ad4]
 J 2480 c2 planespotter.model.io.DBOut.getLastTrackingIDByFlightID(I)I (84 bytes) @ 0x000001cde9f07ca0 [0x000001cde9f07860+0x0000000000000440]

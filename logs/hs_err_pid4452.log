@@ -30,14 +30,14 @@
 Command Line: -javaagent:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2021.3\lib\idea_rt.jar=54331:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2021.3\bin -Dfile.encoding=UTF-8 planespotter.Main
 
 Host: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz, 12 cores, 7G,  Windows 10 , 64 bit Build 22000 (10.0.22000.675)
-Time: Sat Jun 11 13:52:54 2022 Mitteleuropäische Sommerzeit elapsed time: 2271.450462 seconds (0d 0h 37m 51s)
+Time: Sat Jun 11 13:52:54 2022 Mitteleuropï¿½ische Sommerzeit elapsed time: 2271.450462 seconds (0d 0h 37m 51s)
 
 ---------------  T H R E A D  ---------------
 
 Current thread (0x0000016731d50c70):  VMThread "VM Thread" [stack: 0x00000041da600000,0x00000041da700000] [id=21212]
 
 Stack: [0x00000041da600000,0x00000041da700000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x66fa1a]
 V  [jvm.dll+0x7ce5a4]
 V  [jvm.dll+0x7cfd4e]

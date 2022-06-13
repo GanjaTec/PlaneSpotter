@@ -30,7 +30,7 @@
 Command Line: -javaagent:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2021.3\lib\idea_rt.jar=65430:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2021.3\bin -Dfile.encoding=UTF-8 planespotter.SupplierMain
 
 Host: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz, 12 cores, 7G,  Windows 10 , 64 bit Build 22000 (10.0.22000.675)
-Time: Fri Jun 10 00:46:30 2022 Mitteleuropäische Sommerzeit elapsed time: 509.727004 seconds (0d 0h 8m 29s)
+Time: Fri Jun 10 00:46:30 2022 Mitteleuropï¿½ische Sommerzeit elapsed time: 509.727004 seconds (0d 0h 8m 29s)
 
 ---------------  T H R E A D  ---------------
 
@@ -41,7 +41,7 @@ Current CompileTask:
 C1: 509727 6828       3       sun.nio.cs.UTF_8$Encoder::encodeArrayLoop (489 bytes)
 
 Stack: [0x0000000a7ca00000,0x0000000a7cb00000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x66fa1a]
 V  [jvm.dll+0x7ce5a4]
 V  [jvm.dll+0x7cfd4e]

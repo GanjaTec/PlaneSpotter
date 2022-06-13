@@ -47,7 +47,7 @@ public abstract class DataLoader {
             log.log("Trying to insert last live data...", DataLoader.class);
             //var gui = Controller.getGUI();
             //gui.getContainer("window").setVisible(false);
-            while (!isEmpty()) {
+            while (!isEmpty() && inserted < 5000) {
                 var frames = pollFrames(500);
                 scheduler.exec(() -> Supplier.writeToDB(frames, dbOut, dbIn),
                         "Inserter", false, 9, false);

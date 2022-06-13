@@ -37,7 +37,7 @@ Time: Thu Mar 31 13:46:40 2022 Mitteleurop�ische Sommerzeit elapsed time: 39.9
 Current thread (0x000001b6a8c65520):  JavaThread "AWT-Windows" daemon [_thread_in_vm, id=20900, stack(0x0000001513a00000,0x0000001513b00000)]
 
 Stack: [0x0000001513a00000,0x0000001513b00000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x62ae9a]
 V  [jvm.dll+0x7817a9]
 V  [jvm.dll+0x782f03]
@@ -50,7 +50,7 @@ V  [jvm.dll+0x77711e]
 V  [jvm.dll+0x3ea5e0]
 C  0x000001b68394f137
 
-Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+Java fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code)
 j  java.security.AccessController.getStackAccessControlContext()Ljava/security/AccessControlContext;+0 java.base@15.0.2
 j  java.security.AccessController.getContext()Ljava/security/AccessControlContext;+0 java.base@15.0.2
 j  java.lang.Thread.<init>(Ljava/lang/ThreadGroup;Ljava/lang/Runnable;Ljava/lang/String;JLjava/security/AccessControlContext;Z)V+191 java.base@15.0.2

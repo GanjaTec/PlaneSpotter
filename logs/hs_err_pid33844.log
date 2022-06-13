@@ -30,7 +30,7 @@ Time: Thu Jun  2 20:09:19 2022 Mitteleurop�ische Sommerzeit elapsed time: 449.
 Current thread (0x000001911c9f5810):  JavaThread "pool-1-thread-26" [_thread_in_Java, id=35376, stack(0x000000243c200000,0x000000243c300000)]
 
 Stack: [0x000000243c200000,0x000000243c300000]
-Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+Native fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
 V  [jvm.dll+0x66fa1a]
 V  [jvm.dll+0x7ce5a4]
 V  [jvm.dll+0x7cfd4e]
@@ -42,7 +42,7 @@ V  [jvm.dll+0x24f81d]
 V  [jvm.dll+0x25283c]
 C  0x000001910778232b
 
-Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+Java fr24Frames: (J=compiled Java code, j=interpreted, Vv=VM code)
 v  ~UncommonTrapBlob
 J 5288 c2 planespotter.model.io.DBOut.querryDB(Ljava/lang/String;)Ljava/sql/ResultSet; (23 bytes) @ 0x000001910f3490e0 [0x000001910f3469e0+0x0000000000002700]
 J 5424 c1 planespotter.model.io.DBOut.getLastTimestempByFlightID(I)J (71 bytes) @ 0x0000019107f6ff34 [0x0000019107f6f240+0x0000000000000cf4]

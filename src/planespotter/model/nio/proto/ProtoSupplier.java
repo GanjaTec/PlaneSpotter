@@ -4,7 +4,7 @@ import org.jetbrains.annotations.TestOnly;
 import planespotter.constants.Areas;
 import planespotter.constants.SQLQueries;
 import planespotter.controller.Scheduler;
-import planespotter.dataclasses.Frame;
+import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBOut;
 import planespotter.model.SupperDB;
 import planespotter.throwables.DataNotFoundException;
@@ -75,7 +75,7 @@ public class ProtoSupplier extends SupperDB implements Runnable {
         }
     }
 
-    public void writeToDB(Deque<Frame> frames, DBOut dbOut) {
+    public void writeToDB(Deque<Fr24Frame> fr24Frames, DBOut dbOut) {
         long writeStartMillis = nowMillis();
         System.out.println("Writing DB-Data...");
 
@@ -86,7 +86,7 @@ public class ProtoSupplier extends SupperDB implements Runnable {
                 var newFlights = this.insertFlights(conn, frames, dbOut, newPlanes);
                 this.insertTracking(conn, frames, dbOut, newFlights);
                 conn.close();*/
-                var stmts = this.createWriteStatements(conn, frames, dbOut);
+                var stmts = this.createWriteStatements(conn, fr24Frames, dbOut);
                 assert stmts != null;
                 executeSQL(conn, stmts);
             } catch (SQLException | ClassNotFoundException | NoAccessException e) {
@@ -109,13 +109,13 @@ public class ProtoSupplier extends SupperDB implements Runnable {
         System.out.println("DB filled in " + elapsedSeconds(writeStartMillis) + " seconds!");
     }
 
-    public HashMap<String, Integer> insertPlanes(Connection conn, Deque<Frame> frames, DBOut dbo) {
+    public HashMap<String, Integer> insertPlanes(Connection conn, Deque<Fr24Frame> fr24Frames, DBOut dbo) {
         var map = new HashMap<String, Integer>();
         try {
             final var planeQuery = conn.prepareStatement(SQLQueries.planequerry);
             final var icaoIDMap = dbo.icaoIDMap(); //TODO andere Methode / ohne FlightIDs
 
-            frames.forEach(f -> {
+            fr24Frames.forEach(f -> {
                 boolean containsPlane;
                 if (!icaoIDMap.isEmpty()) {
                     containsPlane = icaoIDMap.containsKey(f.getIcaoAdr());
@@ -153,13 +153,13 @@ public class ProtoSupplier extends SupperDB implements Runnable {
         throw new NullPointerException();
     }
 
-    public HashMap<String, Integer> insertFlights(Connection conn, Deque<Frame> frames, DBOut dbo, HashMap<String, Integer> icaosPlaneIDs) {
+    public HashMap<String, Integer> insertFlights(Connection conn, Deque<Fr24Frame> fr24Frames, DBOut dbo, HashMap<String, Integer> icaosPlaneIDs) {
         try {
             var flightQuery = conn.prepareStatement(SQLQueries.flightquerry);
             var fnrsAndPids = dbo.getFlightNRsWithFlightIDs();
             //var icaoIdMap = dbo.icaoIDMap();
 
-            frames.forEach(f -> {
+            fr24Frames.forEach(f -> {
                 boolean containsFlight;
                 assert fnrsAndPids != null;
                 if (!fnrsAndPids.isEmpty()) {
@@ -196,12 +196,12 @@ public class ProtoSupplier extends SupperDB implements Runnable {
         throw new NullPointerException();
     }
 
-    public int[] insertTracking(Connection conn, Deque<Frame> frames, DBOut dbo, HashMap<String, Integer> fnrsWithIDs) {
+    public int[] insertTracking(Connection conn, Deque<Fr24Frame> fr24Frames, DBOut dbo, HashMap<String, Integer> fnrsWithIDs) {
         try {
             var trackingQuery = conn.prepareStatement(SQLQueries.trackingquerry);
             var icaoIdMap = dbo.icaoIDMap();
 
-            frames.forEach(f -> {
+            fr24Frames.forEach(f -> {
                 int flightID = -1;
                 var fnr = f.getFlightnumber();
                 if (fnrsWithIDs.containsKey(fnr)) {
@@ -232,7 +232,7 @@ public class ProtoSupplier extends SupperDB implements Runnable {
 
 
 
-    public PreparedStatement[] createWriteStatements(Connection conn, Deque<Frame> frames, DBOut dbo) {
+    public PreparedStatement[] createWriteStatements(Connection conn, Deque<Fr24Frame> fr24Frames, DBOut dbo) {
         try {
             var planeQuery = conn.prepareStatement(SQLQueries.planequerry);
             var flightQuery = conn.prepareStatement(SQLQueries.flightquerry);
@@ -242,7 +242,7 @@ public class ProtoSupplier extends SupperDB implements Runnable {
             final int[] planeTableSize = { dbo.getTableSize("planes") };
             final int[] flightTableSize = { dbo.getTableSize("flights") };
 
-            frames.forEach(f -> {
+            fr24Frames.forEach(f -> {
                 int planeID = planeTableSize[0],
                     flightID = flightTableSize[0];
                 boolean containsPlane = false;

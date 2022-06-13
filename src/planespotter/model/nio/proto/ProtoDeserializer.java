@@ -5,9 +5,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
-import planespotter.a_test.Test;
 import planespotter.controller.Scheduler;
-import planespotter.dataclasses.Frame;
+import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.nio.AbstractDeserializer;
 import planespotter.model.nio.Supplier;
 import planespotter.throwables.Fr24Exception;
@@ -38,8 +37,8 @@ public class ProtoDeserializer implements AbstractDeserializer {
      * @param scheduler is the Scheduler to allow parallelism
      * @return Deque of deserialized Frames
      */
-    public synchronized Deque<Frame> getFr24Frames(String[] areas, final Scheduler scheduler) {
-        var concurrentDeque = new ConcurrentLinkedDeque<Frame>();
+    public synchronized Deque<Fr24Frame> getFr24Frames(String[] areas, final Scheduler scheduler) {
+        var concurrentDeque = new ConcurrentLinkedDeque<Fr24Frame>();
         System.out.println("Deserializing Fr24-Data...");
 
         var ready = new AtomicBoolean(false);
@@ -75,7 +74,7 @@ public class ProtoDeserializer implements AbstractDeserializer {
 
     /**
      * deserializes incoming http response
-     * from json to frame ArrayDeque
+     * from json to fr24Frame ArrayDeque
      *
      * @param response is the HttpResponse to deserialize
      * @return ArrayDeque of deserialized Frames
@@ -83,16 +82,16 @@ public class ProtoDeserializer implements AbstractDeserializer {
      * @indev
      */
     @Override
-    public Deque<Frame> deserialize(HttpResponse<String> response) {
+    public Deque<Fr24Frame> deserialize(HttpResponse<String> response) {
         var jsa = this.parseJsonArray(response);
-        var frames = new ArrayDeque<Frame>();
+        var frames = new ArrayDeque<Fr24Frame>();
         var it = jsa.iterator();
         var gson = new Gson();
-        Frame frame;
+        Fr24Frame fr24Frame;
         for (JsonElement j; it.hasNext(); /**/) {
             j = it.next();
-            frame = gson.fromJson(j, Frame.class);
-            frames.add(frame);
+            fr24Frame = gson.fromJson(j, Fr24Frame.class);
+            frames.add(fr24Frame);
         }
         return frames;
     }
