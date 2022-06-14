@@ -15,24 +15,35 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+/**
+ * @name LiveData
+ * @author jml04
+ * @version 1.0
+ *
+ * abstract class LiveData represents a Live-Data-Manager,
+ * it is able to load live data directly from Fr24 into Flight Objects,
+ * it contains a queue 'insertLater' where all the frames are added to,
+ * these frames get collected from there by another class.
+ * @see DataLoader
+ * @see Supplier
+ * @see Fr24Deserializer
+ * @see Areas
+ * @see AreaFactory
+ * @see ConcurrentLinkedDeque
+ */
 public abstract class LiveData {
-    // frames, which will be inserted later (first loaded into the view)
+    /**
+     * boolean live represents a live-flag and
+     * indicates if the live map is shown at the moment
+     */
+    private static boolean live;
+    /**
+     * frames, which will be inserted later (first loaded into the view)
+     */
     private static final ConcurrentLinkedQueue<Fr24Frame> insertLater;
-    // static initializer
+    // static initializer, initializes static variables
     static {
         insertLater = new ConcurrentLinkedQueue<>();
-    }
-
-    // boolean isLive shows if the live map is shown at the moment
-    private static boolean live;
-
-    /**
-     *
-     *
-     * @param data
-     */
-    public static void insertLater(final Collection<Fr24Frame> data) {
-        insertLater.addAll(data);
     }
 
     /**
@@ -48,9 +59,19 @@ public abstract class LiveData {
         var supplier = new Supplier();
         var deserializer = new Fr24Deserializer();
         var world = Areas.getWorldAreas();
+        var testArea = new String[] { Areas.TEST };
+        /*
+        var gui = Controller.getGUI();
+        var map = gui.getMap();
+        var bottomLeft = map.getPosition(0, map.getHeight());
+        var topRight = map.getPosition(map.getWidth(), 0);
+        var testArea = new String[] {
+                AreaFactory.createArea(Position.parsePosition(bottomLeft), Position.parsePosition(topRight))
+        };
+        */
         var frames = supplier.getFr24Frames(world, deserializer, scheduler);
         // termorary if // daten gehen verloren
-        if (mayLoad()) {
+        if (maxSizeReached()) {
             insertLater(frames);
         }
         var id = new AtomicInteger(0);
@@ -60,33 +81,11 @@ public abstract class LiveData {
     }
 
     /**
-     * @return true if the insertLater-size is less than 10000, else false
-     */
-    protected static boolean mayLoad() {
-        return insertLater.size() < 10000;
-    }
-
-    /**
-     * @return true, if insertLater.size() is greater or equals 1000, else false
-     *         if true, another Method gets ac
-     */
-    protected static boolean canInsert(final int count) {
-        return insertLater.size() > count;
-    }
-
-    /**
-     * @return true if the insert-later-deque is empty, else false
-     */
-    protected static boolean isEmpty() {
-        return insertLater.size() == 0;
-    }
-
-    /**
      * polls a certain amount of frames from the
-     * insert-later-deque if
+     * insert-later-deque if it is not empty
      *
-     * @param count
-     * @return
+     * @param count is the pull count
+     * @return Deque of Frames with @param count es length
      */
     public static Deque<Fr24Frame> pollFrames(final int count) {
         if (isEmpty()) {
@@ -106,18 +105,58 @@ public abstract class LiveData {
     }
 
     /**
+     * adds a Collection of Frames
      *
+     * @param data is the data to add to insert later
+     */
+    public static void insertLater(final Collection<Fr24Frame> data) {
+        insertLater.addAll(data);
+    }
+
+    /**
+     * indicates if a method may load frames into the insertLater-deque
+     * by checking if the max. Size (10000) is reached.
      *
-     * @return
+     * @return true if the insertLater-size is greater than 10000, else false
+     */
+    protected static boolean maxSizeReached() {
+        return insertLater.size() > 10000;
+    }
+
+    /**
+     * indicates if a method may collect data from the insertLater-deque
+     *
+     * @param count is the exclusive minimum size, the deque must have to return true
+     * @return true, if insertLater.size() is greater or equals 1000, else false
+     *         if true, another Method gets ac
+     */
+    protected static boolean ableToCollect(final int count) {
+        return insertLater.size() > count;
+    }
+
+    /**
+     * indicates if the insertLater-deque is emoty
+     *
+     * @return true if the insert-later-deque is empty, else false
+     */
+    protected static boolean isEmpty() {
+        return insertLater.isEmpty();
+    }
+
+    /**
+     * getter for the live-flag
+     *
+     * @return true if the live map is shown at the moment, else false
      */
     public static boolean isLive() {
         return live;
     }
 
     /**
+     * sets the live-flag, should only be used if
+     * the map goes live or when it disposes
      *
-     *
-     * @param b
+     * @param b is the boolean to set
      */
     public static void setLive(boolean b) {
         live = b;

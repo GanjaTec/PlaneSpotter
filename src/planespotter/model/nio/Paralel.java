@@ -39,17 +39,14 @@ public class Paralel {
 		exe.setKeepAliveTime(20, TimeUnit.SECONDS);
 		
 		
-		List<String> resultList = new ArrayList<String>(Areas.EASTERN_FRONT.length + Areas.GERMANY.length + Areas.ITA_SWI_AU.length);
-	    Collections.addAll(resultList, Areas.EASTERN_FRONT);
-	    Collections.addAll(resultList, Areas.GERMANY);
-	    Collections.addAll(resultList, Areas.ITA_SWI_AU);
+		String[] resultList = Areas.getAllAreas();
 	    int i = 0;
 	    for (String s : resultList) {
 			executor.execute(new Supplier(i, s));
 			i += 1;
 	    }
 
-		KeeperOfTheArchives bofh = new KeeperOfTheArchives(resultList.size(), 1200L);
+		KeeperOfTheArchives bofh = new KeeperOfTheArchives(resultList.length, 1200L);
 		executor.execute(bofh);
 		executor.shutdown();
 		}

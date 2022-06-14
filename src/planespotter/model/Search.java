@@ -13,6 +13,7 @@ import java.util.*;
  * @version 1.0
  *
  * class search contains search methods for flights, planes, airports, airlines and areas
+ * it gets its parameters from other classes like Controller and tries to return search results.
  */
 public class Search {
 
@@ -27,7 +28,9 @@ public class Search {
      *
      * @param inputs are the input strings
      */
-    public Vector<DataPoint> verifyFlight (String[] inputs) throws DataNotFoundException {
+    public Vector<DataPoint> verifyFlight(String[] inputs)
+            throws DataNotFoundException {
+
         var id = inputs[0];
         var callsign = inputs[1];
         try {
@@ -67,7 +70,9 @@ public class Search {
      *
      * @param inputs are the input strings
      */
-    public Vector<DataPoint> verifyPlane (String[] inputs) throws DataNotFoundException {
+    public Vector<DataPoint> verifyPlane(String[] inputs)
+            throws DataNotFoundException {
+
         var id = inputs[0]; // FIXME: 11.05.2022 ID ist 5 statt 56
         var planetypes = this.findPlanetypes(inputs[1]); // FIXME: 06.05.2022 ES WERDEN RANDOM planetypes zurückgegeben
         var icao = inputs[2]; // find ICAOs
@@ -92,7 +97,9 @@ public class Search {
     }
 
     // TODO: 25.05.2022 Airport suche mit Start und Ziel Airport
-    public Vector<DataPoint> verifyAirport (String[] inputs) throws DataNotFoundException {
+    public Vector<DataPoint> verifyAirport(String[] inputs)
+            throws DataNotFoundException {
+
         var id = inputs[0];
         var tag = inputs[1];
         var name = inputs[2];
@@ -119,7 +126,9 @@ public class Search {
      * @param input is the input planetype, must not be complete
      * @return complete planetype, if one found, else the input one
      */
-    private ArrayDeque<String> findPlanetypes (String input) throws DataNotFoundException {
+    private ArrayDeque<String> findPlanetypes(String input)
+            throws DataNotFoundException {
+
         var allPlanetypes = new DBOut().getAllPlanetypesLike(input);
         if (allPlanetypes.isEmpty()) {
             throw new DataNotFoundException("no existing planetype found for " + input + "!");
@@ -127,7 +136,9 @@ public class Search {
         return allPlanetypes;
     }
 
-    private ArrayDeque<String> findCallsigns (String input) throws DataNotFoundException { // TODO evtl. hier catchen!! in DBout Werfen
+    private ArrayDeque<String> findCallsigns(String input)
+            throws DataNotFoundException { // TODO evtl. hier catchen!! in DBout Werfen
+
         var allCallsigns = new DBOut().getAllCallsignsLike(input);
         if (allCallsigns.isEmpty()) {
             throw new DataNotFoundException("no existing callsign found for " + input + "!");
@@ -135,8 +146,11 @@ public class Search {
         return allCallsigns;
     }
 
-    private int findAirport (String airport) throws DataNotFoundException {
+    private int findAirport(String airport)
+            throws DataNotFoundException {
+
         var aids = new DBOut().getAirportIDsLike(airport);
+        assert aids != null;
         if (aids.isEmpty()) {
             throw new DataNotFoundException("No existing airport found for " + airport + "!");
         }

@@ -9,6 +9,7 @@ import planespotter.throwables.DataNotFoundException;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -35,15 +36,25 @@ import static planespotter.util.Time.*;
  * it is able to collect different types of flight-data Frames (Fr24Frames),
  * it contains methods to collect data and some to write data
  * to the database.
+ * @see planespotter.SupplierMain
+ * @see planespotter.a_test.TestMain
  */
 public class Supplier implements Runnable {
+	// inserted frames counter for all writeToDB inserts
+	private static int insertedFrames, newPlanes, newFlights;
+	// initializer
+	static {
+		insertedFrames = 0;
+		newPlanes = 0;
+		newFlights = 0;
+	}
+	// class instance fields
 	private final int threadNumber;
 	private final String ThreadName;
 	private final String area;
-
-	HttpClient client = HttpClient.newHttpClient();
-	DBIn dbi = new DBIn();
-	DBOut dbo = new DBOut();
+	private final HttpClient client;
+	private final DBIn dbi;
+	private final DBOut dbo;
 	//TODO Write getters
 	
 	public int getThreadNumber() {
@@ -62,27 +73,30 @@ public class Supplier implements Runnable {
 		this.threadNumber = threadNumber;
 		this.ThreadName = "SupplierThread-" + threadNumber;
 		this.area = area;
+		this.client = HttpClient.newHttpClient();
+		this.dbi = new DBIn();
+		this.dbo = new DBOut();
 	}
 
 	@Override
 	public void run(){
 		try {
-			Deserializer ds = new Deserializer();
-			System.out.println("Starting Thread \"" + this.ThreadName + "\"");
+			System.out.println("Starting Supplier-Thread \"" + this.ThreadName + "\"...");
 
+			Fr24Deserializer deserializer = new Fr24Deserializer();
 			HttpResponse<String> response = this.fr24get();
-			Deque<Fr24Frame> fr24Frames = new Fr24Deserializer().deserialize(response);
-			// use Proto-deserialize instead of ds.deserialize(...) for right-way-deserialized frames (no "" anymore)
-			// old: ds.deserialize(response)
+			// use Proto-deserializer for correct frame data
+			Deque<Fr24Frame> fr24Frames = deserializer.deserialize(response);
 			writeToDB(fr24Frames, this.dbo, this.dbi);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
+		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public HttpResponse<String> fr24get() throws Exception {
-		//HttpClient client = HttpClient.newHttpClient();
+	public HttpResponse<String> fr24get()
+			throws IOException, InterruptedException {
+
+		//HttpClient client = HttpClient.newHttpClient(); TODO das geht doch auch hier oder?
 		// Request flightradar24 data with Firefox UserAgent
 		// URL splitted only for visibility
 		HttpRequest request = HttpRequest
@@ -171,29 +185,30 @@ public class Supplier implements Runnable {
 		} catch (DataNotFoundException ignored) {
 			// something doesn't exist in the DB, this is no error!
 		}
+		int airlineID, planeID, flightID;
+		boolean checkPlane, checkFlight;
+		Fr24Frame frame;
 		while (!fr24Frames.isEmpty()) {
-				Fr24Frame fr24Frame = fr24Frames.poll();
-
+				frame = fr24Frames.poll();
 				// insert into planes
-				int airlineID = airlineTagsIDs.getOrDefault(fr24Frame.getAirline(), 1);
-				int planeID = planeIcaoIDs.getOrDefault(fr24Frame.getIcaoAdr(), -1);
-				//int airlineID = dbo.getAirlineIDByTag(frame.getAirline());
-				//int planeID = dbo.checkPlaneInDB(frame.getIcaoAdr());
-				boolean checkPlane = planeID > -1;
+				airlineID = airlineTagsIDs.getOrDefault(frame.getAirline(), 1);
+				planeID = planeIcaoIDs.getOrDefault(frame.getIcaoAdr(), -1);
+				checkPlane = planeID > -1;
 				if (!checkPlane) {
-					planeID = dbi.insertPlane(fr24Frame, airlineID);
+					planeID = dbi.insertPlane(frame, airlineID);
+					newPlanes++;
 				}
-
 				// insert into flights
-				int flightID = flightNRsIDs.getOrDefault(fr24Frame.getFlightnumber(), -1);
-				//int flightID = dbo.checkFlightInDB(frame, planeID);
-				boolean checkFlight = flightID > -1;
+				flightID = flightNRsIDs.getOrDefault(frame.getFlightnumber(), -1);
+				checkFlight = flightID > -1;
 				if (!checkFlight) {
-					flightID = dbi.insertFlight(fr24Frame, planeID);
+					flightID = dbi.insertFlight(frame, planeID);
+					newFlights++;
 				}
-
 				// insert into tracking
-				dbi.insertTracking(fr24Frame, flightID);
+				dbi.insertTracking(frame, flightID);
+				// increasing the inserted frames value
+				insertedFrames++;
 			}
 
 			System.out.println("filled DB in " + elapsedSeconds(ts1) + " seconds!");
@@ -225,5 +240,17 @@ public class Supplier implements Runnable {
 		} else {
 			System.out.println("File already exists! This should not happen since epoch is unique");
 		}
+	}
+
+	public static int getInserted() {
+		return insertedFrames;
+	}
+
+	public static int getNewPlanes() {
+		return newPlanes;
+	}
+
+	public static int getNewFlights() {
+		return newFlights;
 	}
 }
