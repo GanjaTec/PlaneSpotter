@@ -24,7 +24,7 @@ public abstract class DataLoader {
         if (enabled) {
             var log = Controller.getLogger();
             log.log("Trying to insert frames...", DataLoader.class);
-            if (canInsert(count)) {
+            if (ableToCollect(count)) {
                 // insert live data with normal writeToDB
                 var frames = pollFrames(count);
                 scheduler.exec(() -> Supplier.writeToDB(frames, new DBOut(), new DBIn()),
