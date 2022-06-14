@@ -48,7 +48,8 @@ public abstract class LiveData {
         var supplier = new Supplier();
         var deserializer = new Fr24Deserializer();
         var world = Areas.getWorldAreas();
-        var frames = supplier.getFr24Frames(world, deserializer, scheduler);
+        var testArea = new String[] { Areas.TEST };
+        var frames = supplier.getFr24Frames(testArea, deserializer, scheduler);
         // termorary if // daten gehen verloren
         if (mayLoad()) {
             insertLater(frames);

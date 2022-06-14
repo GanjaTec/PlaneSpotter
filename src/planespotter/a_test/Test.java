@@ -38,9 +38,10 @@ public class Test {
         //final long startTime =  nowMillis();
 
         var test = new Test();
-        System.out.println(linesCode(Paths.CODE_PATH));
+        //System.out.println(linesCode(Paths.CODE_PATH));
+        System.out.println();
 
-        //test.testAnimation(test);
+        test.testAnimation(test);
 
 /*
         var scheduler = new Scheduler();

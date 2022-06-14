@@ -415,7 +415,7 @@ public class Controller {
     private void onClick_all(ICoordinate clickedCoord) { // TODO aufteilen
         if (!this.clicking) {
             this.clicking = true;
-            var markers = gui.getMap().getMapMarkerList();
+            var mapMarkers = gui.getMap().getMapMarkerList();
             var newMarkerList = new ArrayList<MapMarker>();
             Coordinate markerCoord;
             DefaultMapMarker newMarker;
@@ -429,7 +429,7 @@ public class Controller {
             var logger = Controller.getLogger();
             var menu = (JPanel) gui.getContainer("menuPanel");
             // going though markers
-            for (var m : markers) {
+            for (var m : mapMarkers) {
                 markerCoord = m.getCoordinate();
                 newMarker = new DefaultMapMarker(markerCoord, 90); // FIXME: 13.05.2022 // FIXME 19.05.2022
                 if (bbn.isMarkerHit(markerCoord, clickedCoord)) {
@@ -457,9 +457,11 @@ public class Controller {
             case MAP_FROMSEARCH -> {
                 marker.setBackColor(Color.RED);
                 menuPanel.setVisible(false);
-                int flightID = dataPoints.get(counter).flightID(); // FIXME: 15.05.2022 WAS IST MIT DEM COUNTER LOS
-                //  (keine info beim click - flight is null)
+                int flightID = dataPoints.get(counter).flightID();
                 try {
+                    //this.show(MAP_TRACKING, "Flight '" + flightID + "'", String.valueOf(flightID));
+                    this.showTrackingMap("Flight '" + flightID + "'", gui.getMapManager(),
+                                         dbOut, new String[] { String.valueOf(flightID) });
                     var flight = dbOut.getFlightByID(flightID);
                     treePlantation.createFlightInfo(flight, guiAdapter);
                 } catch (DataNotFoundException e) {

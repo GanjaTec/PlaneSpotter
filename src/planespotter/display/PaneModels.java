@@ -1,9 +1,14 @@
 package planespotter.display;
 
+import planespotter.constants.DefaultColor;
+import planespotter.constants.GUIConstants;
 import planespotter.constants.Images;
 import planespotter.controller.ActionHandler;
 
 import javax.swing.*;
+
+import java.awt.*;
+import java.util.Arrays;
 
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.DefaultColor.*;
@@ -16,7 +21,7 @@ import static planespotter.constants.Images.*;
  *
  * contains panel models for GUI
  */
-final class PaneModels {
+public final class PaneModels {
 
     JFrame windowFrame(ActionHandler listener) {
         var window = new JFrame("PlaneSpotter v0.1");
@@ -289,5 +294,103 @@ final class PaneModels {
         lblStartScreen.setOpaque(false);
         return lblStartScreen;
     }
+
+    /**
+     * @name SupplierDisplay
+     * @version 1.0
+     *
+     * inner class SupplierDisplay is a little Display for the SupplierMain
+     * @see planespotter.SupplierMain
+     */
+    public static class SupplierDisplay {
+
+        private static final Runtime runtime = Runtime.getRuntime();
+        // inserted values indexes:   0 = allFrames,   1 = newPlanes,   2 = newFlights
+        private final int[] inserted = {0, 0, 0};
+        private int totalMemory = 13212;
+        private final JProgressBar progressBar = new JProgressBar(JProgressBar.HORIZONTAL, 0, totalMemory);
+        private final JLabel insertedLabel = new JLabel(),
+                             memoryLabel = new JLabel(),
+                             framesPerSec = new JLabel(),
+                             newPlanesLabel = new JLabel(),
+                             newFlightsLabel = new JLabel();
+        private final JLabel[] labels = { insertedLabel, memoryLabel, framesPerSec, newPlanesLabel, newFlightsLabel };
+        private final JFrame frame;
+
+
+        public SupplierDisplay() {
+            this.frame = this.frame();
+        }
+
+        public void start() {
+            this.frame.setVisible(true);
+        }
+
+        private JFrame frame() {
+            var size = new Dimension(300, 400);
+            int compWidth = size.width - 20;
+            int y = 10;
+            for (var lbl : this.labels) {
+                lbl.setBounds(10, y, compWidth-20, 20);
+                y += 30;
+            }
+            this.progressBar.setForeground(DEFAULT_MAP_ICON_COLOR.get());
+            this.progressBar.setBounds(10, y, compWidth-20, 20);
+            this.progressBar.setString("Memory Usage");
+            this.progressBar.setStringPainted(true);
+            this.progressBar.setBorder(MENU_BORDER);
+
+            var seps = new JSeparator[] {
+                    new JSeparator(),new JSeparator(),new JSeparator(),
+                    new JSeparator(),new JSeparator(), new JSeparator()
+            };
+            y = 30;
+            for (var sep : seps) {
+                sep.setOpaque(true);
+                sep.setForeground(Color.DARK_GRAY);
+                sep.setBounds(10, y+5, compWidth-20, 2);
+                y += 30;
+            }
+
+            var panel = new JPanel();
+            //panel.setBackground(Color.DARK_GRAY);
+            panel.setLayout(null);
+            panel.setSize(size);
+            Arrays.stream(this.labels).forEach(panel::add);
+            Arrays.stream(seps).forEach(panel::add);
+            panel.add(this.progressBar);
+
+            JFrame.setDefaultLookAndFeelDecorated(false);
+            var frame = new JFrame("Fr24-Collector");
+            frame.setIconImage(FLYING_PLANE_ICON.get().getImage());
+            frame.setLayout(null);
+            frame.setSize(size);
+            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+            frame.setResizable(false);
+            frame.add(panel);
+
+            return frame;
+        }
+
+        public synchronized void update(final int insertedNow, final int newPlanesNow, final int newFlightsNow) {
+            this.inserted[0] += insertedNow;
+            this.inserted[1] += newPlanesNow;
+            this.inserted[2] += newFlightsNow;
+            this.insertedLabel.setText("Inserted Frames: " + this.inserted[0]);
+            this.framesPerSec.setText("Frames per Second: " + insertedNow);
+            long freeMemory = runtime.freeMemory() / 10_000;
+            this.totalMemory = (int) (runtime.totalMemory() / 10_000);
+            int memoryUsage = (int) (this.totalMemory - freeMemory);
+            this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");
+            this.newPlanesLabel.setText("New Planes: " + this.inserted[1] + ", " + newPlanesNow + " per Sec");
+            this.newFlightsLabel.setText("New Flights: " + this.inserted[2] + ", " + newFlightsNow + " per Sec");
+            this.progressBar.setValue(memoryUsage);
+        }
+    }
+
+
+
+
+
 
 }
