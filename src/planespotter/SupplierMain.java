@@ -7,10 +7,12 @@ import planespotter.model.nio.Supplier;
 import planespotter.model.nio.FastKeeper;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class SupplierMain {
     // monitor object
-    public static final Object lock = new Object();
+    public static final Lock lock = new ReentrantLock(); // ich weiß nicht genau was das kann aber ich glaube es kann viel
 
     public static final int INSERT_PERIOD_SEC = 60; // seconds
 

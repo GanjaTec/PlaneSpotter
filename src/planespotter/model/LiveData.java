@@ -1,9 +1,13 @@
 package planespotter.model;
 
 import planespotter.constants.Areas;
+import planespotter.controller.Controller;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Fr24Frame;
+import planespotter.dataclasses.Position;
+import planespotter.display.GUI;
+import planespotter.display.TreasureMap;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Supplier;
 
@@ -49,7 +53,16 @@ public abstract class LiveData {
         var deserializer = new Fr24Deserializer();
         var world = Areas.getWorldAreas();
         var testArea = new String[] { Areas.TEST };
-        var frames = supplier.getFr24Frames(testArea, deserializer, scheduler);
+        /*
+        var gui = Controller.getGUI();
+        var map = gui.getMap();
+        var bottomLeft = map.getPosition(0, map.getHeight());
+        var topRight = map.getPosition(map.getWidth(), 0);
+        var testArea = new String[] {
+                AreaFactory.createArea(Position.parsePosition(bottomLeft), Position.parsePosition(topRight))
+        };
+        */
+        var frames = supplier.getFr24Frames(world, deserializer, scheduler);
         // termorary if // daten gehen verloren
         if (mayLoad()) {
             insertLater(frames);

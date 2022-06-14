@@ -549,10 +549,13 @@ public class Controller {
     public void handleException(final Throwable thr) {
         if (thr instanceof DataNotFoundException) {
             guiAdapter.showWarning(Warning.NO_DATA_FOUND, thr.getMessage());
-            thr.printStackTrace();
         } else if (thr instanceof SQLException sql) {
-            guiAdapter.showWarning(Warning.SQL_ERROR, sql.getMessage() + "\n" + sql.getSQLState());
+            var message = sql.getMessage();
+            guiAdapter.showWarning(Warning.SQL_ERROR, message + "\n" + sql.getSQLState());
             thr.printStackTrace();
+            if (message.contains("BUSY")) {
+                System.exit(-1);
+            }
         } else if (thr instanceof TimeoutException) {
             guiAdapter.showWarning(Warning.TIMEOUT);
         } else if (thr instanceof RejectedExecutionException) {

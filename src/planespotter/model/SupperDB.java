@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Lukas
  *
  */
-public class SupperDB {
+public abstract class SupperDB {
 
 	// writing boolean, true when writing
 	protected static volatile AtomicBoolean sqlBusy = new AtomicBoolean(false);

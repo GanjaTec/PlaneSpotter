@@ -9,10 +9,20 @@ package planespotter.constants;
  */
 public final class Areas { // TODO zu Enum machen (die einzel Strings) mit String area Bsp.: URKAINE("...").get() oder so
 
+	/**
+	 * Area Structure:
+	 *
+	 * " {startLat} %2C {endLat} %2C {startLon} %2C {endLon} "
+	 *
+	 * lat's go from 90 to -90 (exclusive)
+	 * lon's go from -180 to 180 (exclusive)
+	 */
+
 	// Test Area
-	public static final String TEST = "50.0%2C-100.0%2C-100.0%2C-40.0";
+	public static final String TEST = "57.0%2C46.0%2C5.0%2C15.0";
 
 	// World Areas
+	public static final String WORLD = "89.0%2C-89.0%2C-170.0%2C170.0";
 	public static final String AMERICA = "84.512%2C-66.357%2C-162.169%2C-23.303";
 	public static final String EURASIA = "85.052%2C-63.86%2C-41.935%2C-170.256";
 

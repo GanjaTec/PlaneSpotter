@@ -1,6 +1,7 @@
 package planespotter.a_test;
 
 import org.jetbrains.annotations.TestOnly;
+import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
 import planespotter.constants.ANSIColor;
 import planespotter.constants.Areas;
 import planespotter.constants.Images;
@@ -40,8 +41,6 @@ public class Test {
         var test = new Test();
         //System.out.println(linesCode(Paths.CODE_PATH));
         System.out.println();
-
-        test.testAnimation(test);
 
 /*
         var scheduler = new Scheduler();
