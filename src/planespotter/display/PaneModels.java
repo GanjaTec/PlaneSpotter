@@ -363,6 +363,7 @@ public final class PaneModels {
             JFrame.setDefaultLookAndFeelDecorated(false);
             var frame = new JFrame("Fr24-Collector");
             frame.setIconImage(FLYING_PLANE_ICON.get().getImage());
+            frame.setLocationRelativeTo(null);
             frame.setLayout(null);
             frame.setSize(size);
             frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -376,11 +377,12 @@ public final class PaneModels {
             this.inserted[0] += insertedNow;
             this.inserted[1] += newPlanesNow;
             this.inserted[2] += newFlightsNow;
+            this.totalMemory = (int) (runtime.totalMemory() / 10_000);
+            int freeMemory = (int) (runtime.freeMemory() / 10_000);
+            int memoryUsage = (this.totalMemory - freeMemory);
+
             this.insertedLabel.setText("Inserted Frames: " + this.inserted[0]);
             this.framesPerSec.setText("Frames per Second: " + insertedNow);
-            long freeMemory = runtime.freeMemory() / 10_000;
-            this.totalMemory = (int) (runtime.totalMemory() / 10_000);
-            int memoryUsage = (int) (this.totalMemory - freeMemory);
             this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");
             this.newPlanesLabel.setText("New Planes: " + this.inserted[1] + ", " + newPlanesNow + " per Sec");
             this.newFlightsLabel.setText("New Flights: " + this.inserted[2] + ", " + newFlightsNow + " per Sec");

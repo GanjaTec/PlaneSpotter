@@ -12,7 +12,7 @@ public abstract class SupplierMain {
     // monitor object
     public static final Object lock = new Object();
 
-    public static final int INSERT_PERIOD_SEC = 30; // seconds
+    public static final int INSERT_PERIOD_SEC = 60; // seconds
 
     /**
      * Second Supplier Test-Main, single, scheduled World-Supplier
