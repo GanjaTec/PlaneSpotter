@@ -1,11 +1,13 @@
 package planespotter;
 
 import planespotter.constants.Areas;
+import planespotter.constants.Images;
 import planespotter.controller.Scheduler;
 import planespotter.display.PaneModels;
 import planespotter.model.nio.Supplier;
 import planespotter.model.nio.FastKeeper;
 
+import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;

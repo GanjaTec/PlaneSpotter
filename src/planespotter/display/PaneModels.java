@@ -324,6 +324,7 @@ public final class PaneModels {
 
         public void start() {
             this.frame.setVisible(true);
+            this.tryAddTrayIcon();
         }
 
         private JFrame frame() {
@@ -387,6 +388,19 @@ public final class PaneModels {
             this.newPlanesLabel.setText("New Planes: " + this.inserted[1] + ", " + newPlanesNow + " per Sec");
             this.newFlightsLabel.setText("New Flights: " + this.inserted[2] + ", " + newFlightsNow + " per Sec");
             this.progressBar.setValue(memoryUsage);
+        }
+
+        private void tryAddTrayIcon() {
+            if (SystemTray.isSupported()) {
+                var trayIcon = new TrayIcon(Images.FLYING_PLANE_ICON.get().getImage());
+                trayIcon.setImageAutoSize(true);
+                trayIcon.addActionListener(e -> this.frame.setVisible(this.frame.isVisible()));
+                try {
+                    SystemTray.getSystemTray().add(trayIcon);
+                } catch (AWTException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
