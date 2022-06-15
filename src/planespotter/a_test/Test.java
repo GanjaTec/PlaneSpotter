@@ -1,18 +1,12 @@
 package planespotter.a_test;
 
 import org.jetbrains.annotations.TestOnly;
-import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
 import planespotter.constants.ANSIColor;
-import planespotter.constants.Areas;
 import planespotter.constants.Images;
 import planespotter.constants.Paths;
 import planespotter.dataclasses.DataPoint;
-import planespotter.dataclasses.Fr24Frame;
-import planespotter.dataclasses.Frame;
 import planespotter.dataclasses.Position;
 import planespotter.display.*;
-import planespotter.model.nio.Fr24Deserializer;
-import planespotter.model.nio.Supplier;
 import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.model.io.DBOut;
@@ -24,13 +18,10 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static planespotter.util.Utilities.linesCode;
 
 @TestOnly
 public class Test {

@@ -2,9 +2,6 @@ package planespotter.model.nio;
 
 import planespotter.constants.Areas;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -21,7 +18,7 @@ public class Paralel {
 	public void startThreads() throws InterruptedException {
 		String[] areay= Areas.EASTERN_FRONT;
 		for(int i=0; i < areay.length; i++) {
-			Supplier s = new Supplier(i, areay[i]);
+			Fr24Supplier s = new Fr24Supplier(i, areay[i]);
 			ses.scheduleAtFixedRate(s, 10+(i*5), 60, TimeUnit.SECONDS);
 		}
 
@@ -42,7 +39,7 @@ public class Paralel {
 		String[] resultList = Areas.getAllAreas();
 	    int i = 0;
 	    for (String s : resultList) {
-			executor.execute(new Supplier(i, s));
+			executor.execute(new Fr24Supplier(i, s));
 			i += 1;
 	    }
 

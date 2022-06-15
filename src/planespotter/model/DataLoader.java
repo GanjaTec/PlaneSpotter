@@ -4,7 +4,7 @@ import planespotter.controller.Controller;
 import planespotter.controller.Scheduler;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.DBOut;
-import planespotter.model.nio.Supplier;
+import planespotter.model.nio.Fr24Supplier;
 
 import static planespotter.model.LiveData.*;
 
@@ -27,7 +27,7 @@ public abstract class DataLoader {
             if (ableToCollect(count)) {
                 // insert live data with normal writeToDB
                 var frames = pollFrames(count);
-                scheduler.exec(() -> Supplier.writeToDB(frames, new DBOut(), new DBIn()),
+                scheduler.exec(() -> Fr24Supplier.writeToDB(frames, new DBOut(), new DBIn()),
                         "DB-LiveData Writer", true, 2, true);
                 insertCount += count;
             }
@@ -49,7 +49,7 @@ public abstract class DataLoader {
             //gui.getContainer("window").setVisible(false);
             while (!isEmpty() && inserted < 5000) {
                 var frames = pollFrames(500);
-                scheduler.exec(() -> Supplier.writeToDB(frames, dbOut, dbIn),
+                scheduler.exec(() -> Fr24Supplier.writeToDB(frames, dbOut, dbIn),
                         "Inserter", false, 9, false);
                 inserted += 500;
             }

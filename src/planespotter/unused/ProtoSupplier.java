@@ -9,7 +9,7 @@ import planespotter.model.io.DBOut;
 import planespotter.model.SupperDB;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.FastKeeper;
-import planespotter.model.nio.Supplier;
+import planespotter.model.nio.Fr24Supplier;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.NoAccessException;
 
@@ -59,7 +59,7 @@ public class ProtoSupplier extends SupperDB implements Runnable {
             // collecting all areas
             var areas = Areas.getAllAreas();
             // grabbing data from Fr24 and deserializing to Frames
-            var frames = new Supplier().getFr24Frames(areas, this.deserializer, new Scheduler());
+            var frames = new Fr24Supplier().getFr24Frames(areas, this.deserializer, new Scheduler());
             // writing the frames to DB
             this.writeToDB(frames, new DBOut());
             try {

@@ -5,7 +5,7 @@ import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.nio.Fr24Deserializer;
-import planespotter.model.nio.Supplier;
+import planespotter.model.nio.Fr24Supplier;
 
 import java.util.Collection;
 import java.util.Deque;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * it contains a queue 'insertLater' where all the frames are added to,
  * these frames get collected from there by another class.
  * @see DataLoader
- * @see Supplier
+ * @see Fr24Supplier
  * @see Fr24Deserializer
  * @see Areas
  * @see AreaFactory
@@ -56,7 +56,7 @@ public abstract class LiveData {
      * @return Vector of Flight objects, loaded directly by a supplier
      */
     public static Vector<Flight> directLiveData(final Scheduler scheduler) {
-        var supplier = new Supplier();
+        var supplier = new Fr24Supplier();
         var deserializer = new Fr24Deserializer();
         var world = Areas.getWorldAreas();
         var testArea = new String[] { Areas.TEST };

@@ -1,13 +1,11 @@
 package planespotter;
 
 import planespotter.constants.Areas;
-import planespotter.constants.Images;
 import planespotter.controller.Scheduler;
 import planespotter.display.PaneModels;
-import planespotter.model.nio.Supplier;
+import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.nio.FastKeeper;
 
-import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -26,8 +24,8 @@ public abstract class SupplierMain {
     public static void main(String[] args) {
 
         final var scheduler = new Scheduler();
-        final var supplier0 = new Supplier(0, Areas.AMERICA);
-        final var supplier1 = new Supplier(1, Areas.EURASIA);
+        final var supplier0 = new Fr24Supplier(0, Areas.AMERICA);
+        final var supplier1 = new Fr24Supplier(1, Areas.EURASIA);
         final var keeper = new FastKeeper(1200L);
         final var display = new PaneModels.SupplierDisplay();
         final AtomicInteger insertedNow = new AtomicInteger(0),
@@ -47,9 +45,9 @@ public abstract class SupplierMain {
                 .schedule(System::gc, "GC Caller", 30, 20)
                 // updating display
                 .schedule(() -> {
-                    insertedNow.set(Supplier.getInserted() - insertedNow.get());
-                    newPlanesNow.set(Supplier.getNewPlanes() - newPlanesNow.get());
-                    newFlightsNow.set(Supplier.getNewFlights() - newFlightsNow.get());
+                    insertedNow.set(Fr24Supplier.getInserted() - insertedNow.get());
+                    newPlanesNow.set(Fr24Supplier.getPlaneCount() - newPlanesNow.get());
+                    newFlightsNow.set(Fr24Supplier.getFlightCount() - newFlightsNow.get());
 
                     display.update(insertedNow.get(), newPlanesNow.get(), newFlightsNow.get());
                 }, 0, 1);

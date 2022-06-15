@@ -5,19 +5,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
-import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
-import planespotter.model.nio.AbstractDeserializer;
-import planespotter.model.nio.Supplier;
 import planespotter.throwables.Fr24Exception;
 import planespotter.throwables.InvalidDataException;
 
 import java.net.http.HttpResponse;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @name ProtoDeserializer
