@@ -263,7 +263,7 @@ public class Fr24Supplier implements Supplier {
 		return this.ThreadName;
 	}
 
-	public static int getInserted() {
+	public static int getFrameCount() {
 		return frameCount;
 	}
 

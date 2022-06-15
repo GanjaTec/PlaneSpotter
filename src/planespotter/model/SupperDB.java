@@ -6,7 +6,6 @@ import planespotter.dataclasses.DBResult;
 import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.NoAccessException;
 
-import java.net.http.HttpClient;
 import java.sql.*;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,6 +32,8 @@ public abstract class SupperDB {
 	private static final String DB_URL;
 	// database Source-Object
 	private static final SQLiteDataSource database;
+
+	// TODO SQLiteDataSource hat viele interessante Optionen
 
 	static {
 		// setting sqlBusy to false

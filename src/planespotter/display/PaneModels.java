@@ -9,6 +9,7 @@ import javax.swing.*;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.DefaultColor.*;
@@ -311,10 +312,9 @@ public final class PaneModels {
         private final JProgressBar progressBar = new JProgressBar(JProgressBar.HORIZONTAL, 0, totalMemory);
         private final JLabel insertedLabel = new JLabel(),
                              memoryLabel = new JLabel(),
-                             framesPerSec = new JLabel(),
                              newPlanesLabel = new JLabel(),
                              newFlightsLabel = new JLabel();
-        private final JLabel[] labels = { insertedLabel, memoryLabel, framesPerSec, newPlanesLabel, newFlightsLabel };
+        private final JLabel[] labels = { insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel };
         private final JFrame frame;
 
 
@@ -343,7 +343,7 @@ public final class PaneModels {
 
             var seps = new JSeparator[] {
                     new JSeparator(),new JSeparator(),new JSeparator(),
-                    new JSeparator(),new JSeparator(), new JSeparator()
+                    new JSeparator(),new JSeparator()
             };
             y = 30;
             for (var sep : seps) {
@@ -382,12 +382,20 @@ public final class PaneModels {
             int freeMemory = (int) (runtime.freeMemory() / 10_000);
             int memoryUsage = (this.totalMemory - freeMemory);
 
-            this.insertedLabel.setText("Inserted Frames: " + this.inserted[0]);
-            this.framesPerSec.setText("Frames per Second: " + insertedNow);
+            this.insertedLabel.setText("Inserted Frames: " + this.inserted[0] + ", " + insertedNow + " per Sec.");
             this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");
-            this.newPlanesLabel.setText("New Planes: " + this.inserted[1] + ", " + newPlanesNow + " per Sec");
-            this.newFlightsLabel.setText("New Flights: " + this.inserted[2] + ", " + newFlightsNow + " per Sec");
+            this.newPlanesLabel.setText("New Planes: " + this.inserted[1] + ", " + newPlanesNow + " per Sec.");
+            this.newFlightsLabel.setText("New Flights: " + this.inserted[2] + ", " + newFlightsNow + " per Sec.");
             this.progressBar.setValue(memoryUsage);
+            try {
+                TimeUnit.MILLISECONDS.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            freeMemory = (int) (runtime.freeMemory() / 10_000);
+            memoryUsage = (this.totalMemory - freeMemory);
+            this.progressBar.setValue(memoryUsage);
+            this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");
         }
 
         private void tryAddTrayIcon() {

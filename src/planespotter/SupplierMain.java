@@ -28,9 +28,9 @@ public abstract class SupplierMain {
         final var supplier1 = new Fr24Supplier(1, Areas.EURASIA);
         final var keeper = new FastKeeper(1200L);
         final var display = new PaneModels.SupplierDisplay();
-        final AtomicInteger insertedNow = new AtomicInteger(0),
-                newPlanesNow = new AtomicInteger(0),
-                newFlightsNow = new AtomicInteger(0);
+        final AtomicInteger insertedNow = new AtomicInteger(0), insertedFrames = new AtomicInteger(0),
+                newPlanesNow = new AtomicInteger(0), newPlanesAll = new AtomicInteger(0),
+                newFlightsNow = new AtomicInteger(0), newFlightsAll = new AtomicInteger(0);
 
         display.start();
 
@@ -45,11 +45,15 @@ public abstract class SupplierMain {
                 .schedule(System::gc, "GC Caller", 30, 20)
                 // updating display
                 .schedule(() -> {
-                    insertedNow.set(Fr24Supplier.getInserted() - insertedNow.get());
-                    newPlanesNow.set(Fr24Supplier.getPlaneCount() - newPlanesNow.get());
-                    newFlightsNow.set(Fr24Supplier.getFlightCount() - newFlightsNow.get());
+                    insertedNow.set(Fr24Supplier.getFrameCount() - insertedFrames.get());
+                    newPlanesNow.set(Fr24Supplier.getPlaneCount() - newPlanesAll.get());
+                    newFlightsNow.set(Fr24Supplier.getFlightCount() - newFlightsAll.get());
 
                     display.update(insertedNow.get(), newPlanesNow.get(), newFlightsNow.get());
+
+                    insertedFrames.set(Fr24Supplier.getFrameCount());
+                    newPlanesAll.set(Fr24Supplier.getPlaneCount());
+                    newFlightsAll.set(Fr24Supplier.getFlightCount());
                 }, 0, 1);
     }
 
