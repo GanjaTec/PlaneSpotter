@@ -1,11 +1,15 @@
-package planespotter.display;
+package planespotter.display.models;
 
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.Plot;
 import planespotter.constants.DefaultColor;
 import planespotter.constants.GUIConstants;
 
 import javax.swing.*;
 import java.awt.*;
 
+// TODO: 16.06.2022 include JFreeChart
 public class Diagram extends JPanel {
 
     public static final int TYPE_BAR_CHART = 0,

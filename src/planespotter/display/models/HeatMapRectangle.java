@@ -1,7 +1,8 @@
-package planespotter.display;
+package planespotter.display.models;
 
 import org.jetbrains.annotations.NotNull;
 import org.openstreetmap.gui.jmapviewer.MapRectangleImpl;
+import planespotter.display.TreasureMap;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

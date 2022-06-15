@@ -1,7 +1,8 @@
-package planespotter.display;
+package planespotter.display.models;
 
 import libs.UWPButton;
 import planespotter.controller.ActionHandler;
+import planespotter.display.GUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,12 +20,12 @@ import static planespotter.constants.DefaultColor.*;
  *
  * class SearchModels contains different (gui-menu) search models
  */
-final class SearchModels {
+public final class SearchModels {
 
     /**
      * radio buttons
      */
-    JComboBox<String> searchFor_cmbBox(JPanel parent, ItemListener listener) {
+    public JComboBox<String> searchFor_cmbBox(JPanel parent, ItemListener listener) {
         // setting up "search for" combo box
         var searchFor = new JComboBox<>(this.searchBoxItems());
         searchFor.setBounds(parent.getWidth()/2, 10, (parent.getWidth()-20)/2, 25);
@@ -40,7 +41,7 @@ final class SearchModels {
      * @param parent is the panel where the combo-box is in
      * @return menu combobox-text-label
      */
-    JLabel cmbBoxLabel(JPanel parent) {
+    public JLabel cmbBoxLabel(JPanel parent) {
         var boxLabel = new JLabel("Search for:");
         boxLabel.setBounds(10, 10, (parent.getWidth()-20)/2, 25);
         boxLabel.setForeground(DEFAULT_MAP_ICON_COLOR.get());
@@ -66,7 +67,7 @@ final class SearchModels {
     /**
      * @return panel for exact search settings
      */
-    JSeparator searchSeperator(JPanel parent) {
+    public JSeparator searchSeperator(JPanel parent) {
         // TODO: setting up exact search panel
         var seperator = new JSeparator(JSeparator.HORIZONTAL);
         seperator.setBounds(10, 43, parent.getWidth()-20, 2);
@@ -79,7 +80,7 @@ final class SearchModels {
      * @param parent is the parent panel where the message label is shown in
      * @return the search message text area
      */
-    JTextArea searchMessage(JPanel parent) {
+    public JTextArea searchMessage(JPanel parent) {
         var message = "Es muss mindestens eins der Felder ausgefüllt sein!";
         var headMessage = new JTextArea(message);
         headMessage.setBounds(10, parent.getHeight()-80, parent.getWidth()-20, 35);
@@ -100,7 +101,7 @@ final class SearchModels {
      * @param parent is the parent panel component
      * @return list of JLabels (the search field names)
      */
-    List<JComponent> flightSearch(JPanel parent, GUI gui, ActionHandler listener) {
+    public List<JComponent> flightSearch(JPanel parent, GUI gui, ActionHandler listener) {
         var components = new ArrayList<JComponent>();
         components.add(new JLabel("ID:"));
         var id = new JTextField();
@@ -155,7 +156,7 @@ final class SearchModels {
      * @param parent is the parent panel component
      * @return list of JLabels (the search field names)
      */
-    List<JComponent> planeSearch(JPanel parent, GUI gui, ActionHandler listener) {
+    public List<JComponent> planeSearch(JPanel parent, GUI gui, ActionHandler listener) {
         var components = new ArrayList<JComponent>();
         components.add(new JLabel("ID:"));
         var id = new JTextField();

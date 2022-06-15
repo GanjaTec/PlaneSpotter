@@ -6,7 +6,7 @@ import planespotter.constants.Images;
 import planespotter.constants.Paths;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
-import planespotter.display.*;
+import planespotter.display.models.Diagram;
 import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.model.io.DBOut;

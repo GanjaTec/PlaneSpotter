@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.constants.SearchType;
 import planespotter.constants.Warning;
+import planespotter.display.models.PaneModels;
 import planespotter.model.LiveData;
 import planespotter.throwables.IllegalInputException;
 import planespotter.util.Utilities;

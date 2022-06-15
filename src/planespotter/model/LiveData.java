@@ -4,6 +4,7 @@ import planespotter.constants.Areas;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Fr24Frame;
+import planespotter.model.io.DBWriter;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
 
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
  * it is able to load live data directly from Fr24 into Flight Objects,
  * it contains a queue 'insertLater' where all the frames are added to,
  * these frames get collected from there by another class.
- * @see DataLoader
+ * @see DBWriter
  * @see Fr24Supplier
  * @see Fr24Deserializer
  * @see Areas
@@ -59,7 +60,6 @@ public abstract class LiveData {
         var supplier = new Fr24Supplier();
         var deserializer = new Fr24Deserializer();
         var world = Areas.getWorldAreas();
-        var testArea = new String[] { Areas.TEST };
         /*
         var gui = Controller.getGUI();
         var map = gui.getMap();
@@ -69,9 +69,11 @@ public abstract class LiveData {
                 AreaFactory.createArea(Position.parsePosition(bottomLeft), Position.parsePosition(topRight))
         };
         */
-        var frames = supplier.getFr24Frames(world, deserializer, scheduler);
+        var testAreaRaster1D = Areas.getWorldAreaRaster1D();
+
+        var frames = supplier.getFr24Frames(testAreaRaster1D, deserializer, scheduler);
         // termorary if // daten gehen verloren
-        if (maxSizeReached()) {
+        if (!maxSizeReached()) {
             insertLater(frames);
         }
         var id = new AtomicInteger(0);
@@ -130,7 +132,7 @@ public abstract class LiveData {
      * @return true, if insertLater.size() is greater or equals 1000, else false
      *         if true, another Method gets ac
      */
-    protected static boolean ableToCollect(final int count) {
+    public static boolean ableCollect(final int count) {
         return insertLater.size() > count;
     }
 
@@ -139,7 +141,7 @@ public abstract class LiveData {
      *
      * @return true if the insert-later-deque is empty, else false
      */
-    protected static boolean isEmpty() {
+    public static boolean isEmpty() {
         return insertLater.isEmpty();
     }
 

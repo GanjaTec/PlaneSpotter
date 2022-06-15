@@ -1,4 +1,4 @@
-package planespotter.display;
+package planespotter.display.models;
 
 import planespotter.constants.DefaultColor;
 import planespotter.constants.GUIConstants;
@@ -24,7 +24,7 @@ import static planespotter.constants.Images.*;
  */
 public final class PaneModels {
 
-    JFrame windowFrame(ActionHandler listener) {
+    public JFrame windowFrame(ActionHandler listener) {
         var window = new JFrame("PlaneSpotter v0.1");
         window.setSize(1280, 720);
         window.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -39,7 +39,7 @@ public final class PaneModels {
     /**
      * main-panel
      */
-    JPanel mainPanel (JFrame parent) {
+    public JPanel mainPanel(JFrame parent) {
         // TODO: setting up mainpanel
         var mainpanel = new JPanel();
         mainpanel.setBounds(0, 0, parent.getWidth(), parent.getHeight()); // mainpanel width: 1260
@@ -48,7 +48,7 @@ public final class PaneModels {
         return mainpanel;
     }
 
-    JDesktopPane[] desktopPanes(JPanel parent) {
+    public JDesktopPane[] desktopPanes(JPanel parent) {
         // setting up left desktop pane
         var dpleft = new JDesktopPane();
         dpleft.setBorder(LINE_BORDER);
@@ -71,7 +71,7 @@ public final class PaneModels {
     /**
      * title panel with bground and title
      */
-    JPanel titlePanel (JPanel parent) {
+    public JPanel titlePanel(JPanel parent) {
         // setting up title panel
         var title = new JPanel();
         title.setBounds(0, 0, parent.getWidth(), 70);
@@ -99,7 +99,7 @@ public final class PaneModels {
     /**
      * @return head panel for view
      */
-    JPanel viewHeadPanel (JDesktopPane parent) {
+    public JPanel viewHeadPanel(JDesktopPane parent) {
         // setting up view head panel
         var viewHead = new JPanel();
         viewHead.setBounds(0, 0, parent.getWidth(), 24);
@@ -115,7 +115,7 @@ public final class PaneModels {
         /**
          * @return head label, which is part of viewHeadPanel
          */
-        JLabel headTxtLabel() {
+        public JLabel headTxtLabel() {
             // setting up head label
             var head = new JLabel("PlaneSpotter > ");
             head.setBounds(5, 0, 600, 20);
@@ -129,7 +129,7 @@ public final class PaneModels {
     /**
      * @return list panel
      */
-    JPanel listPanel (JDesktopPane parent) {
+    public JPanel listPanel(JDesktopPane parent) {
         // setting up list panel
         var list = new JPanel();
         list.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
@@ -144,7 +144,7 @@ public final class PaneModels {
     /**
      * map panel
      */
-    JPanel mapPanel (JDesktopPane parent) {
+    public JPanel mapPanel(JDesktopPane parent) {
         // setting up map panel
         var map = new JPanel();
         map.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
@@ -159,7 +159,7 @@ public final class PaneModels {
     /**
      * menu panel
      */
-    JPanel menuPanel (JDesktopPane parent) {
+    public JPanel menuPanel(JDesktopPane parent) {
         // setting up menu panel
         var menu = new JPanel();
         menu.setBounds(0, 0, parent.getWidth(), parent.getHeight());
@@ -173,7 +173,7 @@ public final class PaneModels {
     /**
      * info panel
      */
-    JPanel infoPanel (JDesktopPane parent) {
+    public JPanel infoPanel(JDesktopPane parent) {
         // setting up info panel
         var info = new JPanel();
         info.setBounds(0, 0, parent.getWidth(), parent.getHeight());
@@ -187,7 +187,7 @@ public final class PaneModels {
     /**
      * search panel // TODO radioButtons, TxtField, 2 Buttons, JLabels -> aber extern
      */
-    JPanel searchPanel (JPanel parent) {
+    public JPanel searchPanel(JPanel parent) {
         // TODO: setting up search panel
         var search = new JPanel();
         search.setBounds(10, 150, parent.getWidth()-20, parent.getHeight()-240);
@@ -203,7 +203,7 @@ public final class PaneModels {
     /**
      * src panel
      */
-    JPanel startPanel (JDesktopPane parent) {
+    public JPanel startPanel(JDesktopPane parent) {
         // setting up src screen panel
         var start = new JPanel();
         start.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
@@ -218,7 +218,7 @@ public final class PaneModels {
     /**
      * background label
      */
-    JLabel backgroundLabel (JDesktopPane parent) {
+    public JLabel backgroundLabel(JDesktopPane parent) {
         // setting up background image
         var bground = new JLabel(BGROUND_IMG.get());
         bground.setSize(parent.getWidth(), parent.getHeight());
@@ -229,7 +229,7 @@ public final class PaneModels {
     /**
      * background label
      */
-    JLabel menuBgLabel (JDesktopPane parent) {
+    public JLabel menuBgLabel(JDesktopPane parent) {
         // setting up background image
         var bground = new JLabel(MENU_BGROUND_IMG.get());
         bground.setSize(parent.getWidth(), parent.getHeight());
@@ -242,7 +242,7 @@ public final class PaneModels {
      * @param inside is the JTree or whatever, which is displayed in the JScrollPane
      * @return sp, the JScrollPane
      */
-    JScrollPane listScrollPane(JTree inside, JPanel parent) {
+    public JScrollPane listScrollPane(JTree inside, JPanel parent) {
         var sp = new JScrollPane(inside);
         sp.setViewportView(inside);
         sp.setBackground(DEFAULT_BG_COLOR.get());
@@ -263,7 +263,7 @@ public final class PaneModels {
      *
      * @return loading screen JFrame
      */
-    JFrame loadingScreen() {
+    public JFrame loadingScreen() {
         var loadingScreen = new JFrame();
         loadingScreen.setSize(333, 243);
         loadingScreen.setLocationRelativeTo(null);
@@ -276,7 +276,7 @@ public final class PaneModels {
         return loadingScreen;
     }
 
-    JLabel titleBackgroundLabel(JPanel parent) {
+    public JLabel titleBackgroundLabel(JPanel parent) {
         var titleBackground = new JLabel();
         titleBackground.setBounds(parent.getBounds());
         titleBackground.setBorder(LINE_BORDER);
@@ -288,7 +288,7 @@ public final class PaneModels {
         return titleBackground;
     }
 
-    JLabel startScreenLabel(JPanel parent, ImageIcon image) {
+    public JLabel startScreenLabel(JPanel parent, ImageIcon image) {
         var lblStartScreen = new JLabel(image);
         lblStartScreen.setBounds(0, 0, parent.getWidth(), parent.getHeight());
         lblStartScreen.setBorder(LINE_BORDER);

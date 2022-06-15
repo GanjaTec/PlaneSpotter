@@ -54,9 +54,7 @@ public abstract class SupperDB {
 
 		//if (!sqlBusy) {
 			sqlBusy.set(true);
-			//Class.forName("com.mysql.cj.jdbc.Driver");
 			return database.getConnection();
-			//return DriverManager.getConnection(db);
 		//}
 		//throw new NoAccessException("Database is locked, probably writing...");
 	}

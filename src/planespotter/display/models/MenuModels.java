@@ -1,4 +1,4 @@
-package planespotter.display;
+package planespotter.display.models;
 
 import libs.UWPButton;
 
@@ -25,7 +25,7 @@ public final class MenuModels {
     /**
      * menubar (contains the other menu components)
      */
-    JMenuBar menuBar(JPanel parent) {
+    public JMenuBar menuBar(JPanel parent) {
         // setting up menubar
         var menubar = new JMenuBar();
         menubar.setBackground(DEFAULT_BG_COLOR.get());
@@ -41,7 +41,7 @@ public final class MenuModels {
     /**
      * list button
      */
-    JButton listButton(JMenuBar parent, ActionListener listener) {
+    public JButton listButton(JMenuBar parent, ActionListener listener) {
         // setting up list button
         var list = new UWPButton();
         list.setText("List-View");
@@ -57,7 +57,7 @@ public final class MenuModels {
     /**
      * map button
      */
-    JButton mapButton(JMenuBar parent, ActionListener listener) {
+    public JButton mapButton(JMenuBar parent, ActionListener listener) {
         // setting up list button
         var map = new UWPButton();
         map.setText("Live-Map");
@@ -73,7 +73,7 @@ public final class MenuModels {
     /**
      * settings button
      */
-    JButton settingsButton(JMenuBar parent, ActionListener listener) {
+    public JButton settingsButton(JMenuBar parent, ActionListener listener) {
         // setting up settings menu
         var settings = new UWPButton();
         settings.setText("Settings");
@@ -89,7 +89,7 @@ public final class MenuModels {
     /**
      * search-filter button
      */
-    JButton searchButton(JMenuBar parent, ActionListener listener) {
+    public JButton searchButton(JMenuBar parent, ActionListener listener) {
         // setting up search-settings menu
         var search_settings = new UWPButton();
         search_settings.setText("Search");
@@ -105,7 +105,7 @@ public final class MenuModels {
     /**
      *
      */
-    JProgressBar progressBar(JMenuBar parent) {
+    public JProgressBar progressBar(JMenuBar parent) {
         // seting up progress bar
         var progressbar = new JProgressBar();
         progressbar.setBorder(LINE_BORDER);
@@ -122,7 +122,7 @@ public final class MenuModels {
     /**
      * search text field
      */
-    JTextField searchTextField(JMenuBar parent, KeyListener listener) {
+    public JTextField searchTextField(JMenuBar parent, KeyListener listener) {
         // setting up search text field
         var search = new JTextField();
         search.setToolTipText("Search");
@@ -138,7 +138,7 @@ public final class MenuModels {
     /**
      * close view button
      */
-    JButton fileButton(JDesktopPane parent, ActionListener listener) {
+    public JButton fileButton(JDesktopPane parent, ActionListener listener) {
         // setting up view close button
         var file = new UWPButton();
         file.setText("File");
@@ -154,7 +154,7 @@ public final class MenuModels {
     /**
      * close view button
      */
-    JButton closeViewButton(JDesktopPane parent, ActionListener listener) {
+    public JButton closeViewButton(JDesktopPane parent, ActionListener listener) {
         // setting up view close button
         var closeView = new UWPButton();
         closeView.setText("Close");
@@ -170,7 +170,7 @@ public final class MenuModels {
     /**
      * @return settings option pane (which pops up)
      */
-    JDialog settingsDialog(JFrame parent) {
+    public JDialog settingsDialog(JFrame parent) {
             var maxLoadLbl = new JLabel("Max. loaded Data:");
             maxLoadLbl.setBounds(20, 20, 180, 30);
             maxLoadLbl.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
@@ -199,7 +199,7 @@ public final class MenuModels {
     /**
      * settings opt. pane max-load text field
      */
-    JTextField settings_maxLoadTxtField(KeyListener listener) {
+    public JTextField settings_maxLoadTxtField(KeyListener listener) {
         var maxLoadTxtfield = new JTextField();
         maxLoadTxtfield.setBounds(200, 20, 50, 30);
         maxLoadTxtfield.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR.get()));
@@ -211,7 +211,7 @@ public final class MenuModels {
         return maxLoadTxtfield;
     }
 
-    JButton[] settingsButtons(JDialog parent, ActionListener listener) {
+    public JButton[] settingsButtons(JDialog parent, ActionListener listener) {
         int mid = parent.getWidth() / 2;
         int height = parent.getHeight() - 80;
         var cancel = new UWPButton("Cancel");
@@ -231,7 +231,7 @@ public final class MenuModels {
         };
     }
 
-    JComboBox<String> settings_mapTypeCmbBox(ItemListener listener) {
+    public JComboBox<String> settings_mapTypeCmbBox(ItemListener listener) {
         var mapTypeCmbBox = new JComboBox<>(new String[]{
                 "Bing Map",
                 "Default Map",
@@ -275,7 +275,7 @@ public final class MenuModels {
         return fileChooser;
     }
 
-    JButton[] fileMenu(JPanel parent, ActionListener listener) {
+    public JButton[] fileMenu(JPanel parent, ActionListener listener) {
         var components = new JButton[] {
                 new UWPButton("Back"),
                 new UWPButton("Save"),

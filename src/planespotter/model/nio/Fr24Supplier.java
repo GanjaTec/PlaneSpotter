@@ -5,7 +5,7 @@ import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.DBOut;
-import planespotter.throwables.DataNotFoundException;
+import planespotter.model.io.DBWriter;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -16,14 +16,11 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static planespotter.util.Time.*;
 
 /**
  * @name Supplier
@@ -38,14 +35,6 @@ import static planespotter.util.Time.*;
  * @see planespotter.a_test.TestMain
  */
 public class Fr24Supplier implements Supplier {
-	// inserted frames counter for all writeToDB inserts
-	private static int frameCount, planeCount, flightCount;
-	// initializer
-	static {
-		frameCount = 0;
-		planeCount = 0;
-		flightCount = 0;
-	}
 	// class instance fields
 	private final int threadNumber;
 	private final String ThreadName;
@@ -77,7 +66,7 @@ public class Fr24Supplier implements Supplier {
 			HttpResponse<String> response = this.sendRequest();
 			Deque<Fr24Frame> fr24Frames = deserializer.deserialize(response);
 			// writing frames to DB
-			writeToDB(fr24Frames, this.dbOut, this.dbIn);
+			DBWriter.write(fr24Frames, this.dbOut, this.dbIn);
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -175,61 +164,6 @@ public class Fr24Supplier implements Supplier {
 		System.out.println();
 		return concurrentDeque;
 	}
-
-	/***********************************************************************************
-	 * WICHTIG:
-	 *
-	 * "Setting an object in an array to null or to another objects makes it eligible for garbage collection,
-	 *  ASSUMING that there are no references to the same object stored anywhere."
-	 *
-	 *  -> es müssen irgendwo noch Referenzen sein
-	 ***********************************************************************************/
-
-	public static synchronized void writeToDB(Deque<Fr24Frame> fr24Frames, DBOut dbo, DBIn dbi) {
-		long ts1 = nowMillis();
-		var airlineTagsIDs = new HashMap<String, Integer>();
-		var planeIcaoIDs = new HashMap<String, Integer>();
-		var flightNRsIDs = new HashMap<String, Integer>();
-		try {
-			airlineTagsIDs = dbo.getAirlineTagsIDs();
-			planeIcaoIDs = dbo.getPlaneIcaosIDs();
-			flightNRsIDs = dbo.getFlightNRsWithFlightIDs();
-		} catch (DataNotFoundException ignored) {
-			// something doesn't exist in the DB, this is no error!
-			// this usually happens when the DB has empty tables.
-		}
-		int airlineID, planeID, flightID;
-		boolean checkPlane, checkFlight;
-		Fr24Frame frame;
-		while (!fr24Frames.isEmpty()) {
-				frame = fr24Frames.poll();
-				// insert into planes
-				airlineID = airlineTagsIDs.getOrDefault(frame.getAirline(), 1);
-				planeID = planeIcaoIDs.getOrDefault(frame.getIcaoAdr(), -1);
-				checkPlane = planeID > -1;
-				if (!checkPlane) {
-					planeID = dbi.insertPlane(frame, airlineID);
-					increasePlaneCount();
-				}
-				// insert into flights
-				flightID = flightNRsIDs.getOrDefault(frame.getFlightnumber(), -1);
-				checkFlight = flightID > -1;
-				if (!checkFlight) {
-					flightID = dbi.insertFlight(frame, planeID);
-					increaseFlightCount();
-				}
-				// insert into tracking
-				dbi.insertTracking(frame, flightID);
-				// increasing the inserted frames value
-				increaseFrameCount();
-			}
-
-			System.out.println("filled DB in " + elapsedSeconds(ts1) + " seconds!");
-
-			System.gc();
-
-	}
-
 	
 	/**
 	 * @deprecated
@@ -263,26 +197,4 @@ public class Fr24Supplier implements Supplier {
 		return this.ThreadName;
 	}
 
-	public static int getFrameCount() {
-		return frameCount;
-	}
-
-	public static int getPlaneCount() {
-		return planeCount;
-	}
-
-	public static int getFlightCount() {
-		return flightCount;
-	}
-
-	public static synchronized void increaseFrameCount() {
-		frameCount++;
-	}
-	public static synchronized void increasePlaneCount() {
-		planeCount++;
-	}
-
-	public static synchronized void increaseFlightCount() {
-		flightCount++;
-	}
 }

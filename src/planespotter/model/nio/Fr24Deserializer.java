@@ -103,7 +103,7 @@ public class Fr24Deserializer implements AbstractDeserializer {
             o.addProperty("callsign", cols[16]);
             o.addProperty("unknown3", cols[17]);
             o.addProperty("airline", cols[18]);
-        } catch (ArrayIndexOutOfBoundsException ignored) { // NumberFormatException still there??
+        } catch (ArrayIndexOutOfBoundsException ignored) {
         } catch (NumberFormatException nfe) {
             throw new InvalidDataException("Invalid data to deserialize, the given Area is probably out of range!");
         }
