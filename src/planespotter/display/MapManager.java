@@ -5,6 +5,7 @@ import org.openstreetmap.gui.jmapviewer.interfaces.*;
 import planespotter.constants.UserSettings;
 import planespotter.controller.ActionHandler;
 import planespotter.dataclasses.*;
+import planespotter.display.models.HeatMapRectangle;
 import planespotter.util.Utilities;
 import planespotter.throwables.DataNotFoundException;
 

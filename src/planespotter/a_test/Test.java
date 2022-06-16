@@ -1,18 +1,13 @@
 package planespotter.a_test;
 
 import org.jetbrains.annotations.TestOnly;
-import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
 import planespotter.constants.ANSIColor;
-import planespotter.constants.Areas;
 import planespotter.constants.Images;
 import planespotter.constants.Paths;
 import planespotter.dataclasses.DataPoint;
-import planespotter.dataclasses.Fr24Frame;
-import planespotter.dataclasses.Frame;
 import planespotter.dataclasses.Position;
-import planespotter.display.*;
-import planespotter.model.nio.Fr24Deserializer;
-import planespotter.model.nio.Supplier;
+import planespotter.display.models.Diagram;
+import planespotter.statistics.HeatMap;
 import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.model.io.DBOut;
@@ -24,13 +19,10 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static planespotter.util.Utilities.linesCode;
 
 @TestOnly
 public class Test {
@@ -42,6 +34,12 @@ public class Test {
         //System.out.println(linesCode(Paths.CODE_PATH));
         System.out.println();
 
+        Vector<Position> allTrackingPositions = new DBOut().getAllTrackingPositions();
+        HeatMap heatMap = new RasterHeatMap(0.02f)
+                .heat(allTrackingPositions);
+        Diagram dia = new Diagram(Diagram.TYPE_BAR_CHART, 1200, 720, heatMap.getHeatMap());
+
+        test.createTestJFrame(dia);
 /*
         var scheduler = new Scheduler();
         var supplier = new ProtoSupplier(new ProtoDeserializer(), new ProtoKeeper(1200L)); // TODO best threshold time?
@@ -257,6 +255,7 @@ public class Test {
         } catch (DataNotFoundException e) {
             e.printStackTrace();
         }
+        assert liveTrackingBetween != null;
         var positions = Utilities.parsePositionVector(liveTrackingBetween);
         var positionHeatMap = statistics.positionHeatMap(positions);
 

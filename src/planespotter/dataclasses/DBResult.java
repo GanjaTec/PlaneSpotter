@@ -23,7 +23,6 @@ public record DBResult(ResultSet resultSet, Connection connection) {
     public void close() throws SQLException {
         resultSet.close();
         connection.close();
-        SupperDB.sqlReady();
     }
 
 }

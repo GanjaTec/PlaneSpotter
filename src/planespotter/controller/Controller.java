@@ -12,8 +12,10 @@ import planespotter.constants.ViewType;
 import planespotter.constants.Warning;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
+import planespotter.display.models.MenuModels;
 import planespotter.model.*;
 import planespotter.model.io.DBOut;
+import planespotter.model.io.DBWriter;
 import planespotter.model.io.FileMaster;
 import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
@@ -124,7 +126,7 @@ public class Controller {
                             var current = Thread.currentThread();
                             current.setName("Data Inserter");
                             current.setPriority(2);
-                            DataLoader.insert(scheduler, 250);
+                            DBWriter.insert(scheduler, 500);
                         }
                     }, 20, 20)
                     .schedule(() -> {
@@ -180,11 +182,12 @@ public class Controller {
                     "Exit", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (option == JOptionPane.YES_OPTION) {
             logger.infoLog("Shutting down program, please wait...", this);
+            gui.getContainer("progressBar").setVisible(true);
             LiveData.setLive(false);
             this.setLoading(true);
             FileMaster.saveConfig();
-            //DataLoader.insertRemaining(scheduler);
-            DataLoader.setEnabled(false);
+            DBWriter.insertRemaining(scheduler);
+            DBWriter.setEnabled(false);
             while (scheduler.active() > 0) {
                 try {
                     this.wait(1000);

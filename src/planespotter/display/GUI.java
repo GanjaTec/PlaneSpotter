@@ -5,6 +5,9 @@ import planespotter.constants.SearchType;
 import planespotter.constants.UserSettings;
 import planespotter.constants.ViewType;
 import planespotter.controller.ActionHandler;
+import planespotter.display.models.MenuModels;
+import planespotter.display.models.PaneModels;
+import planespotter.display.models.SearchModels;
 import planespotter.throwables.NoSuchContainerException;
 
 import javax.swing.*;
@@ -38,15 +41,15 @@ public class GUI implements Runnable {
     public JFrame loadingScreen;
     protected List<JComponent> flightSearch, planeSearch, airlineSearch, airportSearch, areaSearch;
     // search components
-    protected JTextField search_flightID;
-    protected JTextField search_callsign;
+    public JTextField search_flightID;
+    public JTextField search_callsign;
     public JTextField search_planeID;
-    protected JTextField search_planetype;
-    protected JTextField search_icao;
-    protected JTextField search_tailNr;
-    protected JTextField search_airpName;
-    protected JTextField search_airpTag;
-    protected JTextField search_airpID;
+    public JTextField search_planetype;
+    public JTextField search_icao;
+    public JTextField search_tailNr;
+    public JTextField search_airpName;
+    public JTextField search_airpTag;
+    public JTextField search_airpID;
     // file menu
     protected JButton[] fileMenu;
     // data trees
@@ -77,7 +80,7 @@ public class GUI implements Runnable {
      * initialize method
      * creates new GUI window
      */
-    protected JFrame initialize () {
+    protected JFrame initialize() {
         var menuModels = new MenuModels();
         var panelModels = new PaneModels();
         var searchModels = new SearchModels();
@@ -100,9 +103,6 @@ public class GUI implements Runnable {
         // initializing map viewer
         this.mapManager = new MapManager(this, mapPanel, this.actionHandler);
 
-        /*this.mapViewer().addKeyListener(this.actionHandler);
-        this.mapViewer().addMouseListener(this.actionHandler);
-        this.mapViewer().addJMVListener(this.actionHandler);*/
         var menuPanel = panelModels.menuPanel((JDesktopPane) this.getContainer("leftDP"));
         this.addContainer("menuPanel", menuPanel);
         var infoPanel = panelModels.infoPanel((JDesktopPane) this.getContainer("leftDP"));
@@ -287,7 +287,7 @@ public class GUI implements Runnable {
     /**
      * @return all search models in a list
      */
-    ArrayList<List<JComponent>> allSearchModels () {
+    ArrayList<List<JComponent>> allSearchModels() {
         var allSearchComps = new ArrayList<List<JComponent>>();
         allSearchComps.add(this.flightSearch);
         allSearchComps.add(this.planeSearch);

@@ -5,19 +5,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
-import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
-import planespotter.model.nio.AbstractDeserializer;
-import planespotter.model.nio.Supplier;
 import planespotter.throwables.Fr24Exception;
 import planespotter.throwables.InvalidDataException;
 
 import java.net.http.HttpResponse;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @name ProtoDeserializer
@@ -110,7 +103,7 @@ public class Fr24Deserializer implements AbstractDeserializer {
             o.addProperty("callsign", cols[16]);
             o.addProperty("unknown3", cols[17]);
             o.addProperty("airline", cols[18]);
-        } catch (ArrayIndexOutOfBoundsException ignored) { // NumberFormatException still there??
+        } catch (ArrayIndexOutOfBoundsException ignored) {
         } catch (NumberFormatException nfe) {
             throw new InvalidDataException("Invalid data to deserialize, the given Area is probably out of range!");
         }

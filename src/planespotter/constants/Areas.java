@@ -1,5 +1,11 @@
 package planespotter.constants;
 
+import planespotter.dataclasses.Position;
+import planespotter.model.AreaFactory;
+
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * @name Areas
  * @author Lukas
@@ -7,19 +13,17 @@ package planespotter.constants;
  *
  * class areas contains all map areas as complicated coordinate-strings
  */
-public final class Areas { // TODO zu Enum machen (die einzel Strings) mit String area Bsp.: URKAINE("...").get() oder so
-
+public final class Areas {
 	/**
 	 * Area Structure:
 	 *
-	 * " {startLat} %2C {endLat} %2C {startLon} %2C {endLon} "
+	 * " {lat-topLeft} %2C {latBottomRight} %2C {lonTopLeft} %2C {lonBottomRight} "
 	 *
-	 * lat's go from 90 to -90 (exclusive)
-	 * lon's go from -180 to 180 (exclusive)
+	 * lat's go from 90 to -90
+	 * lon's go from -180 to 180
+	 *
+	 * Bsp.: "86.0%2C-45.8%2C-120.1%2C150.5"
 	 */
-
-	// Test Area
-	public static final String TEST = "57.0%2C46.0%2C5.0%2C15.0";
 
 	// World Areas
 	public static final String WORLD = "89.0%2C-89.0%2C-170.0%2C170.0";
@@ -78,6 +82,28 @@ public final class Areas { // TODO zu Enum machen (die einzel Strings) mit Strin
 	
 	public static final String[] NAFC = {};
 
+	public static synchronized String[] getWorldAreaRaster1D() {
+		final var areaRaster2D = new String[6][6]; // 6 * 6 Raster of Areas
+		final var areaRaster1D = new String[36]; // 6 * 6 Raster as 1D-Array
+		final var index = new AtomicInteger(0);
+
+		double latVel = 30., lonVel = 60.;
+		double lat, lon = -180.;
+
+		for (byte x = 0; x < 6; x++) {
+			lat = 90.;
+			for (byte y = 0; y < 6; y++) {
+				areaRaster2D[x][y] = AreaFactory.newArea(new Position(lat, lon), new Position(lat - latVel, lon + lonVel));
+				lat -= latVel;
+			}
+			lon += lonVel;
+		}
+		Arrays.stream(areaRaster2D)
+				.forEach(arr -> Arrays.stream(arr)
+						.forEach(area -> areaRaster1D[index.getAndIncrement()] = area));
+
+		return areaRaster1D;
+	}
 
 	public static synchronized String[] getWorldAreas() {
 		return new String[] { AMERICA, EURASIA };
