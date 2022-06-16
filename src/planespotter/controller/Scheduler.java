@@ -182,8 +182,10 @@ public class Scheduler {
     public synchronized boolean shutdown() {
         boolean success = false;
         try {
-            success = exe.awaitTermination(10, TimeUnit.SECONDS);
-            success = scheduled_exe.awaitTermination(10, TimeUnit.SECONDS);
+            final var sec = TimeUnit.SECONDS;
+            final int timeout = 0;
+            success = exe.awaitTermination(timeout, sec);
+            success = scheduled_exe.awaitTermination(timeout, sec);
             return success;
         } catch (Exception e) {
             e.printStackTrace();

@@ -3,6 +3,7 @@ package planespotter.model.nio;
 import planespotter.model.SupperDB;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.DBOut;
+import planespotter.throwables.DataNotFoundException;
 
 import static planespotter.util.Time.*;
 
@@ -65,12 +66,11 @@ public class FastKeeper implements Keeper {
                     }
                 }
             }
-        } catch (Exception e) {
+        } catch (DataNotFoundException e) {
             e.printStackTrace();
         }
         long elapsed = elapsedSeconds(startMillis);
         System.out.println("ProtoKeeper finished work on the DB in " + elapsed +
-                " seconds!\n" + rowsUpdated + " rows updated");
-        SupperDB.sqlReady();
+                           " seconds!\n" + rowsUpdated + " rows updated");
     }
 }

@@ -12,8 +12,10 @@ import planespotter.constants.ViewType;
 import planespotter.constants.Warning;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
+import planespotter.display.models.MenuModels;
 import planespotter.model.*;
 import planespotter.model.io.DBOut;
+import planespotter.model.io.DBWriter;
 import planespotter.model.io.FileMaster;
 import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
@@ -124,7 +126,7 @@ public class Controller {
                             var current = Thread.currentThread();
                             current.setName("Data Inserter");
                             current.setPriority(2);
-                            DataLoader.insert(scheduler, 250);
+                            DBWriter.insert(scheduler, 500);
                         }
                     }, 20, 20)
                     .schedule(() -> {
@@ -180,11 +182,12 @@ public class Controller {
                     "Exit", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (option == JOptionPane.YES_OPTION) {
             logger.infoLog("Shutting down program, please wait...", this);
+            gui.getContainer("progressBar").setVisible(true);
             LiveData.setLive(false);
             this.setLoading(true);
             FileMaster.saveConfig();
-            //DataLoader.insertRemaining(scheduler);
-            DataLoader.setEnabled(false);
+            DBWriter.insertRemaining(scheduler);
+            DBWriter.setEnabled(false);
             while (scheduler.active() > 0) {
                 try {
                     this.wait(1000);
@@ -415,7 +418,7 @@ public class Controller {
     private void onClick_all(ICoordinate clickedCoord) { // TODO aufteilen
         if (!this.clicking) {
             this.clicking = true;
-            var markers = gui.getMap().getMapMarkerList();
+            var mapMarkers = gui.getMap().getMapMarkerList();
             var newMarkerList = new ArrayList<MapMarker>();
             Coordinate markerCoord;
             DefaultMapMarker newMarker;
@@ -429,7 +432,7 @@ public class Controller {
             var logger = Controller.getLogger();
             var menu = (JPanel) gui.getContainer("menuPanel");
             // going though markers
-            for (var m : markers) {
+            for (var m : mapMarkers) {
                 markerCoord = m.getCoordinate();
                 newMarker = new DefaultMapMarker(markerCoord, 90); // FIXME: 13.05.2022 // FIXME 19.05.2022
                 if (bbn.isMarkerHit(markerCoord, clickedCoord)) {
@@ -457,9 +460,11 @@ public class Controller {
             case MAP_FROMSEARCH -> {
                 marker.setBackColor(Color.RED);
                 menuPanel.setVisible(false);
-                int flightID = dataPoints.get(counter).flightID(); // FIXME: 15.05.2022 WAS IST MIT DEM COUNTER LOS
-                //  (keine info beim click - flight is null)
+                int flightID = dataPoints.get(counter).flightID();
                 try {
+                    //this.show(MAP_TRACKING, "Flight '" + flightID + "'", String.valueOf(flightID));
+                    this.showTrackingMap("Flight '" + flightID + "'", gui.getMapManager(),
+                                         dbOut, new String[] { String.valueOf(flightID) });
                     var flight = dbOut.getFlightByID(flightID);
                     treePlantation.createFlightInfo(flight, guiAdapter);
                 } catch (DataNotFoundException e) {
@@ -547,10 +552,13 @@ public class Controller {
     public void handleException(final Throwable thr) {
         if (thr instanceof DataNotFoundException) {
             guiAdapter.showWarning(Warning.NO_DATA_FOUND, thr.getMessage());
-            thr.printStackTrace();
         } else if (thr instanceof SQLException sql) {
-            guiAdapter.showWarning(Warning.SQL_ERROR, sql.getMessage() + "\n" + sql.getSQLState());
+            var message = sql.getMessage();
+            guiAdapter.showWarning(Warning.SQL_ERROR, message + "\n" + sql.getSQLState());
             thr.printStackTrace();
+            if (message.contains("BUSY")) {
+                System.exit(-1);
+            }
         } else if (thr instanceof TimeoutException) {
             guiAdapter.showWarning(Warning.TIMEOUT);
         } else if (thr instanceof RejectedExecutionException) {

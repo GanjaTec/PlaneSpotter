@@ -5,6 +5,7 @@ import org.openstreetmap.gui.jmapviewer.interfaces.*;
 import planespotter.constants.UserSettings;
 import planespotter.controller.ActionHandler;
 import planespotter.dataclasses.*;
+import planespotter.display.models.HeatMapRectangle;
 import planespotter.util.Utilities;
 import planespotter.throwables.DataNotFoundException;
 
@@ -69,10 +70,16 @@ public final class MapManager {
             heading = dp.heading();
             markerColor = Utilities.colorByAltitude(altitude);
             if (counter > 0) {
-                double latDiff = lastdp.pos().lat() - dp.pos().lat();
+                double lon0 = lastdp.pos().lon();
+                double lon1 = dp.pos().lon();
+                //boolean lonFit = (lon0 < 140 && lon1 > lon0) || (lon0 < -140 && lon1 < lon0);
+                double lonDiff = Math.abs(lon0) - Math.abs(lon1);
+                //boolean lonDiffFit = (lonDiff < 100) && (-lonDiff > -100);
+                boolean lonFit = (lon0 + lonDiff <= 180) || (lon0 - lonDiff >= -180);
+
                 if (dp.flightID() == lastdp.flightID() // check if the data points belong to eachother
                         && dp.timestamp() >= lastdp.timestamp()
-                        && latDiff < 350) {
+                        && lonFit) {
                     coord1 = Position.toCoordinate(dpPos);
                     coord2 = Position.toCoordinate(lastdp.pos());
                     line = new MapPolygonImpl(coord1, coord2, coord1);

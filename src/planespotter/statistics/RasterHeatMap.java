@@ -32,7 +32,7 @@ public class RasterHeatMap extends HeatMap {
     @Override
     public <D> RasterHeatMap heat(D data) {
         if (data instanceof Vector<?> positions) {
-            positions.parallelStream().forEach(pos -> {
+            positions.forEach(pos -> {
                 try {
                     this.assign(((Position) pos).lat() + 180, ((Position) pos).lon() + 90, (Position) pos);
                     super.watchDog.allocation(3).comparison();

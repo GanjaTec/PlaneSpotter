@@ -284,11 +284,17 @@ public record ActionHandler()
         Controller.getInstance().onExit(e);
     }
 
+    @Override
+    public void processCommand(JMVCommandEvent e) {
+        // TODO visible Rect nehmen,
+        //  neue Area erstellen und
+        //  für diese Area Daten in die GUI laden
+    }
+
 
     // unused listeners
     @Override public void keyTyped(KeyEvent e) {}
     @Override public void keyReleased(KeyEvent e) {}
-    @Override public void processCommand(JMVCommandEvent e) {}
     @Override public void componentHidden(ComponentEvent e) {}
     @Override public void componentMoved(ComponentEvent e) {}
     @Override public void mouseClicked(MouseEvent e) {}

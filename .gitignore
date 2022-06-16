@@ -10,6 +10,14 @@ out/
 .project
 PlaneSpotter.iml
 src/planespotter/module-info.java
+PlaneSpotterNeuNeu.iml
 
 #intelliJ
 .idea/
+
+#database
+.db
+
+#artifacts
+PlaneSpotterNeuNeu.jar
+src/META-INF/
