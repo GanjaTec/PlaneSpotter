@@ -182,10 +182,11 @@ public class Controller {
                     "Exit", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (option == JOptionPane.YES_OPTION) {
             logger.infoLog("Shutting down program, please wait...", this);
+            gui.getContainer("progressBar").setVisible(true);
             LiveData.setLive(false);
             this.setLoading(true);
             FileMaster.saveConfig();
-            //DataLoader.insertRemaining(scheduler);
+            DBWriter.insertRemaining(scheduler);
             DBWriter.setEnabled(false);
             while (scheduler.active() > 0) {
                 try {

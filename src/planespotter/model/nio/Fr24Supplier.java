@@ -93,34 +93,6 @@ public class Fr24Supplier implements Supplier {
 				+ "gliders=0&"
 				+ "stats=0");
 		return this.httpClient.send(request, BodyHandlers.ofString());
-
-		// following is old code, replaced through createRequest, the HttpClient is now implemented in the Supplier interface
-
-		// Request flightradar24 data with Firefox UserAgent
-		// URL splitted only for visibility
-		/*HttpRequest request = HttpRequest
-				.newBuilder(URI.create("https://data-live.flightradar24.com/zones/fcgi/feed.js?faa=1&"
-						// bounds defines the visible area on the live map, directly linked to planes in
-						// response, parameterize
-						+ "bounds=" + area + "&"
-						+ "satellite=1&"
-						+ "mlat=1&"
-						+ "flarm=1&"
-						+ "adsb=1&"
-						+ "gnd=1&"
-						+ "air=1&"
-						// Disable vehicles
-						+ "vehicles=0&"
-						+ "estimated=1&"
-						+ "maxage=14400&"
-						// Disable gliders and stats
-						+ "gliders=0&"
-						+ "stats=0"))
-				// User agent to prevent Response Code 451
-				.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0").build();
-		return this.client.send(request, BodyHandlers.ofString());*/
-
-
 	}
 
 	/**

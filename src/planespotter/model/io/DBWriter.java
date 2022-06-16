@@ -45,48 +45,49 @@ public abstract class DBWriter {
      * @param dbi is a DBIn Object for DB-Inserts
      */
     public static synchronized void write(final Deque<Fr24Frame> fr24Frames, final DBOut dbo, final DBIn dbi) {
-        long ts1 = nowMillis();
-        var airlineTagsIDs = new HashMap<String, Integer>();
-        var planeIcaoIDs = new HashMap<String, Integer>();
-        var flightNRsIDs = new HashMap<String, Integer>();
-        try {
-            airlineTagsIDs = dbo.getAirlineTagsIDs();
-            planeIcaoIDs = dbo.getPlaneIcaosIDs();
-            flightNRsIDs = dbo.getFlightNRsWithFlightIDs();
-        } catch (DataNotFoundException ignored) {
-            // something doesn't exist in the DB, this is no error!
-            // this usually happens when the DB has empty tables.
-            // ( For example when the DB gets cleared )
-        }
-        int airlineID, planeID, flightID;
-        boolean checkPlane, checkFlight;
-        Fr24Frame frame;
-        while (!fr24Frames.isEmpty()) {
-            frame = fr24Frames.poll();
-            // insert into planes
-            airlineID = airlineTagsIDs.getOrDefault(frame.getAirline(), 1);
-            planeID = planeIcaoIDs.getOrDefault(frame.getIcaoAdr(), -1);
-            checkPlane = planeID > -1;
-            if (!checkPlane) {
-                planeID = dbi.insertPlane(frame, airlineID);
-                increasePlaneCount();
+        if (enabled) {
+            long ts1 = nowMillis();
+            var airlineTagsIDs = new HashMap<String, Integer>();
+            var planeIcaoIDs = new HashMap<String, Integer>();
+            var flightNRsIDs = new HashMap<String, Integer>();
+            try {
+                airlineTagsIDs = dbo.getAirlineTagsIDs();
+                planeIcaoIDs = dbo.getPlaneIcaosIDs();
+                flightNRsIDs = dbo.getFlightNRsWithFlightIDs();
+            } catch (DataNotFoundException ignored) {
+                // something doesn't exist in the DB, this is no error!
+                // this usually happens when the DB has empty tables.
+                // ( For example when the DB gets cleared )
             }
-            // insert into flights
-            flightID = flightNRsIDs.getOrDefault(frame.getFlightnumber(), -1);
-            checkFlight = flightID > -1;
-            if (!checkFlight) {
-                flightID = dbi.insertFlight(frame, planeID);
-                increaseFlightCount();
+            int airlineID, planeID, flightID;
+            boolean checkPlane, checkFlight;
+            Fr24Frame frame;
+            while (!fr24Frames.isEmpty()) {
+                frame = fr24Frames.poll();
+                // insert into planes
+                airlineID = airlineTagsIDs.getOrDefault(frame.getAirline(), 1);
+                planeID = planeIcaoIDs.getOrDefault(frame.getIcaoAdr(), -1);
+                checkPlane = planeID > -1;
+                if (!checkPlane) {
+                    planeID = dbi.insertPlane(frame, airlineID);
+                    increasePlaneCount();
+                }
+                // insert into flights
+                flightID = flightNRsIDs.getOrDefault(frame.getFlightnumber(), -1);
+                checkFlight = flightID > -1;
+                if (!checkFlight) {
+                    flightID = dbi.insertFlight(frame, planeID);
+                    increaseFlightCount();
+                }
+                // insert into tracking
+                dbi.insertTracking(frame, flightID);
+                // increasing the inserted frames value
+                increaseFrameCount();
             }
-            // insert into tracking
-            dbi.insertTracking(frame, flightID);
-            // increasing the inserted frames value
-            increaseFrameCount();
+            System.out.println("[DBWriter] filled DB in " + elapsedSeconds(ts1) + " seconds!");
+            // collecting garbage that was created during the insert
+            System.gc();
         }
-
-        System.out.println("filled DB in " + elapsedSeconds(ts1) + " seconds!");
-
-        System.gc();
 
     }
 
@@ -94,7 +95,7 @@ public abstract class DBWriter {
         int insertCount = 0;
         if (enabled) {
             var log = Controller.getLogger();
-            log.log("Trying to insert frames...", DBWriter.class);
+            log.log("Trying to insert frames...", instance);
             if (ableCollect(count)) {
                 // insert live data with normal writeToDB
                 var frames = pollFrames(count);
@@ -118,14 +119,14 @@ public abstract class DBWriter {
             log.log("Trying to insert last live data...", instance);
             //var gui = Controller.getGUI();
             //gui.getContainer("window").setVisible(false);
-            while (!isEmpty() && inserted < 5000) {
+            while (!isEmpty() /*&& inserted < 5000*/) {
                 var frames = pollFrames(500);
                 scheduler.exec(() -> write(frames, dbOut, dbIn),
                         "Inserter", false, 9, false);
                 inserted += 500;
             }
 
-            log.log("Inserted " + inserted + " frames!", DBWriter.class);
+            log.log("Inserted " + inserted + " frames!", instance);
             System.out.println("Inserted " + inserted + " frames!");
         }
         return inserted;

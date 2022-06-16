@@ -13,9 +13,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class SupplierMain {
-    // monitor object
-    public static final Lock lock = new ReentrantLock(); // ich weiß nicht genau was das kann aber ich glaube es kann viel
-
     public static final int INSERT_PERIOD_SEC = 60; // seconds
 
     /**
@@ -36,13 +33,12 @@ public abstract class SupplierMain {
         display.start();
 
         scheduler.schedule(() -> {
-                    // executing two suppliers to collect Fr24-Data
-                    scheduler.exec(() -> Arrays.stream(worldAreaRaster1D)
-                                    .forEach(area -> new Fr24Supplier(0, area).supply()),
-                            "Fr24-Supplier", true, 2, false);
-            /*scheduler.exec(supplier0, "Supplier-0", true, 2, false)
-                     .exec(supplier1, "Supplier-1", true, 2, false);*/
-        }, "Supplier-Main", 0, INSERT_PERIOD_SEC)
+                    // executing suppliers to collect Fr24-Data
+                    var tID = new AtomicInteger();
+                    Arrays.stream(worldAreaRaster1D)
+                            .parallel()
+                            .forEach(area -> new Fr24Supplier(tID.getAndIncrement(), area).supply());
+                }, "Supplier-Main", 0, INSERT_PERIOD_SEC)
                 // executing the keeper every 400 seconds
                 .schedule(keeper, "Keeper", 100, 400)
                 // executing the GC every 20 seconds

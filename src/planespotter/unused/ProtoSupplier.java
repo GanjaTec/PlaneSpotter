@@ -62,15 +62,15 @@ public class ProtoSupplier extends SupperDB implements Runnable {
             var frames = new Fr24Supplier().getFr24Frames(areas, this.deserializer, new Scheduler());
             // writing the frames to DB
             this.writeToDB(frames, new DBOut());
-            try {
-                while (sqlBusy.get()) {
+            /*try {
+                while (busyLock) {
                     synchronized (this) {
                         this.wait();
                     }
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
+            }*/
             exe.execute(this.keeper);
             exe.shutdown();
             running = false;
@@ -94,7 +94,7 @@ public class ProtoSupplier extends SupperDB implements Runnable {
             } catch (SQLException | ClassNotFoundException | NoAccessException e) {
                 e.printStackTrace();
             }
-            sqlBusy.set(false);
+            //busyLock.set(false);
         });
         writerThread.setName("DB-Writer");
         writerThread.setPriority(9);  // (?)
