@@ -10,6 +10,8 @@ import planespotter.model.io.DBWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
@@ -39,7 +41,7 @@ public class Fr24Supplier implements Supplier {
 	private final int threadNumber;
 	private final String ThreadName;
 	private final String area;
-	//private final HttpClient client;
+	private final HttpClient httpClient;
 	private final DBIn dbIn;
 	private final DBOut dbOut;
 	//TODO Write getters
@@ -52,7 +54,7 @@ public class Fr24Supplier implements Supplier {
 		this.threadNumber = threadNumber;
 		this.ThreadName = "SupplierThread-" + threadNumber;
 		this.area = area;
-		//this.client = HttpClient.newHttpClient(); // TODO using HttpClient from interface
+		this.httpClient = HttpClient.newHttpClient();
 		this.dbIn = new DBIn();
 		this.dbOut = new DBOut();
 	}
@@ -93,6 +95,14 @@ public class Fr24Supplier implements Supplier {
 				+ "gliders=0&"
 				+ "stats=0");
 		return this.httpClient.send(request, BodyHandlers.ofString());
+	}
+
+	private HttpRequest createHttpRequest(final String request) {
+		return HttpRequest
+				.newBuilder(URI.create(request))
+				// User agent to prevent Response Code 451
+				.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0")
+				.build();
 	}
 
 	/**
