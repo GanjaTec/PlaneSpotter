@@ -9,8 +9,6 @@ import planespotter.model.nio.FastKeeper;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class SupplierMain {
     public static final int INSERT_PERIOD_SEC = 60; // seconds
@@ -34,10 +32,10 @@ public abstract class SupplierMain {
 
         scheduler.schedule(() -> {
                     // executing suppliers to collect Fr24-Data
-                    var tID = new AtomicInteger();
+                    var threadNr = new AtomicInteger();
                     Arrays.stream(worldAreaRaster1D)
                             .parallel()
-                            .forEach(area -> new Fr24Supplier(tID.getAndIncrement(), area).supply());
+                            .forEach(area -> new Fr24Supplier(threadNr.getAndIncrement(), area).supply());
                 }, "Supplier-Main", 0, INSERT_PERIOD_SEC)
                 // executing the keeper every 400 seconds
                 .schedule(keeper, "Keeper", 100, 400)

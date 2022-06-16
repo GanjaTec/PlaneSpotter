@@ -1,13 +1,20 @@
 package planespotter.display.models;
 
+import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.Plot;
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.xy.DefaultXYDataset;
+import org.jfree.data.xy.XYBarDataset;
 import planespotter.constants.DefaultColor;
 import planespotter.constants.GUIConstants;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 // TODO: 16.06.2022 include JFreeChart
 public class Diagram extends JPanel {
@@ -43,10 +50,7 @@ public class Diagram extends JPanel {
         super.paintComponent(g);
         var g2d = (Graphics2D) g;
         switch (this.type) {
-            case TYPE_BAR_CHART -> {
-                var color = DefaultColor.DEFAULT_ACCENT_COLOR.get();
-                g2d.setColor(color);
-            }
+            case TYPE_BAR_CHART -> this.paintBarChart(g2d);
             case TYPE_CAKE_CHART -> this.paintTestCake(g2d);
             case TYPE_GRAPH_CHART -> {}
             case TYPE_HEATMAP_CHART -> {
@@ -126,6 +130,23 @@ public class Diagram extends JPanel {
             g2d.setColor(new Color(red, green, blue));
             g2d.fillArc(310, 140, 80, 80, a, 1);
         }
+    }
+
+    private void paintBarChart(Graphics2D g2d) {
+        var dataset = new DefaultCategoryDataset();
+
+        int lengthX = this.heatMap.length;
+        int lengthY = this.heatMap[0].length;
+        for (int x = 0; x < lengthX; x++) {
+            for (int y = 0; y < lengthY; y++) {
+                dataset.addValue((Number) this.heatMap[x][y], x, y);
+            }
+        }
+
+        var barChart = ChartFactory.createBarChart("", "", "", dataset);
+        var chartImg = barChart.createBufferedImage(800, 500);
+
+        g2d.drawImage(chartImg, 0, 0, null);
     }
 
 }
