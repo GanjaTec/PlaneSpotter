@@ -14,7 +14,7 @@ import java.io.Serializable;
  */
 public record Position(@Range(from = 90, to = -90) double lat,
 					   @Range(from = -180, to = 180) double lon)
-		implements Serializable {
+		implements Data {
 
 	/**
 	 * @param coord is the Coordinate to parse

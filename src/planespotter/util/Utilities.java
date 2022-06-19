@@ -15,6 +15,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -29,7 +30,9 @@ public abstract class Utilities {
 
     /**
      * plays a sound from the default toolkit
-     * @param sound is the sound to be played (see: {@link planespotter.constants.GUIConstants})
+     *
+     * @param sound is the sound to be played
+     * @see planespotter.constants.Sound
      */
     public static boolean playSound(@NotNull final String sound) {
         var sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(sound);
@@ -55,7 +58,7 @@ public abstract class Utilities {
      * @return a feet value in meters
      */
     public static int feetToMeters(@Range(from = 0, to = Integer.MAX_VALUE) int feet) {
-        return (int) (feet/3.2808);
+        return asInt(feet / 3.2808);
     }
 
     /**
@@ -63,7 +66,7 @@ public abstract class Utilities {
      * @return the knots in km per hour
      */
     public static int knToKmh(@Range(from = 0,to = Integer.MAX_VALUE) int kn) {
-        return (int) Math.round(kn * 1.852);
+        return asInt(Math.round(kn * 1.852));
     }
 
     /**
@@ -114,7 +117,7 @@ public abstract class Utilities {
      * @return number cast as int
      */
     public static <N extends Number> int asInt(N number) {
-        return (int) number;
+        return number.intValue();
     }
 
     /**
@@ -161,12 +164,36 @@ public abstract class Utilities {
 
     /**
      *
-     * @param array
+     *
+     * @param arrayOrCollection
      * @param <T>
      * @return
      */
-    public static <T> Deque<T> parseDeque(T[] array) {
-        return new ArrayDeque<>(Arrays.asList(array));
+    public static <T, R> Deque<R> parseDeque(T arrayOrCollection) {
+        return (arrayOrCollection instanceof Collection<?> collection)
+                ? new ArrayDeque<>((Collection<R>) collection)
+                : new ArrayDeque<>((Collection<R>) List.of(arrayOrCollection));
+    }
+
+    public static DataPoint[] parseArray(Deque<DataPoint> deque) {
+        return deque.toArray(DataPoint[]::new);
+    }
+
+    /**
+     *
+     *
+     * @param toCheck
+     * @param topLeft
+     * @param bottomRight
+     * @return
+     */
+    public static boolean fitArea(final Position toCheck, final Position topLeft, final Position bottomRight) {
+        double checkLat = toCheck.lat(),
+               checkLon = toCheck.lon();
+        return     checkLat < topLeft.lat()
+                && checkLat > bottomRight.lat()
+                && checkLon > topLeft.lon()
+                && checkLon < bottomRight.lon();
     }
 
     /**

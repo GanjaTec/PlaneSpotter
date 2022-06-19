@@ -59,7 +59,6 @@ public abstract class LiveData {
     public static Vector<Flight> directLiveData(final Scheduler scheduler) {
         var supplier = new Fr24Supplier();
         var deserializer = new Fr24Deserializer();
-        var world = Areas.getWorldAreas();
         /*
         var gui = Controller.getGUI();
         var map = gui.getMap();
@@ -69,9 +68,8 @@ public abstract class LiveData {
                 AreaFactory.createArea(Position.parsePosition(bottomLeft), Position.parsePosition(topRight))
         };
         */
-        var testAreaRaster1D = Areas.getWorldAreaRaster1D();
-
-        var frames = supplier.getFr24Frames(testAreaRaster1D, deserializer, scheduler);
+        var worldAreaRaster1D = Areas.getWorldAreaRaster1D();
+        var frames = supplier.getFrames(worldAreaRaster1D, deserializer, scheduler);
         // termorary if // daten gehen verloren
         if (!maxSizeReached()) {
             insertLater(frames);

@@ -7,6 +7,7 @@ import planespotter.throwables.DataNotFoundException;
 
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.concurrent.ForkJoinPool;
 
 import static planespotter.model.LiveData.*;
 import static planespotter.util.Time.elapsedSeconds;
@@ -110,24 +111,19 @@ public abstract class DBWriter {
         return insertCount;
     }
 
-    public static synchronized int insertRemaining(final Scheduler scheduler) {
+    public static synchronized int insertRemaining(final Scheduler scheduler, int framesPerWrite) {
         int inserted = 0;
         if (enabled) {
-            final var log = Controller.getLogger();
             final var dbOut = new DBOut();
             final var dbIn = new DBIn();
-            log.log("Trying to insert last live data...", instance);
-            //var gui = Controller.getGUI();
-            //gui.getContainer("window").setVisible(false);
-            while (!isEmpty() /*&& inserted < 5000*/) {
-                var frames = pollFrames(500);
+
+            while (!isEmpty()) {
+                var frames = pollFrames(framesPerWrite);
                 scheduler.exec(() -> write(frames, dbOut, dbIn),
                         "Inserter", false, 9, false);
-                inserted += 500;
+                inserted += framesPerWrite;
             }
-
-            log.log("Inserted " + inserted + " frames!", instance);
-            System.out.println("Inserted " + inserted + " frames!");
+            System.out.println("Inserting " + inserted + " frames...");
         }
         return inserted;
     }

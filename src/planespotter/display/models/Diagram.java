@@ -12,9 +12,6 @@ import planespotter.constants.GUIConstants;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.util.Arrays;
-import java.util.stream.IntStream;
 
 // TODO: 16.06.2022 include JFreeChart
 public class Diagram extends JPanel {

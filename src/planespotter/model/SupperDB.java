@@ -8,10 +8,6 @@ import planespotter.throwables.NoAccessException;
 
 import java.sql.*;
 import java.util.Arrays;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @name SupperDB
@@ -27,7 +23,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 // TODO evtl klasse umbenennen, für einen aussagekräftigen namen, sowas wie Database oder DBManager
 public abstract class SupperDB {
 	// writing boolean, true when writing
-	public static final Object dbLock;
+	public static final Object dbSync;
 	// database name
 	public static final String DB_NAME;
 	// database URL
@@ -37,7 +33,7 @@ public abstract class SupperDB {
 
 	static {
 		// setting sqlBusy to false
-		dbLock = new Object();
+		dbSync = new Object();
 		// setting final database Strings
 		DB_NAME = "plane.db";
 		DB_URL = "jdbc:sqlite:" + DB_NAME;

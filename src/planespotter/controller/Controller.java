@@ -186,7 +186,7 @@ public class Controller {
             LiveData.setLive(false);
             this.setLoading(true);
             FileMaster.saveConfig();
-            DBWriter.insertRemaining(scheduler);
+            DBWriter.insertRemaining(scheduler, 500);
             DBWriter.setEnabled(false);
             while (scheduler.active() > 0) {
                 try {
@@ -194,11 +194,11 @@ public class Controller {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                this.notifyAll();
             }
+            this.notifyAll();
             this.done();
             logger.close();
-            boolean shutdown = scheduler.shutdown();
+            boolean shutdown = scheduler.shutdown(1);
             byte out = Utilities.boolToBinary(shutdown);
             System.exit(out);
 

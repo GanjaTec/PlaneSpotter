@@ -11,7 +11,8 @@ public record Plane(int id,
 					String tailNr,
 					String planeType,
 					String registration,
-					Airline airline) {
+					Airline airline)
+		implements Data {
 }
 
 /*

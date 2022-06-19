@@ -13,7 +13,7 @@ public class DBIn extends SupperDB {
 
 	public int insertPlane(Fr24Frame f, int airlineID) {
 		try {
-			synchronized (dbLock) {
+			synchronized (dbSync) {
 				Connection conn = SupperDB.getDBConnection();
 				//TODO Airline ID anfrage
 				// insert into planes
@@ -41,7 +41,7 @@ public class DBIn extends SupperDB {
 
 	public int insertFlight(Fr24Frame f, int planeID) {
 		try {
-			synchronized (dbLock) {
+			synchronized (dbSync) {
 				Connection conn = getDBConnection();
 				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.flightquerry, Statement.RETURN_GENERATED_KEYS);
 
@@ -69,7 +69,7 @@ public class DBIn extends SupperDB {
 
 	public void insertTracking(Fr24Frame f, int id) {
 		try {
-			synchronized (dbLock) {
+			synchronized (dbSync) {
 				Connection conn = SupperDB.getDBConnection();
 				// insert into tracking
 				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.trackingquerry);
@@ -91,7 +91,7 @@ public class DBIn extends SupperDB {
 
 	public void updateFlightEnd(int id, long timestamp) {
 		try {
-			synchronized (dbLock) {
+			synchronized (dbSync) {
 				Connection conn = SupperDB.getDBConnection();
 
 				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.updateFlightEnd);
