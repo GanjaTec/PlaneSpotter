@@ -97,7 +97,7 @@ public class Fr24Supplier implements Supplier {
 		return this.httpClient.send(request, BodyHandlers.ofString());
 	}
 
-	private HttpRequest createHttpRequest(final String request) {
+	HttpRequest createHttpRequest(final String request) {
 		return HttpRequest
 				.newBuilder(URI.create(request))
 				// User agent to prevent Response Code 451
@@ -112,7 +112,7 @@ public class Fr24Supplier implements Supplier {
 	 * @param scheduler is the Scheduler to allow parallelism
 	 * @return Deque of deserialized Frames
 	 */
-	public synchronized Deque<Fr24Frame> getFr24Frames(String[] areas, final Fr24Deserializer deserializer, final Scheduler scheduler) {
+	public synchronized Deque<Fr24Frame> getFrames(String[] areas, final Fr24Deserializer deserializer, final Scheduler scheduler) {
 		var concurrentDeque = new ConcurrentLinkedDeque<Fr24Frame>();
 		System.out.println("Deserializing Fr24-Data...");
 

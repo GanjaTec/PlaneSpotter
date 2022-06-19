@@ -1,13 +1,19 @@
 package planespotter.a_test;
 
+import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.TestOnly;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartFrame;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.DefaultCategoryDataset;
+
 import planespotter.constants.ANSIColor;
 import planespotter.constants.Images;
 import planespotter.constants.Paths;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
 import planespotter.display.models.Diagram;
-import planespotter.statistics.HeatMap;
 import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.model.io.DBOut;
@@ -22,58 +28,126 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 @TestOnly
 public class Test {
     // TEST-MAIN
     public static void main(String[] args) throws Exception {
-        //final long startTime =  nowMillis();
 
         var test = new Test();
-        //System.out.println(linesCode(Paths.CODE_PATH));
-        System.out.println();
 
-        Vector<Position> allTrackingPositions = new DBOut().getAllTrackingPositions();
-        HeatMap heatMap = new RasterHeatMap(0.02f)
-                .heat(allTrackingPositions);
-        Diagram dia = new Diagram(Diagram.TYPE_BAR_CHART, 1200, 720, heatMap.getHeatMap());
+        var stats = new Statistics();
 
-        test.createTestJFrame(dia);
+        test.topAirports(20);
 /*
-        var scheduler = new Scheduler();
-        var supplier = new ProtoSupplier(new ProtoDeserializer(), new ProtoKeeper(1200L)); // TODO best threshold time?
-        scheduler.schedule(supplier, 0, (int) TimeUnit.MINUTES.toSeconds(3));
+
+        var wind = stats.flightHeadwind(7326);
+        var dataset = new DefaultCategoryDataset();
+        for (var pos : wind.keySet()) {
+            double[] values = wind.get(pos);
+            var posString = String.valueOf(pos);
+            dataset.addValue(values[0], "Groundspeed", posString);
+            dataset.addValue(values[1], "VectorSpeed", posString);
+        }
+        var chart = ChartFactory.createLineChart("Speed-Diagram", "Positions", "Speed (km/h & direction)", dataset);
+        var frame = new ChartFrame("Speed-Statistic", chart);
+        frame.pack();
+        frame.setVisible(true);
 */
 
+    }
 
-        //System.out.println("linesCode = " + linesCode(Paths.CODE_PATH));
+    private void speedChartTest() throws DataNotFoundException {
+        var ptps = new DBOut().getAllPlanetypesLike("c20");
+        var fids = new DBOut().getFlightIDsByPlaneTypes(ptps);
+        var arr = fids.toArray(new Integer[0]);
 
+        this.testSpeedChartByFlightID(Stream.of(arr).mapToInt(i -> i).toArray());
+    }
 
-       /* byte b1= Integer.valueOf(5).byteValue();
-        byte b2 = Integer.valueOf(100480).byteValue();
-        System.out.print(b1);
-        System.out.print(", ");
-        System.out.println(b2);*/
-/*
-        var speedMap = new OutputWizard(null).loadSpeedMap(0, 300000);
-        var heatMap = new SpeedHeatMap(0.1f, null, null).heat(speedMap);
-*/
-        /*var file = new File(Paths.RESSOURCE_PATH + "bitmap.bmp");
+    private void testSpeedChartByFlightID(@Range(from = 0, to = Integer.MAX_VALUE) int... flightIDs) {
+        var dbOut = new DBOut();
+        var inputDeques = new ArrayDeque<?>[0];
+        for (int fid : flightIDs) {
+            try {
+                int length = inputDeques.length;
+                inputDeques = Arrays.copyOf(inputDeques, length + 1);
+                var dps = new Vector<>(dbOut.getTrackingByFlight(fid));
+                inputDeques[length] = (ArrayDeque<?>) Utilities.parseDeque(dps);
+            } catch (DataNotFoundException e) {
+                e.printStackTrace();
+            }
+        };
+        var stats = new Statistics();
+        var speedMap = stats.windSpeed(new Position(90., -180.), new Position(-90., 180.), (Deque<DataPoint>[]) inputDeques);
+        var dataset = Statistics.createMapBarDataset(speedMap);
+        var chart = ChartFactory.createLineChart("Flight-Groundspeed", "Time", "Speed (km/h)", dataset);
+        var frame = new ChartFrame("Speed", chart);
+        frame.pack();
+        frame.setVisible(true);
+    }
 
-        var positions = new DBOut().getAllTrackingPositions();
-        var heat = new RasterHeatMap(1f)
-                .heat(positions);
-        var dia = new Diagram(Diagram.TYPE_CAKE_CHART, 600, 400, heat.getHeatMap());
-        test.createTestJFrame(dia);*/
+    private void testChart1() throws DataNotFoundException {
+        var stats = new Statistics();
+        var airportTags = new DBOut().getAllAirportTags();
+        var apStats = stats.onlySignificant(stats.tagCount(airportTags), 900);
+        var dataset = Statistics.createBarDataset(apStats);
+        DefaultCategoryDataset defaultCategoryDataset = new DefaultCategoryDataset();
+        defaultCategoryDataset.addValue(3., "Speed", "t0");
+        defaultCategoryDataset.addValue(9., "Speed", "t1");
+        defaultCategoryDataset.addValue(16., "Speed", "t2");
+        defaultCategoryDataset.addValue(7., "Speed", "t3");
+        defaultCategoryDataset.addValue(45., "Altitude", "t0");
+        defaultCategoryDataset.addValue(26., "Altitude", "t1");
+        defaultCategoryDataset.addValue(51., "Altitude", "t2");
+        defaultCategoryDataset.addValue(33., "Altitude", "t3");
+        var barChart = ChartFactory.createLineChart("Test-LineChart", "Attributes", "Time", defaultCategoryDataset, PlotOrientation.VERTICAL, true, true, false);
+        var frame = new ChartFrame("Test-LineChart", barChart);
+        frame.pack();
+        frame.setVisible(true);
+    }
 
-        /*var bitmap = heat.createBitmap();
-        var img = heat.createImage();
-        //test.createTestJFrame(bitmap);
-        test.createTestJFrame(img);*/
+    private void testAirlineChart() throws DataNotFoundException {
+        var stats = new Statistics();
+        var airlineTags = new DBOut().getAllAirlineTags();
+        var airlineStats = stats.onlySignificant(stats.tagCount(airlineTags), 150);
+        var dataset = Statistics.createBarDataset(airlineStats);
+        var barChart = ChartFactory.createBarChart("Airline Counter", "Airlines", "Count/Significance", dataset, PlotOrientation.HORIZONTAL, true, true, false);
+        newChartFrame("Airline Counter", barChart);
+    }
 
-        //System.out.println();
-        //System.out.println("Task finished in " + elapsedMillis(startTime) + " milliseconds!");
+    private static void newChartFrame(String title, JFreeChart chart) {
+        var frame = new ChartFrame(title, chart);
+        frame.pack();
+        frame.setVisible(true);
+    }
+
+    private void topAirports(int limit) throws DataNotFoundException {
+        var stats = new Statistics();
+        var airportTags = new DBOut().getAllAirportTags();
+        var apStats = stats.onlySignificant(stats.tagCount(airportTags), 500);
+        // filtering top airports
+        var sortedMap = new HashMap<String, Integer>();
+        apStats.entrySet()
+                .stream()
+                .sorted((a, b) -> Math.max(a.getValue(), b.getValue()))
+                .limit(limit)
+                .forEach(entry -> sortedMap.put(entry.getKey(), entry.getValue()));
+        var dataset = Statistics.createBarDataset(sortedMap);
+        var barChart = ChartFactory.createBarChart("Airport-Significance", "Airports", "Flight-Count", dataset, PlotOrientation.HORIZONTAL, true, true, false);
+        newChartFrame("Airport Significance", barChart);
+    }
+
+    private void testAirportChart(int minCount) throws DataNotFoundException {
+        var stats = new Statistics();
+        var airportTags = new DBOut().getAllAirportTags();
+        var apStats = stats.onlySignificant(stats.tagCount(airportTags), minCount);
+        var dataset = Statistics.createBarDataset(apStats);
+        var barChart = ChartFactory.createBarChart("Airport-Significance", "Airports", "Flight-Count", dataset, PlotOrientation.HORIZONTAL, true, true, false);
+        newChartFrame("Airport Significance", barChart);
     }
 
     private void testAnimation(Test test) {

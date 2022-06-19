@@ -1,6 +1,7 @@
 package planespotter.dataclasses;
 
-public interface Data {
+import java.io.Serializable;
 
-    // TODO int id hier rein
+public interface Data extends Serializable {
+
 }
