@@ -124,11 +124,7 @@ public class OutputWizard extends DBOut implements Runnable {
     public HashMap<Position, Integer> loadSpeedMap(final int from, final int to)
             throws DataNotFoundException {
         // wird evtl. noch erweitert mit threading
-        try {
-            return super.speedMap(from, to);
-        } catch (DataNotFoundException e) {
-            throw new DataNotFoundException(e.getMessage(), true);
-        }
+        return super.speedMap(from, to);
     }
 
     //TODO allWithPlanetype(type)

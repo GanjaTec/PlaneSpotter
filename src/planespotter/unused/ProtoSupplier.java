@@ -59,7 +59,7 @@ public class ProtoSupplier extends SupperDB implements Runnable {
             // collecting all areas
             var areas = Areas.getAllAreas();
             // grabbing data from Fr24 and deserializing to Frames
-            var frames = new Fr24Supplier().getFr24Frames(areas, this.deserializer, new Scheduler());
+            var frames = new Fr24Supplier().getFrames(areas, this.deserializer, new Scheduler());
             // writing the frames to DB
             this.writeToDB(frames, new DBOut());
             /*try {

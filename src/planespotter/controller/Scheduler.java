@@ -179,11 +179,10 @@ public class Scheduler {
      *
      * @return true if the shutdown was successfully
      */
-    public synchronized boolean shutdown() {
+    public synchronized boolean shutdown(final int timeout) {
         boolean success = false;
         try {
             final var sec = TimeUnit.SECONDS;
-            final int timeout = 0;
             success = exe.awaitTermination(timeout, sec);
             success = scheduled_exe.awaitTermination(timeout, sec);
             return success;

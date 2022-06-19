@@ -29,11 +29,9 @@ public class GrabSupplier implements Supplier {
         }
     }
 
-    @Override
     public HttpResponse<String> sendRequest()
             throws IOException, InterruptedException {
 
-        var request = this.createHttpRequest(dukeRequest0);
-        return this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        throw new UnsupportedOperationException("Not allowed!");
     }
 }
