@@ -42,16 +42,20 @@ public class Search {
                 return ctrl.loadedData;
             } else if (!callsign.isBlank()) {
                 var signs = this.findCallsigns(callsign);
-                ctrl.loadedData = new Vector<>();
                 var fids = new ArrayDeque<Integer>();
                 while (!signs.isEmpty()) {
                     fids.addAll(out.getFlightIDsByCallsign(signs.poll()));
                 }
                 int counter = 0;
-                var data = ctrl.loadedData;
-                for (int i : fids) {
-                    data.addAll(out.getTrackingByFlight(i));
-                    if (counter++ > 10) break; // MAX 10 FLIGHTS
+                var key = "tracking" + fids;
+                ctrl.loadedData = (Vector<DataPoint>) Controller.protoCache.get(key);
+                if (ctrl.loadedData == null) {
+                    ctrl.loadedData = new Vector<>();
+                    for (int i : fids) {
+                        ctrl.loadedData.addAll(out.getTrackingByFlight(i)); // TODO trackingByFlightIDs
+                        if (counter++ > 20) break; // MAX 10 FLIGHTS
+                    }
+                    Controller.protoCache.put(key, ctrl.loadedData);
                 }
                 if (!ctrl.loadedData.isEmpty()) {
                     return ctrl.loadedData;
@@ -105,12 +109,15 @@ public class Search {
         var name = inputs[2];
         var out = new DBOut();
         var ctrl = Controller.getInstance();
-        ctrl.loadedData = new Vector<>();
         if (!id.isBlank()) {
             // trackings with airport id (-> airport join)
         } else if (!tag.isBlank()) {
-            ctrl.loadedData.addAll(out.getTrackingsWithAirportTag(tag));
-            //ctrl.loadedData.addAll(out.getTrackingsWithAirport(Objects.requireNonNullElse(tag, name)));
+            var key = "airport" + tag.toUpperCase();
+            ctrl.loadedData = (Vector<DataPoint>) Controller.protoCache.get(key);
+            if (ctrl.loadedData == null) {
+                ctrl.loadedData = new Vector<>(out.getTrackingsWithAirportTag(tag));
+                Controller.protoCache.put(key, ctrl.loadedData);
+            }
         } else if (!name.isBlank()) {
             //ctrl.loadedData.addAll( ); (-> airport join)
         }

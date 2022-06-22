@@ -97,9 +97,8 @@ public class Fr24Supplier implements Supplier {
 		return this.httpClient.send(request, BodyHandlers.ofString());
 	}
 
-	HttpRequest createHttpRequest(final String request) {
-		return HttpRequest
-				.newBuilder(URI.create(request))
+	private HttpRequest createHttpRequest(final String request) {
+		return HttpRequest.newBuilder(URI.create(request))
 				// User agent to prevent Response Code 451
 				.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0")
 				.build();

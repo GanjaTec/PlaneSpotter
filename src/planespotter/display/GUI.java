@@ -28,6 +28,8 @@ public class GUI implements Runnable {
     private final ActionHandler actionHandler;
     // map manager
     private MapManager mapManager;
+    // tree plantation
+    private TreePlantation treePlantation;
     // current loaded search
     private SearchType currentSearchType;
     // current view type ( in action )
@@ -102,6 +104,7 @@ public class GUI implements Runnable {
 
         // initializing map viewer
         this.mapManager = new MapManager(this, mapPanel, this.actionHandler);
+        this.treePlantation = new TreePlantation();
 
         var menuPanel = panelModels.menuPanel((JDesktopPane) this.getContainer("leftDP"));
         this.addContainer("menuPanel", menuPanel);
@@ -297,14 +300,19 @@ public class GUI implements Runnable {
         return allSearchComps;
     }
 
-    public final TreasureMap getMap() {
+    public TreasureMap getMap() {
         assert this.mapManager != null;
         return this.mapManager.getMapViewer();
     }
 
-    public final MapManager getMapManager() {
+    public MapManager getMapManager() {
         assert this.mapManager != null;
         return this.mapManager;
+    }
+
+    public TreePlantation getTreePlantation() {
+        assert this.treePlantation != null;
+        return this.treePlantation;
     }
 
     public SearchType getCurrentSearchType() {

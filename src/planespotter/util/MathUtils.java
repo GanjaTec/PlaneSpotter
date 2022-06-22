@@ -1,5 +1,7 @@
 package planespotter.util;
 
+import org.jetbrains.annotations.Range;
+
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.StrictMath.*;
@@ -47,10 +49,27 @@ public abstract class MathUtils {
         };
     }
 
+    public static int divide(int a, int divisor) {
+        if (divisor == 0.) {
+            throw new ArithmeticException("Divisor may not be null!");
+        }
+        return a / divisor;
+    }
+
     public static double divide(double a, double divisor) {
         if (divisor == 0.) {
             throw new ArithmeticException("Divisor may not be null!");
         }
         return a / divisor;
+    }
+
+    /**
+     * converts a boolean to byte (0 or 1)
+     *
+     * @param bool is the give boolean
+     * @return 0 if true, else 1
+     */
+    public static @Range(from = 0, to = 1) byte toBinary(boolean bool) {
+        return (byte) (bool ? 0 : 1);
     }
 }

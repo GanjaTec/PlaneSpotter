@@ -7,7 +7,6 @@ import planespotter.throwables.DataNotFoundException;
 
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.concurrent.ForkJoinPool;
 
 import static planespotter.model.LiveData.*;
 import static planespotter.util.Time.elapsedSeconds;
