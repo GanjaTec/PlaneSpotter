@@ -5,7 +5,19 @@ import org.jetbrains.annotations.Range;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * @name LRUCache
+ * @author jml04
+ * @version 1.0
+ * @param <K> is the Key class
+ * @param <V> is the Value class
+ *
+ * Class LRUCache represents a Cache with Least-Recently-Used strategy and any key and value.
+ */
 public class LRUCache<K, V> {
 
     private final Map<K, CacheElement<V>> cache;
@@ -58,26 +70,29 @@ public class LRUCache<K, V> {
         if (entrySet.isEmpty()) {
             return false;
         }
-        int minUseCount = Integer.MAX_VALUE;
-        boolean success = false;
-        K key = null;
+        var minUseCount = new AtomicInteger(Integer.MAX_VALUE);
+        var success = new AtomicBoolean(false);
+        var key = new AtomicReference<K>();
 
-        CacheElement<V> value;
-        int useCount;
+        //CacheElement<V> value;
+        //int useCount;
 
-        for (var entry : entrySet) {
-            value = entry.getValue();
-            useCount = value.getUseCount();
-            if (useCount < minUseCount /*&& value.getGeneration() < 4*/) {
-                minUseCount = useCount;
-                key = entry.getKey();
-                success = true;
+        // TODO: 22.06.2022 test if parallelStream is needed!!
+        // replaced for with parallelStream.forEach
+        entrySet.parallelStream()
+                .forEach(entry -> {
+            var value = entry.getValue();
+            int useCount = value.getUseCount();
+            if (useCount < minUseCount.get() /*&& value.getGeneration() < 4*/) {
+                minUseCount.set(useCount);
+                key.set(entry.getKey());
+                success.set(true);
             }
+        });
+        if (key.get() != null) {
+            this.remove(key.get());
         }
-        if (key != null) {
-            this.remove(key);
-        }
-        return success;
+        return success.get();
     }
 
     public synchronized void remove(@NotNull K key) {
@@ -88,8 +103,15 @@ public class LRUCache<K, V> {
         throw new UnsupportedOperationException("Not implemented yet!");
     }
 
-
-
+    /**
+     * @name CacheElement
+     * @version 1.0
+     * @param <V> is the Cache Value Class
+     *
+     * Inner class CacheElement is the Value class for the Cache-HashMap, which contains the Value class V,
+     *           that is the actual Value class the user works with, the CacheElement has just a few more values,
+     *           where they can be managed in the cache-HashMap
+     */
     private static class CacheElement<V> {
 
         public static final byte BABY = 0,
