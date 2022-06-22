@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import static planespotter.constants.DefaultColor.*;
 import static planespotter.constants.GUIConstants.MENU_BORDER;
 import static planespotter.constants.Images.FLYING_PLANE_ICON;
+import static planespotter.util.MathUtils.divide;
 
 /**
  * @version 1.0
@@ -30,7 +31,7 @@ public class SupplierDisplay {
     private static final String STATUS_TXT = "Status: ";
     // inserted values indexes:   0 = allFrames,   1 = newPlanes,   2 = newFlights
     private final int[] inserted = {0, 0, 0};
-    private int totalMemory = 13212;
+    private int totalMemory = divide((int) runtime.totalMemory(), 10_000);
     private final UWPButton pauseButton = new UWPButton(),
             startStopButton = new UWPButton();
     private final JProgressBar progressBar = new JProgressBar(JProgressBar.HORIZONTAL, 0, totalMemory);
@@ -137,9 +138,9 @@ public class SupplierDisplay {
         this.inserted[0] += insertedNow;
         this.inserted[1] += newPlanesNow;
         this.inserted[2] += newFlightsNow;
-        this.totalMemory = (int) (runtime.totalMemory() / 10_000);
-        int freeMemory = (int) (runtime.freeMemory() / 10_000);
-        int memoryUsage = (this.totalMemory - freeMemory);
+        this.totalMemory = divide((int) runtime.totalMemory(), 10_000);
+        int freeMemory = divide((int) runtime.freeMemory(), 10_000);
+        int memoryUsage = this.totalMemory - freeMemory;
 
         this.insertedLabel.setText("Inserted Frames: " + this.inserted[0] + ", " + insertedNow + " per Sec.");
         this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");

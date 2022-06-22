@@ -54,9 +54,9 @@ public abstract class SupplierMain {
 
     public static boolean stopCollecting() {
         mainThread.interrupt();
-        return     scheduler.shutdownNow()
-                && Scheduler.sleepSec(5)
-                && mainThread.isInterrupted();
+        boolean success = scheduler.shutdownNow() && mainThread.isInterrupted();
+        Scheduler.sleepSec(2);
+        return success;
     }
 
     /**
