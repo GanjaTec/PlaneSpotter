@@ -44,9 +44,8 @@ public abstract class SupperDB {
 	}
 
 	protected static Connection getDBConnection()
-			throws ClassNotFoundException, SQLException, NoAccessException {
+			throws SQLException {
 
-		// TODO: 15.06.2022 sollte es vielleicht im ganzen Programm nur eine dauerhafte Connection geben?
 		return database.getConnection();
 	}
 	
@@ -57,18 +56,20 @@ public abstract class SupperDB {
 	 * @param querry String to use for the Query
 	 * @return ResultSet containing the queried Data
 	 */
-	protected DBResult queryDB(final String querry) throws NoAccessException {
+	protected DBResult queryDB(final String querry)
+			throws NoAccessException {
+
 			try {
 				Connection conn = getDBConnection();
 				Statement stmt = conn.createStatement();
 				ResultSet query = stmt.executeQuery(querry);
 				// returning new DBResult Object
 				return new DBResult(query, conn);
-			} catch (SQLException | ClassNotFoundException e) {
+			} catch (SQLException e) {
 				Controller.getInstance().handleException(e);
 				e.printStackTrace();
 			}
-			throw new InvalidDataException("SupperDB.queryDB: Couldn't find any Data or an error occurred!");
+			throw new NoAccessException("SupperDB.queryDB: Couldn't find any Data or an error occurred!");
 	}
 
 	/**
