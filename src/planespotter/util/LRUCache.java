@@ -1,19 +1,18 @@
-package planespotter.a_test;
+package planespotter.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
-import planespotter.util.MathUtils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ProtoCache<K, V> {
+public class LRUCache<K, V> {
 
     private final Map<K, CacheElement<V>> cache;
     private final int maxSize;
 
-    public ProtoCache(final int maxElements) {
-        this.cache = new LinkedHashMap<>(maxElements);
+    public LRUCache(final int maxElements) {
+        this.cache = new LinkedHashMap<>(maxElements); // TODO ist was ist hier die beste Collection??
         this.maxSize = maxElements;
     }
 

@@ -207,7 +207,7 @@ public class Scheduler {
     public synchronized boolean shutdownNow() {
         this.exe.shutdownNow();
         this.scheduled_exe.shutdownNow();
-        sleepSec(1);
+        sleep(1000);
         return (this.exe.isTerminated() || this.exe.isTerminating()) && this.scheduled_exe.isTerminated();
     }
 

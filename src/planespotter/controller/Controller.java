@@ -8,7 +8,7 @@ import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
-import planespotter.a_test.ProtoCache;
+import planespotter.util.LRUCache;
 import planespotter.constants.UserSettings;
 import planespotter.constants.ViewType;
 import planespotter.constants.Warning;
@@ -64,7 +64,7 @@ public class Controller {
     // gui adapter
     private static final GUIAdapter guiAdapter;
     // proto test-cache
-    public static final ProtoCache<String, Object> protoCache;
+    public static final LRUCache<String, Object> LRU_LRU_CACHE;
     // logger for whole program
     private static Logger logger;
 
@@ -74,7 +74,7 @@ public class Controller {
         actionHandler = new ActionHandler();
         gui = new GUI(actionHandler);
         guiAdapter = new GUIAdapter(gui);
-        protoCache = new ProtoCache<>(40);
+        LRU_LRU_CACHE = new LRUCache<>(40);
     }
     // boolean loading is true when something is loading
     private volatile boolean loading;
@@ -576,10 +576,10 @@ public class Controller {
 
     private void  showRasterHeatMap(String heatText, MapManager bbn, DBOut dbOut) {
         try {
-            var positions = (Vector<Position>) protoCache.get("allTrackingPosVec");
+            var positions = (Vector<Position>) LRU_LRU_CACHE.get("allTrackingPosVec");
             if (positions == null) {
                 positions = dbOut.getAllTrackingPositions();
-                if (!protoCache.put("allTrackingPosVec", positions)) {
+                if (!LRU_LRU_CACHE.put("allTrackingPosVec", positions)) {
                     System.out.println("Cache is full of Senior Data!");
                 }
             }
@@ -661,16 +661,16 @@ public class Controller {
                 assert data[0] != null;
                 flightID = Integer.parseInt(data[0]);
                 key = "tracking" + flightID;
-                flightTracking = (Vector<DataPoint>) protoCache.get(key);
+                flightTracking = (Vector<DataPoint>) LRU_LRU_CACHE.get(key);
                 if (flightTracking == null) {
                     flightTracking = dbOut.getTrackingByFlight(flightID);
-                    protoCache.put(key, flightTracking);
+                    LRU_LRU_CACHE.put(key, flightTracking);
                 }
                 this.loadedData.addAll(flightTracking);
 
             } else if (data.length > 1) {
                 key = "tracking" + data;
-                this.loadedData = (Vector<DataPoint>) protoCache.get(key);
+                this.loadedData = (Vector<DataPoint>) LRU_LRU_CACHE.get(key);
                 if (this.loadedData == null) {
                     this.loadedData = new Vector<>();
                     for (var id : data) {
@@ -681,7 +681,7 @@ public class Controller {
                     }
 
                 }
-                protoCache.put(key, this.loadedData);
+                LRU_LRU_CACHE.put(key, this.loadedData);
             }
             if (flightID == -1) {
                 throw new InvalidDataException("Flight may not be null!");
