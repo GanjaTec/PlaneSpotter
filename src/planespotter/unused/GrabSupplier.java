@@ -1,4 +1,6 @@
-package planespotter.model.nio;
+package planespotter.unused;
+
+import planespotter.model.nio.Supplier;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;

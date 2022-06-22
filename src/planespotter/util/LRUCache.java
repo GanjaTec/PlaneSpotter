@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @param <V> is the Value class
  *
  * Class LRUCache represents a Cache with Least-Recently-Used strategy and any key and value.
+ * @see CacheElement
  */
 public class LRUCache<K, V> {
 
@@ -111,6 +112,7 @@ public class LRUCache<K, V> {
      * Inner class CacheElement is the Value class for the Cache-HashMap, which contains the Value class V,
      *           that is the actual Value class the user works with, the CacheElement has just a few more values,
      *           where they can be managed in the cache-HashMap
+     * @see LRUCache
      */
     private static class CacheElement<V> {
 

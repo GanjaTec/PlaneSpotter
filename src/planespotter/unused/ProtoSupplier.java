@@ -93,7 +93,7 @@ public class ProtoSupplier extends SupperDB implements Runnable {
                 var stmts = this.createWriteStatements(conn, fr24Frames, dbOut);
                 assert stmts != null;
                 executeSQL(conn, stmts);
-            } catch (SQLException | ClassNotFoundException | NoAccessException e) {
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
             //busyLock.set(false);
