@@ -30,7 +30,7 @@ public abstract class SupperDB {
 	private static final String DB_URL;
 	// database Source-Object
 	private static final SQLiteDataSource database;
-
+	// static initializer
 	static {
 		// setting sqlBusy to false
 		dbSync = new Object();

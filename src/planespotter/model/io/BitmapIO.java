@@ -6,8 +6,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+/**
+ * @name BitmapIO
+ * @author jml04
+ * @version 1.0
+ *
+ * Class BitmapIO is responsible for bitmap input and output
+ * uses IO-Streams to write byte[][] with high performance
+ */
 public abstract class BitmapIO {
-
+// TODO change bitmap to byte
     /**
      *
      *

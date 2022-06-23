@@ -100,6 +100,13 @@ public class Search {
         return new Vector<>(out.getLastTrackingsByFlightIDs(fids)); // working???
     }
 
+    /**
+     * verifies an airport by input strings
+     *
+     * @param inputs are the input strings [id,tag,name]
+     * @return Vector of all DataPoints containing a flight with the input airport
+     * @throws DataNotFoundException if no airport or no flights where found
+     */
     // TODO: 25.05.2022 Airport suche mit Start und Ziel Airport
     public Vector<DataPoint> verifyAirport(String[] inputs)
             throws DataNotFoundException {
@@ -143,6 +150,13 @@ public class Search {
         return allPlanetypes;
     }
 
+    /**
+     * finds a callsign
+     *
+     * @param input is the callsign to search for
+     * @return Deque of all callsigns found for the input string
+     * @throws DataNotFoundException if no callsign was found
+     */
     private ArrayDeque<String> findCallsigns(String input)
             throws DataNotFoundException { // TODO evtl. hier catchen!! in DBout Werfen
 
@@ -153,10 +167,17 @@ public class Search {
         return allCallsigns;
     }
 
+    /**
+     * finds a airport
+     *
+     * @param airport is the airport to search for
+     * @return id of the found airport, if one is found
+     * @throws DataNotFoundException if no airport was found
+     */
     private int findAirport(String airport)
             throws DataNotFoundException {
 
-        var aids = new DBOut().getAirportIDsLike(airport);
+        var aids = new DBOut().getAirportIDsLike(airport); // TODO evtl ohne LIKE für performance
         assert aids != null;
         if (aids.isEmpty()) {
             throw new DataNotFoundException("No existing airport found for " + airport + "!");

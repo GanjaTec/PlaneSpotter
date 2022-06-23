@@ -21,7 +21,7 @@ import java.util.*;
  * It converts the HttpResponse to a Collection of Frames,
  * which can be used to create further dataclasses like flights, planes, etc...
  */
-public class Fr24Deserializer implements AbstractDeserializer {
+public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<String>> {
 
     /**
      * deserializes incoming http response

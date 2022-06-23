@@ -8,6 +8,7 @@ import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
+import planespotter.model.io.FileWizard;
 import planespotter.util.LRUCache;
 import planespotter.constants.UserSettings;
 import planespotter.constants.ViewType;
@@ -18,7 +19,6 @@ import planespotter.display.models.MenuModels;
 import planespotter.model.*;
 import planespotter.model.io.DBOut;
 import planespotter.model.io.DBWriter;
-import planespotter.model.io.FileMaster;
 import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
@@ -126,7 +126,7 @@ public abstract class Controller {
                         if (!this.loading) this.loadLiveData();
                     }, "Live-Data PreLoader")
                     .schedule(() -> {
-                        if (!this.loading) FileMaster.saveConfig();
+                        if (!this.loading) FileWizard.getFileWizard().saveConfig();
                     }, 60, 300)
                     .schedule(() -> {
                         if (!this.loading) {
@@ -192,7 +192,7 @@ public abstract class Controller {
             gui.getContainer("progressBar").setVisible(true);
             LiveData.setLive(false);
             this.setLoading(true);
-            FileMaster.saveConfig();
+            FileWizard.getFileWizard().saveConfig();
             DBWriter.insertRemaining(scheduler, 500);
             while (scheduler.active() > 0) {
                 try {
@@ -223,7 +223,6 @@ public abstract class Controller {
         var map = gui.getMap();
         var markers = new ArrayList<MapMarker>();
         this.liveData.stream()
-                //.filter(Objects::nonNull)
                 .map(flight -> {
                     final var pos = flight.dataPoints().get(0).pos();
                     final double lat = pos.lat(),
@@ -503,7 +502,7 @@ public abstract class Controller {
         var fileChooser = MenuModels.fileSaver((JFrame) gui.getContainer("window"));
         var mapData = new MapData(this.loadedData, MAP_TRACKING, null);
         try {
-            new FileMaster().savePlsFile(mapData, fileChooser.getSelectedFile(), this);
+            FileWizard.getFileWizard().savePlsFile(mapData, fileChooser.getSelectedFile(), this);
         } catch (DataNotFoundException | FileAlreadyExistsException e) {
             this.handleException(e);
         }
@@ -511,10 +510,9 @@ public abstract class Controller {
 
     public void loadFile() {
         try {
-            var fileMaster = new FileMaster();
             var mapManager = gui.getMapManager();
             var fileChooser = MenuModels.fileLoader((JFrame) gui.getContainer("window"));
-            this.loadedData = fileMaster.loadPlsFile(fileChooser);
+            this.loadedData = FileWizard.getFileWizard().loadPlsFile(fileChooser);
             var trackingMap = mapManager.createTrackingMap(this.loadedData, null, true, Controller.guiAdapter);
             mapManager.recieveMap(trackingMap, "Loaded from File");
             /*var idList = this.loadedData

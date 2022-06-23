@@ -11,23 +11,22 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
+import static planespotter.SupplierMain.*;
 import static planespotter.constants.DefaultColor.*;
 import static planespotter.constants.GUIConstants.MENU_BORDER;
 import static planespotter.constants.Images.FLYING_PLANE_ICON;
 import static planespotter.util.MathUtils.divide;
 
 /**
- * @version 1.0
- * <p>
- * inner class SupplierDisplay is a little Display for the SupplierMain
  * @name SupplierDisplay
+ * @author jml04
+ * @version 1.0
+ *
+ * inner class SupplierDisplay is a little Display for the SupplierMain
  * @see planespotter.SupplierMain
  */
 public class SupplierDisplay {
 
-    private static final Runtime runtime = Runtime.getRuntime();
-    private static boolean paused = false,
-                           enabled = true;
     private static final String STATUS_TXT = "Status: ";
     // inserted values indexes:   0 = allFrames,   1 = newPlanes,   2 = newFlights
     private final int[] inserted = {0, 0, 0};

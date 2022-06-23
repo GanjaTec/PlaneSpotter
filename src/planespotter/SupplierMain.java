@@ -8,13 +8,22 @@ import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.nio.FastKeeper;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * @name SupplierMain
+ * @author jml04
+ * @version 1.0
+ *
+ * Class SupplierMain is the Main-class for the Fr24-Supplier Program
+ * @see SupplierDisplay
+ */
 public abstract class SupplierMain {
 
     public static final int INSERT_PERIOD_SEC = 100; // seconds
 
+    public static final Runtime runtime = Runtime.getRuntime();
+    public static boolean paused, enabled;
 
     public static final Object sync;
     public static Thread mainThread;
@@ -25,6 +34,8 @@ public abstract class SupplierMain {
                                         newPlanesNow, newPlanesAll,
                                         newFlightsNow, newFlightsAll;
     static {
+        paused = false;
+        enabled = true;
         sync = new Object();
         worldAreaRaster1D = Areas.getWorldAreaRaster1D();
         display = new SupplierDisplay();
@@ -36,7 +47,7 @@ public abstract class SupplierMain {
         newFlightsAll = new AtomicInteger(0);
     }
     /**
-     * Second Supplier Test-Main, single, scheduled World-Supplier
+     * Fr24-Supplier Main-method
      *
      * @param args can be ignored
      */

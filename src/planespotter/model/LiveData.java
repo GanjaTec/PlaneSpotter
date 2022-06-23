@@ -42,7 +42,7 @@ public abstract class LiveData {
      * frames, which will be inserted later (first loaded into the view)
      */
     private static final ConcurrentLinkedQueue<Fr24Frame> insertLater;
-    // static initializer, initializes static variables
+    // static initializer
     static {
         insertLater = new ConcurrentLinkedQueue<>();
     }

@@ -16,21 +16,26 @@ import java.util.Vector;
 import static planespotter.constants.Configuration.*;
 
 /**
- * file manager -> loads and saves files
+ * @name FileMaster
+ * @author jml04
+ * @version 1.0
+ *
+ * class FileMaster is a file manager that loads and saves files
  */
-public class FileMaster {
+public class FileWizard {
+
+    private static final FileWizard fileWizard = new FileWizard();
 
     /**
      * constructor
      */
-    public FileMaster() {
+    private FileWizard() {
     }
 
     /**
      * saves the config as a .cfg file
      */
-    public static void saveConfig() {
-        var fileWizard = new FileMaster();
+    public void saveConfig() {
         // saving / loading at the monment ?
         try {
             Controller.getLogger().log("saving config...", fileWizard);
@@ -95,7 +100,7 @@ public class FileMaster {
     }
 
     // TODO will be replaced with log4j (-> saving logs)
-    public void saveLogFile (String logged) {
+    public void saveLogFile(String logged) {
         try {
             if (logged == null) {
                 throw new IllegalArgumentException("logged data might not be null!");
@@ -139,7 +144,7 @@ public class FileMaster {
         fos.close();
     }
 
-    private void writeLog (File file, String text) {
+    private void writeLog(File file, String text) {
         try {
             var writer = new FileWriter(file);
             writer.write(text);
@@ -147,6 +152,10 @@ public class FileMaster {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static FileWizard getFileWizard() {
+        return fileWizard;
     }
 
 }
