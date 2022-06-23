@@ -1,5 +1,7 @@
 package planespotter.model.nio;
 
+import org.opensky.example.ExampleDecoder;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,15 +13,50 @@ public class ADSBSupplier implements Supplier{
     private final String host;
     private final int port;
 
-    public ADSBSupplier(String ip, int port) {
+    private boolean running;
+
+    public ADSBSupplier(String ip, int port, boolean run) {
     this.host = ip;
     this.port = port;
+    this.running = run;
 
     }
 
     @Override
     public void supply() {
         getCon();
+        try {
+            System.out.println("Reader ready? " + in.ready());
+            while (this.running) {
+                while (in.ready()) {
+                    //String encoded = in.readLine();
+                    in.lines()
+                            //.map(s -> s.replace("*", "").replace(";", ""))
+                            .forEach(s -> {
+                                System.out.println(s);
+                                if (s.matches("^\\*[A-F0-9]+\\;$")) {
+                                    s.replace("*","");
+                                    s.replace(";","");
+                                    decode(s);
+                                }
+
+
+                            });
+
+                    //System.out.println(encoded);
+                    //decode(encoded);
+                    toFrame();
+                    groupFrames();
+
+                }
+            }
+
+        } catch (IOException ex) {
+            System.out.println("Nothing to be read on the Stream!");
+        }
+        //printOutput();
+        //toFrame();
+        //groupFrames();
 
     }
 
@@ -48,8 +85,12 @@ public class ADSBSupplier implements Supplier{
 
     }
 
-    public void decode () {
+    public void decode (String raw) {
+        ExampleDecoder decoder = new ExampleDecoder();
+        long time = System.currentTimeMillis();
 
+
+        decoder.decodeMsg(time, raw, null);
     }
 
     public void toFrame(){

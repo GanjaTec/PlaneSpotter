@@ -3,6 +3,9 @@
 bin/
 out/
 
+#logs
+*.log
+
 #ignore settings
 .settings
 .classpath
@@ -16,7 +19,7 @@ PlaneSpotterNeuNeu.iml
 .idea/
 
 #database
-.db
+*.db
 
 #artifacts
 PlaneSpotterNeuNeu.jar
