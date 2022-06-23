@@ -7,7 +7,6 @@ import planespotter.throwables.DataNotFoundException;
 
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.concurrent.ForkJoinPool;
 
 import static planespotter.model.LiveData.*;
 import static planespotter.util.Time.elapsedSeconds;
@@ -18,6 +17,11 @@ import static planespotter.util.Time.nowMillis;
  * @author jml04
  * @author Lukas
  * @version 1.0
+ *
+ * The DBWriter class is an important model part that is responsible for
+ * filling the database with data, uses methods from LiveData and takes its data
+ * from the insertLater-queue in LiveData
+ * @see planespotter.model.LiveData
  */
 public abstract class DBWriter {
     // empty DBWriter instance, for class reference
@@ -31,15 +35,14 @@ public abstract class DBWriter {
         frameCount = 0;
         planeCount = 0;
         flightCount = 0;
-    }
-
-    static {
         enabled = true;
         instance = new DBWriter() {};
     }
 
     /**
-     * writes frames to the database
+     * writes frames to the database,
+     * old strategy from @Lukas, but revised (fixed the memory problem by
+     * getting all dbOut-data before the loop instead of in it)
      *
      * @param fr24Frames are the Fr24Frames to write, could be extended to '<? extends Frame>'
      * @param dbo is a DBOut Object for DB-Output
@@ -92,6 +95,13 @@ public abstract class DBWriter {
 
     }
 
+    /**
+     * inserts a certain amount of frames from the insertLater-queue into the DB
+     *
+     * @param scheduler is the Scheduler which executes tasks
+     * @param count is the frame count that should be written to DB
+     * @return inserted frames count as an int
+     */
     public static synchronized int insert(final Scheduler scheduler, final int count) {
         int insertCount = 0;
         if (enabled) {
@@ -99,9 +109,12 @@ public abstract class DBWriter {
             log.log("Trying to insert frames...", instance);
             if (ableCollect(count)) {
                 // insert live data with normal writeToDB
+                var dbOut = new DBOut();
+                var dbIn = new DBIn();
                 var frames = pollFrames(count);
-                scheduler.exec(() -> write(frames, new DBOut(), new DBIn()),
-                        "DB-LiveData Writer", true, 2, true);
+
+                scheduler.exec(() -> write(frames, dbOut, dbIn),
+                        "DB-LiveData Writer", true, Scheduler.LOW_PRIO, true);
                 insertCount += count;
             }
             if (insertCount > 0) {
@@ -111,6 +124,13 @@ public abstract class DBWriter {
         return insertCount;
     }
 
+    /**
+     * inserts all remaining data from the insertLater-queue into the DB
+     *
+     * @param scheduler is the Scheduler which executes tasks
+     * @param framesPerWrite is the frame count that should be written per one write task
+     * @return inserted frames count as an int
+     */
     public static synchronized int insertRemaining(final Scheduler scheduler, int framesPerWrite) {
         int inserted = 0;
         if (enabled) {
@@ -120,7 +140,7 @@ public abstract class DBWriter {
             while (!isEmpty()) {
                 var frames = pollFrames(framesPerWrite);
                 scheduler.exec(() -> write(frames, dbOut, dbIn),
-                        "Inserter", false, 9, false);
+                        "Inserter", false, Scheduler.HIGH_PRIO, false);
                 inserted += framesPerWrite;
             }
             System.out.println("Inserting " + inserted + " frames...");
@@ -128,34 +148,60 @@ public abstract class DBWriter {
         return inserted;
     }
 
+    /**
+     * @return true if the DBWriter is enabled, else false
+     */
     public static boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * enables/disables the DBWriter
+     *
+     * @param b is the enabled flag, [true -> enabled, false -> disabled]
+     */
     public static void setEnabled(boolean b) {
         enabled = b;
     }
 
+    /**
+     * @return all inserted frames count
+     */
     public static int getFrameCount() {
         return frameCount;
     }
 
+    /**
+     * @return all inserted planes count
+     */
     public static int getPlaneCount() {
         return planeCount;
     }
 
+    /**
+     * @return all inserted flights count
+     */
     public static int getFlightCount() {
         return flightCount;
     }
 
+    /**
+     * increases the 'all frame count' by 1
+     */
     private static synchronized void increaseFrameCount() {
         frameCount++;
     }
 
+    /**
+     * increases the 'all planes count' by 1
+     */
     private static synchronized void increasePlaneCount() {
         planeCount++;
     }
 
+    /**
+     * increases the 'all flights count' by 1
+     */
     private static synchronized void increaseFlightCount() {
         flightCount++;
     }

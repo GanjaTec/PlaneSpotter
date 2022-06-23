@@ -1,13 +1,17 @@
 package planespotter.display.models;
 
-import planespotter.constants.DefaultColor;
-import planespotter.constants.GUIConstants;
+import libs.UWPButton;
+import planespotter.SupplierMain;
 import planespotter.constants.Images;
+import planespotter.constants.Paths;
 import planespotter.controller.ActionHandler;
+import planespotter.model.io.DBWriter;
 
 import javax.swing.*;
 
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -295,126 +299,6 @@ public final class PaneModels {
         lblStartScreen.setOpaque(false);
         return lblStartScreen;
     }
-
-    /**
-     * @name SupplierDisplay
-     * @version 1.0
-     *
-     * inner class SupplierDisplay is a little Display for the SupplierMain
-     * @see planespotter.SupplierMain
-     */
-    public static class SupplierDisplay {
-
-        private static final Runtime runtime = Runtime.getRuntime();
-        // inserted values indexes:   0 = allFrames,   1 = newPlanes,   2 = newFlights
-        private final int[] inserted = {0, 0, 0};
-        private int totalMemory = 13212;
-        private final JProgressBar progressBar = new JProgressBar(JProgressBar.HORIZONTAL, 0, totalMemory);
-        private final JLabel insertedLabel = new JLabel(),
-                             memoryLabel = new JLabel(),
-                             newPlanesLabel = new JLabel(),
-                             newFlightsLabel = new JLabel();
-        private final JLabel[] labels = { insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel };
-        private final JFrame frame;
-
-
-        public SupplierDisplay() {
-            this.frame = this.frame();
-        }
-
-        public void start() {
-            this.frame.setVisible(true);
-            this.tryAddTrayIcon();
-        }
-
-        private JFrame frame() {
-            var size = new Dimension(300, 400);
-            int compWidth = size.width - 20;
-            int y = 10;
-            for (var lbl : this.labels) {
-                lbl.setBounds(10, y, compWidth-20, 20);
-                y += 30;
-            }
-            this.progressBar.setForeground(DEFAULT_MAP_ICON_COLOR.get());
-            this.progressBar.setBounds(10, y, compWidth-20, 20);
-            this.progressBar.setString("Memory Usage");
-            this.progressBar.setStringPainted(true);
-            this.progressBar.setBorder(MENU_BORDER);
-
-            var seps = new JSeparator[] {
-                    new JSeparator(),new JSeparator(),new JSeparator(),
-                    new JSeparator(),new JSeparator()
-            };
-            y = 30;
-            for (var sep : seps) {
-                sep.setOpaque(true);
-                sep.setForeground(Color.DARK_GRAY);
-                sep.setBounds(10, y+5, compWidth-20, 2);
-                y += 30;
-            }
-
-            var panel = new JPanel();
-            //panel.setBackground(Color.DARK_GRAY);
-            panel.setLayout(null);
-            panel.setSize(size);
-            Arrays.stream(this.labels).forEach(panel::add);
-            Arrays.stream(seps).forEach(panel::add);
-            panel.add(this.progressBar);
-
-            JFrame.setDefaultLookAndFeelDecorated(false);
-            var frame = new JFrame("Fr24-Collector");
-            frame.setIconImage(FLYING_PLANE_ICON.get().getImage());
-            frame.setLocationRelativeTo(null);
-            frame.setLayout(null);
-            frame.setSize(size);
-            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-            frame.setResizable(false);
-            frame.add(panel);
-
-            return frame;
-        }
-
-        public synchronized void update(final int insertedNow, final int newPlanesNow, final int newFlightsNow) {
-            this.inserted[0] += insertedNow;
-            this.inserted[1] += newPlanesNow;
-            this.inserted[2] += newFlightsNow;
-            this.totalMemory = (int) (runtime.totalMemory() / 10_000);
-            int freeMemory = (int) (runtime.freeMemory() / 10_000);
-            int memoryUsage = (this.totalMemory - freeMemory);
-
-            this.insertedLabel.setText("Inserted Frames: " + this.inserted[0] + ", " + insertedNow + " per Sec.");
-            this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");
-            this.newPlanesLabel.setText("New Planes: " + this.inserted[1] + ", " + newPlanesNow + " per Sec.");
-            this.newFlightsLabel.setText("New Flights: " + this.inserted[2] + ", " + newFlightsNow + " per Sec.");
-            this.progressBar.setValue(memoryUsage);
-            try {
-                TimeUnit.MILLISECONDS.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            freeMemory = (int) (runtime.freeMemory() / 10_000);
-            memoryUsage = (this.totalMemory - freeMemory);
-            this.progressBar.setValue(memoryUsage);
-            this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");
-        }
-
-        private void tryAddTrayIcon() {
-            if (SystemTray.isSupported()) {
-                var trayIcon = new TrayIcon(Images.FLYING_PLANE_ICON.get().getImage());
-                trayIcon.setImageAutoSize(true);
-                trayIcon.addActionListener(e -> this.frame.setVisible(this.frame.isVisible()));
-                try {
-                    SystemTray.getSystemTray().add(trayIcon);
-                } catch (AWTException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-
-
-
 
 
 }

@@ -1,5 +1,6 @@
 package planespotter.model.io;
 
+import org.jetbrains.annotations.NotNull;
 import planespotter.constants.Paths;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
@@ -9,26 +10,32 @@ import planespotter.throwables.DataNotFoundException;
 
 import javax.swing.*;
 import java.io.*;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.Vector;
 
 import static planespotter.constants.Configuration.*;
 
 /**
- * file manager -> loads and saves files
+ * @name FileMaster
+ * @author jml04
+ * @version 1.0
+ *
+ * class FileMaster is a file manager that loads and saves files
  */
-public class FileMaster {
+public class FileWizard {
+
+    private static final FileWizard fileWizard = new FileWizard();
 
     /**
      * constructor
      */
-    public FileMaster() {
+    private FileWizard() {
     }
 
     /**
      * saves the config as a .cfg file
      */
-    public static void saveConfig() {
-        var fileWizard = new FileMaster();
+    public void saveConfig() {
         // saving / loading at the monment ?
         try {
             Controller.getLogger().log("saving config...", fileWizard);
@@ -51,7 +58,7 @@ public class FileMaster {
      * saves a flight route in a .psp (.planespotter) file
      * @return the loaded route as a data point vector
      */
-    public Vector<DataPoint> loadPlsFile (JFileChooser chooser) throws DataNotFoundException {
+    public Vector<DataPoint> loadPlsFile(JFileChooser chooser) throws DataNotFoundException {
         var ctrl = Controller.getInstance();
         var file = chooser.getSelectedFile();
         if (file.exists()) {
@@ -69,26 +76,31 @@ public class FileMaster {
     /**
      * saves a flight route in a .psp (.planespotter) file
      */
-    public void savePlsFile (File file, Controller ctrl) {
+    public void savePlsFile(@NotNull MapData mapData, File file, Controller ctrl)
+            throws DataNotFoundException, FileAlreadyExistsException {
+
         try {
             if (!file.exists()) {
-                file.createNewFile();
+                if (!file.createNewFile()) {
+                    throw new FileAlreadyExistsException("");
+                }
             }
-            if (!ctrl.loadedData.isEmpty()) {
-                var mapData = new MapData(ctrl.loadedData, Controller.getGUI().getCurrentViewType(), Controller.getGUI().getCurrentVisibleRect());
+            if (!mapData.data().isEmpty()) {
                 this.writeMapData(file, mapData);
             } else {
                 throw new DataNotFoundException("Couldn't save flight route, loaded data is empty!");
             }
-        } catch (IOException | DataNotFoundException e) {
-            e.printStackTrace();
+        } catch (FileAlreadyExistsException fae) {
+            throw new FileAlreadyExistsException("File already exists");
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
         } finally {
             ctrl.done();
         }
     }
 
     // TODO will be replaced with log4j (-> saving logs)
-    public void saveLogFile (String logged) {
+    public void saveLogFile(String logged) {
         try {
             if (logged == null) {
                 throw new IllegalArgumentException("logged data might not be null!");
@@ -132,7 +144,7 @@ public class FileMaster {
         fos.close();
     }
 
-    private void writeLog (File file, String text) {
+    private void writeLog(File file, String text) {
         try {
             var writer = new FileWriter(file);
             writer.write(text);
@@ -140,6 +152,10 @@ public class FileMaster {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static FileWizard getFileWizard() {
+        return fileWizard;
     }
 
 }

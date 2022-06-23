@@ -250,7 +250,7 @@ public final class MenuModels {
     /**
      * @return file chooser for file dialog
      */
-    public JFileChooser fileSaver(JFrame parent) {
+    public static JFileChooser fileSaver(JFrame parent) {
         var home = FileSystemView.getFileSystemView().getHomeDirectory();
         var fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);
@@ -264,7 +264,7 @@ public final class MenuModels {
     /**
      * @return file chooser for file dialog
      */
-    public JFileChooser fileLoader(JFrame parent) {
+    public static JFileChooser fileLoader(JFrame parent) {
         var home = FileSystemView.getFileSystemView().getHomeDirectory();
         var fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);

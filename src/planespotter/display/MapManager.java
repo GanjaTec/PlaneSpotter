@@ -51,6 +51,7 @@ public final class MapManager {
      */
     public TreasureMap createTrackingMap(Vector<DataPoint> dataPoints, Flight flight, boolean showPoints, GUIAdapter guiAdapter)
             throws DataNotFoundException {
+
         var viewer = this.mapViewer;
         int size = dataPoints.size(),
             counter = 0,
@@ -72,14 +73,15 @@ public final class MapManager {
             if (counter > 0) {
                 double lon0 = lastdp.pos().lon();
                 double lon1 = dp.pos().lon();
+                boolean lonJump = (lon0 < -90 && lon1 > 90) || (lon0 > 90 && lon1 < -90);
                 //boolean lonFit = (lon0 < 140 && lon1 > lon0) || (lon0 < -140 && lon1 < lon0);
-                double lonDiff = Math.abs(lon0) - Math.abs(lon1);
+                //double lonDiff = Math.abs(lon0) - Math.abs(lon1);
                 //boolean lonDiffFit = (lonDiff < 100) && (-lonDiff > -100);
-                boolean lonFit = (lon0 + lonDiff <= 180) || (lon0 - lonDiff >= -180);
+                //boolean lonFit = (lon0 + lonDiff <= 180) || (lon0 - lonDiff >= -180);
 
                 if (dp.flightID() == lastdp.flightID() // check if the data points belong to eachother
                         && dp.timestamp() >= lastdp.timestamp()
-                        && lonFit) {
+                        && !lonJump) { // TODO: 22.06.2022 FIX lonFit
                     coord1 = Position.toCoordinate(dpPos);
                     coord2 = Position.toCoordinate(lastdp.pos());
                     line = new MapPolygonImpl(coord1, coord2, coord1);
@@ -96,15 +98,19 @@ public final class MapManager {
             lastdp = dp;
         }
 
+        guiAdapter.disposeView();
+
         if (!dataPoints.isEmpty()) {
             if (showPoints) {
                 viewer.setMapMarkerList(markers);
             }
             viewer.setMapPolygonList(polys);
-            if (dataPoints.size() == 1) {
-                new TreePlantation().createFlightInfo(flight, guiAdapter);
+            if (dataPoints.size() == 1 && flight != null) {
+                gui.getTreePlantation().createFlightInfo(flight, guiAdapter);
             }
-        } else throw new DataNotFoundException("Couldn't create Flight Route for this flightID!");
+        } else {
+            throw new DataNotFoundException("Couldn't create Flight Route for this flightID!");
+        }
         return viewer;
     }
 

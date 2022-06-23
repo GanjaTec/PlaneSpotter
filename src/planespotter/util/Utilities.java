@@ -44,16 +44,6 @@ public abstract class Utilities {
     }
 
     /**
-     * converts a boolean to byte (0 or 1)
-     *
-     * @param bool is the give boolean
-     * @return 0 if true, else 1
-     */
-    public static @Range(from = 0, to = 1) byte boolToBinary(boolean bool) {
-        return (byte) (bool ? 0 : 1);
-    }
-
-    /**
      * @param feet is the input, in feet (ft)
      * @return a feet value in meters
      */

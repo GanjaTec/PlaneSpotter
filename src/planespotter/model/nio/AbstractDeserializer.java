@@ -9,6 +9,9 @@ import java.util.Collection;
  * @name AbstractDeserializer
  * @author jml04
  * @version 1.0
+ * @param <D> is the Data-Class that the deserialize-method gets,
+ *           for example: ...implements AbstractDeserializer<HttpResponse<String>>
+ *                    or: ...implements AbstractDeserializer<String>
  *
  * Interface AbstractDeserializer repsesents an abstract Deserializer which has one deserialize-Method
  * @see Fr24Deserializer
@@ -16,8 +19,7 @@ import java.util.Collection;
  * for implementations
  * @indev
  */
-public interface AbstractDeserializer {
+public interface AbstractDeserializer<D> {
 
-    // TODO: 11.06.2022 change to Type paremeter sth. like <F extends AbstractFrame> or sth like this
-    Collection<? extends Frame> deserialize(HttpResponse<String> response);
+    Collection<? extends Frame> deserialize(D data);
 }

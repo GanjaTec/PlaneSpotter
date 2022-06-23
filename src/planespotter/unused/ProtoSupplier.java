@@ -31,13 +31,15 @@ import static planespotter.util.Time.*;
  *
  * class ProtoSupplier represents a Prototype-Supplier which
  * is able to deserialize Fr24-Data to Frames and write them to DB
- * note: this supplier is much faster than the old one,
- *       improved in-loop I/O-Statements,
+ * note: improved in-loop I/O-Statements,
  *       the String-magic is no 'magic' anymore, working with fromJson
+ *
+ * ... doesn't work well yet, will probably not be used
  */
 // FIXME: 04.06.2022 Daten werden eventuell noch mit falschen IDs eingefügt, checken!
 
 @TestOnly
+@Deprecated(since = "writeToDB-update")
 public class ProtoSupplier extends SupperDB implements Runnable {
 
     private static volatile boolean running = false;
@@ -91,7 +93,7 @@ public class ProtoSupplier extends SupperDB implements Runnable {
                 var stmts = this.createWriteStatements(conn, fr24Frames, dbOut);
                 assert stmts != null;
                 executeSQL(conn, stmts);
-            } catch (SQLException | ClassNotFoundException | NoAccessException e) {
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
             //busyLock.set(false);

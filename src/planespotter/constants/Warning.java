@@ -14,7 +14,8 @@ public enum Warning {
     UNKNOWN_ERROR("Unknown error occurred, please contact an admin!"),
     TIMEOUT("Timeout! Task takes more time than expected! \nIf the Program is lagging, try to restart it!"),
     REJECTED_EXECUTION("Execution rejected! This shouldn't happen normally!"),
-    ILLEGAL_INPUT("Illegal Input! \nAn expression/character you used, is not allowed!");
+    ILLEGAL_INPUT("Illegal Input! \nAn expression/character you used, is not allowed!"),
+    FILE_ALREADY_EXISTS("File already exists, please choose another name!");
     // warning string instance field
     private final String message;
     // private enum constructor

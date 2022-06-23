@@ -41,9 +41,8 @@ public class Test {
 
         var stats = new Statistics();
 
-        test.topAirports(20);
+        test.testSpeedChartByFlightID(1363);
 /*
-
         var wind = stats.flightHeadwind(7326);
         var dataset = new DefaultCategoryDataset();
         for (var pos : wind.keySet()) {

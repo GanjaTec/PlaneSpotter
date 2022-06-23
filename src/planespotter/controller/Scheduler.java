@@ -18,24 +18,19 @@ import static planespotter.constants.Configuration.*;
  */
 public class Scheduler {
     // Thread priority constants
-    public static final int LOW_PRIO = 2;
-    public static final int MID_PRIO = 5;
-    public static final int HIGH_PRIO = 9;
+    public static final int LOW_PRIO = 2,
+                            MID_PRIO = 5,
+                            HIGH_PRIO = 9;
 
     // thread maker (thread factory)
     private static final ThreadMaker threadMaker;
     // ThreadPoolExecutor for (parallel) execution of different threads
-    private static final ThreadPoolExecutor exe;
+    private final ThreadPoolExecutor exe;
     // ScheduledExecutorService for scheduled execution at a fixed rate
-    private static final ScheduledExecutorService scheduled_exe;
+    private final ScheduledExecutorService scheduled_exe;
 
-    // static constructor
     static {
         threadMaker = new ThreadMaker();
-        exe = new ThreadPoolExecutor(CORE_POOLSIZE, MAX_THREADPOOL_SIZE,
-                                     KEEP_ALIVE_TIME, TimeUnit.SECONDS,
-                                     new SynchronousQueue<>(), threadMaker);
-        scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker);
     }
 
     // hash code
@@ -47,6 +42,23 @@ public class Scheduler {
      * for thread execution
      */
     public Scheduler() {
+        this.exe = new ThreadPoolExecutor(CORE_POOLSIZE, MAX_THREADPOOL_SIZE,
+                KEEP_ALIVE_TIME, TimeUnit.SECONDS,
+                new SynchronousQueue<>(), threadMaker);
+        this.scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker);
+    }
+
+    public static boolean sleepSec(long seconds) {
+        return sleep(seconds * 1000);
+    }
+
+    public static boolean sleep(long millis) {
+        try {
+            TimeUnit.MILLISECONDS.sleep(millis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     /**
@@ -77,7 +89,7 @@ public class Scheduler {
         } if (period < 1) {
             throw new IllegalArgumentException("period out of range! must be 1 or higher!");
         }
-        scheduled_exe.scheduleAtFixedRate(task, initDelay, period, TimeUnit.SECONDS);
+        this.scheduled_exe.scheduleAtFixedRate(task, initDelay, period, TimeUnit.SECONDS);
         return this;
     }
 
@@ -110,7 +122,7 @@ public class Scheduler {
         this.getThreadFactory().addThreadProperties(tName, daemon, prio);
         if (withTimeout) {
             var currentThread = new AtomicReference<Thread>();
-            CompletableFuture.runAsync(target, exe)
+            CompletableFuture.runAsync(target, this.exe)
                     .orTimeout(15, TimeUnit.SECONDS)
                     .exceptionally(e -> {
                         Controller.getInstance().handleException(e);
@@ -119,7 +131,7 @@ public class Scheduler {
                         return null;
                     });
         } else {
-            CompletableFuture.runAsync(target, exe);
+            CompletableFuture.runAsync(target, this.exe);
         }
         return this;
     }
@@ -152,7 +164,7 @@ public class Scheduler {
         }
         Controller.getLogger().infoLog("Task cancelled!", this);
         Arrays.stream(targets)
-                .forEach(exe::remove);
+                .forEach(this.exe::remove);
     }
 
     /**
@@ -180,16 +192,23 @@ public class Scheduler {
      * @return true if the shutdown was successfully
      */
     public synchronized boolean shutdown(final int timeout) {
-        boolean success = false;
         try {
             final var sec = TimeUnit.SECONDS;
-            success = exe.awaitTermination(timeout, sec);
-            success = scheduled_exe.awaitTermination(timeout, sec);
-            return success;
-        } catch (Exception e) {
+            return this.exe.awaitTermination(timeout, sec) && this.scheduled_exe.awaitTermination(timeout, sec);
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return success;
+        return false;
+    }
+
+    /**
+     * shuts down the Scheduler directly
+     */
+    public synchronized boolean shutdownNow() {
+        this.exe.shutdownNow();
+        this.scheduled_exe.shutdownNow();
+        sleep(1000);
+        return (this.exe.isTerminated() || this.exe.isTerminating()) && this.scheduled_exe.isTerminated();
     }
 
     /**
@@ -204,7 +223,7 @@ public class Scheduler {
      *         not from the scheduled executor
      */
     public int active() {
-        return exe.getActiveCount();
+        return this.exe.getActiveCount();
     }
 
     /**
@@ -212,7 +231,7 @@ public class Scheduler {
      *         not from the scheduled executor
      */
     public long completed() {
-        return exe.getCompletedTaskCount();
+        return this.exe.getCompletedTaskCount();
     }
 
     /**
@@ -220,7 +239,7 @@ public class Scheduler {
      *         not from the scheduled executor
      */
     public int largestPoolSize() {
-        return exe.getLargestPoolSize();
+        return this.exe.getLargestPoolSize();
     }
 
     /**
@@ -264,6 +283,7 @@ public class Scheduler {
                 Controller.getLogger().errorLog("Exception " + e.getMessage() +
                                 " occured in thread " + t.getName(),
                                 Controller.getInstance());
+                Controller.getInstance().handleException(e);
             });
             return thread;
         }
