@@ -98,9 +98,12 @@ public abstract class DBWriter {
             log.log("Trying to insert frames...", instance);
             if (ableCollect(count)) {
                 // insert live data with normal writeToDB
+                var dbOut = new DBOut();
+                var dbIn = new DBIn();
                 var frames = pollFrames(count);
-                scheduler.exec(() -> write(frames, new DBOut(), new DBIn()),
-                        "DB-LiveData Writer", true, 2, true);
+
+                scheduler.exec(() -> write(frames, dbOut, dbIn),
+                        "DB-LiveData Writer", true, Scheduler.LOW_PRIO, true);
                 insertCount += count;
             }
             if (insertCount > 0) {
@@ -119,7 +122,7 @@ public abstract class DBWriter {
             while (!isEmpty()) {
                 var frames = pollFrames(framesPerWrite);
                 scheduler.exec(() -> write(frames, dbOut, dbIn),
-                        "Inserter", false, 9, false);
+                        "Inserter", false, Scheduler.HIGH_PRIO, false);
                 inserted += framesPerWrite;
             }
             System.out.println("Inserting " + inserted + " frames...");

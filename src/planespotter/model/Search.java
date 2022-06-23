@@ -48,14 +48,14 @@ public class Search {
                 }
                 int counter = 0;
                 var key = "tracking" + fids;
-                ctrl.loadedData = (Vector<DataPoint>) Controller.LRU_LRU_CACHE.get(key);
+                ctrl.loadedData = (Vector<DataPoint>) Controller.cache.get(key);
                 if (ctrl.loadedData == null) {
                     ctrl.loadedData = new Vector<>();
                     for (int i : fids) {
                         ctrl.loadedData.addAll(out.getTrackingByFlight(i)); // TODO trackingByFlightIDs
                         if (counter++ > 20) break; // MAX 10 FLIGHTS
                     }
-                    Controller.LRU_LRU_CACHE.put(key, ctrl.loadedData);
+                    Controller.cache.put(key, ctrl.loadedData);
                 }
                 if (!ctrl.loadedData.isEmpty()) {
                     return ctrl.loadedData;
@@ -113,10 +113,10 @@ public class Search {
             // trackings with airport id (-> airport join)
         } else if (!tag.isBlank()) {
             var key = "airport" + tag.toUpperCase();
-            ctrl.loadedData = (Vector<DataPoint>) Controller.LRU_LRU_CACHE.get(key);
+            ctrl.loadedData = (Vector<DataPoint>) Controller.cache.get(key);
             if (ctrl.loadedData == null) {
                 ctrl.loadedData = new Vector<>(out.getTrackingsWithAirportTag(tag));
-                Controller.LRU_LRU_CACHE.put(key, ctrl.loadedData);
+                Controller.cache.put(key, ctrl.loadedData);
             }
         } else if (!name.isBlank()) {
             //ctrl.loadedData.addAll( ); (-> airport join)

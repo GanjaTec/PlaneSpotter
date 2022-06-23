@@ -52,7 +52,7 @@ import static planespotter.constants.ViewType.*;
  * main controller - responsible for connection between model and view
  * has static controller, scheduler, gui, action handler and logger instance
  */
-public class Controller {
+public abstract class Controller {
     // ONLY Controller instance
     private static final Controller mainController;
     // scheduler, contains executor services / thread pools
@@ -64,17 +64,17 @@ public class Controller {
     // gui adapter
     private static final GUIAdapter guiAdapter;
     // proto test-cache
-    public static final LRUCache<String, Object> LRU_LRU_CACHE;
+    public static final LRUCache<String, Object> cache;
     // logger for whole program
     private static Logger logger;
 
     static {
         scheduler = new Scheduler();
-        mainController = new Controller();
+        mainController = new Controller() {};
         actionHandler = new ActionHandler();
         gui = new GUI(actionHandler);
         guiAdapter = new GUIAdapter(gui);
-        LRU_LRU_CACHE = new LRUCache<>(40);
+        cache = new LRUCache<>(40);
     }
     // boolean loading is true when something is loading
     private volatile boolean loading;
@@ -87,7 +87,7 @@ public class Controller {
     private final int hashCode;
 
     /**
-     * constructor - private -> only ONE instance ( getter: Controller.getInstance() )
+     * private -> only ONE instance ( getter: Controller.getInstance() )
      */
     private Controller() {
         this.hashCode = System.identityHashCode(mainController);
@@ -174,7 +174,7 @@ public class Controller {
      * opens a new GUI window as a thread
      */
     private synchronized void openWindow() {
-        this.loading = true;
+        this.setLoading(true);
         logger.log("initialising GUI...", gui);
         scheduler.exec(gui, "Planespotter-GUI", false, Scheduler.MID_PRIO, false);
         logger.sucsessLog("GUI initialized sucsessfully!", gui);
@@ -194,7 +194,6 @@ public class Controller {
             this.setLoading(true);
             FileMaster.saveConfig();
             DBWriter.insertRemaining(scheduler, 500);
-            DBWriter.setEnabled(false);
             while (scheduler.active() > 0) {
                 try {
                     this.wait(1000);
@@ -203,6 +202,7 @@ public class Controller {
                 }
             }
             this.notifyAll();
+            DBWriter.setEnabled(false);
             this.done();
             logger.close();
             boolean shutdown = scheduler.shutdown(1);
@@ -217,7 +217,7 @@ public class Controller {
      * @indev
      */
     public synchronized void loadLiveData() {
-        this.loading = true;
+        this.setLoading(true);
 
         this.liveData = LiveData.directLiveData(scheduler);
         var map = gui.getMap();
@@ -272,7 +272,7 @@ public class Controller {
                                   @NotNull final String headText,
                                   @Nullable String... data) {
         var mapManager = gui.getMapManager();
-        this.loading = true;
+        this.setLoading(true);
         var dbOut = new DBOut();
         // TODO ONLY HERE: dispose GUI view(s)
         guiAdapter.disposeView();
@@ -299,7 +299,7 @@ public class Controller {
     // TODO: 24.05.2022 DEBUG PLANE SEARCH
     public void search(String[] inputs, int button) { // TODO button abfragen??
         var gad = guiAdapter;
-        this.loading = true;
+        this.setLoading(true);
         try {
             gad.startProgressBar();
             var search = new Search();
@@ -576,10 +576,10 @@ public class Controller {
 
     private void  showRasterHeatMap(String heatText, MapManager bbn, DBOut dbOut) {
         try {
-            var positions = (Vector<Position>) LRU_LRU_CACHE.get("allTrackingPosVec");
+            var positions = (Vector<Position>) cache.get("allTrackingPosVec");
             if (positions == null) {
                 positions = dbOut.getAllTrackingPositions();
-                if (!LRU_LRU_CACHE.put("allTrackingPosVec", positions)) {
+                if (!cache.put("allTrackingPosVec", positions)) {
                     System.out.println("Cache is full of Senior Data!");
                 }
             }
@@ -661,16 +661,16 @@ public class Controller {
                 assert data[0] != null;
                 flightID = Integer.parseInt(data[0]);
                 key = "tracking" + flightID;
-                flightTracking = (Vector<DataPoint>) LRU_LRU_CACHE.get(key);
+                flightTracking = (Vector<DataPoint>) cache.get(key);
                 if (flightTracking == null) {
                     flightTracking = dbOut.getTrackingByFlight(flightID);
-                    LRU_LRU_CACHE.put(key, flightTracking);
+                    cache.put(key, flightTracking);
                 }
                 this.loadedData.addAll(flightTracking);
 
             } else if (data.length > 1) {
                 key = "tracking" + data;
-                this.loadedData = (Vector<DataPoint>) LRU_LRU_CACHE.get(key);
+                this.loadedData = (Vector<DataPoint>) cache.get(key);
                 if (this.loadedData == null) {
                     this.loadedData = new Vector<>();
                     for (var id : data) {
@@ -681,7 +681,7 @@ public class Controller {
                     }
 
                 }
-                LRU_LRU_CACHE.put(key, this.loadedData);
+                cache.put(key, this.loadedData);
             }
             if (flightID == -1) {
                 throw new InvalidDataException("Flight may not be null!");
