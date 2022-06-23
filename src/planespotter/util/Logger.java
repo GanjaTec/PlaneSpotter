@@ -1,7 +1,7 @@
 package planespotter.util;
 
 import org.jetbrains.annotations.Nullable;
-import planespotter.model.io.FileMaster;
+import planespotter.model.io.FileWizard;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -169,7 +169,7 @@ public class Logger extends JFrame implements ComponentListener {
 
     public void close() {
         var loggedText = out.getText();
-        new FileMaster().saveLogFile(loggedText);
+        FileWizard.getFileWizard().saveLogFile(loggedText);
         this.dispose();
     }
 

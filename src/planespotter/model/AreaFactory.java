@@ -35,9 +35,9 @@ public abstract class AreaFactory {
                                  @Range(from = 90, to = -90) final double latBottomRight,
                                  @Range(from = -180, to = 180) final double lonTopLeft,
                                  @Range(from = -180, to = 180) final double lonBottomRight) {
-        return  latTopLeft + SEPARATOR +
-                latBottomRight   + SEPARATOR +
-                lonTopLeft + SEPARATOR +
+        return  latTopLeft     + SEPARATOR +
+                latBottomRight + SEPARATOR +
+                lonTopLeft     + SEPARATOR +
                 lonBottomRight;
     }
 

@@ -33,7 +33,7 @@ public class DBIn extends SupperDB {
 				conn.close();
 				return id;
 			}
-		} catch (SQLException | ClassNotFoundException | NoAccessException e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return -1;
@@ -61,7 +61,7 @@ public class DBIn extends SupperDB {
 				conn.close();
 				return id;
 			}
-		} catch (SQLException | ClassNotFoundException | NoAccessException e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return -1;
@@ -84,7 +84,7 @@ public class DBIn extends SupperDB {
 				pstmt.executeUpdate();
 				conn.close();
 			}
-		} catch (SQLException | ClassNotFoundException | NoAccessException e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
@@ -100,7 +100,7 @@ public class DBIn extends SupperDB {
 				pstmt.executeUpdate();
 				conn.close();
 			}
-		} catch (NoAccessException | SQLException | ClassNotFoundException e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}

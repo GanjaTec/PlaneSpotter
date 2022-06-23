@@ -22,6 +22,7 @@ import static planespotter.util.Time.*;
  *
  * class OutputWizard can load the live data threaded or the
  */
+@Deprecated(since = "live-map update", forRemoval = true)
 public class OutputWizard extends DBOut implements Runnable {
     // @Nullable thread pool executor instance
     private final Scheduler scheduler;

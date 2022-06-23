@@ -14,6 +14,7 @@ import java.util.List;
  * @author Lukas
  *
  */
+@Deprecated(since = "faster keeper update")
 public class KeeperOfTheArchives implements Runnable{ // TODO: 11.06.2022 can implement Keeper
 	private final long threshold;
 	private final int threadNumber;
