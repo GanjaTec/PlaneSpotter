@@ -5,13 +5,12 @@ import planespotter.constants.Areas;
 import planespotter.constants.SQLQueries;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
+import planespotter.model.io.DBConnector;
 import planespotter.model.io.DBOut;
-import planespotter.model.SupperDB;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.FastKeeper;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.throwables.DataNotFoundException;
-import planespotter.throwables.NoAccessException;
 
 import java.sql.*;
 import java.util.*;
@@ -40,7 +39,7 @@ import static planespotter.util.Time.*;
 
 @TestOnly
 @Deprecated(since = "writeToDB-update")
-public class ProtoSupplier extends SupperDB implements Runnable {
+public class ProtoSupplier extends DBConnector implements Runnable {
 
     private static volatile boolean running = false;
 

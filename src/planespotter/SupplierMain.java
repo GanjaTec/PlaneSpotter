@@ -2,6 +2,7 @@ package planespotter;
 
 import planespotter.constants.Areas;
 import planespotter.controller.Scheduler;
+import planespotter.display.SupplierDisplay;
 import planespotter.model.LiveData;
 import planespotter.model.io.DBWriter;
 import planespotter.model.nio.Fr24Deserializer;
@@ -46,14 +47,18 @@ public abstract class SupplierMain {
         newFlightsNow = new AtomicInteger(0);
         newFlightsAll = new AtomicInteger(0);
     }
+
+    public static void start() {
+        display.start();
+        startCollecting();
+    }
     /**
      * Fr24-Supplier Main-method
      *
      * @param args can be ignored
      */
     public static void main(String[] args) {
-        display.start();
-        startCollecting();
+        start();
     }
 
     public static void startCollecting() {

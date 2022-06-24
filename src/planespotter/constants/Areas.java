@@ -1,7 +1,8 @@
 package planespotter.constants;
 
+import org.jetbrains.annotations.Range;
+import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import planespotter.dataclasses.Position;
-import planespotter.model.AreaFactory;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,6 +15,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * class areas contains all map areas as complicated coordinate-strings
  */
 public final class Areas {
+
+	/**
+	 * Area-Separator-String, is used to separate the doubles in an Area-String
+	 */
+	private static final String SEPARATOR = "%2C";
 	/**
 	 * Area Structure:
 	 *
@@ -82,6 +88,12 @@ public final class Areas {
 	
 	public static final String[] NAFC = {};
 
+	/**
+	 * creates a 1D-Array of Area Strings, which are created by coordinates
+	 * in a 6 * 6 2D array with newArea()
+	 *
+	 * @return Array of Areas (whole world)
+	 */
 	public static synchronized String[] getWorldAreaRaster1D() {
 		final var areaRaster2D = new String[6][6]; // 6 * 6 Raster of Areas
 		final var areaRaster1D = new String[36]; // 6 * 6 Raster as 1D-Array
@@ -93,7 +105,7 @@ public final class Areas {
 		for (byte x = 0; x < 6; x++) {
 			lat = 90.;
 			for (byte y = 0; y < 6; y++) {
-				areaRaster2D[x][y] = AreaFactory.newArea(new Position(lat, lon), new Position(lat - latVel, lon + lonVel));
+				areaRaster2D[x][y] = Areas.newArea(new Position(lat, lon), new Position(lat - latVel, lon + lonVel));
 				lat -= latVel;
 			}
 			lon += lonVel;
@@ -132,6 +144,47 @@ public final class Areas {
 		}
 		return areas;
 	}
+
+		/**
+		 * creates an Area directly by single Coordinates
+		 *
+		 * @param latTopLeft is the bottom-right-latitude
+		 * @param latBottomRight is the top-left-latitude
+		 * @param lonTopLeft is the bottom-left-longitude
+		 * @param lonBottomRight is the top-right-longitude
+		 * @return new Area String, composed of the given Coordinates
+		 */
+		public static String newArea(@Range(from = 90, to = -90) final double latTopLeft,
+									 @Range(from = 90, to = -90) final double latBottomRight,
+									 @Range(from = -180, to = 180) final double lonTopLeft,
+									 @Range(from = -180, to = 180) final double lonBottomRight) {
+			return  latTopLeft     + SEPARATOR +
+					latBottomRight + SEPARATOR +
+					lonTopLeft     + SEPARATOR +
+					lonBottomRight;
+		}
+
+		/**
+		 * creates an Area by Positions
+		 *
+		 * @param topLeft is the bottom-left-position
+		 * @param bottomRight is the top-right-position
+		 * @return new Area String, composed of the given Positions
+		 */
+		public static String newArea(final Position topLeft, final Position bottomRight) {
+			return newArea(topLeft.lat(), bottomRight.lat(), topLeft.lon(), bottomRight.lon());
+		}
+
+		/**
+		 * creates an Area by ICoordinates / Coordinates
+		 *
+		 * @param topLeft is the bottom-left-coordinate
+		 * @param bottomRight is the top-right-coordniate
+		 * @return new Area String, composed of the given ICoordniates / Coordniates
+		 */
+		public static String newArea(final ICoordinate topLeft, final ICoordinate bottomRight) {
+			return newArea(topLeft.getLat(), bottomRight.getLat(), topLeft.getLon(), bottomRight.getLon());
+		}
 
 }
 	

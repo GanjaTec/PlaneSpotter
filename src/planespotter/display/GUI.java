@@ -136,35 +136,31 @@ public class GUI implements Runnable {
                 // initializing buttons
                 var listButton = menuModels.listButton(menuBar, this.actionHandler);
                 this.addContainer("listButton", listButton);
-                //this.btList.addActionListener(this.actionHandler);
                 var mapButton = menuModels.mapButton(menuBar, this.actionHandler);
                 this.addContainer("mapButton", mapButton);
-                //this.btMap.addActionListener(this.actionHandler);
+                var statsButton = menuModels.statisticsButton(menuBar, this.actionHandler);
+                this.addContainer("statsButton", statsButton);
+                var supplierButton = menuModels.supplierButton(menuBar, this.actionHandler);
+                this.addContainer("supplierButton", supplierButton);
                 var settingsButton = menuModels.settingsButton(menuBar, this.actionHandler);
                 this.addContainer("settingsButton", settingsButton);
-                //this.settings.addActionListener(this.actionHandler);
-                var searchTextField = menuModels.searchTextField(menuBar, this.actionHandler);
-                this.addContainer("searchTxtField", searchTextField);
-                //this.tfSearch.addKeyListener(this.actionHandler);
                 var searchButton = menuModels.searchButton(menuBar, this.actionHandler);
                 this.addContainer("searchButton", searchButton);
-                //this.searchButton.addActionListener(this.actionHandler);
+
+                var searchTextField = menuModels.searchTextField(menuBar, this.actionHandler);
+                this.addContainer("searchTxtField", searchTextField);
                 var progressBar = menuModels.progressBar(menuBar);
                 this.addContainer("progressBar", progressBar);
                 var settingsDialog = menuModels.settingsDialog(window);
                 this.addContainer("settingsDialog", settingsDialog);
                 var settings_maxLoadTxtField = menuModels.settings_maxLoadTxtField(this.actionHandler);
                 this.addContainer("settingsMaxLoadTxtField", settings_maxLoadTxtField);
-                //this.settings_maxLoadTf.addKeyListener(this.actionHandler);
                 var settings_mapTypeCmbBox = menuModels.settings_mapTypeCmbBox(this.actionHandler);
                 this.addContainer("settingsMapTypeCmbBox", settings_mapTypeCmbBox);
-                //this.settings_mapTypeCmbBox.addItemListener(this.actionHandler);
                 var settingsButtons = menuModels.settingsButtons(settingsDialog, this.actionHandler);
                 this.addContainer("settingsCancelButton", settingsButtons[0]);
                 this.addContainer("settingsConfirmButton", settingsButtons[1]);
-                /*for (var bt : this.settingsButtons) {
-                    bt.addActionListener(this.actionHandler);
-                }*/
+
             var viewHeadTxtLabel = panelModels.headTxtLabel();
             this.addContainer("viewHeadTxtLabel", viewHeadTxtLabel);
             var fileButton = menuModels.fileButton((JDesktopPane) this.getContainer("rightDP"), this.actionHandler);
@@ -180,7 +176,8 @@ public class GUI implements Runnable {
             //this.closeView.addActionListener(this.actionHandler);
             var titleBackgroundLabel = panelModels.titleBackgroundLabel(titlePanel);
             this.addContainer("titleBgLabel", titleBackgroundLabel);
-            var test_img = new ImageIcon(Paths.RESSOURCE_PATH + "ttowers.png"); // FIXME: 28.05.2022 auslagern und anderes bild!
+
+            var test_img = new ImageIcon(Paths.IMAGE_PATH + "ttowers.png"); // FIXME: 28.05.2022 auslagern und anderes bild!
                                                                                        // (richtiger start screen mit kurzem text oder so)
             var startLabel = panelModels.startScreenLabel(startPanel, test_img);
             this.addContainer("startLabel", startLabel);
@@ -205,10 +202,12 @@ public class GUI implements Runnable {
         var menubar = this.getContainer("menuBar");
         menubar.add(this.getContainer("listButton"));
         menubar.add(this.getContainer("mapButton"));
+        menubar.add(this.getContainer("statsButton"));
+        menubar.add(this.getContainer("supplierButton"));
         menubar.add(this.getContainer("settingsButton")); // TODO gehört das nicht alles in SearchPanel
         menubar.add(this.getContainer("searchTxtField"));
         menubar.add(this.getContainer("searchButton"));
-        menubar.add(this.getContainer("progressBar")); // TODO alles so wie hier
+        menubar.add(this.getContainer("progressBar"));
         // adding everything to search panel
         var searchPanel = this.getContainer("searchPanel");
         searchPanel.add(this.getContainer("searchForLabel"));

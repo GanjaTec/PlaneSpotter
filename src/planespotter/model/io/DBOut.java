@@ -5,7 +5,6 @@ import planespotter.dataclasses.*;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.constants.UserSettings;
 import planespotter.dataclasses.DBResult;
-import planespotter.model.SupperDB;
 import planespotter.throwables.NoAccessException;
 import planespotter.util.Utilities;
 import planespotter.throwables.DataNotFoundException;
@@ -25,7 +24,7 @@ import java.util.*;
  *
  */
 
-public class DBOut extends SupperDB {
+public class DBOut extends DBConnector {
 
 	/**
 	 * This method is a quick botch because i messed up the Airports Table in the DB
@@ -758,27 +757,35 @@ public class DBOut extends SupperDB {
 	/**
 	 * @return list of all callsigns
 	 */ // FIXME: 05.05.2022 HIER IST EIN FEHLER !!
-	public final ArrayDeque<Integer> getAirportIDsLike(String airport)
+	public int[] getFlightIDsIDsByAirportTag(String tag)
 			throws DataNotFoundException {
 
-		final var aids = new ArrayDeque<Integer>();
+		int[] fids = new int[0];
+		var query = "SELECT DISTINCT f.ID " +
+					"FROM flights f " +
+					"JOIN airports a " +
+					"ON (a.iatatag IS f.src " +
+					"OR a.iatatag IS f.dest) " +
+					"AND a.iatatag IS " + Utilities.packString(tag.toUpperCase());
 		try {
-			var query = "SELECT DISTINCT ID FROM airports " +
-						"WHERE ((iatatag LIKE '%" + airport + "%') " +
-						"OR (name LIKE '%" + airport + "%'))";
 			synchronized (dbSync) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
+				int length;
 				while (rs.next()) {
-					aids.add(rs.getInt("ID"));
+					length = fids.length;
+					fids = Arrays.copyOf(fids, length + 1);
+					fids[length] = rs.getInt(1);
 				}
 				result.close();
 			}
-			return aids;
 		} catch (SQLException | NoAccessException e) {
 			e.printStackTrace();
-		} 
-		return null;
+		}
+		if (fids.length == 0) {
+			throw new DataNotFoundException("No flight IDs found for airport tag " + tag + "!");
+		}
+		return fids;
 	}
 
 	/**
@@ -926,7 +933,7 @@ public class DBOut extends SupperDB {
 			}
 		} catch (SQLException | NoAccessException e) {
 			e.printStackTrace();
-		} 
+		}
 		return dps;
 	}
 
@@ -1336,6 +1343,65 @@ public class DBOut extends SupperDB {
 			e.printStackTrace();
 		}
 		return tags;
+	}
+
+	public int[] getFlightIDsByAirportName(String name)
+			throws DataNotFoundException {
+
+		int[] ids = new int[0];
+		var query = "SELECT f.ID " +
+				"FROM flights f " +
+				"JOIN airports a " +
+				"ON (a.name LIKE '%" + name + "%')" +
+				"AND (a.iatatag IS f.src OR a.iatatag IS f.dest)";
+		try {
+			synchronized (dbSync) {
+				var result = super.queryDB(query);
+				var rs = result.resultSet();
+				int length;
+				while (rs.next()) {
+					length = ids.length;
+					ids = Arrays.copyOf(ids, length + 1);
+					ids[length] = rs.getInt(1);
+				}
+				result.close();
+			}
+		} catch (NoAccessException | SQLException e) {
+			e.printStackTrace();
+		}
+		if (ids.length == 0) {
+			throw new DataNotFoundException("No airport tags found for name " + name + "!");
+		}
+		return ids;
+	}
+
+	public Vector<DataPoint> getTrackingsByFlightIDs(int[] ids)
+			throws DataNotFoundException {
+
+		final var dps = new Vector<DataPoint>();
+		try {
+			var query = "SELECT * FROM tracking " +
+						"WHERE flightid " + SQLQueries.IN_INT(ids);
+			synchronized (dbSync) {
+				var result = super.queryDB(query);
+				var rs = result.resultSet();
+				DataPoint dp;
+				while (rs.next()) {
+					dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"),
+							new Position(rs.getDouble("latitude"), rs.getDouble("longitude")),
+							rs.getLong("timestamp"), rs.getInt("squawk"), rs.getInt("groundspeed"),
+							rs.getInt("heading"), rs.getInt("altitude"));
+					dps.add(dp);
+				}
+				result.close();
+			}
+			if (dps.isEmpty()) {
+				throw new DataNotFoundException("No tracking found for these IDs!");
+			}
+		} catch (SQLException | NoAccessException e) {
+			e.printStackTrace();
+		}
+		return dps;
 	}
 
 }

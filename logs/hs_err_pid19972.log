@@ -437,7 +437,7 @@ Event: 646.092 Thread 0x000001f4cbf3f920 Uncommon trap: reason=unstable_if actio
 Event: 646.093 Thread 0x000001f4cbf3f920 DEOPT PACKING pc=0x000001f4bbe60ee8 sp=0x0000008e288fed80
 Event: 646.094 Thread 0x000001f4cbf3f920 DEOPT UNPACKING pc=0x000001f4b42b23a3 sp=0x0000008e288fed50 mode 2
 Event: 646.183 Thread 0x000001f4cbf3f920 Uncommon trap: trap_request=0x00000032 fr.pc=0x000001f4bbed924c relative=0x000000000000112c
-Event: 646.183 Thread 0x000001f4cbf3f920 Uncommon trap: reason=unloaded action=reinterpret pc=0x000001f4bbed924c method=planespotter.model.SupperDB.queryDB(Ljava/lang/String;)Ljava/sql/ResultSet; @ 24 c2
+Event: 646.183 Thread 0x000001f4cbf3f920 Uncommon trap: reason=unloaded action=reinterpret pc=0x000001f4bbed924c method=planespotter.model.io.DBConnector.queryDB(Ljava/lang/String;)Ljava/sql/ResultSet; @ 24 c2
 Event: 646.183 Thread 0x000001f4cbf3f920 DEOPT PACKING pc=0x000001f4bbed924c sp=0x0000008e288fef10
 Event: 646.183 Thread 0x000001f4cbf3f920 DEOPT UNPACKING pc=0x000001f4b42b23a3 sp=0x0000008e288fee78 mode 2
 
