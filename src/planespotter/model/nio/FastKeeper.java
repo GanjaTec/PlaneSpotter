@@ -1,6 +1,6 @@
 package planespotter.model.nio;
 
-import planespotter.model.SupperDB;
+import planespotter.model.io.DBConnector;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.DBOut;
 import planespotter.throwables.DataNotFoundException;
@@ -22,7 +22,7 @@ import static planespotter.util.Time.*;
  * even with big amount of data.
  * @see planespotter.model.nio.KeeperOfTheArchives
  * @see planespotter.model.nio.Keeper
- * @see SupperDB
+ * @see DBConnector
  */
 public class FastKeeper implements Keeper {
     // threshold milliseconds

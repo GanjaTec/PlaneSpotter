@@ -5,6 +5,7 @@ import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.MapMarkerCircle;
 import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
+import planespotter.constants.Images;
 import planespotter.constants.Paths;
 import planespotter.display.MarkerPainter;
 import planespotter.throwables.OutOfRangeException;
@@ -22,7 +23,7 @@ import java.awt.*;
  */
 public class DefaultMapMarker extends MapMarkerDot implements MapMarker {
 
-    public static final Image img = new ImageIcon(Paths.RESSOURCE_PATH + "flying_plane_icon.png").getImage();
+    public static final Image img = Images.FLYING_PLANE_ICON.get().getImage();
     private final int heading;
 
     /**

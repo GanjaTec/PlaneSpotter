@@ -35,11 +35,10 @@ public class FileWizard {
     /**
      * saves the config as a .cfg file
      */
-    public void saveConfig() {
-        // saving / loading at the monment ?
+    public synchronized void saveConfig() {
         try {
             Controller.getLogger().log("saving config...", fileWizard);
-            var config = new File(Paths.SRC_PATH + "planespotter/ressources/configuration.cfg");
+            var config = new File(Paths.RESOURCE_PATH + "config.psconfig");
             if (!config.exists()) { // creating new file if there is no existing one
                 config.createNewFile();
             }
@@ -50,7 +49,7 @@ public class FileWizard {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            Controller.getLogger().sucsessLog("configuration.cfg saved sucsessfully!", fileWizard);
+            Controller.getLogger().sucsessLog("configuration saved sucsessfully!", fileWizard);
         }
     }
 
@@ -58,7 +57,7 @@ public class FileWizard {
      * saves a flight route in a .psp (.planespotter) file
      * @return the loaded route as a data point vector
      */
-    public Vector<DataPoint> loadPlsFile(JFileChooser chooser) throws DataNotFoundException {
+    public synchronized Vector<DataPoint> loadPlsFile(JFileChooser chooser) throws DataNotFoundException {
         var ctrl = Controller.getInstance();
         var file = chooser.getSelectedFile();
         if (file.exists()) {
@@ -76,7 +75,7 @@ public class FileWizard {
     /**
      * saves a flight route in a .psp (.planespotter) file
      */
-    public void savePlsFile(@NotNull MapData mapData, File file, Controller ctrl)
+    public synchronized void savePlsFile(@NotNull MapData mapData, File file, Controller ctrl)
             throws DataNotFoundException, FileAlreadyExistsException {
 
         try {
@@ -100,7 +99,7 @@ public class FileWizard {
     }
 
     // TODO will be replaced with log4j (-> saving logs)
-    public void saveLogFile(String logged) {
+    public synchronized void saveLogFile(String logged) {
         try {
             if (logged == null) {
                 throw new IllegalArgumentException("logged data might not be null!");
@@ -120,7 +119,7 @@ public class FileWizard {
      * @param file is the file to read from
      * @return the flight route hash map
      */
-    private MapData readMapData(File file)
+    private synchronized MapData readMapData(File file)
             throws ClassCastException, IOException, ClassNotFoundException {
         var fis = new FileInputStream(file);
         var ois = new ObjectInputStream(fis);
@@ -133,10 +132,9 @@ public class FileWizard {
     /**
      *
      */
-    private void writeMapData(File toWrite, MapData mapData)
+    private synchronized void writeMapData(File toWrite, MapData mapData)
             throws IOException {
-        // TODO how to write Hashmap to File?
-        //  Serializable? new Class? Gson? (must not be readable, just loadable)
+
         var fos = new FileOutputStream(toWrite);
         var oos = new ObjectOutputStream(fos);
         oos.writeObject(mapData);
@@ -144,14 +142,12 @@ public class FileWizard {
         fos.close();
     }
 
-    private void writeLog(File file, String text) {
-        try {
-            var writer = new FileWriter(file);
-            writer.write(text);
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private synchronized void writeLog(File file, String text)
+            throws IOException {
+
+        var writer = new FileWriter(file);
+        writer.write(text);
+        writer.close();
     }
 
     public static FileWizard getFileWizard() {

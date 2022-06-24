@@ -122,11 +122,19 @@ public class Search {
             var key = "airport" + tag.toUpperCase();
             ctrl.loadedData = (Vector<DataPoint>) Controller.cache.get(key);
             if (ctrl.loadedData == null) {
-                ctrl.loadedData = new Vector<>(out.getTrackingsWithAirportTag(tag));
+                int[] fids = out.getFlightIDsIDsByAirportTag(tag);
+                ctrl.loadedData = new Vector<>(out.getTrackingsByFlightIDs(fids));
                 Controller.cache.put(key, ctrl.loadedData);
             }
         } else if (!name.isBlank()) {
-            //ctrl.loadedData.addAll( ); (-> airport join)
+            var key = "airport" + name.toUpperCase();
+            ctrl.loadedData = (Vector<DataPoint>) Controller.cache.get(key);
+            if (ctrl.loadedData == null) {
+                // FIXME too slow
+                int[] fids = out.getFlightIDsByAirportName(name);
+                ctrl.loadedData = new Vector<>(out.getTrackingsByFlightIDs(fids));
+                Controller.cache.put(key, ctrl.loadedData);
+            }
         }
         if (ctrl.loadedData.isEmpty()) {
             throw new DataNotFoundException("No airports found for these inputs!");
@@ -165,24 +173,6 @@ public class Search {
             throw new DataNotFoundException("no existing callsign found for " + input + "!");
         }
         return allCallsigns;
-    }
-
-    /**
-     * finds a airport
-     *
-     * @param airport is the airport to search for
-     * @return id of the found airport, if one is found
-     * @throws DataNotFoundException if no airport was found
-     */
-    private int findAirport(String airport)
-            throws DataNotFoundException {
-
-        var aids = new DBOut().getAirportIDsLike(airport); // TODO evtl ohne LIKE für performance
-        assert aids != null;
-        if (aids.isEmpty()) {
-            throw new DataNotFoundException("No existing airport found for " + airport + "!");
-        }
-        return aids.getFirst();
     }
 
 }

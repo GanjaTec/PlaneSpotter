@@ -66,14 +66,21 @@ public final class SQLQueries {
 	 * @param inThis
 	 * @return
 	 */ // TODO zu einer Methode machen mit Wildcards
-	public static String IN_INT (final Deque<Integer> inThis) {
+	public static <I> String IN_INT(final I inThis) {
 		var out = new StringBuilder("IN (");
-		for (int i : inThis) {
-			out.append(i).append(",");
+		if (inThis instanceof Deque<?> deq && deq.getFirst() instanceof Integer) {
+			for (int i : (Deque<Integer>) deq) {
+				out.append(i).append(",");
+			}
+		} else if (inThis instanceof int[] arr) {
+			for (int i : arr) {
+				out.append(i).append(",");
+			}
 		}
 		return out.substring(0, out.length()-2) + ")";
 	}
-	public static String IN_STR (final Deque<String> inThis) {
+
+	public static String IN_STR(final Deque<String> inThis) {
 		var out = new StringBuilder("IN (");
 		int counter = 0;
 		int last = inThis.size() - 1;

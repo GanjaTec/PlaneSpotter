@@ -19,7 +19,6 @@ public class SpeedHeatMap extends HeatMap {
         super(gridSize);
         this.topLeft = topLeft;
         this.bottomRight = bottomRight;
-        super.watchDog.allocation(2);
     }
 
     // TODO: 31.05.2022 datenstrukturen verbessern, Hash Map ist langsam, am besten array
@@ -28,7 +27,6 @@ public class SpeedHeatMap extends HeatMap {
         if (data instanceof HashMap<?,?> speedMap) {
             // für jede pos -> bereich checken und dort 1 erhöhen
             var adds = new HashMap<Position, Integer>();
-            super.watchDog.allocation().comparison();
 
             speedMap.forEach((k, v) -> {
                 if (   k instanceof Position pos
@@ -43,17 +41,14 @@ public class SpeedHeatMap extends HeatMap {
                         adds.put(key, 1);
                     }
                     this.heatMap[x][y] += speed;
-                    super.watchDog.allocation(10).comparison();
                 }
             });
             adds.forEach((pos, addCount) -> {
                 int x = (int) pos.lat(),
                     y = (int) pos.lon();
-                short speed = this.heatMap[x][y];
-                this.heatMap[x][y] = (short) (speed / addCount);
-                super.watchDog.allocation(5);
+                byte speed = this.heatMap[x][y];
+                this.heatMap[x][y] = (byte) (speed / addCount);
             });
-            super.watchDog.array().array().print();
         }
         return this;
     }

@@ -1,9 +1,12 @@
 package planespotter.model;
 
 import planespotter.constants.Areas;
+import planespotter.controller.Controller;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Fr24Frame;
+import planespotter.dataclasses.Position;
+import planespotter.display.TreasureMap;
 import planespotter.model.io.DBWriter;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
@@ -29,7 +32,6 @@ import java.util.stream.Collectors;
  * @see Fr24Supplier
  * @see Fr24Deserializer
  * @see Areas
- * @see AreaFactory
  * @see ConcurrentLinkedDeque
  */
 public abstract class LiveData {
@@ -56,20 +58,18 @@ public abstract class LiveData {
      * @param scheduler is the Scheduler which executes tasks
      * @return Vector of Flight objects, loaded directly by a supplier
      */
-    public static Vector<Flight> directLiveData(final Scheduler scheduler) {
+    public static Vector<Flight> directLiveData(final Scheduler scheduler, final TreasureMap map) {
         var supplier = new Fr24Supplier();
         var deserializer = new Fr24Deserializer();
-        /*
-        var gui = Controller.getGUI();
-        var map = gui.getMap();
-        var bottomLeft = map.getPosition(0, map.getHeight());
-        var topRight = map.getPosition(map.getWidth(), 0);
-        var testArea = new String[] {
-                AreaFactory.createArea(Position.parsePosition(bottomLeft), Position.parsePosition(topRight))
+        // area with panel size
+        var topLeft = map.getPosition(0, 0);
+        var bottomRight = map.getPosition(map.getWidth(), map.getHeight());
+        var currentArea = new String[] {
+                Areas.newArea(topLeft, bottomRight)
         };
-        */
+
         var worldAreaRaster1D = Areas.getWorldAreaRaster1D();
-        var frames = supplier.getFrames(worldAreaRaster1D, deserializer, scheduler);
+        var frames = supplier.getFrames(currentArea, deserializer, scheduler);
         // termorary if // daten gehen verloren
         if (!maxSizeReached()) {
             insertLater(frames);

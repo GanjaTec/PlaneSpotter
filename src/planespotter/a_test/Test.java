@@ -11,13 +11,13 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import planespotter.constants.ANSIColor;
 import planespotter.constants.Images;
 import planespotter.constants.Paths;
+import planespotter.dataclasses.Bitmap;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
 import planespotter.display.models.Diagram;
 import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.model.io.DBOut;
-import planespotter.model.io.BitmapIO;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.util.Utilities;
 
@@ -28,7 +28,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
@@ -41,7 +40,12 @@ public class Test {
 
         var stats = new Statistics();
 
-        test.testSpeedChartByFlightID(1363);
+        var hm = new RasterHeatMap(1f).heat(test.testPosVector());
+        test.createTestJFrame(hm.createImage());
+
+        //test.bitmapWriteTest(new File(Paths.RESOURCE_PATH + "testBitmap.bmp"));
+
+        //test.testSpeedChartByFlightID(1363);
 /*
         var wind = stats.flightHeadwind(7326);
         var dataset = new DefaultCategoryDataset();
@@ -199,21 +203,27 @@ public class Test {
 
     private void bitmapWriteTest(File file) throws DataNotFoundException {
         var positions = new DBOut().getAllTrackingPositions();
-        var heat = new RasterHeatMap(0.01f)
+        var heat = new RasterHeatMap(0.1f)
                 .heat(positions);
 
-        BitmapIO.write(heat.getHeatMap(), file);
+        Bitmap.write(new Bitmap(heat.getHeatMap()), file);
     }
 
     private void bitmapReadTest(File file) throws FileNotFoundException {
         var heatMap = new RasterHeatMap(0.01f).getHeatMap();
-        short[][] input = BitmapIO.read(file, heatMap);
+        Bitmap input = null;
+        try {
+            input = Bitmap.read(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         int counter = 0;
         String str;
-        for (var a : input) {
-            for (var b : a) {
-                if (b != 0) {
-                    str = (counter == 0) ? ("" + b) : (", " + b);
+        assert input != null;
+        for (var arr : input.getBitmap()) {
+            for (var by : arr) {
+                if (by != 0) {
+                    str = (counter == 0) ? ("" + by) : (", " + by);
                     System.out.print(str);
                     counter++;
                 }
@@ -293,7 +303,7 @@ public class Test {
                 .forEach(s -> System.out.println(Arrays.toString(s)));
 
         var img = rectHeatMap.createImage();
-        var file = new File(Paths.RESSOURCE_PATH + "testHeatMap.bmp");
+        var file = new File(Paths.RESOURCE_PATH + "testHeatMap.bmp");
         try {
             ImageIO.write(img, "bmp", file);
         } catch (IOException e) {

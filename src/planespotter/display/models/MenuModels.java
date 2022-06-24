@@ -43,8 +43,7 @@ public final class MenuModels {
      */
     public JButton listButton(JMenuBar parent, ActionListener listener) {
         // setting up list button
-        var list = new UWPButton();
-        list.setText("List-View");
+        var list = new UWPButton("List-View");
         list.setBackground(DEFAULT_ACCENT_COLOR.get());
         list.setForeground(DEFAULT_FONT_COLOR.get());
         list.setBounds(10, 15, ((parent.getWidth()-20)/2)-5, 25);
@@ -59,8 +58,7 @@ public final class MenuModels {
      */
     public JButton mapButton(JMenuBar parent, ActionListener listener) {
         // setting up list button
-        var map = new UWPButton();
-        map.setText("Live-Map");
+        var map = new UWPButton("Live-Map");
         map.setBackground(DEFAULT_ACCENT_COLOR.get());
         map.setForeground(DEFAULT_FONT_COLOR.get());
         map.setBounds(145, 15, ((parent.getWidth()-20)/2)-5, 25);
@@ -73,10 +71,9 @@ public final class MenuModels {
     /**
      * settings button
      */
-    public JButton settingsButton(JMenuBar parent, ActionListener listener) {
+    public JButton statisticsButton(JMenuBar parent, ActionListener listener) {
         // setting up settings menu
-        var settings = new UWPButton();
-        settings.setText("Settings");
+        var settings = new UWPButton("Statistics");
         settings.setBackground(DEFAULT_ACCENT_COLOR.get());
         settings.setForeground(DEFAULT_FONT_COLOR.get());
         settings.setFont(FONT_MENU);
@@ -87,12 +84,41 @@ public final class MenuModels {
     }
 
     /**
+     * settings button
+     */
+    public JButton supplierButton(JMenuBar parent, ActionListener listener) {
+        // setting up settings menu
+        var settings = new UWPButton("Supplier");
+        settings.setBackground(DEFAULT_ACCENT_COLOR.get());
+        settings.setForeground(DEFAULT_FONT_COLOR.get());
+        settings.setFont(FONT_MENU);
+        settings.setBounds(10, 95, parent.getWidth()-20, 25);
+        settings.addActionListener(listener);
+
+        return settings;
+    }
+
+    /**
+     * settings button
+     */
+    public JButton settingsButton(JMenuBar parent, ActionListener listener) {
+        // setting up settings menu
+        var settings = new UWPButton("Settings");
+        settings.setBackground(DEFAULT_ACCENT_COLOR.get());
+        settings.setForeground(DEFAULT_FONT_COLOR.get());
+        settings.setFont(FONT_MENU);
+        settings.setBounds(10, 135, parent.getWidth()-20, 25);
+        settings.addActionListener(listener);
+
+        return settings;
+    }
+
+    /**
      * search-filter button
      */
     public JButton searchButton(JMenuBar parent, ActionListener listener) {
         // setting up search-settings menu
-        var search_settings = new UWPButton();
-        search_settings.setText("Search");
+        var search_settings = new UWPButton("Search");
         search_settings.setBackground(DEFAULT_ACCENT_COLOR.get());
         search_settings.setForeground(DEFAULT_FONT_COLOR.get());
         search_settings.setFont(FONT_MENU);

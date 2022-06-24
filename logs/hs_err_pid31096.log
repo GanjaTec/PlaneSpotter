@@ -280,7 +280,7 @@ Event: 420.961 Thread 0x000001b67fa03d10 nmethod 3689 0x000001b608305990 code [0
 Event: 420.961 Thread 0x000001b67fa03d10 3690       2       sun.nio.cs.ThreadLocalCoders::decoderFor (18 bytes)
 Event: 420.961 Thread 0x000001b67fa03d10 nmethod 3690 0x000001b608306110 code [0x000001b6083062c0, 0x000001b608306428]
 Event: 420.999 Thread 0x000001b67f9fee60 nmethod 3688 0x000001b60f40e710 code [0x000001b60f40e9e0, 0x000001b60f410410]
-Event: 420.999 Thread 0x000001b67f9fee60 3691       4       planespotter.model.SupperDB::getDBConnection (14 bytes)
+Event: 420.999 Thread 0x000001b67f9fee60 3691       4       planespotter.model.io.DBConnector::getDBConnection (14 bytes)
 Event: 421.001 Thread 0x000001b67f9fee60 nmethod 3691 0x000001b60f411510 code [0x000001b60f4116c0, 0x000001b60f4119d8]
 Event: 421.052 Thread 0x000001b67fa03d10 3692       3       java.lang.invoke.Invokers$Holder::linkToTargetMethod (9 bytes)
 Event: 421.052 Thread 0x000001b67fa03d10 nmethod 3692 0x000001b608306590 code [0x000001b608306740, 0x000001b6083069f8]

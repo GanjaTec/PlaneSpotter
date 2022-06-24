@@ -8,6 +8,7 @@ import planespotter.constants.UserSettings;
 import planespotter.constants.ViewType;
 import planespotter.display.GUI;
 import planespotter.display.GUIAdapter;
+import planespotter.display.Menus;
 import planespotter.throwables.IllegalInputException;
 import planespotter.util.Utilities;
 
@@ -26,16 +27,20 @@ import static planespotter.constants.ViewType.MAP_LIVE;
  * @author Bennet
  * @version 1.0
  *
- * record ActionHandler handles GUI-User-Interactions and calls the Controller
+ * record ActionHandler handles GUI-User-Interactions and does further actions
  */
 public record ActionHandler()
         implements ActionListener, KeyListener, JMapViewerEventListener,
                    ComponentListener, MouseListener, ItemListener, WindowListener {
 
     /**
-     * executed when a button is clicked
+     * executed when a button is clicked,
+     * executes certain actions for different buttons
      *
      * @param button is the clicked button
+     * @param ctrl is the main controller instance
+     * @param gui is the main GUI instance
+     * @param guiAdapter is the main GUIAdapter instance
      */
     public synchronized void buttonClicked(JButton button, Controller ctrl, GUI gui, GUIAdapter guiAdapter) {
         Controller.getScheduler().exec(() -> {
@@ -49,6 +54,10 @@ public record ActionHandler()
             } else if (button == gui.getContainer("mapButton")) {
                 guiAdapter.startProgressBar();
                 ctrl.show(MAP_LIVE, "Live-Map");
+            } else if (button == gui.getContainer("statsButton")) {
+                Menus.showStatisticMenu((Window) gui.getContainer("window"));
+            } else if (button == gui.getContainer("supplierButton")) {
+                Menus.showSupplierMenu((Window) gui.getContainer("window"));
             } else if (button == gui.getContainer("closeViewButton")) {
                 guiAdapter.disposeView();
                 ctrl.loadedData = null;
