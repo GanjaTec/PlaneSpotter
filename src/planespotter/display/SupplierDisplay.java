@@ -1,6 +1,7 @@
-package planespotter;
+package planespotter.display;
 
 import libs.UWPButton;
+import planespotter.SupplierMain;
 import planespotter.constants.Images;
 import planespotter.model.io.DBWriter;
 import planespotter.util.MathUtils;

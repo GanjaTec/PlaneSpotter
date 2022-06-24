@@ -222,7 +222,8 @@ public abstract class Utilities {
         return new Color(r, g, 255);
     }
 
-    public static Color colorByLevel(final int level) { // max level: 255
+    // TODO: 24.06.2022 auf BYTES umstellen
+    public static Color colorByLevel(final int level) { // max level: 255 TODO change to 127
         if (level < 0 || level > 255) {
             throw new OutOfRangeException("level out of range! (0-255)");
         }

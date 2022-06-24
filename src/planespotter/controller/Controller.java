@@ -65,6 +65,8 @@ public abstract class Controller {
     private static final GUIAdapter guiAdapter;
     // proto test-cache
     public static final LRUCache<String, Object> cache;
+    // live data loading period
+    private static final int LIVE_DATA_PERIOD_SEC = 2;
     // logger for whole program
     private static Logger logger;
 
@@ -74,7 +76,7 @@ public abstract class Controller {
         actionHandler = new ActionHandler();
         gui = new GUI(actionHandler);
         guiAdapter = new GUIAdapter(gui);
-        cache = new LRUCache<>(40);
+        cache = new LRUCache<>(40); // TODO best cache size
     }
     // boolean loading is true when something is loading
     private volatile boolean loading;
@@ -146,7 +148,7 @@ public abstract class Controller {
                             Thread.currentThread().setName("Live Loader");
                             this.loadLiveData();
                         }
-                    }, 0, 5);
+                    }, 0, LIVE_DATA_PERIOD_SEC);
 
             logger.sucsessLog("Executors initialized sucsessfully!", this);
         }
@@ -219,7 +221,7 @@ public abstract class Controller {
     public synchronized void loadLiveData() {
         this.setLoading(true);
 
-        this.liveData = LiveData.directLiveData(scheduler);
+        this.liveData = LiveData.directLiveData(scheduler, gui.getMap());
         var map = gui.getMap();
         var markers = new ArrayList<MapMarker>();
         this.liveData.stream()

@@ -1,9 +1,8 @@
-package planespotter.model;
+package planespotter.model.io;
 
 import org.sqlite.SQLiteDataSource;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DBResult;
-import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.NoAccessException;
 
 import java.sql.*;
@@ -15,13 +14,12 @@ import java.util.Arrays;
  * @author jml04
  * @version 1.1
  *
- * Class SupperDB represents a Database Manager,
+ * Class DatabaseConnector represents a Database-Connector,
  * which is able to do general actions on the database.
  * It is used to reduce redundant code in the DB-subclasses.
  * It also prepares you a nice, warm supper.
  */
-// TODO evtl klasse umbenennen, für einen aussagekräftigen namen, sowas wie Database oder DBManager
-public abstract class SupperDB {
+public abstract class DBConnector {
 	// writing boolean, true when writing
 	public static final Object dbSync;
 	// database name

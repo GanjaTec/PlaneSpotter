@@ -1,6 +1,7 @@
 package planespotter.display;
 
 import org.jetbrains.annotations.NotNull;
+import planespotter.constants.Images;
 import planespotter.constants.Paths;
 import planespotter.dataclasses.*;
 import planespotter.util.Utilities;
@@ -28,7 +29,8 @@ public final class TreePlantation {
     /**
      * default plane icon in the JTree
      */
-    private final Icon PLANE_ICON = new ImageIcon(Paths.RESSOURCE_PATH + "tree_plane_icon.png");
+    // FIXME: 24.06.2022 REPLACE WITH GOOD ICON for Info Tree Values
+    private final Icon PLANE_ICON = null;
 
     /**
      * private constructor
@@ -77,7 +79,7 @@ public final class TreePlantation {
      * @param treeNode is the root tree node
      * @return default JTree
      */
-    private  JTree defaultTree (DefaultMutableTreeNode treeNode) {
+    private  JTree defaultTree(DefaultMutableTreeNode treeNode) {
         var tree = new JTree(treeNode);
         tree.setFont(FONT_MENU);
         tree.setBackground(DEFAULT_BG_COLOR.get());
@@ -100,7 +102,7 @@ public final class TreePlantation {
      * @param list is the list of flights to be converted into a tree node
      * @return DefaultMutableTreeNode, the root node of the JTree, with all its children nodes
      */
-    public  DefaultMutableTreeNode allFlightsTreeNode (List<Flight> list) {
+    public  DefaultMutableTreeNode allFlightsTreeNode(List<Flight> list) {
         var it = list.iterator();
         // root node
         var root = new DefaultMutableTreeNode("");
@@ -201,7 +203,7 @@ public final class TreePlantation {
      * @param dp is the data point to be shown
      * @return data point info root tree node
      */
-    private  DefaultMutableTreeNode dataPointInfoTreeNode (DataPoint dp) {
+    private  DefaultMutableTreeNode dataPointInfoTreeNode(DataPoint dp) {
         int id = dp.id(),
             flightID = dp.flightID(),
             speed = Utilities.knToKmh(dp.speed()),
@@ -230,7 +232,7 @@ public final class TreePlantation {
      * creates a 'Tree' of
      * @return root, the root node of the tree
      */
-    public DefaultMutableTreeNode allAirlinesTreeNode (List<Airline> list) {
+    public DefaultMutableTreeNode allAirlinesTreeNode(List<Airline> list) {
         // list iterator for going through the list
         Iterator<Airline> it = list.iterator();
         // root node

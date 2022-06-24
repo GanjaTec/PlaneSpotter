@@ -2,6 +2,7 @@ package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.*;
+import planespotter.constants.Areas;
 import planespotter.constants.UserSettings;
 import planespotter.controller.ActionHandler;
 import planespotter.dataclasses.*;
@@ -124,6 +125,27 @@ public final class MapManager {
             newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
             viewer.addMapMarker(newMarker);
         }
+        /*var areas = Areas.getWorldAreaRaster1D();
+        var coords = new ArrayDeque<Coordinate[]>();
+        for (var a : areas) {
+            var sp = a.split("%2C");
+            var carr = new Coordinate[] {
+                    new Coordinate(0., 0.), new Coordinate(0., 0.)
+            };
+            for (int i = 0; i < sp.length; i++) {
+                double dble = Double.parseDouble(sp[i]);
+                switch (i) {
+                    case 0 -> carr[0].setLat(dble);
+                    case 1 -> carr[1].setLat(dble);
+                    case 2 -> carr[0].setLon(dble);
+                    case 3 -> carr[1].setLon(dble);
+                }
+            }
+            coords.add(carr);
+        }
+        for (var cds : coords) {
+            mapViewer.addMapRectangle(new MapRectangleImpl(cds[0], cds[1]));
+        }*/
         return viewer;
     }
 
