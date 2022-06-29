@@ -25,6 +25,7 @@ public class ADSBSupplier implements Supplier{
     @Override
     public void supply() {
         getCon();
+
         try {
             System.out.println("Reader ready? " + in.ready());
             while (this.running) {
@@ -37,6 +38,7 @@ public class ADSBSupplier implements Supplier{
                                 if (s.matches("^\\*[A-F0-9]+\\;$")) {
                                     s.replace("*","");
                                     s.replace(";","");
+                                    System.out.println(s);
                                     decode(s);
                                 }
 
@@ -117,4 +119,6 @@ public class ADSBSupplier implements Supplier{
             System.out.println("Nothing to be read on the Stream!");
         }
     }
+
+
 }
