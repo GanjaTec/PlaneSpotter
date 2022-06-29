@@ -13,7 +13,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
@@ -305,33 +304,44 @@ public abstract class Utilities {
         return new ImageIcon(scaled);
     }
 
-    public static int linesCode(final String rootPath) {
+    public static int linesCode(@NotNull final String rootPath, @NotNull String... extensions) {
         var linesCode = new AtomicInteger(0);
-        var files = allJavaFiles(rootPath);
-        while (!files.isEmpty()) {
-            try {
-                var fr = new FileReader(files.poll());
-                var br = new BufferedReader(fr);
-                br.lines().forEach(l -> {
-                    if (!l.isBlank()) {
-                        linesCode.getAndIncrement();
-                    }
-                });
-                br.close();
-                fr.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+        var allFiles = new ArrayDeque<Deque<File>>();
+
+        for (var ext : extensions) {
+            allFiles.add(allFilesWithExtension(rootPath, ext));
+        }
+
+        while (!allFiles.isEmpty()) {
+            var files = allFiles.poll();
+            while (!files.isEmpty()) {
+                try {
+                    var fr = new FileReader(files.poll());
+                    var br = new BufferedReader(fr);
+                    br.lines().forEach(l -> {
+                        if (!l.isBlank()) {
+                            linesCode.getAndIncrement();
+                        }
+                    });
+                    br.close();
+                    fr.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
         return linesCode.get();
     }
 
-    private static Deque<File> allJavaFiles(final String path) {
+    private static Deque<File> allFilesWithExtension(final String path, String extension) {
+        if (!extension.startsWith(".")) {
+            throw new InvalidDataException("extension must begin with '.'");
+        }
         var files = new ArrayDeque<File>();
         try (var paths = Files.walk(java.nio.file.Paths.get(path))) {
             paths.forEach(p -> {
                 var file = p.toFile();
-                if (!file.isDirectory() && file.getName().endsWith(".java")) {
+                if (!file.isDirectory() && file.getName().endsWith(extension)) {
                     files.add(file);
                 }
             });

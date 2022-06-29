@@ -28,6 +28,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -44,23 +45,19 @@ public class Test {
 
         var bitmapPath = Paths.RESOURCE_PATH + "newTestBitMap.bmp";
 
-        var hex = Integer.toHexString(255);
-        System.out.println(hex + "\n" + Utilities.hexStrToInt(hex));
+        System.out.println(Utilities.linesCode("", ".py", ".java", ".log"));
 
-        /*System.out.println(Utilities.hexStrToInt(Integer.toHexString(Color.WHITE.getRGB())));
-        System.out.println(Color.WHITE.getRGB());
-*/
-        var positions = test.testPosVector();/*new DBOut()
+   /*     var positions = test.testPosVector();*//*new DBOut()
                 .getTrackingsWithAirportTag("CGN")
                 .stream()
                 .map(DataPoint::pos)
-                .collect(Collectors.toCollection(Vector::new));*/
+                .collect(Collectors.toCollection(Vector::new));*//*
         assert positions != null;
         var bmp = Bitmap.fromPosVector(positions, 0.5f);
         //test.createTestJFrame(bmp.toImage());
         // bitmap write & read funktioniert
         Bitmap.writeBmp(bmp, new File(Paths.RESOURCE_PATH + "bmpBitmap.bmp"));
-
+*/
         /*if (true) {
             var bitmap = Bitmap.read(bitmapPath);
             System.out.println(bitmap.width + ", " + bitmap.heigth);

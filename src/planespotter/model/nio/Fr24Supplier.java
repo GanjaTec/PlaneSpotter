@@ -1,7 +1,7 @@
 package planespotter.model.nio;
 
 import org.jetbrains.annotations.NotNull;
-import planespotter.Fr24Collector;
+import planespotter.model.Fr24Collector;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
