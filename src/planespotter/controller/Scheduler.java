@@ -14,44 +14,77 @@ import static planespotter.constants.Configuration.*;
  * @author jml04
  * @version 1.1
  *
- * scheduler class contains all thread pool executors and is responsible for threading
+ * Scheduler class contains all thread pool executors and is responsible for threading.
+ * It is able to execute tasks once and in period,
+ * hold it static if you need only one instance, else use multiple instances
+ * which can be started and stopped parallel.
+ * @see Controller
+ * @see ThreadMaker
+ * @see ThreadPoolExecutor
+ * @see ScheduledExecutorService
+ * @see java.util.concurrent
  */
 public class Scheduler {
-    // Thread priority constants
-    public static final int LOW_PRIO = 2,
-                            MID_PRIO = 5,
-                            HIGH_PRIO = 9;
+    /**
+     * Thread priority constants:
+     *  LOW_PRIO is 2,
+     *  MID_PRIO is 5,
+     *  HIGH_PRIO is 9
+     */
+    public static final int LOW_PRIO = 2, MID_PRIO = 5, HIGH_PRIO = 9;
 
     // thread maker (thread factory)
     private static final ThreadMaker threadMaker;
+    // static initializer
+    static {
+        threadMaker = new ThreadMaker();
+    }
     // ThreadPoolExecutor for (parallel) execution of different threads
     private final ThreadPoolExecutor exe;
     // ScheduledExecutorService for scheduled execution at a fixed rate
     private final ScheduledExecutorService scheduled_exe;
-
-    static {
-        threadMaker = new ThreadMaker();
-    }
-
     // hash code
     private final int hashCode = System.identityHashCode(this);
 
     /**
-     * constructor, creates a new Scheduler
-     * all Schedulers use the same executors
-     * for thread execution
+     * constructor, creates a new Scheduler with MAX_THREADPOOL_SIZE
+     * constant as max. ThreadPool-size
      */
     public Scheduler() {
         this.exe = new ThreadPoolExecutor(CORE_POOLSIZE, MAX_THREADPOOL_SIZE,
+                                          KEEP_ALIVE_TIME, TimeUnit.SECONDS,
+                                          new SynchronousQueue<>(), threadMaker);
+        this.scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker);
+    }
+
+    /**
+     * second Scheduler constructor with specific pool size
+     *
+     * @param maxPoolsize is the max. ThreadPool-size
+     */
+    public Scheduler(int maxPoolsize) {
+        this.exe = new ThreadPoolExecutor(CORE_POOLSIZE, maxPoolsize,
                 KEEP_ALIVE_TIME, TimeUnit.SECONDS,
                 new SynchronousQueue<>(), threadMaker);
         this.scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker);
     }
 
+    /**
+     * lets the current Thread sleep for a certain amount of seconds
+     *
+     * @param seconds are the seconds to wait
+     * @return always false
+     */
     public static boolean sleepSec(long seconds) {
         return sleep(seconds * 1000);
     }
 
+    /**
+     * lets the current thread sleep for a certain amount of milliseconds
+     *
+     * @param millis are the millis to sleep
+     * @return always false
+     */
     public static boolean sleep(long millis) {
         try {
             TimeUnit.MILLISECONDS.sleep(millis);
@@ -62,7 +95,7 @@ public class Scheduler {
     }
 
     /**
-     * executed a thread with a certain name
+     * executed a thread with a certain name and period
      *
      * @param tName is the thread name
      * @param task is the Runnable to execute in period
@@ -78,6 +111,7 @@ public class Scheduler {
     }
 
     /**
+     * executes a task in a specific period
      *
      * @param task is the Runnable to execute in period
      * @param initDelay is the src delay in seconds, must be 1 or higher
@@ -95,7 +129,7 @@ public class Scheduler {
 
     /**
      * executes a single thread with custom name
-     * created thread will be watched by the WatchDog
+     * executed tasks run with timeout
      *
      * @param target is the Runnable to execute
      * @param tName is the Thread-Name
@@ -106,8 +140,6 @@ public class Scheduler {
 
     /**
      * executes a single task as a thread
-     * created thread won't be watched by the WatchDog
-     * !! thread runs without timeout !!
      *
      * @param target is the Runnable to execute
      * @param tName is the thread name
@@ -137,7 +169,7 @@ public class Scheduler {
     }
 
     /**
-     *
+     * runs a task as a new Thread, but not with the ThreadPoolExecutor
      *
      * @param target is the target runnable to execute
      * @param tName is the thread name

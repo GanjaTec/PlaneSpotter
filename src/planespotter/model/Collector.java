@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * abstract class collector is a 'Collector'-superclass.
  * a Collector represents a complete data collector which can be started and stopped.
  * Create a subclass to implement a new Collector and implement startCollecting()
- * @see planespotter.Fr24Collector
+ * @see Fr24Collector
  */
 public abstract class Collector {
     // insert period in seconds

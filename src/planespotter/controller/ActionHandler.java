@@ -23,7 +23,10 @@ import static planespotter.constants.ViewType.MAP_LIVE;
  * @author Bennet
  * @version 1.0
  *
- * record ActionHandler handles GUI-User-Interactions and does further actions
+ * record ActionHandler handles GUI-User-Interactions and does further action
+ * @see GUI
+ * @see Controller
+ * @see Scheduler
  */
 public record ActionHandler()
         implements ActionListener, KeyListener,
@@ -32,7 +35,8 @@ public record ActionHandler()
 
     /**
      * executed when a button is clicked,
-     * executes certain actions for different buttons
+     * executes certain actions for different
+     * buttons (in a new thread)
      *
      * @param button is the clicked button
      * @param ctrl is the main controller instance
@@ -114,11 +118,12 @@ public record ActionHandler()
     }
 
     /**
+     * executed when the map is clicked,
+     * used for showing information about flights
      *
-     *
-     * @param clickEvent
-     * @param ctrl
-     * @param gui
+     * @param clickEvent is the MouseEvent, produced by the click
+     * @param ctrl is the Controller instance (given by Controller.getInstance())
+     * @param gui is the GUI instance (given by Controller.getGUI())
      */
     public synchronized void mapClicked(MouseEvent clickEvent, Controller ctrl, GUI gui) {
         // TODO evtl threaded
@@ -134,24 +139,16 @@ public record ActionHandler()
     }
 
     /**
+     * executed when a key is entered on a certain component
      *
-     *
-     * @param source
-     * @param key
-     * @param gui
-     * @param guiAdapter
+     * @param source is the source component where the key was entered on
+     * @param key is the key code from the entered key
+     * @param gui is the GUI instance
+     * @param guiAdapter is the GUIAdapter instance
      */
     public void keyEntered(Object source, int key, GUI gui, GUIAdapter guiAdapter) {
         try {
-            if (source == gui.getContainer("searchTxtField")) {
-                if (key == KeyEvent.VK_ENTER) {
-                    var searchTxtField = (JTextField) gui.getContainer("searchTxtField");
-                    if (searchTxtField.hasFocus()) {
-                        var txt = searchTxtField.getText().toLowerCase();
-                        Controller.getInstance().enterText(txt);
-                    }
-                }
-            } else if (source == gui.getContainer("settingsMaxLoadTxtField")) {
+            if (source == gui.getContainer("settingsMaxLoadTxtField")) {
                 if (key == KeyEvent.VK_ENTER) {
                     var settingsMaxLoadTxtField = (JTextField) gui.getContainer("settingsMaxLoadTxtField");
                     // TODO fixen: settings fenster schließt erst nach loading
@@ -188,9 +185,9 @@ public record ActionHandler()
     }
 
     /**
+     * executed when the window is resized
      *
-     *
-     * @param gui
+     * @param gui is the GUI instance that owns all components
      */
     public void windowResized(GUI gui) {
         var window = gui.getContainer("window");
@@ -256,9 +253,9 @@ public record ActionHandler()
     /**
      *
      *
-     * @param source
-     * @param item
-     * @param gui
+     * @param source is the source component, on which the change occurred
+     * @param item is the item String
+     * @param gui is the GUI instance
      */
     private void itemChanged(Object source, String item, GUI gui) {
         if (source == gui.getContainer("searchForCmbBox")) {

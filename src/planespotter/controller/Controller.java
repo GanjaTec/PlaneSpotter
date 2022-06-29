@@ -3,11 +3,11 @@ package planespotter.controller;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import org.jetbrains.annotations.TestOnly;
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
+
 import planespotter.model.io.FileWizard;
 import planespotter.util.LRUCache;
 import planespotter.constants.UserSettings;
@@ -33,6 +33,7 @@ import java.awt.*;
 import java.nio.file.FileAlreadyExistsException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Vector;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -71,7 +72,7 @@ public abstract class Controller {
     // supplier enabled flag, indicates if the supplier is running right now
     // TODO: 28.06.2022 move to Supplier Mains
     private static boolean supplierRunning;
-
+    // static initializer
     static {
         scheduler = new Scheduler();
         mainController = new Controller() {};
@@ -107,7 +108,7 @@ public abstract class Controller {
     }
 
     /**
-     * initializes the controller
+     * initializes the controller with a Logger
      */
     private void initialize() {
         if (!this.initialized) {
@@ -120,8 +121,7 @@ public abstract class Controller {
     }
 
     /**
-     * initializes all executors
-     * :: -> method reference
+     * initializes all executors and starts  them
      */
     private void startExecutors() {
         if (!this.initialized) {
@@ -329,28 +329,15 @@ public abstract class Controller {
         if (data[0] == null || data[1] == null) {
             throw new IllegalArgumentException("Please fill all fields! (with the right params)");
         }
-        var us = new UserSettings();
-        us.setMaxLoadedData(Integer.parseInt(data[0]));
+        UserSettings.setMaxLoadedData(Integer.parseInt(data[0]));
         var map = UserSettings.getCurrentMapSource();
         switch (data[1]) {
-            case "Bing Map" -> map = us.BING_MAP;
-            case "Default Map" -> map = us.DEFAULT_MAP;
-            case "Transport Map" -> map = us.TRANSPORT_MAP;
+            case "Bing Map" -> map = UserSettings.BING_MAP;
+            case "Default Map" -> map = UserSettings.DEFAULT_MAP;
+            case "Transport Map" -> map = UserSettings.TRANSPORT_MAP;
         }
-        us.setCurrentMapSource(map);
+        UserSettings.setCurrentMapSource(map);
         gui.getMap().setTileSource(map);
-    }
-
-    /**
-     * enters the text in the textfield (use for key listener)
-     */
-    @TestOnly
-    public void enterText(String text) {
-        if (!text.isBlank()) {
-            if (text.startsWith("exit")) {
-                System.exit(2);
-            }
-        }
     }
 
     void onLiveClick(ICoordinate clickedCoord) {
@@ -406,9 +393,7 @@ public abstract class Controller {
             var logger = Controller.getLogger();
             var menu = (JPanel) gui.getContainer("menuPanel");
             // going though markers
-            MapMarker m;
-            for (int i = 0; i < mapMarkers.size(); i++) {
-                m = mapMarkers.get(i);
+            for (var m : mapMarkers) {
                 markerCoord = m.getCoordinate();
                 newMarker = new DefaultMapMarker(markerCoord, 90); // FIXME: 13.05.2022 // FIXME 19.05.2022
                 if (bbn.isMarkerHit(markerCoord, clickedCoord) && !markerHit) {
@@ -662,7 +647,7 @@ public abstract class Controller {
                 this.loadedData.addAll(flightTracking);
 
             } else if (data.length > 1) {
-                key = "tracking" + data;
+                key = "tracking" + Arrays.toString(data);
                 this.loadedData = (Vector<DataPoint>) cache.get(key);
                 if (this.loadedData == null) {
                     this.loadedData = new Vector<>();
