@@ -15,10 +15,13 @@ public class TestMain {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
+		//decimal(255);
 		ADSBSupplier adsb = new ADSBSupplier("localhost", 47806, true);
 		Scheduler s = new Scheduler();
 		s.exec(adsb, "Supplier");
 		//s.exec(()-> SupplierMain.main(null), "supllier");
+
+
 
 
 
@@ -33,6 +36,12 @@ public class TestMain {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
+	}
+
+	public static void decimal(int i) {
+		String hex = Integer.toHexString(i);
+		System.out.println(hex);
+
 	}
 
 }
