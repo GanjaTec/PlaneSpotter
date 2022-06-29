@@ -1,14 +1,12 @@
 package planespotter.controller;
 
-import org.openstreetmap.gui.jmapviewer.events.JMVCommandEvent;
-import org.openstreetmap.gui.jmapviewer.interfaces.JMapViewerEventListener;
 import planespotter.constants.Images;
 import planespotter.constants.SearchType;
 import planespotter.constants.UserSettings;
 import planespotter.constants.ViewType;
 import planespotter.display.GUI;
 import planespotter.display.GUIAdapter;
-import planespotter.display.Menus;
+import planespotter.display.models.Menus;
 import planespotter.throwables.IllegalInputException;
 import planespotter.util.Utilities;
 
@@ -17,8 +15,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 import static java.awt.event.KeyEvent.*;
-import static java.awt.event.KeyEvent.VK_PAGE_DOWN;
-import static planespotter.constants.ViewType.LIST_FLIGHT;
 import static planespotter.constants.ViewType.MAP_LIVE;
 
 /**
@@ -30,8 +26,9 @@ import static planespotter.constants.ViewType.MAP_LIVE;
  * record ActionHandler handles GUI-User-Interactions and does further actions
  */
 public record ActionHandler()
-        implements ActionListener, KeyListener, JMapViewerEventListener,
-                   ComponentListener, MouseListener, ItemListener, WindowListener {
+        implements ActionListener, KeyListener,
+                   ComponentListener, MouseListener,
+                   ItemListener, WindowListener {
 
     /**
      * executed when a button is clicked,
@@ -48,16 +45,20 @@ public record ActionHandler()
             if (button == gui.getContainer("fileButton")) {
                 guiAdapter.setViewHeadBtVisible(false);
                 guiAdapter.setFileMenuVisible(true);
+
             } else if (button == gui.getContainer("listButton")) {
                 guiAdapter.startProgressBar();
-                ctrl.show(LIST_FLIGHT, "");
+
             } else if (button == gui.getContainer("mapButton")) {
                 guiAdapter.startProgressBar();
                 ctrl.show(MAP_LIVE, "Live-Map");
+
             } else if (button == gui.getContainer("statsButton")) {
-                Menus.showStatisticMenu((Window) gui.getContainer("window"));
+                Menus.show(Menus.TYPE_STATS, (Window) gui.getContainer("window"));
+
             } else if (button == gui.getContainer("supplierButton")) {
-                Menus.showSupplierMenu((Window) gui.getContainer("window"));
+                Menus.show(Menus.TYPE_SUPPLIER, (Window) gui.getContainer("window"));
+
             } else if (button == gui.getContainer("closeViewButton")) {
                 guiAdapter.disposeView();
                 ctrl.loadedData = null;
@@ -65,27 +66,32 @@ public record ActionHandler()
                 var rightDP = (JDesktopPane) gui.getContainer("rightDP");
                 startPanel.setVisible(true);
                 rightDP.moveToFront(startPanel);
+
             } else if (button == gui.getContainer("settingsButton")) {
                 gui.getContainer("settingsDialog").setVisible(true);
                 var settingsMaxLoadTxtField = (JTextField) gui.getContainer("settingsMaxLoadTxtField");
                 settingsMaxLoadTxtField.setCaretColor(Color.YELLOW);
                 guiAdapter.requestComponentFocus(settingsMaxLoadTxtField);
+
             } else if (button == gui.getContainer("searchButton")) {
                 var searchPanel = gui.getContainer("searchPanel");
                 searchPanel.setVisible(!searchPanel.isVisible());
                 gui.getContainer("searchTxtField").setVisible(!searchPanel.isVisible());
                 guiAdapter.loadSearch(SearchType.FLIGHT);
+
             } else if (button == gui.getContainer("settingsCancelButton")) {
                 gui.getContainer("settingsDialog").setVisible(false);
+
             } else if (button == gui.getContainer("settingsConfirmButton")) {
                 var settingsMaxLoadTxtField = (JTextField) gui.getContainer("settingsMaxLoadTxtField");
                 var settingsMapTypeCmbBox = (JComboBox<String>) gui.getContainer("settingsMapTypeCmbBox");
                 ctrl.confirmSettings(settingsMaxLoadTxtField.getText(), (String) settingsMapTypeCmbBox.getSelectedItem());
                 gui.getContainer("settingsDialog").setVisible(false);
+
             } else if (button.getName().equals("loadList")) {
                 // future
                 ctrl.show(ViewType.MAP_HEATMAP, "Heat Map");
-                //this.guiAdapter.ctrl.show(MAP_SIGNIFICANCE, "Significance Map");
+
             } else if (button.getName().equals("loadMap")) {
                 try {
                     var inputs = guiAdapter.searchInput();
@@ -95,24 +101,45 @@ public record ActionHandler()
                 }
             } else if (button.getName().equals("open")) {
                 Controller.getInstance().loadFile();
+
             } else if (button.getName().equals("save")) {
                 Controller.getInstance().saveFile();
+
             } else if (button.getName().equals("back")) {
                 guiAdapter.setFileMenuVisible(false);
                 guiAdapter.setViewHeadBtVisible(true);
+
             }
         }, "Action Handler", false, Scheduler.MID_PRIO, true);
     }
 
-    public void mapClicked(MouseEvent clickEvent, Controller ctrl, GUI gui) {
+    /**
+     *
+     *
+     * @param clickEvent
+     * @param ctrl
+     * @param gui
+     */
+    public synchronized void mapClicked(MouseEvent clickEvent, Controller ctrl, GUI gui) {
+        // TODO evtl threaded
         int button = clickEvent.getButton();
         if (button == MouseEvent.BUTTON1 && gui.getCurrentViewType() != null) {
-            ctrl.mapClicked(clickEvent.getPoint());
+            var clicked = gui.getMap().getPosition(clickEvent.getPoint());
+            switch (gui.getCurrentViewType()) {
+                case MAP_LIVE -> ctrl.onLiveClick(clicked);
+                case MAP_FROMSEARCH -> ctrl.onClick_all(clicked);
+                case MAP_TRACKING -> ctrl.onTrackingClick(clicked);
+            }
         }
     }
 
     /**
-     * executed when a key is pressed
+     *
+     *
+     * @param source
+     * @param key
+     * @param gui
+     * @param guiAdapter
      */
     public void keyEntered(Object source, int key, GUI gui, GUIAdapter guiAdapter) {
         try {
@@ -128,20 +155,24 @@ public record ActionHandler()
                 if (key == KeyEvent.VK_ENTER) {
                     var settingsMaxLoadTxtField = (JTextField) gui.getContainer("settingsMaxLoadTxtField");
                     // TODO fixen: settings fenster schließt erst nach loading
-                    if (Integer.parseInt(settingsMaxLoadTxtField.getText()) >= 4) {
+                    int newMax = Integer.parseInt(settingsMaxLoadTxtField.getText());
+                    if (newMax > 0) {
                         guiAdapter.startProgressBar();
-                        new UserSettings().setMaxLoadedData(Integer.parseInt(settingsMaxLoadTxtField.getText()));
+                        UserSettings.setMaxLoadedData(newMax);
                         settingsMaxLoadTxtField.setText("");
                         gui.getContainer("settingsDialog").setVisible(false);
+                    } else {
+                        settingsMaxLoadTxtField.setText("[x > 0]");
                     }
                 }
-            } else if (source == gui.getMap()) {
+            } else if (source == gui.getContainer("window") /*&& gui.getCurrentViewType() == MAP_LIVE*/) {
+                System.out.println(key);
                 final var viewer = gui.getMap();
                 switch (key) { // FIXME läuft noch nicht
-                    case VK_PAGE_UP -> viewer.moveMap(0, 10);
-                    case VK_HOME -> viewer.moveMap(-10, 0);
-                    case VK_END -> viewer.moveMap(10, 0);
-                    case VK_PAGE_DOWN -> viewer.moveMap(0, -10);
+                    case VK_PAGE_UP, VK_W -> viewer.moveMap(0, 10);
+                    case VK_HOME, VK_A -> viewer.moveMap(-10, 0);
+                    case VK_END, VK_D -> viewer.moveMap(10, 0);
+                    case VK_PAGE_DOWN, VK_S -> viewer.moveMap(0, -10);
                 }
             } else if (source instanceof JTextField && key == VK_ENTER) {
                 var jButton = new JButton();
@@ -156,6 +187,11 @@ public record ActionHandler()
         }
     }
 
+    /**
+     *
+     *
+     * @param gui
+     */
     public void windowResized(GUI gui) {
         var window = gui.getContainer("window");
         var mainPanel = gui.getContainer("mainPanel");
@@ -217,17 +253,23 @@ public record ActionHandler()
         }
     }
 
+    /**
+     *
+     *
+     * @param source
+     * @param item
+     * @param gui
+     */
     private void itemChanged(Object source, String item, GUI gui) {
         if (source == gui.getContainer("searchForCmbBox")) {
             var guiAdapter = new GUIAdapter(gui);
             guiAdapter.clearSearch();
             guiAdapter.loadSearch(SearchType.byItemString(item));
         } else if (source == gui.getContainer("settingsMapTypeCmbBox")) {
-            var usrSettings = new UserSettings();
             switch (item) {
-                case "Bing Map" -> usrSettings.setCurrentMapSource(usrSettings.bingMap);
-                case "Default Map" -> usrSettings.setCurrentMapSource(usrSettings.tmstMap);
-                case "Transport Map" -> usrSettings.setCurrentMapSource(usrSettings.transportMap);
+                case "Bing Map" -> UserSettings.setCurrentMapSource(UserSettings.BING_MAP);
+                case "Default Map" -> UserSettings.setCurrentMapSource(UserSettings.DEFAULT_MAP);
+                case "Transport Map" ->  UserSettings.setCurrentMapSource(UserSettings.TRANSPORT_MAP);
             }
         }
     }
@@ -249,6 +291,12 @@ public record ActionHandler()
         }
     }
 
+    /**
+     * MouseListener-method,
+     * executed when the mouse is pressed
+     *
+     * @param e is the MouseEvent which contains the button
+     */
     @Override
     public void mousePressed(MouseEvent e) {
         var ctrl = Controller.getInstance();
@@ -256,6 +304,12 @@ public record ActionHandler()
         this.mapClicked(e, ctrl, gui);
     }
 
+    /**
+     * KeyListener-method,
+     * executed when a key is pressed
+     *
+     * @param e is the Key event which contains the Key-Code and Key-Char
+     */
     @Override
     public void keyPressed(KeyEvent e) {
         var src = e.getSource();
@@ -268,7 +322,10 @@ public record ActionHandler()
     }
 
     /**
-     * component listener: fits the component sizes if the window is resized
+     * ComponentListener-method,
+     * executed when a Component is resized
+     *
+     * @param e is the ComponentEvent
      */
     @Override
     public void componentResized(ComponentEvent e) {
@@ -276,14 +333,24 @@ public record ActionHandler()
         this.windowResized(gui);
     }
 
+    /**
+     * ComponentListener-method,
+     * executed when a Component is shown
+     *
+     * @param e is the ComponentEvent
+     */
     @Override
     public void componentShown(ComponentEvent e) {
         this.componentResized(e);
     }
 
-    // item listener (combo-box)
+    /**
+     * ItemListener-method,
+     * executed when a JComboBox-item is changed
+     *
+     * @param e is the ItemEvent
+     */
     @Override
-    // TODO: 06.06.2022 falsches item
     public void itemStateChanged(ItemEvent e) {
         var src = e.getSource();
         var item = (String) e.getItem();
@@ -291,20 +358,21 @@ public record ActionHandler()
         this.itemChanged(src, item, gui);
     }
 
+    /**
+     * WindowListener-method,
+     * executed on window-closing (X - button)
+     *
+     * @param e is the WindowEvent
+     */
     @Override
     public void windowClosing(WindowEvent e) {
-        Controller.getInstance().onExit(e);
+        Controller.getInstance().shutdown(false);
     }
 
-    @Override
-    public void processCommand(JMVCommandEvent e) {
-        // TODO visible Rect nehmen,
-        //  neue Area erstellen und
-        //  für diese Area Daten in die GUI laden
-    }
+    /**
+     * the following listener-methods are unused
+     */
 
-
-    // unused listeners
     @Override public void keyTyped(KeyEvent e) {}
     @Override public void keyReleased(KeyEvent e) {}
     @Override public void componentHidden(ComponentEvent e) {}

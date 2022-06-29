@@ -2,6 +2,7 @@ package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.JMapViewer;
 import org.openstreetmap.gui.jmapviewer.MemoryTileCache;
+import planespotter.controller.Controller;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -14,16 +15,16 @@ import java.awt.image.BufferedImage;
  * class TreasureMap represents a Map which extends from JMapViewer
  */
 public class TreasureMap extends JMapViewer {
+
+    public static final Object lock = new Object();
     // heat map image
     private BufferedImage heatMap = null;
 
     /**
      * treasure map constructor
-     *
-     * @param memoryTileCache is the MemoryTileCache the Map-Viewer uses
      */
-    public TreasureMap(MemoryTileCache memoryTileCache) {
-        super(memoryTileCache);
+    public TreasureMap() {
+        super(new MemoryTileCache());
     }
 
     /**
@@ -34,7 +35,7 @@ public class TreasureMap extends JMapViewer {
      */
     @Override
     protected void paintComponent(Graphics g) {
-        synchronized (this) {
+        synchronized (lock) {
             super.paintComponent(g);
         }
         /*if (this.heatMap != null) {

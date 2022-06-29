@@ -1,5 +1,6 @@
 package planespotter.statistics;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.throwables.InvalidArrayException;
 import planespotter.util.TaskWatch;
@@ -36,9 +37,27 @@ public abstract class HeatMap {
      *
      * @param gridSize
      */
-    protected HeatMap(final float gridSize) {
+    protected HeatMap(final float gridSize, boolean create) {
         this.gridSize = gridSize;
-        this.createHeatMap();
+        if (create) {
+            this.createHeatMap();
+        }
+    }
+
+    public static HeatMap nullHeatMap() {
+        return new HeatMap(3, false) {
+            @Override protected <D> HeatMap heat(D data) {
+                return null;
+            }
+
+            @Override protected BufferedImage createImage() {
+                return null;
+            }
+
+            @Override protected BufferedImage createBitmap() {
+                return null;
+            }
+        };
     }
 
     /**
@@ -90,6 +109,10 @@ public abstract class HeatMap {
             return (byte) ((int) lvl - 128);
         }
 
+    }
+
+    public static int maxValue(int[][] of) {
+        return nullHeatMap().findMax(of).max;
     }
 
     /**

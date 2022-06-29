@@ -60,7 +60,7 @@ public class DBOut extends DBConnector {
 
 		Airline a = null;
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(SQLQueries.getAirlineByTag + tag);
 				var rs = result.resultSet();
 				if (rs.next()) {
@@ -85,7 +85,7 @@ public class DBOut extends DBConnector {
 
 		try {
 			tag = Utilities.packString(tag);
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(SQLQueries.getAirlineIDByTag + tag);
 				var rs = result.resultSet();
 				if (rs.next()) {
@@ -114,7 +114,7 @@ public class DBOut extends DBConnector {
 
 		final var aps = new ArrayList<Airport>();
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var srcResult = super.queryDB(SQLQueries.getAirportByTag + Utilities.packString(srcAirport));
 				var destResult = super.queryDB(SQLQueries.getAirportByTag + Utilities.packString(destAirport));
 
@@ -162,7 +162,7 @@ public class DBOut extends DBConnector {
 		icao = Utilities.packString(icao);
 		final var ids = new ArrayDeque<Integer>();
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(SQLQueries.getPlaneIDsByICAO + icao);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -189,7 +189,7 @@ public class DBOut extends DBConnector {
 
 		Plane p = null;
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(SQLQueries.getPlaneByID + id);
 				var rs = result.resultSet();
 				if (rs.next()) {
@@ -219,7 +219,7 @@ public class DBOut extends DBConnector {
 					"JOIN planes p " +
 					"ON ((p.airline = a.ID) " +
 					"AND (p.ID = " + id + "))";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				if (rs.next()) {
@@ -250,7 +250,7 @@ public class DBOut extends DBConnector {
 
 		var planeFilter = "SELECT ID FROM planes WHERE icaonr = '" + icao + "' LIMIT 1";
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = this.queryDB(planeFilter);
 				var rs = result.resultSet();
 				int id;
@@ -285,7 +285,7 @@ public class DBOut extends DBConnector {
 		final var dps = new Vector<DataPoint>();
 		//var flight_id = Utilities.packString(flightID);
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = queryDB("SELECT * FROM tracking WHERE flightid = " + flightID);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -313,7 +313,7 @@ public class DBOut extends DBConnector {
 		final var dps = new HashMap<Integer, DataPoint>();
 		//var flight_id = Utilities.packString(flightID);
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = queryDB("SELECT * FROM tracking WHERE flightid = " + flightID);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -344,7 +344,7 @@ public class DBOut extends DBConnector {
 		var getLastTracking = "SELECT max(timestamp) FROM tracking WHERE flightid = " + id;
 		//var getLastTracking = "SELECT timestamp FROM tracking WHERE flightid == "+ id +" ORDER BY ID DESC LIMIT 1";
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = this.queryDB(getLastTracking);
 				var rs = result.resultSet();
 
@@ -365,7 +365,7 @@ public class DBOut extends DBConnector {
 		DataPoint dp = null;
 		var query =  "SELECT * FROM tracking WHERE flightid = '"+ id +"' ORDER BY ID DESC LIMIT 1";
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = queryDB(query);
 				var rs = result.resultSet();
 
@@ -392,7 +392,7 @@ public class DBOut extends DBConnector {
 		int tid = -1;
 		var getLastTrackingByFlightID =  "SELECT ID FROM tracking WHERE flightid = '"+ flightID +"' ORDER BY ID DESC LIMIT 1";
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = queryDB(getLastTrackingByFlightID);
 				var rs = result.resultSet();
 				if (rs.next()) {
@@ -429,7 +429,7 @@ public class DBOut extends DBConnector {
 
 		final var flights = new ArrayList<Flight>();
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(SQLQueries.getFlights);
 				var rs = result.resultSet();
 
@@ -460,7 +460,7 @@ public class DBOut extends DBConnector {
 		callsign = Utilities.packString(callsign);
 		final var ids = new ArrayDeque<Integer>();
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = queryDB(SQLQueries.getFlightIDsByCallsign + callsign);
 				var rs = result.resultSet();
 
@@ -485,7 +485,7 @@ public class DBOut extends DBConnector {
 			throws DataNotFoundException {
 
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = this.queryDB(SQLQueries.getLastFlightID);
 				var rs = result.resultSet();
 				int flightid;
@@ -510,7 +510,7 @@ public class DBOut extends DBConnector {
 	 */
 	public int checkFlightInDB(Fr24Frame f, int planeid) {
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = this.queryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
 				var rs = result.resultSet();
 				int flightID;
@@ -533,7 +533,7 @@ public class DBOut extends DBConnector {
 
 		final var flightIDs = new ArrayList<Integer>();
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = this.queryDB(SQLQueries.checkEndOfFlight);
 				var rs = result.resultSet();
 
@@ -553,7 +553,7 @@ public class DBOut extends DBConnector {
 
 		Flight f = null;
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				DBResult result = super.queryDB(SQLQueries.getFlightByID + id);
 				ResultSet rs = result.resultSet();
 
@@ -577,7 +577,7 @@ public class DBOut extends DBConnector {
 
 		final var flights = new ArrayList<Flight>();
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB("SELECT * FROM flights " +
 						"WHERE (ID BETWEEN " + start_id + " AND " + end_id + ") " +
 						"AND endTime IS NULL");
@@ -608,7 +608,7 @@ public class DBOut extends DBConnector {
 
 		int count = -9999;
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB("SELECT count(*) FROM " + table + " WHERE flightid == " + flightID);
 				var rs = result.resultSet();
 				count = rs.getInt(1);
@@ -627,7 +627,7 @@ public class DBOut extends DBConnector {
 		try {
 			var query = "SELECT ID FROM flights " +
 						"WHERE plane " + SQLQueries.IN_INT(ids);
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -659,7 +659,7 @@ public class DBOut extends DBConnector {
 			var query = "SELECT f.ID FROM flights f " +
 						"JOIN planes p ON ((p.ID = f.plane) AND (f.endTime IS NULL))" +
 						"WHERE (p.type " + SQLQueries.IN_STR(planetypes) + ")";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -689,7 +689,7 @@ public class DBOut extends DBConnector {
 		tailNr = Utilities.packString(tailNr);
 		final var ids = new ArrayDeque<Integer>();
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(SQLQueries.getPlaneIDByTailNr + tailNr);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -716,7 +716,7 @@ public class DBOut extends DBConnector {
 		final var allTypes = new ArrayDeque<String>();
 		try {
 			var querry = "SELECT type FROM planes WHERE type LIKE '" + planetype + "%' GROUP BY type";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(querry);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -739,7 +739,7 @@ public class DBOut extends DBConnector {
 
 		final var allCallsigns = new ArrayDeque<String>();
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB("SELECT DISTINCT callsign FROM flights WHERE callsign LIKE '" + callsign + "%'");
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -768,7 +768,7 @@ public class DBOut extends DBConnector {
 					"OR a.iatatag IS f.dest) " +
 					"AND a.iatatag IS " + Utilities.packString(tag.toUpperCase());
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				int length;
@@ -801,7 +801,7 @@ public class DBOut extends DBConnector {
 			var querry = 	"SELECT max(t.ID) AS ID, t.flightid, t.latitude, t.longitude, t.altitude, t.groundspeed, t.heading, t.squawk, t.timestamp " +
 							"FROM tracking t " +
 							"WHERE flightid " + SQLQueries.IN_INT(flightIDs) + " GROUP BY flightid";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(querry);
 				var rs = result.resultSet();
 
@@ -837,7 +837,7 @@ public class DBOut extends DBConnector {
 							"JOIN flights f ON ((f.ID = t.flightid) " +
 							"AND (f.endTime IS NULL)) " +
 							"WHERE (t.flightid BETWEEN " + from + " AND " + to + ")";*/
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(querry);
 				var rs = result.resultSet();
 				Position pos;
@@ -870,7 +870,7 @@ public class DBOut extends DBConnector {
 						"FROM flights " +
 						"WHERE endTime IS NOT NULL " +
 						"AND ID BETWEEN " + from + " AND " + to;
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -915,7 +915,7 @@ public class DBOut extends DBConnector {
 					"JOIN flights f ON ((f.ID = t.flightid) " +
 					"AND ((f.src LIKE '" + tag + "') " +
 					"OR (f.dest LIKE '" + tag + "')))"; // eventuell vor/hinterher _ einfügen
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(querry);
 				var rs = result.resultSet();
 				DataPoint dp;
@@ -948,7 +948,7 @@ public class DBOut extends DBConnector {
 		try {
 			var query = SQLQueries.SELECT(false, "f.src", "f.dest") +
 						SQLQueries.FROM("flights f");
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				int counter = 0;
@@ -980,7 +980,7 @@ public class DBOut extends DBConnector {
 		try {
 			var querry = "SELECT latitude, longitude " +
 						 "FROM tracking ";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(querry);
 				var rs = result.resultSet();
 				Position pos;
@@ -1007,7 +1007,7 @@ public class DBOut extends DBConnector {
 					 "FROM tracking t " +
 					 "WHERE (t.ID BETWEEN " + from + " AND " + to + ")";
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(querry);
 				var rs = result.resultSet();
 				Position pos;
@@ -1035,7 +1035,7 @@ public class DBOut extends DBConnector {
 		try {
 			var query = "SELECT ID " +
 						"FROM flights";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -1065,7 +1065,7 @@ public class DBOut extends DBConnector {
 						"FROM planes p " +
 						"JOIN flights f " +
 						"ON (f.plane = p.ID)";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				int[] values;
@@ -1094,7 +1094,7 @@ public class DBOut extends DBConnector {
 						"JOIN flights f " +
 						"ON (f.ID = t.flightid) AND (f.endTime IS NULL)" +
 						"GROUP BY t.flightid";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -1116,7 +1116,7 @@ public class DBOut extends DBConnector {
 			var query = "SELECT plane, flightnr " +
 						"FROM flights " +
 						"WHERE endTime IS NULL";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -1138,7 +1138,7 @@ public class DBOut extends DBConnector {
 			var query = "SELECT ID, flightnr " +
 						"FROM flights " +
 						"WHERE (endTime IS NULL)";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -1161,7 +1161,7 @@ public class DBOut extends DBConnector {
 						"FROM flights " +
 						"WHERE (ID " + SQLQueries.IN_INT(flightIDs) + ") " +
 						"AND (endTime IS NULL)";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				String fnr;
@@ -1188,7 +1188,7 @@ public class DBOut extends DBConnector {
 		try {
 			var query = "SELECT count(ID) AS size " +
 						"FROM " + table;
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				if (rs.next()) {
@@ -1213,7 +1213,7 @@ public class DBOut extends DBConnector {
 			var query = "SELECT icaonr " +
 						"FROM planes " +
 						"WHERE ID " + SQLQueries.IN_INT(planeIDs);
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -1234,7 +1234,7 @@ public class DBOut extends DBConnector {
 		try {
 			var query = "SELECT ID " +
 						"FROM planes";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -1254,7 +1254,7 @@ public class DBOut extends DBConnector {
 		var map = new HashMap<String, Integer>();
 		try {
 			var query = "SELECT icaotag, ID FROM airlines";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -1277,7 +1277,7 @@ public class DBOut extends DBConnector {
 		var map = new HashMap<String, Integer>();
 		try {
 			var query = "SELECT icaonr, ID FROM planes";
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -1300,7 +1300,7 @@ public class DBOut extends DBConnector {
 		var tags = new ArrayDeque<String>();
 		var query = "SELECT src, dest FROM flights";
 		 try {
-			 synchronized (dbSync) {
+			 synchronized (DB_SYNC) {
 				 var result = super.queryDB(query);
 				 var rs = result.resultSet();
 				 while (rs.next()) {
@@ -1328,7 +1328,7 @@ public class DBOut extends DBConnector {
 					"ON ((p.airline = a.ID) " +
 					"AND (a.ID != 1))";
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
@@ -1355,7 +1355,7 @@ public class DBOut extends DBConnector {
 				"ON (a.name LIKE '%" + name + "%')" +
 				"AND (a.iatatag IS f.src OR a.iatatag IS f.dest)";
 		try {
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				int length;
@@ -1382,7 +1382,7 @@ public class DBOut extends DBConnector {
 		try {
 			var query = "SELECT * FROM tracking " +
 						"WHERE flightid " + SQLQueries.IN_INT(ids);
-			synchronized (dbSync) {
+			synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				DataPoint dp;

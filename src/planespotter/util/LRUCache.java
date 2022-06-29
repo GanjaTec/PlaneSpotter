@@ -2,6 +2,7 @@ package planespotter.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
+import planespotter.util.math.MathUtils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

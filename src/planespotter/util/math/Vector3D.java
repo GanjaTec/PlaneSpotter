@@ -1,4 +1,6 @@
-package planespotter.util;
+package planespotter.util.math;
+
+import planespotter.util.math.Vector2D;
 
 public class Vector3D extends Vector2D {
 

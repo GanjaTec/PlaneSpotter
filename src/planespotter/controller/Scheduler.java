@@ -56,7 +56,7 @@ public class Scheduler {
         try {
             TimeUnit.MILLISECONDS.sleep(millis);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            System.err.println("Scheduler: sleep interrupted!");
         }
         return false;
     }

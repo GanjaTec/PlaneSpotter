@@ -4,7 +4,9 @@ import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.*;
 import planespotter.constants.Areas;
 import planespotter.constants.UserSettings;
+import planespotter.constants.ViewType;
 import planespotter.controller.ActionHandler;
+import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
 import planespotter.display.models.HeatMapRectangle;
 import planespotter.util.Utilities;
@@ -44,7 +46,6 @@ public final class MapManager {
         this.mapViewer = this.defaultMapViewer(defaultMapPanel);
         this.mapViewer.addKeyListener(listener);
         this.mapViewer.addMouseListener(listener);
-        this.mapViewer.addJMVListener(listener);
     }
 
     /**
@@ -195,7 +196,7 @@ public final class MapManager {
      * @return a map prototype (TreasureMap)
      */
     public TreasureMap defaultMapViewer(JPanel parent) {
-        var viewer = new TreasureMap(new MemoryTileCache());
+        var viewer = new TreasureMap();
         var mapController = new DefaultMapController(viewer);
         var mapType = UserSettings.getCurrentMapSource();
         mapController.setMovementMouseButton(1);
@@ -247,7 +248,8 @@ public final class MapManager {
      *
      * @param map is the map to be set
      */
-    public void recieveMap(TreasureMap map, String text) {
+    public void recieveMap(TreasureMap map, String text, ViewType viewType) {
+        Controller.getGUI().setCurrentViewType(viewType);
         // adding MapViewer to panel (needed?)
         this.mapViewer = map;
         var mapPanel = gui.getContainer("mapPanel");

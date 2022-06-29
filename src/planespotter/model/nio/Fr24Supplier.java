@@ -1,6 +1,7 @@
 package planespotter.model.nio;
 
 import org.jetbrains.annotations.NotNull;
+import planespotter.Fr24Collector;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
@@ -33,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * it is able to collect different types of flight-data Frames (Fr24Frames),
  * it contains methods to collect data and some to write data
  * to the database.
- * @see planespotter.SupplierMain
+ * @see Fr24Collector
  * @see planespotter.a_test.TestMain
  */
 public class Fr24Supplier implements Supplier {
@@ -117,8 +118,10 @@ public class Fr24Supplier implements Supplier {
 
 		var ready = new AtomicBoolean(false);
 		var counter = new AtomicInteger(areas.length - 1);
-		for (var area : areas) {
-			scheduler.exec(() -> {
+
+		scheduler.exec(() -> {
+			for (var area : areas) {
+
 				var supplier = new Fr24Supplier(0, area);
 				try {
 					var data = deserializer.deserialize(supplier.sendRequest());
@@ -132,8 +135,8 @@ public class Fr24Supplier implements Supplier {
 					ready.set(true);
 				}
 				counter.getAndDecrement();
-			}, "Fr24-Deserializer");
-		}
+			}
+		}, "Fr24-Deserializer", false, Scheduler.MID_PRIO, true);
 		while (!ready.get()) {
 			System.out.print(":");
 			try {

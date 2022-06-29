@@ -7,7 +7,7 @@ import planespotter.dataclasses.Airport;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
 import planespotter.throwables.InvalidDataException;
-import planespotter.util.Vector2D;
+import planespotter.util.math.Vector2D;
 import planespotter.model.io.DBOut;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.util.Utilities;
@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static planespotter.util.MathUtils.*;
+import static planespotter.util.math.MathUtils.*;
 
 /**
  * @name Statistics

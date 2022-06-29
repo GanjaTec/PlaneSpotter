@@ -1,7 +1,11 @@
-package planespotter.util;
+package planespotter.util.math;
 
 import org.jetbrains.annotations.Range;
+import planespotter.util.math.Vector2D;
+import planespotter.util.math.Vector3D;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.StrictMath.*;
@@ -17,14 +21,18 @@ public abstract class MathUtils {
 
     public static final double LAT_TO_KM_MULTIPLIER = 111.3;
 
-    public static double abs(Vector2D vector) {
-        return (vector instanceof Vector3D v3d)
+    public static double abs(Vector2D v2d) {
+        return (v2d instanceof Vector3D v3d)
                 ? sqrt(x2(v3d.x) + x2(v3d.y) + x2(v3d.z))
-                : sqrt(x2(vector.x) + x2(vector.y));
+                : sqrt(x2(v2d.x) + x2(v2d.y));
     }
 
     public static double x2(double number) {
         return pow(number, 2);
+    }
+
+    public static double x3(double number) {
+        return pow(number, 3);
     }
 
     public static double latDegreeToKm(double lat) {
@@ -53,14 +61,16 @@ public abstract class MathUtils {
         if (divisor == 0.) {
             throw new ArithmeticException("Divisor may not be null!");
         }
-        return a / divisor;
+        return StrictMath.floorDiv(a, divisor);
     }
 
     public static double divide(double a, double divisor) {
         if (divisor == 0.) {
             throw new ArithmeticException("Divisor may not be null!");
         }
-        return a / divisor;
+        return new BigDecimal(a)
+                .divide(new BigDecimal(divisor), RoundingMode.DOWN)
+                .doubleValue();
     }
 
     /**
