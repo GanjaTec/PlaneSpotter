@@ -5,8 +5,10 @@ package planespotter.constants;
  * @author jml04
  * @version 1.0
  *
+ * @desription
  * ANSI-colors for System.out.println
- * note: these colors don't work on every console
+ * note: these colors don't work on every console and might create artifacts on those where it doesnt work, its heavily dependent on the IDE or Shell you use
+ * tested on IntelliJ (Wwrking) and Eclipse (not working)
  */
 public enum ANSIColor {
     GREEN("\u001B[92m"),

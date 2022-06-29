@@ -1,7 +1,8 @@
-package planespotter.model.nio;
+package planespotter.unused;
 
 import com.google.gson.Gson;
 import planespotter.dataclasses.Fr24Frame;
+import planespotter.model.nio.AbstractDeserializer;
 
 import java.net.http.HttpResponse;
 import java.util.ArrayList;

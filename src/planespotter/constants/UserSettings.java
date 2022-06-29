@@ -10,7 +10,7 @@ import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
  * @name UserSettings
  * @author jml04
  * @version 1.0
- *
+ * @description
  * class UserSettings contains the user settings which can be edited in the settings menu
  */
 public class UserSettings {

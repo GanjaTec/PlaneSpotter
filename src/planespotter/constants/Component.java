@@ -4,6 +4,7 @@ package planespotter.constants;
  * @name Component
  * @author jml04
  * @version 1.0
+ * @description
  *
  * enum Component contains all Components with names
  * the names are keys for the component-HashMap in GUI

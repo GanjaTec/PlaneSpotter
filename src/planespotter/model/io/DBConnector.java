@@ -9,15 +9,17 @@ import java.sql.*;
 import java.util.Arrays;
 
 /**
- * @name SupperDB
+ * @name DBConnector
  * @author Lukas
  * @author jml04
  * @version 1.1
  *
+ * @description
  * Class DatabaseConnector represents a Database-Connector,
  * which is able to do general actions on the database.
  * It is used to reduce redundant code in the DB-subclasses.
  * It also prepares you a nice, warm supper.
+ *
  */
 public abstract class DBConnector {
 	// writing boolean, true when writing
@@ -80,10 +82,10 @@ public abstract class DBConnector {
 	public static int[] executeSQL(PreparedStatement pstmt)
 			throws SQLException {
 
-		var ids = new int[0];
+		int[] ids = new int[0];
 		pstmt.setFetchSize(1000); // TODO beste?
 		pstmt.executeBatch();
-		var generatedKeys = pstmt.getGeneratedKeys();
+		ResultSet generatedKeys = pstmt.getGeneratedKeys();
 		int rowID, length;
 		while (generatedKeys.next()) {
 			rowID = generatedKeys.getInt(1);
@@ -106,7 +108,7 @@ public abstract class DBConnector {
 	public static void executeSQL(Connection conn, PreparedStatement... stmts)
 			throws SQLException {
 
-		for (var stmt : stmts) {
+		for (PreparedStatement stmt : stmts) {
 			stmt.setFetchSize(2000); // TODO beste?
 			stmt.executeBatch();
 			stmt.closeOnCompletion();

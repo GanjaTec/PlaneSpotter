@@ -1,8 +1,8 @@
 package planespotter.model.nio;
 
 import planespotter.dataclasses.Frame;
+import planespotter.unused.Deserializer;
 
-import java.net.http.HttpResponse;
 import java.util.Collection;
 
 /**
@@ -15,7 +15,7 @@ import java.util.Collection;
  *
  * Interface AbstractDeserializer repsesents an abstract Deserializer which has one deserialize-Method
  * @see Fr24Deserializer
- * @see planespotter.model.nio.Deserializer
+ * @see Deserializer
  * for implementations
  * @indev
  */
