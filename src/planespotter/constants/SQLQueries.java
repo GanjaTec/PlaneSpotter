@@ -13,10 +13,9 @@ import java.util.Deque;
  *
  *
  * This Class is used to hold All SQL Querries that we need to use
- * Please insert your Querry depending on what they do, Mainly Insertion and Selection
+ * Please insert your Query depending on what they do, Mainly Insertion and Selection
  * 
  * TODO Sort Querrys by Table
- * 
  */
 public final class SQLQueries {
 	

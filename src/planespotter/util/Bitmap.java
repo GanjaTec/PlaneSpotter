@@ -1,13 +1,21 @@
-package planespotter.dataclasses;
+package planespotter.util;
 
+import planespotter.dataclasses.Position;
+import planespotter.statistics.HeatMap;
 import planespotter.throwables.InvalidArrayException;
 
+import javax.imageio.ImageIO;
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.FileImageOutputStream;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Vector;
+
+import static planespotter.util.math.MathUtils.divide;
 
 // TODO: 24.06.2022 MOVE BitmapIO methods to this class
 public final class Bitmap {
@@ -24,6 +32,56 @@ public final class Bitmap {
         this.heigth = bitmap[0].length;
     }
 
+    public static Bitmap fromInt2d(int[][] ints2d) {
+        int width = ints2d.length;
+        if (width == 0) {
+            throw new InvalidArrayException("input array is empty, width out of range!");
+        }
+        int height = ints2d[0].length;
+        if (height == 0) {
+            throw new InvalidArrayException("input array is empty, height out of range!");
+        }
+
+        int max = HeatMap.maxValue(ints2d); // TODO move method to Utilities or MathUtils
+        byte[][] bytes = new byte[width][height];
+        int level;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                level = ints2d[x][y];
+                bytes[x][y] = Utilities.toByteLevel(level, max);
+            }
+        }
+        return new Bitmap(bytes);
+    }
+
+    public static Bitmap fromPosVector(Vector<Position> positions, float gridSize) {
+        //gridSize = (gridSize == 1) ? (float) 0.9972 : gridSize; // FIXME: 25.06.2022
+
+        int width = (int) divide(360., gridSize) + 1;
+        int height = (int) divide(180., gridSize) + 1;
+        int[][] ints2d = new int[width][height];
+
+        Arrays.stream(ints2d)
+                .forEach(arr -> Arrays.fill(arr, 0));
+
+        int posX, posY;
+        for (var pos : positions) {
+            posX = (int) divide(pos.lon() + 180, gridSize); // FIXME: 26.06.2022
+            posY = (int) divide(pos.lat() + 90, gridSize); // FIXME: 26.06.2022
+            // if ?
+            if (posX < width && posY < height) {
+                ints2d[posX][posY]++;
+            } else {
+                ints2d[posX - 1][posY - 1]++;
+            }
+        }
+        return Bitmap.fromInt2d(ints2d);
+    }
+
+    public static Bitmap fromHeatMap(HeatMap heatMap) {
+        return new Bitmap(heatMap.getHeatMap());
+    }
+
     /**
      *
      *
@@ -36,8 +94,8 @@ public final class Bitmap {
         try {
             byte[] bytes = bitmap.getByteArray();
             var outputStream = new FileImageOutputStream(file);
-            outputStream.write(bitmap.width);
-            outputStream.write(bitmap.heigth);
+            outputStream.writeInt(bitmap.width);
+            outputStream.writeInt(bitmap.heigth);
             outputStream.write(bytes);
             outputStream.close();
         } catch (IOException e) {
@@ -58,6 +116,13 @@ public final class Bitmap {
      */
     public static File write(Bitmap bitmap, String filename) {
         return write(bitmap, new File(filename));
+    }
+
+    public static File writeBmp(Bitmap bitmap, File file)
+            throws IOException {
+
+        ImageIO.write(bitmap.toImage(), "BMP", file);
+        return file;
     }
 
     /**
@@ -106,6 +171,26 @@ public final class Bitmap {
             throws IOException {
 
         return read(new File(filename));
+    }
+
+    public BufferedImage toImage() {
+        var img = new BufferedImage(this.width, this.heigth, BufferedImage.TYPE_INT_RGB);
+        short lvl;
+        //var hexStr = new StringBuilder();
+        for (int x = 0; x < this.width; x++) {
+            for (int y = 0; y < this.heigth; y++) {
+                lvl = (short) (this.bitmap[x][y] + 128);
+                //hexStr.append(Utilities.decToHex(lvl)).append(Utilities.decToHex(lvl)).append(Utilities.decToHex(lvl));
+                //img.setRGB(x, y, (int) (lvl * MathUtils.x3(16))); // FIXME: 25.06.2022 right color code!
+                //img.setRGB(x, y, (lvl == 0) ? Utilities.hexStrToInt(Integer.toHexString(Color.WHITE.getRGB())) : Utilities.hexStrToInt(Integer.toHexString(Color.BLACK.getRGB())));
+                var color = new Color(lvl, lvl, lvl);
+                img.setRGB(x, y, (lvl <= 0) ? Color.BLACK.getRGB() : color.getRGB());
+                // TODO: 27.06.2022
+                var graphics = img.createGraphics();
+                graphics.rotate(StrictMath.toRadians(180));
+            }
+        }
+        return img;
     }
 
     public byte[] getByteArray() {

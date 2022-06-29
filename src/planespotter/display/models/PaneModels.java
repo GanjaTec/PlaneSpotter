@@ -1,19 +1,9 @@
 package planespotter.display.models;
 
-import libs.UWPButton;
-import planespotter.SupplierMain;
 import planespotter.constants.Images;
-import planespotter.constants.Paths;
 import planespotter.controller.ActionHandler;
-import planespotter.model.io.DBWriter;
 
 import javax.swing.*;
-
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.DefaultColor.*;
@@ -35,6 +25,7 @@ public final class PaneModels {
         window.setLocationRelativeTo(null);
         window.addComponentListener(listener);
         window.addWindowListener(listener);
+        //window.addKeyListener(listener);
         window.setIconImage(FLYING_PLANE_ICON.get().getImage());
         window.setVisible(false);
         return window;

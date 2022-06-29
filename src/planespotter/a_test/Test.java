@@ -11,7 +11,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import planespotter.constants.ANSIColor;
 import planespotter.constants.Images;
 import planespotter.constants.Paths;
-import planespotter.dataclasses.Bitmap;
+import planespotter.util.Bitmap;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
 import planespotter.display.models.Diagram;
@@ -27,8 +27,10 @@ import javax.swing.Timer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.file.FileSystems;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @TestOnly
@@ -40,12 +42,41 @@ public class Test {
 
         var stats = new Statistics();
 
-        var hm = new RasterHeatMap(1f).heat(test.testPosVector());
-        test.createTestJFrame(hm.createImage());
+        var bitmapPath = Paths.RESOURCE_PATH + "newTestBitMap.bmp";
 
-        //test.bitmapWriteTest(new File(Paths.RESOURCE_PATH + "testBitmap.bmp"));
+        var hex = Integer.toHexString(255);
+        System.out.println(hex + "\n" + Utilities.hexStrToInt(hex));
 
-        //test.testSpeedChartByFlightID(1363);
+        /*System.out.println(Utilities.hexStrToInt(Integer.toHexString(Color.WHITE.getRGB())));
+        System.out.println(Color.WHITE.getRGB());
+*/
+        var positions = test.testPosVector();/*new DBOut()
+                .getTrackingsWithAirportTag("CGN")
+                .stream()
+                .map(DataPoint::pos)
+                .collect(Collectors.toCollection(Vector::new));*/
+        assert positions != null;
+        var bmp = Bitmap.fromPosVector(positions, 0.5f);
+        //test.createTestJFrame(bmp.toImage());
+        // bitmap write & read funktioniert
+        Bitmap.writeBmp(bmp, new File(Paths.RESOURCE_PATH + "bmpBitmap.bmp"));
+
+        /*if (true) {
+            var bitmap = Bitmap.read(bitmapPath);
+            System.out.println(bitmap.width + ", " + bitmap.heigth);
+            System.out.println("Read Bitmap equals written Bitmap? '" + bitmap.equals(bmp) + "'");
+        } else {
+            Bitmap.write(bmp, bitmapPath);
+        }*/
+
+
+       /* int a = 23;
+        int b = 10;
+        // 23 - 10 / a plus Komplement von b plus 1
+        int erg = a + ~b + 1;
+        System.out.println(erg);*/
+
+
 /*
         var wind = stats.flightHeadwind(7326);
         var dataset = new DefaultCategoryDataset();

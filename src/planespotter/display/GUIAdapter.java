@@ -11,6 +11,7 @@ import planespotter.util.Utilities;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
 
 import static planespotter.constants.GUIConstants.*;
 
@@ -264,23 +265,22 @@ public final class GUIAdapter {
 
         int length = inputFields.length;
         for (int i = 0; i < length; i++) {
+            // checking strings for illegal characters
+            // or expressions before returning them
             inputFields[i] = Utilities.checkString(inputFields[i]);
         }
         return inputFields;
     }
 
     public void clearSearch() {
-        var comps = new JTextField[] {
-                gui.search_planetype,
-                gui.search_tailNr,
-                gui.search_planeID,
-                gui.search_callsign,
-                gui.search_flightID,
-                gui.search_icao
-        };
-        for (var c : comps) {
-            c.setText("");
-        }
+        final var blank = "";
+        gui.allSearchModels().stream()
+                .filter(Objects::nonNull)
+                .forEach(models -> models.forEach(m -> {
+                    if (m instanceof JTextField jtf) {
+                        jtf.setText(blank);
+                    }
+                }));
 
     }
 

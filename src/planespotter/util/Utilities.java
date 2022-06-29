@@ -13,11 +13,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import static planespotter.util.math.MathUtils.divide;
 
 /**
  * @name Utilities
@@ -41,6 +44,51 @@ public abstract class Utilities {
             return true;
         }
         return false;
+    }
+
+    public static long decToHex(int dec) {
+        return Long.parseLong(Integer.toHexString(dec), 16);
+    }
+
+    public static final Map<Character, Integer> charIntValues = new HashMap<>(16);
+    static {
+        charIntValues.put('0', 0x000000);
+        charIntValues.put('1', 0x000001);
+        charIntValues.put('2', 0x000002);
+        charIntValues.put('3', 0x000003);
+        charIntValues.put('4', 0x000004);
+        charIntValues.put('5', 0x000005);
+        charIntValues.put('6', 0x000006);
+        charIntValues.put('7', 0x000007);
+        charIntValues.put('8', 0x000008);
+        charIntValues.put('9', 0x000009);
+        charIntValues.put('a', 0x00000A);
+        charIntValues.put('b', 0x00000B);
+        charIntValues.put('c', 0x00000C);
+        charIntValues.put('d', 0x00000D);
+        charIntValues.put('e', 0x00000E);
+        charIntValues.put('f', 0x00000F);
+    }
+
+    public static int hexStrToInt(String hexStr) {
+        char[] chars = hexStr.toCharArray();
+        int pow = 0x000000,
+            hex = 0x000000,
+            num;
+        for (char c : chars) {
+            num = charIntValues.get(c);
+            hex += num * StrictMath.pow(0x000010, pow);
+            pow += 0x000001;
+        }
+        return hex;
+    }
+
+    public static byte toByteLevel(int lvl, int max) {
+        if (lvl == 0 || max == 0) {
+            return 0;
+        }
+        float lvlPercentage = (float) divide((float) lvl, max);
+        return (byte) ((255 * lvlPercentage) - 128);
     }
 
     /**

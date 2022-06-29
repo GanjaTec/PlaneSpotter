@@ -230,10 +230,6 @@ public class GUI implements Runnable {
         menuPanel.add(menubar);
         this.getContainer("startPanel").add(this.getContainer("startLabel"));
         var viewHeadPanel = this.getContainer("viewHeadPanel");
-        /*for (var bt : this.fileMenu) {
-            bt.addActionListener(this.actionHandler);
-            this.pViewHead.add(bt);
-        }*/
         viewHeadPanel.add(this.getContainer("fileBackButton"));
         viewHeadPanel.add(this.getContainer("fileSaveButton"));
         viewHeadPanel.add(this.getContainer("fileOpenButton"));
@@ -260,8 +256,6 @@ public class GUI implements Runnable {
         settingsDialog.add(this.getContainer("settingsMapTypeCmbBox"));
         settingsDialog.add(this.getContainer("settingsCancelButton"));
         settingsDialog.add(this.getContainer("settingsConfirmButton"));
-        /*rightDP.setVisible(true);
-        rightDP.setVisible(true);*/
         var mainPanel = this.getContainer("mainPanel");
         mainPanel.add(titlePanel);
         // adding desktop panes to mainpanel
@@ -289,8 +283,8 @@ public class GUI implements Runnable {
     /**
      * @return all search models in a list
      */
-    ArrayList<List<JComponent>> allSearchModels() {
-        var allSearchComps = new ArrayList<List<JComponent>>();
+     Collection<List<JComponent>> allSearchModels() {
+        var allSearchComps = new LinkedList<List<JComponent>>();
         allSearchComps.add(this.flightSearch);
         allSearchComps.add(this.planeSearch);
         allSearchComps.add(this.airlineSearch);

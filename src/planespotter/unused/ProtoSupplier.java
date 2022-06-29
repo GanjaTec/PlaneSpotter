@@ -84,7 +84,7 @@ public class ProtoSupplier extends DBConnector implements Runnable {
 
         var writerThread = new Thread(() -> {
             try {
-                var conn = getDBConnection();
+                var conn = getConnection();
                 /*var newPlanes = this.insertPlanes(conn, frames, dbOut);
                 var newFlights = this.insertFlights(conn, frames, dbOut, newPlanes);
                 this.insertTracking(conn, frames, dbOut, newFlights);
