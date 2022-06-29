@@ -4,7 +4,7 @@ package planespotter.constants;
  * @name ViewType
  * @author jml04
  * @version 1.0
- *
+ * @description
  * enum view type contains view types and is used to
  * work with the current type of view
  */

@@ -11,7 +11,7 @@ import static planespotter.constants.DefaultColor.DEFAULT_BORDER_COLOR;
  * @name GUIConstants
  * @author jml04
  * @version 1.0
- *
+ * @description
  * class GUIConstants contains all constants needed in the display package
  */
 public final class GUIConstants {

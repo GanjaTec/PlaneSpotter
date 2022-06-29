@@ -6,7 +6,7 @@ import javax.swing.*;
  * @name Images
  * @author jml04
  * @version 1.0
- *
+ * @description
  * enum Images contains all images for the GUI
  */
 public enum Images {

@@ -4,7 +4,7 @@ package planespotter.constants;
  * @name Warning
  * @author jml04
  * @version 1.0
- *
+ * @description
  * enum Warning contains all Warnings with warning-message-strings
  */
 public enum Warning {

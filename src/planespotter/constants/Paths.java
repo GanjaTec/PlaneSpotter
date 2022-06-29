@@ -6,7 +6,7 @@ package planespotter.constants;
  * @author Bennet
  * @author Lukas
  * @version 1.0
- *
+ * @description
  * Contains all (absolute) paths to various resource,
  * root directory is the project directory
  */

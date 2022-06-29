@@ -6,7 +6,7 @@ import java.awt.*;
  * @name DefaultColor
  * @author jml04
  * @version 1.0
- *
+ * @description
  * enum DefaultColor contains all default GUI-Colors (AWT-Colors)
  */
 public enum DefaultColor {

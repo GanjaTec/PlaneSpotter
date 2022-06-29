@@ -7,6 +7,9 @@ import java.sql.*;
 import planespotter.dataclasses.Fr24Frame;
 
 
+/**
+ *
+ */
 public class DBIn extends DBConnector {
 
 	public int insertPlane(Fr24Frame f, int airlineID) {
@@ -15,7 +18,7 @@ public class DBIn extends DBConnector {
 				Connection conn = DBConnector.getConnection();
 				//TODO Airline ID anfrage
 				// insert into planes
-				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.planequerry, Statement.RETURN_GENERATED_KEYS);
+				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.PLANEQUERRY, Statement.RETURN_GENERATED_KEYS);
 				pstmt.setString(1, f.getIcaoAdr());
 				pstmt.setString(2, f.getTailnr());
 				pstmt.setString(3, f.getRegistration());
@@ -41,7 +44,7 @@ public class DBIn extends DBConnector {
 		try {
 			synchronized (DB_SYNC) {
 				Connection conn = getConnection();
-				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.flightquerry, Statement.RETURN_GENERATED_KEYS);
+				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.FLIGHTQUERRY, Statement.RETURN_GENERATED_KEYS);
 
 				pstmt.setInt(1, planeID);
 				pstmt.setString(2, f.getSrcAirport());
@@ -70,7 +73,7 @@ public class DBIn extends DBConnector {
 			synchronized (DB_SYNC) {
 				Connection conn = DBConnector.getConnection();
 				// insert into tracking
-				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.trackingquerry);
+				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.TRACKINGQUERRY);
 				pstmt.setInt(1, id);
 				pstmt.setDouble(2, f.getLat());
 				pstmt.setDouble(3, f.getLon());
@@ -92,7 +95,7 @@ public class DBIn extends DBConnector {
 			synchronized (DB_SYNC) {
 				Connection conn = DBConnector.getConnection();
 
-				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.updateFlightEnd);
+				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.UPDATE_FLIGHT_END);
 				pstmt.setInt(2, id);
 				pstmt.setLong(1, timestamp);
 				pstmt.executeUpdate();

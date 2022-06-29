@@ -16,9 +16,9 @@ public class ADSBSupplier implements Supplier{
     private boolean running;
 
     public ADSBSupplier(String ip, int port, boolean run) {
-    this.host = ip;
-    this.port = port;
-    this.running = run;
+        this.host = ip;
+        this.port = port;
+        this.running = run;
 
     }
 
@@ -32,21 +32,11 @@ public class ADSBSupplier implements Supplier{
                 while (in.ready()) {
                     //String encoded = in.readLine();
                     in.lines()
-                            //.map(s -> s.replace("*", "").replace(";", ""))
-                            .forEach(s -> {
-                                System.out.println(s);
-                                if (s.matches("^\\*[A-F0-9]+\\;$")) {
-                                    s.replace("*","");
-                                    s.replace(";","");
-                                    System.out.println(s);
-                                    decode(s);
-                                }
+                            .filter(s -> s.matches("^\\*[A-F0-9]+\\;$"))
+                            .map(s -> s.replace("*", "").replace(";", ""))
+                            .forEach(this::decode);
 
 
-                            });
-
-                    //System.out.println(encoded);
-                    //decode(encoded);
                     toFrame();
                     groupFrames();
 
