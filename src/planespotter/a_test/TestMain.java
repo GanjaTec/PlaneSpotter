@@ -1,14 +1,8 @@
 package planespotter.a_test;
 
-import java.security.AccessController;
-import java.util.concurrent.TimeUnit;
-
 import org.jetbrains.annotations.TestOnly;
-import org.junit.jupiter.api.Test;
-import planespotter.SupplierMain;
 import planespotter.controller.Scheduler;
 import planespotter.model.nio.ADSBSupplier;
-import planespotter.model.nio.Paralel;
 
 @TestOnly
 public class TestMain {

@@ -1,7 +1,6 @@
 package planespotter.statistics;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.Position;
 import planespotter.display.TreasureMap;
@@ -23,7 +22,7 @@ import java.util.Vector;
 public class RasterHeatMap extends HeatMap {
 
     public RasterHeatMap(float gridSize) {
-        super(gridSize);
+        super(gridSize, true);
     }
 
     /**

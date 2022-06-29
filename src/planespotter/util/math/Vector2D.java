@@ -1,10 +1,10 @@
-package planespotter.util;
+package planespotter.util.math;
 
 
 import planespotter.dataclasses.Position;
 
-import static planespotter.util.MathUtils.latDegreeToKm;
-import static planespotter.util.MathUtils.lonDegreeToKm;
+import static planespotter.util.math.MathUtils.latDegreeToKm;
+import static planespotter.util.math.MathUtils.lonDegreeToKm;
 
 public class Vector2D {
 

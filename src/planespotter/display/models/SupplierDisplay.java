@@ -1,22 +1,24 @@
-package planespotter.display;
+package planespotter.display.models;
 
 import libs.UWPButton;
-import planespotter.SupplierMain;
+import planespotter.Fr24Collector;
 import planespotter.constants.Images;
+import planespotter.controller.Controller;
+import planespotter.model.Collector;
 import planespotter.model.io.DBWriter;
-import planespotter.util.MathUtils;
-import planespotter.util.Utilities;
+import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-import static planespotter.SupplierMain.*;
 import static planespotter.constants.DefaultColor.*;
 import static planespotter.constants.GUIConstants.MENU_BORDER;
 import static planespotter.constants.Images.FLYING_PLANE_ICON;
-import static planespotter.util.MathUtils.divide;
+import static planespotter.util.math.MathUtils.divide;
 
 /**
  * @name SupplierDisplay
@@ -24,27 +26,30 @@ import static planespotter.util.MathUtils.divide;
  * @version 1.0
  *
  * inner class SupplierDisplay is a little Display for the SupplierMain
- * @see planespotter.SupplierMain
+ * @see Fr24Collector
  */
-public class SupplierDisplay {
+public class SupplierDisplay implements WindowListener {
 
     private static final String STATUS_TXT = "Status: ";
     // inserted values indexes:   0 = allFrames,   1 = newPlanes,   2 = newFlights
     private final int[] inserted = {0, 0, 0};
-    private int totalMemory = divide((int) runtime.totalMemory(), 10_000);
+    private final Collector collector;
+    private int totalMemory = divide((int) Collector.RUNTIME.totalMemory(), 10_000);
+    // swing components
     private final UWPButton pauseButton = new UWPButton(),
-            startStopButton = new UWPButton();
+                            startStopButton = new UWPButton();
     private final JProgressBar progressBar = new JProgressBar(JProgressBar.HORIZONTAL, 0, totalMemory);
     private final JLabel insertedLabel = new JLabel(),
-            memoryLabel = new JLabel(),
-            newPlanesLabel = new JLabel(),
-            newFlightsLabel = new JLabel(),
-            statusLabel = new JLabel();
+                         memoryLabel = new JLabel(),
+                         newPlanesLabel = new JLabel(),
+                         newFlightsLabel = new JLabel(),
+                         statusLabel = new JLabel();
     private final JLabel[] labels = {insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel, statusLabel};
     private final JFrame frame;
 
-    public SupplierDisplay() {
-        this.frame = this.frame();
+    public SupplierDisplay(int defaultCloseOperation, Collector collector) {
+        this.frame = this.frame(defaultCloseOperation);
+        this.collector = collector;
     }
 
     public void start() {
@@ -52,7 +57,7 @@ public class SupplierDisplay {
         this.tryAddTrayIcon();
     }
 
-    private JFrame frame() {
+    private JFrame frame(int defaultCloseOperation) {
         var size = new Dimension(300, 400);
         int compWidth = size.width - 20;
         int y = 10;
@@ -85,13 +90,13 @@ public class SupplierDisplay {
         this.startStopButton.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         this.startStopButton.setText("Start / Stop");
         this.startStopButton.addActionListener(e -> {
-            DBWriter.setEnabled(enabled = !enabled);
-            paused = !enabled;
-            switch (MathUtils.toBinary(enabled)) {
-                case 0 -> SupplierMain.startCollecting();
-                case 1 -> System.out.println(SupplierMain.stopCollecting() ? "Interrupted successfully!" : "Couldn't stop the Collector!");
+            DBWriter.setEnabled(this.collector.enabled = !this.collector.enabled); // TODO: 29.06.2022 Collector: getter & setter
+            this.collector.paused = !this.collector.enabled;
+            switch (MathUtils.toBinary(this.collector.enabled)) {
+                case 0 -> this.collector.startCollecting();
+                case 1 -> System.out.println(this.collector.stopCollecting() ? "Interrupted successfully!" : "Couldn't stop the Collector!");
             }
-            this.setStatus((enabled ? "enabled, " : "disabled, ") + (paused ? "paused" : "running"));
+            this.setStatus((this.collector.enabled ? "enabled, " : "disabled, ") + (this.collector.paused ? "paused" : "running"));
         });
 
         this.pauseButton.setBounds(10, size.height - 100, compWidth - 20, 20);
@@ -101,8 +106,8 @@ public class SupplierDisplay {
         this.pauseButton.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         this.pauseButton.setText("Pause");
         this.pauseButton.addActionListener(e -> {
-            DBWriter.setEnabled(paused = !paused);
-            this.setStatus((enabled ? "enabled, " : "disabled, ") + (paused ? "paused" : "running"));
+            DBWriter.setEnabled(this.collector.paused = !this.collector.paused);
+            this.setStatus((this.collector.enabled ? "enabled, " : "disabled, ") + (this.collector.paused ? "paused" : "running"));
         });
 
         this.statusLabel.setForeground(DEFAULT_ACCENT_COLOR.get());
@@ -119,11 +124,11 @@ public class SupplierDisplay {
 
         JFrame.setDefaultLookAndFeelDecorated(false);
         var frame = new JFrame("Fr24-Collector");
+        frame.setDefaultCloseOperation(defaultCloseOperation);
         frame.setIconImage(FLYING_PLANE_ICON.get().getImage());
         frame.setLocationRelativeTo(null);
         frame.setLayout(null);
         frame.setSize(size);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setResizable(false);
         frame.add(panel);
 
@@ -138,8 +143,8 @@ public class SupplierDisplay {
         this.inserted[0] += insertedNow;
         this.inserted[1] += newPlanesNow;
         this.inserted[2] += newFlightsNow;
-        this.totalMemory = divide((int) runtime.totalMemory(), 10_000);
-        int freeMemory = divide((int) runtime.freeMemory(), 10_000);
+        this.totalMemory = divide((int) Collector.RUNTIME.totalMemory(), 10_000);
+        int freeMemory = divide((int) Collector.RUNTIME.freeMemory(), 10_000);
         int memoryUsage = this.totalMemory - freeMemory;
 
         this.insertedLabel.setText("Inserted Frames: " + this.inserted[0] + ", " + insertedNow + " per Sec.");
@@ -149,10 +154,9 @@ public class SupplierDisplay {
         this.progressBar.setValue(memoryUsage);
         try {
             TimeUnit.MILLISECONDS.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (InterruptedException ignored) {
         }
-        freeMemory = (int) (runtime.freeMemory() / 10_000);
+        freeMemory = (int) (Collector.RUNTIME.freeMemory() / 10_000);
         memoryUsage = (this.totalMemory - freeMemory);
         this.progressBar.setValue(memoryUsage);
         this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");
@@ -162,7 +166,7 @@ public class SupplierDisplay {
         if (SystemTray.isSupported()) {
             var trayIcon = new TrayIcon(Images.FLYING_PLANE_ICON.get().getImage());
             trayIcon.setImageAutoSize(true);
-            trayIcon.addActionListener(e -> this.frame.setVisible(this.frame.isVisible()));
+            trayIcon.addActionListener(e -> this.frame.setVisible(!this.frame.isVisible()));
             try {
                 SystemTray.getSystemTray().add(trayIcon);
             } catch (AWTException e) {
@@ -170,4 +174,20 @@ public class SupplierDisplay {
             }
         }
     }
+
+    @Override
+    public void windowOpened(WindowEvent e) {
+        Controller.setSupplierRunning(true);
+    }
+
+    @Override
+    public void windowClosing(WindowEvent e) {
+        Controller.setSupplierRunning(false);
+    }
+
+    @Override public void windowClosed(WindowEvent e) {}
+    @Override public void windowIconified(WindowEvent e) {}
+    @Override public void windowDeiconified(WindowEvent e) {}
+    @Override public void windowActivated(WindowEvent e) {}
+    @Override public void windowDeactivated(WindowEvent e) {}
 }

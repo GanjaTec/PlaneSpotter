@@ -21,7 +21,7 @@ import java.util.Arrays;
  */
 public abstract class DBConnector {
 	// writing boolean, true when writing
-	public static final Object dbSync;
+	public static final Object DB_SYNC;
 	// database name
 	public static final String DB_NAME;
 	// database URL
@@ -31,7 +31,7 @@ public abstract class DBConnector {
 	// static initializer
 	static {
 		// setting sqlBusy to false
-		dbSync = new Object();
+		DB_SYNC = new Object();
 		// setting final database Strings
 		DB_NAME = "plane.db";
 		DB_URL = "jdbc:sqlite:" + DB_NAME;
@@ -41,7 +41,7 @@ public abstract class DBConnector {
 		database.setDatabaseName(DB_NAME);
 	}
 
-	protected static Connection getDBConnection()
+	protected static Connection getConnection()
 			throws SQLException {
 
 		return database.getConnection();
@@ -58,7 +58,7 @@ public abstract class DBConnector {
 			throws NoAccessException {
 
 			try {
-				Connection conn = getDBConnection();
+				Connection conn = getConnection();
 				Statement stmt = conn.createStatement();
 				ResultSet query = stmt.executeQuery(querry);
 				// returning new DBResult Object

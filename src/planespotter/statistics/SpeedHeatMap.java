@@ -16,7 +16,7 @@ public class SpeedHeatMap extends HeatMap {
      * @param gridSize
      */
     public SpeedHeatMap(float gridSize, Position topLeft, Position bottomRight) {
-        super(gridSize);
+        super(gridSize, true);
         this.topLeft = topLeft;
         this.bottomRight = bottomRight;
     }

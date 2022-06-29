@@ -11,8 +11,8 @@ public class DBIn extends DBConnector {
 
 	public int insertPlane(Fr24Frame f, int airlineID) {
 		try {
-			synchronized (dbSync) {
-				Connection conn = DBConnector.getDBConnection();
+			synchronized (DB_SYNC) {
+				Connection conn = DBConnector.getConnection();
 				//TODO Airline ID anfrage
 				// insert into planes
 				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.planequerry, Statement.RETURN_GENERATED_KEYS);
@@ -39,8 +39,8 @@ public class DBIn extends DBConnector {
 
 	public int insertFlight(Fr24Frame f, int planeID) {
 		try {
-			synchronized (dbSync) {
-				Connection conn = getDBConnection();
+			synchronized (DB_SYNC) {
+				Connection conn = getConnection();
 				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.flightquerry, Statement.RETURN_GENERATED_KEYS);
 
 				pstmt.setInt(1, planeID);
@@ -67,8 +67,8 @@ public class DBIn extends DBConnector {
 
 	public void insertTracking(Fr24Frame f, int id) {
 		try {
-			synchronized (dbSync) {
-				Connection conn = DBConnector.getDBConnection();
+			synchronized (DB_SYNC) {
+				Connection conn = DBConnector.getConnection();
 				// insert into tracking
 				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.trackingquerry);
 				pstmt.setInt(1, id);
@@ -89,8 +89,8 @@ public class DBIn extends DBConnector {
 
 	public void updateFlightEnd(int id, long timestamp) {
 		try {
-			synchronized (dbSync) {
-				Connection conn = DBConnector.getDBConnection();
+			synchronized (DB_SYNC) {
+				Connection conn = DBConnector.getConnection();
 
 				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.updateFlightEnd);
 				pstmt.setInt(2, id);
