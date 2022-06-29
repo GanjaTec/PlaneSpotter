@@ -1,7 +1,7 @@
 package planespotter.display.models;
 
 import libs.UWPButton;
-import planespotter.Fr24Collector;
+import planespotter.model.Fr24Collector;
 import planespotter.constants.Images;
 import planespotter.controller.Controller;
 import planespotter.model.Collector;

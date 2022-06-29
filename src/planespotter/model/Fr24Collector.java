@@ -1,9 +1,7 @@
-package planespotter;
+package planespotter.model;
 
 import planespotter.constants.Areas;
 import planespotter.controller.Scheduler;
-import planespotter.model.Collector;
-import planespotter.model.LiveData;
 import planespotter.model.io.DBWriter;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;

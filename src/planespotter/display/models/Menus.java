@@ -2,7 +2,7 @@ package planespotter.display.models;
 
 import libs.UWPButton;
 import org.jetbrains.annotations.Range;
-import planespotter.Fr24Collector;
+import planespotter.model.Fr24Collector;
 import planespotter.constants.DefaultColor;
 
 import javax.swing.*;
