@@ -4,7 +4,7 @@ package planespotter.constants;
  * @name Sound
  * @author jml04
  * @version 1.0
- *
+ * @description
  * enum Sound contains all Windows-Sounds with key strings
  */
 public enum Sound {

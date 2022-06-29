@@ -4,7 +4,7 @@ package planespotter.constants;
  * @name SearchType
  * @author jml04
  * @version 1.0
- *
+ * @description
  * enum SearchType contains all search types, with string-names
  * has a static method byItem() to get an item by string
  */

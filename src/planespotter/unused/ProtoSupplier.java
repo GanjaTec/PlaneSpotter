@@ -115,7 +115,7 @@ public class ProtoSupplier extends DBConnector implements Runnable {
     public HashMap<String, Integer> insertPlanes(Connection conn, Deque<Fr24Frame> fr24Frames, DBOut dbo) {
         var map = new HashMap<String, Integer>();
         try {
-            final var planeQuery = conn.prepareStatement(SQLQueries.planequerry);
+            final var planeQuery = conn.prepareStatement(SQLQueries.PLANEQUERRY);
             final var icaoIDMap = dbo.icaoIDMap(); //TODO andere Methode / ohne FlightIDs
 
             fr24Frames.forEach(f -> {
@@ -158,7 +158,7 @@ public class ProtoSupplier extends DBConnector implements Runnable {
 
     public HashMap<String, Integer> insertFlights(Connection conn, Deque<Fr24Frame> fr24Frames, DBOut dbo, HashMap<String, Integer> icaosPlaneIDs) {
         try {
-            var flightQuery = conn.prepareStatement(SQLQueries.flightquerry);
+            var flightQuery = conn.prepareStatement(SQLQueries.FLIGHTQUERRY);
             var fnrsAndPids = dbo.getFlightNRsWithFlightIDs();
             //var icaoIdMap = dbo.icaoIDMap();
 
@@ -201,7 +201,7 @@ public class ProtoSupplier extends DBConnector implements Runnable {
 
     public int[] insertTracking(Connection conn, Deque<Fr24Frame> fr24Frames, DBOut dbo, HashMap<String, Integer> fnrsWithIDs) {
         try {
-            var trackingQuery = conn.prepareStatement(SQLQueries.trackingquerry);
+            var trackingQuery = conn.prepareStatement(SQLQueries.TRACKINGQUERRY);
             var icaoIdMap = dbo.icaoIDMap();
 
             fr24Frames.forEach(f -> {
@@ -237,9 +237,9 @@ public class ProtoSupplier extends DBConnector implements Runnable {
 
     public PreparedStatement[] createWriteStatements(Connection conn, Deque<Fr24Frame> fr24Frames, DBOut dbo) {
         try {
-            var planeQuery = conn.prepareStatement(SQLQueries.planequerry);
-            var flightQuery = conn.prepareStatement(SQLQueries.flightquerry);
-            var trackingQuery = conn.prepareStatement(SQLQueries.trackingquerry);
+            var planeQuery = conn.prepareStatement(SQLQueries.PLANEQUERRY);
+            var flightQuery = conn.prepareStatement(SQLQueries.FLIGHTQUERRY);
+            var trackingQuery = conn.prepareStatement(SQLQueries.TRACKINGQUERRY);
 
             final var icaoIDMap = dbo.icaoIDMap();
             final int[] planeTableSize = { dbo.getTableSize("planes") };

@@ -61,7 +61,7 @@ public class DBOut extends DBConnector {
 		Airline a = null;
 		try {
 			synchronized (DB_SYNC) {
-				var result = super.queryDB(SQLQueries.getAirlineByTag + tag);
+				var result = super.queryDB(SQLQueries.GET_AIRLINE_BY_TAG + tag);
 				var rs = result.resultSet();
 				if (rs.next()) {
 					a = new Airline(rs.getInt("ID"), rs.getString("iatatag"), rs.getString("name"), rs.getString("country"));
@@ -86,7 +86,7 @@ public class DBOut extends DBConnector {
 		try {
 			tag = Utilities.packString(tag);
 			synchronized (DB_SYNC) {
-				var result = super.queryDB(SQLQueries.getAirlineIDByTag + tag);
+				var result = super.queryDB(SQLQueries.GET_AIRLINE_ID_BY_TAG + tag);
 				var rs = result.resultSet();
 				if (rs.next()) {
 					id = rs.getInt(1);
@@ -115,8 +115,8 @@ public class DBOut extends DBConnector {
 		final var aps = new ArrayList<Airport>();
 		try {
 			synchronized (DB_SYNC) {
-				var srcResult = super.queryDB(SQLQueries.getAirportByTag + Utilities.packString(srcAirport));
-				var destResult = super.queryDB(SQLQueries.getAirportByTag + Utilities.packString(destAirport));
+				var srcResult = super.queryDB(SQLQueries.GET_AIRPORT_BY_TAG + Utilities.packString(srcAirport));
+				var destResult = super.queryDB(SQLQueries.GET_AIRPORT_BY_TAG + Utilities.packString(destAirport));
 
 				var rsSrc = srcResult.resultSet();
 				var rsDst = destResult.resultSet();
@@ -163,7 +163,7 @@ public class DBOut extends DBConnector {
 		final var ids = new ArrayDeque<Integer>();
 		try {
 			synchronized (DB_SYNC) {
-				var result = super.queryDB(SQLQueries.getPlaneIDsByICAO + icao);
+				var result = super.queryDB(SQLQueries.GET_PLANE_IDS_BY_ICAO + icao);
 				var rs = result.resultSet();
 				while (rs.next()) {
 					int id = rs.getInt("ID");
@@ -190,7 +190,7 @@ public class DBOut extends DBConnector {
 		Plane p = null;
 		try {
 			synchronized (DB_SYNC) {
-				var result = super.queryDB(SQLQueries.getPlaneByID + id);
+				var result = super.queryDB(SQLQueries.GET_PLANE_BY_ID + id);
 				var rs = result.resultSet();
 				if (rs.next()) {
 					//var a = new Airline(-1, "BIA", "BUFU Int. Airlines");
@@ -430,7 +430,7 @@ public class DBOut extends DBConnector {
 		final var flights = new ArrayList<Flight>();
 		try {
 			synchronized (DB_SYNC) {
-				var result = super.queryDB(SQLQueries.getFlights);
+				var result = super.queryDB(SQLQueries.GET_FLIGHTS);
 				var rs = result.resultSet();
 
 				int counter = 0;
@@ -461,7 +461,7 @@ public class DBOut extends DBConnector {
 		final var ids = new ArrayDeque<Integer>();
 		try {
 			synchronized (DB_SYNC) {
-				var result = queryDB(SQLQueries.getFlightIDsByCallsign + callsign);
+				var result = queryDB(SQLQueries.GET_FLIGHT_IDS_BY_CALLSIGN + callsign);
 				var rs = result.resultSet();
 
 				while (rs.next()) {
@@ -486,7 +486,7 @@ public class DBOut extends DBConnector {
 
 		try {
 			synchronized (DB_SYNC) {
-				var result = this.queryDB(SQLQueries.getLastFlightID);
+				var result = this.queryDB(SQLQueries.GET_LAST_FLIGHT_ID);
 				var rs = result.resultSet();
 				int flightid;
 				if (rs.next()) {
@@ -534,7 +534,7 @@ public class DBOut extends DBConnector {
 		final var flightIDs = new ArrayList<Integer>();
 		try {
 			synchronized (DB_SYNC) {
-				var result = this.queryDB(SQLQueries.checkEndOfFlight);
+				var result = this.queryDB(SQLQueries.CHECK_END_OF_FLIGHT);
 				var rs = result.resultSet();
 
 				while (rs.next()) {
@@ -554,7 +554,7 @@ public class DBOut extends DBConnector {
 		Flight f = null;
 		try {
 			synchronized (DB_SYNC) {
-				DBResult result = super.queryDB(SQLQueries.getFlightByID + id);
+				DBResult result = super.queryDB(SQLQueries.GET_FLIGHT_BY_ID + id);
 				ResultSet rs = result.resultSet();
 
 				if (rs.next()) {
@@ -690,7 +690,7 @@ public class DBOut extends DBConnector {
 		final var ids = new ArrayDeque<Integer>();
 		try {
 			synchronized (DB_SYNC) {
-				var result = super.queryDB(SQLQueries.getPlaneIDByTailNr + tailNr);
+				var result = super.queryDB(SQLQueries.GET_PLANE_ID_BY_TAIL_NR + tailNr);
 				var rs = result.resultSet();
 				while (rs.next()) {
 					int id = rs.getInt("ID");
