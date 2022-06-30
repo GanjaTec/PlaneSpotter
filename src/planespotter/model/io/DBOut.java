@@ -1304,8 +1304,14 @@ public class DBOut extends DBConnector {
 				 var result = super.queryDB(query);
 				 var rs = result.resultSet();
 				 while (rs.next()) {
-					 tags.add(rs.getString("src"));
-					 tags.add(rs.getString("dest"));
+					 String src = rs.getString("src");
+					 String dest = rs.getString("dest");
+					 if (src != null && !src.isBlank()) {
+						 tags.add(src);
+					 }
+					 if (dest != null && !dest.isBlank()) {
+						 tags.add(dest);
+					 }
 				 }
 				 result.close();
 			 }

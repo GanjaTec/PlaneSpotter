@@ -2,6 +2,7 @@ package planespotter.display;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jfree.chart.ChartPanel;
 import planespotter.constants.SearchType;
 import planespotter.constants.Warning;
 import planespotter.display.models.PaneModels;
@@ -10,10 +11,12 @@ import planespotter.throwables.IllegalInputException;
 import planespotter.util.Utilities;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 
 import static planespotter.constants.GUIConstants.*;
+import static planespotter.constants.Sound.SOUND_DEFAULT;
 
 /**
  * @name GUIAdapter
@@ -68,14 +71,33 @@ public final class GUIAdapter {
     }
 
     /**
+     * this method is executed when pre-loading is done
+     */
+    public void onInitFinish() {
+        Utilities.playSound(SOUND_DEFAULT.get());
+        gui.loadingScreen.dispose();
+        var window = gui.getContainer("window");
+        window.setVisible(true);
+        window.requestFocus();
+    }
+
+    public void receiveChart(ChartPanel chartPanel) {
+        this.disposeView();
+        gui.chartPanel = chartPanel;
+        var rightDP = (JDesktopPane) gui.getContainer("rightDP");
+        rightDP.add(gui.chartPanel);
+        rightDP.moveToFront(gui.chartPanel);
+        gui.chartPanel.setVisible(true);
+    }
+
+    /**
      * sets the JTree in listView and makes it visible
      *
      * @param tree is the tree to set
      */
-    public void recieveTree(JTree tree) {
+    public void receiveTree(JTree tree) {
         var listPanel = (JPanel) gui.getContainer("listPanel");
         tree.setBounds(0, 0, listPanel.getWidth(), listPanel.getHeight());
-        //gui.listView = tree;
         gui.addContainer("listScrollPane", new PaneModels().listScrollPane(tree, listPanel));
         var listScrollPane = gui.getContainer("listScrollPane");
         gui.getContainer("listPanel").add(listScrollPane);
@@ -93,7 +115,7 @@ public final class GUIAdapter {
      * @param flightTree is the flight tree to set
      * @param dpInfoTree is the @Nullable data point info tree
      */
-    public void recieveInfoTree(@NotNull final JTree flightTree,
+    public void receiveInfoTree(@NotNull final JTree flightTree,
                                 @Nullable final JTree dpInfoTree) {
         var infoPanel = gui.getContainer("infoPanel");
         infoPanel.removeAll();
@@ -107,14 +129,14 @@ public final class GUIAdapter {
         infoPanel.add(flightTree);
         gui.addContainer("flightInfoTree", flightTree);
         if (dpInfoTree != null) {
-            this.recieveDataPointInfoTree(dpInfoTree, width, height);
+            this.receiveDataPointInfoTree(dpInfoTree, width, height);
         }
         var leftDP = (JDesktopPane) gui.getContainer("leftDP");
         leftDP.moveToFront(infoPanel);
         infoPanel.setVisible(true);
     }
 
-    private void recieveDataPointInfoTree(@NotNull JTree dpInfoTree, int width, int height) {
+    private void receiveDataPointInfoTree(@NotNull JTree dpInfoTree, int width, int height) {
         dpInfoTree.setBounds(0, height + 50, width, height - 50);
         dpInfoTree.setBorder(LINE_BORDER);
         dpInfoTree.setFont(FONT_MENU.deriveFont(12f));
@@ -196,6 +218,10 @@ public final class GUIAdapter {
      * if no other view is opened, nothing is done
      */
     public synchronized void disposeView() {
+        if (gui.chartPanel != null) {
+            var rightDP = (JDesktopPane) gui.getContainer("rightDP");
+            rightDP.remove(gui.chartPanel);
+        }
         if (gui.hasContainer("startPanel")) {
             gui.getContainer("startPanel").setVisible(false);
         } if (gui.hasContainer("listView")) {

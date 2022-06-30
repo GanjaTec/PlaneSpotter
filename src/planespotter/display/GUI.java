@@ -1,5 +1,6 @@
 package planespotter.display;
 
+import org.jfree.chart.ChartPanel;
 import planespotter.constants.Paths;
 import planespotter.constants.SearchType;
 import planespotter.constants.UserSettings;
@@ -23,7 +24,7 @@ import java.util.List;
  * GUI class is the main gui class, it implements all the listeners
  * and has all components -> it contains window that the user sees
  */
-public class GUI implements Runnable {
+public class GUI {
     // action  handler
     private final ActionHandler actionHandler;
     // map manager
@@ -43,6 +44,7 @@ public class GUI implements Runnable {
     public JFrame loadingScreen;
     protected List<JComponent> flightSearch, planeSearch, airlineSearch, airportSearch, areaSearch;
     // search components
+    // TODO: 30.06.2022 move to components hash map
     public JTextField search_flightID;
     public JTextField search_callsign;
     public JTextField search_planeID;
@@ -56,6 +58,8 @@ public class GUI implements Runnable {
     protected JButton[] fileMenu;
     // data trees
     protected JTree listView, infoTree, dpInfoTree;
+
+    public ChartPanel chartPanel;
 
     /**
      * constructor for GUI
@@ -73,8 +77,7 @@ public class GUI implements Runnable {
     /**
      * GUI run method (?)
      */
-    @Override
-    public void run() {
+    public void startLoadingScreen() {
         this.loadingScreen.setVisible(true);
     }
 
@@ -147,9 +150,7 @@ public class GUI implements Runnable {
                 var searchButton = menuModels.searchButton(menuBar, this.actionHandler);
                 this.addContainer("searchButton", searchButton);
 
-                var searchTextField = menuModels.searchTextField(menuBar, this.actionHandler);
-                this.addContainer("searchTxtField", searchTextField);
-                var progressBar = menuModels.progressBar(menuBar);
+                var progressBar = menuModels.progressBar(viewHeadPanel);
                 this.addContainer("progressBar", progressBar);
                 var settingsDialog = menuModels.settingsDialog(window);
                 this.addContainer("settingsDialog", settingsDialog);
@@ -205,9 +206,7 @@ public class GUI implements Runnable {
         menubar.add(this.getContainer("statsButton"));
         menubar.add(this.getContainer("supplierButton"));
         menubar.add(this.getContainer("settingsButton")); // TODO gehört das nicht alles in SearchPanel
-        menubar.add(this.getContainer("searchTxtField"));
         menubar.add(this.getContainer("searchButton"));
-        menubar.add(this.getContainer("progressBar"));
         // adding everything to search panel
         var searchPanel = this.getContainer("searchPanel");
         searchPanel.add(this.getContainer("searchForLabel"));
@@ -236,6 +235,7 @@ public class GUI implements Runnable {
         viewHeadPanel.add(this.getContainer("viewHeadTxtLabel"));
         viewHeadPanel.add(this.getContainer("closeViewButton"));
         viewHeadPanel.add(this.getContainer("fileButton"));
+        viewHeadPanel.add(this.getContainer("progressBar"));
         // adding everything to right desktop pane
         var rightDP = this.getContainer("rightDP");
         rightDP.add(viewHeadPanel);

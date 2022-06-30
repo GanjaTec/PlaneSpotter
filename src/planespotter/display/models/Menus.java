@@ -1,9 +1,17 @@
 package planespotter.display.models;
 
 import libs.UWPButton;
+
 import org.jetbrains.annotations.Range;
+
+import planespotter.controller.Controller;
+import planespotter.display.Diagrams;
+import planespotter.display.GUIAdapter;
 import planespotter.model.Fr24Collector;
 import planespotter.constants.DefaultColor;
+import planespotter.model.io.DBOut;
+import planespotter.statistics.Statistics;
+import planespotter.throwables.DataNotFoundException;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,12 +49,16 @@ public abstract class Menus {
                 case 2 -> new AreaMenu(owner);
                 default -> throw new IllegalStateException("Unexpected value: " + menuType);
             };
-            //shown = true;
             menu.setVisible(true);
         }
     }
 
     private static class StatisticMenu extends JDialog {
+
+        static final String STATS_TOP_AIRPORTS          = "Top-Airports",
+                            STATS_AIRPORT_SIGNIFICANCE  = "Airport-Significance",
+                            STATS_AIRLINE_SIGNIFICANCE  = "Airline-Significance",
+                            STATS_HEATMAP               = "Position-HeatMap";
 
         StatisticMenu(Window owner) {
             super(owner, "Statistics-Menu");
@@ -57,7 +69,8 @@ public abstract class Menus {
             super.setResizable(false);
             super.addWindowListener(new Listener());
 
-            super.add(this.createShowButton());
+            super.add(this.createStatsList());
+            //super.add(this.createShowButton());
         }
 
         private UWPButton createShowButton() {
@@ -66,7 +79,52 @@ public abstract class Menus {
             showButton.setEffectColor(DEFAULT_FONT_COLOR.get());
             showButton.setSelectedColor(DEFAULT_MAP_ICON_COLOR.get());
             showButton.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+            showButton.addActionListener(e -> {
+                var stats = new Statistics();
+                var gui = Controller.getGUI();
+                var rightDP = (JDesktopPane) gui.getContainer("rightDP");
+                try {
+                    var allAirportTags = new DBOut().getAllAirportTags();
+                    var dataset = Statistics.createBarDataset(stats.onlySignificant(stats.tagCount(allAirportTags),420));
+                    var chartPanel = Diagrams.barChartPanel(rightDP, "Airport-Significance", "Count", "Airports", dataset);
+
+                    var guiAdapter = new GUIAdapter(gui);
+                    guiAdapter.receiveChart(chartPanel);
+                    super.setVisible(false);
+                } catch (DataNotFoundException ex) {
+                    ex.printStackTrace();
+                }
+
+                //var stats = Bitmap.fromPosVector(new Test().TEST_POS_VECTOR, 0.5f).toImage();
+            });
             return showButton;
+        }
+
+        private JList<String> createStatsList() {
+            var data= Stream.of(STATS_TOP_AIRPORTS, STATS_AIRPORT_SIGNIFICANCE, STATS_AIRLINE_SIGNIFICANCE, STATS_HEATMAP)
+                    .collect(Collectors.toCollection(Vector::new));
+            var supList = new JList<String>();
+            supList.setBounds(10, 10, compWidth, heigth-70);
+            supList.setFixedCellWidth(compWidth);
+            supList.setFixedCellHeight(compHeight);
+            supList.setVisibleRowCount(10); // max 10 suppliers
+            supList.setListData(data);
+            supList.addListSelectionListener(e -> {
+                var value = supList.getSelectedValue();
+                var rightDP = (JDesktopPane) Controller.getGUI().getContainer("rightDP");
+                var stats = new Statistics();
+                var guiAdapter = Controller.guiAdapter;
+                switch (value) {
+                    // TODO: 30.06.2022 User-Input for parameters
+                    case STATS_TOP_AIRPORTS -> guiAdapter.receiveChart(Diagrams.barChartPanel(rightDP, stats.topAirports(20)));
+                    case STATS_AIRPORT_SIGNIFICANCE -> guiAdapter.receiveChart(Diagrams.barChartPanel(rightDP, stats.airportSignificance(500)));
+                    case STATS_AIRLINE_SIGNIFICANCE -> guiAdapter.receiveChart(Diagrams.barChartPanel(rightDP, stats.airlineSignificance(500)));
+                    case STATS_HEATMAP -> {/* show heat map */}
+                }
+                super.setVisible(false);
+            });
+
+            return supList;
         }
     }
 
@@ -146,20 +204,21 @@ public abstract class Menus {
 
     private static class Listener implements WindowListener {
         @Override
-        public void windowOpened(WindowEvent e) {
+        public void windowActivated(WindowEvent e) {
             shown = true;
         }
 
         @Override
-        public void windowClosing(WindowEvent e) {
+        public void windowDeactivated(WindowEvent e) {
             shown = false;
         }
 
+        @Override public void windowOpened(WindowEvent e) {}
+        @Override public void windowClosing(WindowEvent e) {}
         @Override public void windowClosed(WindowEvent e) {}
         @Override public void windowIconified(WindowEvent e) {}
         @Override public void windowDeiconified(WindowEvent e) {}
-        @Override public void windowActivated(WindowEvent e) {}
-        @Override public void windowDeactivated(WindowEvent e) {}
+
     }
 
 }

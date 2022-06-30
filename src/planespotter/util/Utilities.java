@@ -84,7 +84,7 @@ public abstract class Utilities {
 
     public static byte toByteLevel(int lvl, int max) {
         if (lvl == 0 || max == 0) {
-            return 0;
+            return -128;
         }
         float lvlPercentage = (float) divide((float) lvl, max);
         return (byte) ((255 * lvlPercentage) - 128);

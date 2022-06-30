@@ -93,6 +93,7 @@ public abstract class Collector {
      */
     public synchronized void start() {
         this.display.start();
+        this.scheduler = new Scheduler();
         this.startCollecting();
     }
 

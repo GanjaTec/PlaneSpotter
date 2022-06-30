@@ -131,34 +131,18 @@ public final class MenuModels {
     /**
      *
      */
-    public JProgressBar progressBar(JMenuBar parent) {
+    public JProgressBar progressBar(JPanel parent) {
         // seting up progress bar
         var progressbar = new JProgressBar();
-        progressbar.setBorder(LINE_BORDER);
+        progressbar.setBorder(MENU_BORDER);
         progressbar.setBackground(DEFAULT_FONT_COLOR.get());
         progressbar.setBorderPainted(true);
         progressbar.setForeground(new Color(92, 214, 92));
-        progressbar.setBounds(10, 90, parent.getWidth()-20, 15);
+        progressbar.setBounds(parent.getWidth() - 386, 4, 200, 16);
         progressbar.setIndeterminate(true);
         progressbar.setVisible(false);
 
         return progressbar;
-    }
-
-    /**
-     * search text field
-     */
-    public JTextField searchTextField(JMenuBar parent, KeyListener listener) {
-        // setting up search text field
-        var search = new JTextField();
-        search.setToolTipText("Search");
-        search.setBounds(10, parent.getHeight()-60, parent.getWidth()-20, 25);
-        search.setBackground(Color.WHITE);
-        search.setFont(FONT_MENU);
-        search.setBorder(LINE_BORDER);
-        search.addKeyListener(listener);
-
-        return search;
     }
 
     /**

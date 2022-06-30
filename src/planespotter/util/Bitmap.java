@@ -179,12 +179,12 @@ public final class Bitmap {
         //var hexStr = new StringBuilder();
         for (int x = 0; x < this.width; x++) {
             for (int y = 0; y < this.heigth; y++) {
-                lvl = (short) (this.bitmap[x][y] + 128);
+                lvl = (short) (255 - (this.bitmap[x][y] + 128));
                 //hexStr.append(Utilities.decToHex(lvl)).append(Utilities.decToHex(lvl)).append(Utilities.decToHex(lvl));
                 //img.setRGB(x, y, (int) (lvl * MathUtils.x3(16))); // FIXME: 25.06.2022 right color code!
                 //img.setRGB(x, y, (lvl == 0) ? Utilities.hexStrToInt(Integer.toHexString(Color.WHITE.getRGB())) : Utilities.hexStrToInt(Integer.toHexString(Color.BLACK.getRGB())));
                 var color = new Color(lvl, lvl, lvl);
-                img.setRGB(x, y, (lvl <= 0) ? Color.BLACK.getRGB() : color.getRGB());
+                img.setRGB(x, y, color.getRGB());
                 // TODO: 27.06.2022
                 var graphics = img.createGraphics();
                 graphics.rotate(StrictMath.toRadians(180));

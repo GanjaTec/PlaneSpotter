@@ -1,8 +1,12 @@
 package planespotter.statistics;
 
 import org.jetbrains.annotations.NotNull;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
+import planespotter.controller.Controller;
 import planespotter.dataclasses.Airport;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
@@ -51,6 +55,28 @@ public class Statistics {
                 .forEach(key -> dataset.addValue(stats.get(key), "Row-Key", String.valueOf(key)));
 
         return dataset;
+    }
+
+    public JFreeChart topAirports(int limit) {
+        var dbOut = new DBOut();
+        Deque<String> airportTags = null;
+        try {
+            airportTags = dbOut.getAllAirportTags();
+        } catch (DataNotFoundException e) {
+            Controller.getInstance().handleException(e);
+        }
+        assert airportTags != null;
+        var apStats = this.onlySignificant(this.tagCount(airportTags), 500);
+        // filtering top airports
+        var sortedMap = new HashMap<String, Integer>();
+        apStats.entrySet()
+                .stream()
+                .sorted((a, b) -> Math.max(a.getValue(), b.getValue()))
+                .limit(limit)
+                .forEach(entry -> sortedMap.put(entry.getKey(), entry.getValue()));
+        var dataset = Statistics.createBarDataset(sortedMap);
+        return ChartFactory.createBarChart("Airport-Significance", "Airports", "Flight-Count",
+                                            dataset, PlotOrientation.HORIZONTAL, true, true, false);
     }
 
     public Map<Position, double[]> flightHeadwind(int flightID) {
@@ -141,6 +167,36 @@ public class Statistics {
         }
         // TODO: 17.06.2022 returnt bisher nur timestamp mit speed
         return maps;
+    }
+
+    public JFreeChart airlineSignificance(int minCount) {
+        var dbOut = new DBOut();
+        Deque<String> airlineTags = null;
+        try {
+            airlineTags = dbOut.getAllAirlineTags();
+        } catch (DataNotFoundException e) {
+            Controller.getInstance().handleException(e);
+        }
+        assert airlineTags != null;
+        var airlStats = this.onlySignificant(this.tagCount(airlineTags), minCount);
+        var dataset = Statistics.createBarDataset(airlStats);
+        return ChartFactory.createBarChart("Airline-Significance", "Airlines", "Flight-Count",
+                                            dataset, PlotOrientation.HORIZONTAL, true, true, false);
+    }
+
+    public JFreeChart airportSignificance(int minCount) {
+        var dbOut = new DBOut();
+        Deque<String> airportTags = null;
+        try {
+            airportTags = dbOut.getAllAirportTags();
+        } catch (DataNotFoundException e) {
+            Controller.getInstance().handleException(e);
+        }
+        assert airportTags != null;
+        var apStats = this.onlySignificant(this.tagCount(airportTags), minCount);
+        var dataset = Statistics.createBarDataset(apStats);
+        return ChartFactory.createBarChart("Airport-Significance", "Airports", "Flight-Count",
+                                            dataset, PlotOrientation.HORIZONTAL, true, true, false);
     }
 
     /**

@@ -33,7 +33,7 @@ public class Logger extends JFrame implements ComponentListener {
     /**
      * true when logger is logging (writing to text pane)
      */
-    public Logger (@Nullable Object ref) {
+    public <R> Logger(@Nullable R ref) {
         super();
         this.mainref = Objects.requireNonNullElse(ref, this);
         super.setTitle("Logger");
@@ -72,6 +72,7 @@ public class Logger extends JFrame implements ComponentListener {
         super.add(this.scrollPane);
         super.setVisible(true);
         this.sign(2);
+        this.sign(2);
     }
 
     /**
@@ -79,7 +80,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param txt
      * @param ref
      */
-    public void errorLog (String txt, @Nullable Object ref) {
+    public void errorLog(String txt, @Nullable Object ref) {
         this.logInColor(txt, new Color(240, 40, 20), ref);
     }
 
@@ -88,7 +89,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param txt
      * @param ref
      */
-    public void sucsessLog (String txt, @Nullable Object ref) {
+    public void sucsessLog(String txt, @Nullable Object ref) {
         this.logInColor(txt, new Color(40, 220, 70), ref);
     }
 
@@ -97,7 +98,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param txt
      * @param ref
      */
-    public void infoLog (String txt, @Nullable Object ref) {
+    public void infoLog(String txt, @Nullable Object ref) {
         this.logInColor(txt, new Color(230, 230, 70), ref);
     }
 
@@ -106,7 +107,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param txt
      * @param ref
      */
-    public void log (String txt, @Nullable Object ref) {
+    public void log(String txt, @Nullable Object ref) {
         this.logInColor(txt, DEFAULT_FONT_COLOR.get(), ref);
     }
 
@@ -116,7 +117,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param col
      * @param ref
      */
-    private synchronized void logInColor (String txt, Color col, Object ref) {
+    private synchronized void logInColor(String txt, Color col, Object ref) {
         this.sign(0);
         var now = LocalDateTime.now();
         var dateFormat = new DateTimeFormatterBuilder().appendPattern("dd.MM.yyyy").toFormatter();
@@ -141,7 +142,7 @@ public class Logger extends JFrame implements ComponentListener {
      *
      * @param val
      */
-    private void sign (int val) {
+    private void sign(int val) {
         switch (val) {
             case 0 -> this.text("[", DEFAULT_MAP_ICON_COLOR.get());
             case 1 -> this.text("]", DEFAULT_MAP_ICON_COLOR.get());
@@ -169,7 +170,7 @@ public class Logger extends JFrame implements ComponentListener {
 
     public void close() {
         var loggedText = out.getText();
-        FileWizard.getFileWizard().saveLogFile(loggedText);
+        FileWizard.getFileWizard().saveLogFile(null, loggedText);
         this.dispose();
     }
 

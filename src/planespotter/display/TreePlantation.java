@@ -47,7 +47,7 @@ public final class TreePlantation {
         // initialisation new JTree
         var tree = this.defaultTree(treeNode);
         tree.setVisible(true);
-        guiAdapter.recieveTree(tree);
+        guiAdapter.receiveTree(tree);
     }
 
     /**
@@ -58,7 +58,7 @@ public final class TreePlantation {
     public void createFlightInfo(Flight flight, GUIAdapter guiAdapter) {
         JTree tree = this.defaultTree(this.flightInfoTreeNode(flight));
         tree.setVisible(true);
-        guiAdapter.recieveInfoTree(tree, null);
+        guiAdapter.receiveInfoTree(tree, null);
     }
 
     /**
@@ -69,7 +69,7 @@ public final class TreePlantation {
     public void createDataPointInfo(Flight flight, DataPoint dp, GUIAdapter guiAdapter) {
         var flightInfo = this.defaultTree(this.flightInfoTreeNode(flight));
         var dpInfo = this.defaultTree(this.dataPointInfoTreeNode(dp));
-        guiAdapter.recieveInfoTree(flightInfo, dpInfo);
+        guiAdapter.receiveInfoTree(flightInfo, dpInfo);
         dpInfo.setVisible(true);
     }
 

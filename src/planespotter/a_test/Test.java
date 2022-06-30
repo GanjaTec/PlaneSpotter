@@ -11,6 +11,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import planespotter.constants.ANSIColor;
 import planespotter.constants.Images;
 import planespotter.constants.Paths;
+import planespotter.display.Diagrams;
 import planespotter.util.Bitmap;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
@@ -27,11 +28,8 @@ import javax.swing.Timer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @TestOnly
@@ -45,19 +43,14 @@ public class Test {
 
         var bitmapPath = Paths.RESOURCE_PATH + "newTestBitMap.bmp";
 
-        System.out.println(Utilities.linesCode("", ".py", ".java", ".log"));
+        var allAirportTags = new DBOut().getAllAirportTags();
+        var dataset = Statistics.createBarDataset(stats.onlySignificant(stats.tagCount(allAirportTags),600));
+        //var image = Diagrams.barChartFromPosVector(600, 400, "Airport-Significance", "Count", "Airports", dataset);
 
-   /*     var positions = test.testPosVector();*//*new DBOut()
-                .getTrackingsWithAirportTag("CGN")
-                .stream()
-                .map(DataPoint::pos)
-                .collect(Collectors.toCollection(Vector::new));*//*
-        assert positions != null;
-        var bmp = Bitmap.fromPosVector(positions, 0.5f);
-        //test.createTestJFrame(bmp.toImage());
-        // bitmap write & read funktioniert
-        Bitmap.writeBmp(bmp, new File(Paths.RESOURCE_PATH + "bmpBitmap.bmp"));
-*/
+        //test.createTestJFrame(image);
+
+        //test.topAirports(20);
+
         /*if (true) {
             var bitmap = Bitmap.read(bitmapPath);
             System.out.println(bitmap.width + ", " + bitmap.heigth);
@@ -89,6 +82,19 @@ public class Test {
         frame.setVisible(true);
 */
 
+    }
+
+    private void testBitmapWrite() throws IOException {
+        var positions = new Test().TEST_POS_VECTOR;/*new DBOut()
+                .getTrackingsWithAirportTag("FRA")
+                .stream()
+                .map(DataPoint::pos)
+                .collect(Collectors.toCollection(Vector::new));*/
+        assert positions != null;
+        var bmp = Bitmap.fromPosVector(positions, 0.5f);
+        //test.createTestJFrame(bmp.toImage());
+        // bitmap write & read funktioniert
+        Bitmap.writeBmp(bmp, new File(Paths.RESOURCE_PATH + "bmpBitmap.bmp"));
     }
 
     private void speedChartTest() throws DataNotFoundException {
@@ -306,13 +312,15 @@ public class Test {
         frame.setVisible(true);
     }
 
-    public final Vector<Position> testPosVector() {
+    public final Vector<Position> TEST_POS_VECTOR;
+    {
+        Vector<Position> trackingPositions;
         try {
-            return new DBOut().getAllTrackingPositions();
+            trackingPositions = new DBOut().getAllTrackingPositions();
         } catch (DataNotFoundException e) {
-            e.printStackTrace();
+            trackingPositions = null;
         }
-        return null;
+        TEST_POS_VECTOR = trackingPositions;
     }
 
     private void printRectHeatMap() throws DataNotFoundException {

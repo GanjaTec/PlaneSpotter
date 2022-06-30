@@ -80,7 +80,6 @@ public record ActionHandler()
             } else if (button == gui.getContainer("searchButton")) {
                 var searchPanel = gui.getContainer("searchPanel");
                 searchPanel.setVisible(!searchPanel.isVisible());
-                gui.getContainer("searchTxtField").setVisible(!searchPanel.isVisible());
                 guiAdapter.loadSearch(SearchType.FLIGHT);
 
             } else if (button == gui.getContainer("settingsCancelButton")) {
@@ -231,7 +230,6 @@ public record ActionHandler()
         gui.getContainer("startLabel").setBounds(0, 0, startPanel.getWidth(), startPanel.getHeight());
         gui.getMap().setBounds(0, 0, mapPanel.getWidth(), mapPanel.getHeight());
         menuBar.setBounds(menuPanel.getBounds());
-        gui.getContainer("searchTxtField").setBounds(10, menuBar.getHeight() - 80, 255, 25);
         gui.getContainer("searchButton").setBounds(10, menuBar.getHeight() - 40, 255, 25);
         if (gui.hasContainer("listScrollPane") && gui.getListView() != null) {
             var listScrollPane = gui.getContainer("listScrollPane");
@@ -241,6 +239,9 @@ public record ActionHandler()
         if (gui.hasContainer("flightInfoTree")) {
             gui.getContainer("flightInfoTree").setBounds(infoPanel.getBounds());
         }
+        if (gui.chartPanel != null) {
+            gui.chartPanel.setBounds(0, 24, rightDP.getWidth(), rightDP.getHeight() - 24);
+        }
         int minus = 84;
         for (var bt : gui.getFileMenu()) {
             if (bt != null) {
@@ -248,6 +249,7 @@ public record ActionHandler()
                 minus += 84;
             }
         }
+
     }
 
     /**

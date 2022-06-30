@@ -1,9 +1,13 @@
 package planespotter.display.models;
 
 import planespotter.constants.Images;
+import planespotter.constants.Paths;
 import planespotter.controller.ActionHandler;
 
 import javax.swing.*;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
 
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.DefaultColor.*;
@@ -25,7 +29,6 @@ public final class PaneModels {
         window.setLocationRelativeTo(null);
         window.addComponentListener(listener);
         window.addWindowListener(listener);
-        //window.addKeyListener(listener);
         window.setIconImage(FLYING_PLANE_ICON.get().getImage());
         window.setVisible(false);
         return window;
@@ -75,20 +78,6 @@ public final class PaneModels {
         title.setLayout(null);
         title.setBorder(LINE_BORDER);
         return title;
-    }
-
-    /**
-     * title text label
-     */
-    JLabel titleTxtLabel (JPanel parent) {
-        // setting up title label
-        var title_text = new JLabel("P l a n e S p o t t e r");
-        title_text.setFont(TITLE_FONT);
-        title_text.setForeground(DEFAULT_FG_COLOR.get());
-        title_text.setFocusable(false);
-        title_text.setBounds(parent.getWidth()/2-200, 0, 400, 70); // bounds in Bounds Klasse (?)
-
-        return title_text;
     }
 
     /**
@@ -143,12 +132,28 @@ public final class PaneModels {
         // setting up map panel
         var map = new JPanel();
         map.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
-        map.setBackground(DEFAULT_BG_COLOR.get());
         map.setLayout(null);
         map.setBorder(LINE_BORDER);
         map.setOpaque(false);
 
         return map;
+    }
+
+    public static  <D> JPanel statsPanel(D data, JDesktopPane parent) {
+        // setting up stats panel
+        var stats = new JPanel();
+        stats.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
+        stats.setLayout(null);
+        stats.setBorder(LINE_BORDER);
+        //stats.setOpaque(false);
+        if (data instanceof Image img) {
+            var label = new JLabel(new ImageIcon(img));
+            label.setLocation(0, 0);
+            label.setSize(stats.getSize());
+            stats.add(label);
+        }
+
+        return stats;
     }
 
     /**
@@ -185,7 +190,7 @@ public final class PaneModels {
     public JPanel searchPanel(JPanel parent) {
         // TODO: setting up search panel
         var search = new JPanel();
-        search.setBounds(10, 150, parent.getWidth()-20, parent.getHeight()-240);
+        search.setBounds(10, 175, parent.getWidth()-20, parent.getHeight()-265);
         search.setBackground(DEFAULT_ACCENT_COLOR.get());
         var border = BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get(), 1);
         search.setBorder(border);

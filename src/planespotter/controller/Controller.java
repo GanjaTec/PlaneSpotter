@@ -39,7 +39,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static planespotter.constants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
-import static planespotter.constants.Sound.SOUND_DEFAULT;
 import static planespotter.constants.ViewType.*;
 
 /**
@@ -62,7 +61,7 @@ public abstract class Controller {
     // only GUI instance
     private static final GUI gui;
     // gui adapter
-    private static final GUIAdapter guiAdapter;
+    public static final GUIAdapter guiAdapter;
     // proto test-cache
     public static final LRUCache<String, Object> cache;
     // live data loading period
@@ -82,18 +81,20 @@ public abstract class Controller {
         cache = new LRUCache<>(40); // TODO best cache size
         setSupplierRunning(false);
     }
-    // boolean loading is true when something is loading
-    private volatile boolean loading;
-    // collections for live flights and loaded flights
-    public volatile Vector<DataPoint> loadedData;
-    public volatile Vector<Flight> liveData;
-    // already-clicking/-initialized flag
-    private boolean clicking, initialized;
     // hash code
     private final int hashCode;
+    // already-clicking/-initialized flag
+    private boolean clicking, initialized;
+    // boolean loading is true when something is loading
+    private volatile boolean loading;
+    // loadedData contains all loaded DataPoints
+    public volatile Vector<DataPoint> loadedData;
+    // liveData contains all loaded live-Flights
+    public volatile Vector<Flight> liveData;
 
     /**
-     * private -> only ONE instance ( getter: Controller.getInstance() )
+     * private constructor for Controller,
+     * get instance with Controller.getInstance()
      */
     private Controller() {
         this.hashCode = System.identityHashCode(mainController);
@@ -108,22 +109,34 @@ public abstract class Controller {
     }
 
     /**
-     * initializes the controller with a Logger
+     * starts the program by initializing the controller
+     * and opening a GUI-window
+     */
+    public synchronized void start() {
+        this.initialize();
+        this.openWindow();
+        guiAdapter.onInitFinish();
+        this.done();
+    }
+
+    /**
+     * initializes the controller by creating a new Logger
+     * and initializing the Main-Tasks and Executors
      */
     private void initialize() {
         if (!this.initialized) {
             logger = new Logger(this);
             logger.log("initializing Controller...", this);
-            this.startExecutors();
+            this.initTasks();
             logger.sucsessLog("Controller initialized sucsessfully!", this);
             this.initialized = true;
         }
     }
 
     /**
-     * initializes all executors and starts  them
+     * starts all Controller tasks with the Scheduler
      */
-    private void startExecutors() {
+    private void initTasks() {
         if (!this.initialized) {
             logger.log("initializing Executors...", this);
 
@@ -158,35 +171,27 @@ public abstract class Controller {
     }
 
     /**
-     * starts the program, opens a gui and initializes the controller
-     */
-    public synchronized void start() {
-        this.initialize();
-        this.openWindow();
-        try {
-            while (this.loading) {
-                this.wait();
-            }
-            this.notify();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        this.donePreLoading();
-        this.done();
-    }
-
-    /**
      * opens a new GUI window as a thread
      */
     private synchronized void openWindow() {
         this.setLoading(true);
         logger.log("initialising GUI...", gui);
-        scheduler.exec(gui, "Planespotter-GUI", false, Scheduler.MID_PRIO, false);
+        // starting loading screen
+        scheduler.exec(gui::startLoadingScreen, "Loading Screen", false, Scheduler.MID_PRIO, false);
+
         logger.sucsessLog("GUI initialized sucsessfully!", gui);
         gui.getContainer("window").setVisible(true);
         this.done();
     }
 
+    /**
+     * executed on shutdown
+     * shuts down the program if the uses chooses so
+     * executes last tasks and closes the program carefully
+     *
+     * @param insertRemainingFrames indicates if the remaining loaded live-frames
+     *                              should be inserted or removed
+     */
     public synchronized void shutdown(boolean insertRemainingFrames) {
         int option = JOptionPane.showConfirmDialog(gui.getContainer("window"),
                 "Do you really want to exit PlaneSpotter?",
@@ -198,7 +203,7 @@ public abstract class Controller {
             this.setLoading(true);
             FileWizard.getFileWizard().saveConfig();
             if (insertRemainingFrames) {
-                DBWriter.insertRemaining(scheduler, 500);
+                DBWriter.insertRemaining(scheduler, 1000);
             }
             while (scheduler.active() > 0) {
                 try {
@@ -218,11 +223,17 @@ public abstract class Controller {
         }
     }
 
+    private void emergencyShutdown(Throwable problem) {
+        problem.printStackTrace();
+        FileWizard.getFileWizard().saveLogFile("error", System.out.toString());
+        System.exit(-1);
+    }
+
     /**
      * loads the live data from Fr24 directly into the View
      * @indev
      */
-    public synchronized void loadLiveData() {
+    private synchronized void loadLiveData() {
         this.setLoading(true);
 
         this.liveData = LiveData.directLiveData(scheduler, gui.getMap());
@@ -256,22 +267,13 @@ public abstract class Controller {
     }
 
     /**
-     * this method is executed when pre-loading is done
-     */
-    // TODO auslagern in GUIAdapter
-    public void donePreLoading() {
-        Utilities.playSound(SOUND_DEFAULT.get());
-        gui.loadingScreen.dispose();
-        var window = gui.getContainer("window");
-        window.setVisible(true);
-        window.requestFocus();
-    }
-
-    /**
-     * creates a GUI-view for a specific view-type
+     * creates a GUI-view for a specific view-type and specific data
      *
      * @param type is the ViewType, sets the content type for the
      *             created view (e.g. different List-View-Types)
+     * @param headText is the view-head-text
+     * @param data are the flight-ids to show, may be null if the data is
+     *             collected directly from this.loadedData
      */
     public synchronized void show(@NotNull ViewType type,
                                   @NotNull final String headText,
@@ -480,7 +482,9 @@ public abstract class Controller {
     public void saveFile() {
         gui.setCurrentVisibleRect(gui.getMap().getVisibleRect()); // TODO visible rect beim repainten speichern
         var fileChooser = MenuModels.fileSaver((JFrame) gui.getContainer("window"));
-        var mapData = new MapData(this.loadedData, MAP_TRACKING, null);
+        var rect = (gui.getCurrentVisibleRect() != null) ? gui.getCurrentVisibleRect() : null;
+        // new MapData object with loadedData, view type and visible rectangle
+        var mapData = new MapData(this.loadedData, MAP_TRACKING, rect);
         try {
             FileWizard.getFileWizard().savePlsFile(mapData, fileChooser.getSelectedFile(), this);
         } catch (DataNotFoundException | FileAlreadyExistsException e) {
@@ -492,42 +496,33 @@ public abstract class Controller {
         try {
             var mapManager = gui.getMapManager();
             var fileChooser = MenuModels.fileLoader((JFrame) gui.getContainer("window"));
+
             this.loadedData = FileWizard.getFileWizard().loadPlsFile(fileChooser);
             var trackingMap = mapManager.createTrackingMap(this.loadedData, null, true, Controller.guiAdapter);
-            mapManager.recieveMap(trackingMap, "Loaded from File", MAP_TRACKING);
-            /*var idList = this.loadedData
-                    .stream()
-                    .map(DataPoint::flightID)
-                    .distinct()
-                    .toList();
-            int size = idList.size();
-            var ids = new String[size];
-            int counter = 0;
-            for (var id : idList) {
-                ids[counter] = id.toString();
-                counter++;
-            }
-            this.show(ViewType.MAP_TRACKING, "Loaded from File", ids);*/
+            // receiving tracking map
+            mapManager.receiveMap(trackingMap, "Loaded from File", MAP_TRACKING);
         } catch (DataNotFoundException e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * handles exceptions
+     * handles exceptions, if an exception occurs,
+     * execute this method to handle it
      *
      * @param thr is the throwable (exceptions in the most cases)
      *            which is thrown and will be handled
      */
     public void handleException(final Throwable thr) {
-        if (thr instanceof DataNotFoundException) {
-            guiAdapter.showWarning(Warning.NO_DATA_FOUND, thr.getMessage());
+        if (thr instanceof DataNotFoundException dnf) {
+            guiAdapter.showWarning(Warning.NO_DATA_FOUND, dnf.getMessage());
         } else if (thr instanceof SQLException sql) {
             var message = sql.getMessage();
-            guiAdapter.showWarning(Warning.SQL_ERROR, message + "\n" + sql.getSQLState());
             thr.printStackTrace();
+            guiAdapter.showWarning(Warning.SQL_ERROR, message + "\n" + sql.getSQLState());
             if (message.contains("BUSY")) {
-                System.exit(-1);
+                // emergency shutdown because of DB-Bug
+                this.emergencyShutdown(sql);
             }
         } else if (thr instanceof TimeoutException) {
             guiAdapter.showWarning(Warning.TIMEOUT);
@@ -537,13 +532,13 @@ public abstract class Controller {
             guiAdapter.showWarning(Warning.ILLEGAL_INPUT);
         } else if (thr instanceof InvalidDataException ide) {
             guiAdapter.showWarning(Warning.UNKNOWN_ERROR, ide.getMessage() + "\n" + ide.getCause().getMessage());
-            thr.printStackTrace();
+            ide.printStackTrace();
         } else if (thr instanceof ClassNotFoundException cnf) {
             guiAdapter.showWarning(Warning.UNKNOWN_ERROR, cnf.getMessage());
-            thr.printStackTrace();
+            cnf.printStackTrace();
         } else if (thr instanceof FileAlreadyExistsException fae) {
             guiAdapter.showWarning(Warning.FILE_ALREADY_EXISTS, fae.getMessage());
-            thr.printStackTrace();
+            fae.printStackTrace();
         } else {
             guiAdapter.showWarning(Warning.UNKNOWN_ERROR, thr.getMessage());
             thr.printStackTrace();
@@ -552,7 +547,7 @@ public abstract class Controller {
 
     // private methods
 
-    private void  showRasterHeatMap(String heatText, MapManager bbn, DBOut dbOut) {
+    private void showRasterHeatMap(String heatText, MapManager bbn, DBOut dbOut) {
         try {
             var positions = (Vector<Position>) cache.get("allTrackingPosVec");
             if (positions == null) {
@@ -566,7 +561,7 @@ public abstract class Controller {
                     .heat(positions)
                     .createImage();
             bbn.createRasterHeatMap(img, viewer)
-                    .recieveMap(viewer, heatText, MAP_HEATMAP);
+                    .receiveMap(viewer, heatText, MAP_HEATMAP);
         } catch (DataNotFoundException e) {
             this.handleException(e);
         }
@@ -584,7 +579,7 @@ public abstract class Controller {
             viewer.setHeatMap(new RasterHeatMap(1f) // TODO: 26.05.2022 addHeatMap
                     .heat(positions)
                     .createImage());
-            bbn.recieveMap(viewer, headText, MAP_HEATMAP);
+            bbn.receiveMap(viewer, headText, MAP_HEATMAP);
         } catch (DataNotFoundException e) {
             this.handleException(e);
         }
@@ -595,7 +590,7 @@ public abstract class Controller {
             var aps = dbOut.getAllAirports();
             var signifMap = new Statistics().airportSignificance(aps);
             var map = bbn.createSignificanceMap(signifMap, gui.getMap());
-            bbn.recieveMap(map, headText, MAP_HEATMAP);
+            bbn.receiveMap(map, headText, MAP_HEATMAP);
         } catch (DataNotFoundException e) {
             logger.errorLog(e.getMessage(), this);
             e.printStackTrace();
@@ -621,7 +616,7 @@ public abstract class Controller {
             }
             var flight = out.getFlightByID(flightID);
             var flightRoute = bbn.createTrackingMap(this.loadedData, flight, false, guiAdapter);
-            bbn.recieveMap(flightRoute, headText, MAP_TRACKING_NP);
+            bbn.receiveMap(flightRoute, headText, MAP_TRACKING_NP);
         } catch (NumberFormatException e) {
             logger.errorLog("NumberFormatException while trying to parse the ID-String! Must be an int!", this);
         } catch (DataNotFoundException e) {
@@ -641,7 +636,7 @@ public abstract class Controller {
                 key = "tracking" + flightID;
                 flightTracking = (Vector<DataPoint>) cache.get(key);
                 if (flightTracking == null) {
-                    flightTracking = dbOut.getTrackingByFlight(flightID);
+                    flightTracking = dbOut.getTrackingByFlight(flightID); // FIXME: 29.06.2022 lade ich das doppelt?
                     cache.put(key, flightTracking);
                 }
                 this.loadedData.addAll(flightTracking);
@@ -666,7 +661,7 @@ public abstract class Controller {
             }
             var flight = dbOut.getFlightByID(flightID);
             var trackingMap = bbn.createTrackingMap(this.loadedData, flight, true, guiAdapter);
-            bbn.recieveMap(trackingMap, headText, MAP_TRACKING);
+            bbn.receiveMap(trackingMap, headText, MAP_TRACKING);
         } catch (NumberFormatException e) {
             logger.errorLog("NumberFormatException while trying to parse the ID-String! Must be an int!", this);
         } catch (DataNotFoundException e) {
@@ -677,7 +672,7 @@ public abstract class Controller {
     private void showSearchMap(String headText, MapManager bbn) {
         var data = Utilities.parsePositionVector(this.loadedData);
         var viewer = bbn.createLiveMap(data, gui.getMap());
-        bbn.recieveMap(viewer, headText, MAP_FROMSEARCH);
+        bbn.receiveMap(viewer, headText, MAP_FROMSEARCH);
     }
 
     private void showLiveMap(final String headText, @NotNull final MapManager mapManager) {
@@ -689,7 +684,7 @@ public abstract class Controller {
         var viewer = mapManager.createLiveMap(data, gui.getMap());
 
         LiveData.setLive(true);
-        mapManager.recieveMap(viewer, headText, MAP_LIVE);
+        mapManager.receiveMap(viewer, headText, MAP_LIVE);
     }
 
     private void showFlightList(DBOut dbOut) {
