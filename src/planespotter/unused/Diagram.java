@@ -1,13 +1,13 @@
-package planespotter.display.models;
+package planespotter.unused;
 
-import org.jfree.chart.ChartFactory;
-import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.chart.JFreeChart;
 import planespotter.constants.GUIConstants;
 import planespotter.throwables.InvalidDataException;
 
 import javax.swing.*;
 import java.awt.*;
 
+@Deprecated(since = "JFreeChart", forRemoval = true)
 public class Diagram extends JPanel {
 
     public static final int TYPE_IMAGE = 0,

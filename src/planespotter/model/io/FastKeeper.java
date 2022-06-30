@@ -1,8 +1,5 @@
-package planespotter.model.nio;
+package planespotter.model.io;
 
-import planespotter.model.io.DBConnector;
-import planespotter.model.io.DBIn;
-import planespotter.model.io.DBOut;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.unused.KeeperOfTheArchives;
 
@@ -22,7 +19,7 @@ import static planespotter.util.Time.*;
  * runs for a very long time on big amount of data, time doesn't increase that fast in here,
  * even with big amount of data.
  * @see KeeperOfTheArchives
- * @see planespotter.model.nio.Keeper
+ * @see Keeper
  * @see DBConnector
  */
 public class FastKeeper implements Keeper {
@@ -40,8 +37,8 @@ public class FastKeeper implements Keeper {
      */
     public FastKeeper(final long endThreshold) {
         this.thresholdMillis = endThreshold;
-        this.dbo = new DBOut();
-        this.dbi = new DBIn();
+        this.dbo = DBOut.getDBOut();
+        this.dbi = DBIn.getDBIn();
     }
 
     /**

@@ -109,8 +109,8 @@ public abstract class DBWriter {
             log.log("Trying to insert frames...", instance);
             if (ableCollect(count)) {
                 // insert live data with normal writeToDB
-                var dbOut = new DBOut();
-                var dbIn = new DBIn();
+                var dbOut = DBOut.getDBOut();
+                var dbIn = DBIn.getDBIn();
                 var frames = pollFrames(count);
 
                 scheduler.exec(() -> write(frames, dbOut, dbIn),
@@ -134,8 +134,8 @@ public abstract class DBWriter {
     public static synchronized int insertRemaining(final Scheduler scheduler, int framesPerWrite) {
         int inserted = 0;
         if (enabled) {
-            final var dbOut = new DBOut();
-            final var dbIn = new DBIn();
+            final var dbOut = DBOut.getDBOut();
+            final var dbIn = DBIn.getDBIn();
 
             while (!isEmpty()) {
                 var frames = pollFrames(framesPerWrite);

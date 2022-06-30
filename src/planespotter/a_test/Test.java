@@ -11,11 +11,9 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import planespotter.constants.ANSIColor;
 import planespotter.constants.Images;
 import planespotter.constants.Paths;
-import planespotter.display.Diagrams;
 import planespotter.util.Bitmap;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
-import planespotter.display.models.Diagram;
 import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.model.io.DBOut;
@@ -43,7 +41,7 @@ public class Test {
 
         var bitmapPath = Paths.RESOURCE_PATH + "newTestBitMap.bmp";
 
-        var allAirportTags = new DBOut().getAllAirportTags();
+        var allAirportTags = DBOut.getDBOut().getAllAirportTags();
         var dataset = Statistics.createBarDataset(stats.onlySignificant(stats.tagCount(allAirportTags),600));
         //var image = Diagrams.barChartFromPosVector(600, 400, "Airport-Significance", "Count", "Airports", dataset);
 
@@ -98,15 +96,15 @@ public class Test {
     }
 
     private void speedChartTest() throws DataNotFoundException {
-        var ptps = new DBOut().getAllPlanetypesLike("c20");
-        var fids = new DBOut().getFlightIDsByPlaneTypes(ptps);
+        var ptps = DBOut.getDBOut().getAllPlanetypesLike("c20");
+        var fids = DBOut.getDBOut().getFlightIDsByPlaneTypes(ptps);
         var arr = fids.toArray(new Integer[0]);
 
         this.testSpeedChartByFlightID(Stream.of(arr).mapToInt(i -> i).toArray());
     }
 
     private void testSpeedChartByFlightID(@Range(from = 0, to = Integer.MAX_VALUE) int... flightIDs) {
-        var dbOut = new DBOut();
+        var dbOut = DBOut.getDBOut();
         var inputDeques = new ArrayDeque<?>[0];
         for (int fid : flightIDs) {
             try {
@@ -129,7 +127,7 @@ public class Test {
 
     private void testChart1() throws DataNotFoundException {
         var stats = new Statistics();
-        var airportTags = new DBOut().getAllAirportTags();
+        var airportTags = DBOut.getDBOut().getAllAirportTags();
         var apStats = stats.onlySignificant(stats.tagCount(airportTags), 900);
         var dataset = Statistics.createBarDataset(apStats);
         DefaultCategoryDataset defaultCategoryDataset = new DefaultCategoryDataset();
@@ -149,7 +147,7 @@ public class Test {
 
     private void testAirlineChart() throws DataNotFoundException {
         var stats = new Statistics();
-        var airlineTags = new DBOut().getAllAirlineTags();
+        var airlineTags = DBOut.getDBOut().getAllAirlineTags();
         var airlineStats = stats.onlySignificant(stats.tagCount(airlineTags), 150);
         var dataset = Statistics.createBarDataset(airlineStats);
         var barChart = ChartFactory.createBarChart("Airline Counter", "Airlines", "Count/Significance", dataset, PlotOrientation.HORIZONTAL, true, true, false);
@@ -164,7 +162,7 @@ public class Test {
 
     private void topAirports(int limit) throws DataNotFoundException {
         var stats = new Statistics();
-        var airportTags = new DBOut().getAllAirportTags();
+        var airportTags = DBOut.getDBOut().getAllAirportTags();
         var apStats = stats.onlySignificant(stats.tagCount(airportTags), 500);
         // filtering top airports
         var sortedMap = new HashMap<String, Integer>();
@@ -180,7 +178,7 @@ public class Test {
 
     private void testAirportChart(int minCount) throws DataNotFoundException {
         var stats = new Statistics();
-        var airportTags = new DBOut().getAllAirportTags();
+        var airportTags = DBOut.getDBOut().getAllAirportTags();
         var apStats = stats.onlySignificant(stats.tagCount(airportTags), minCount);
         var dataset = Statistics.createBarDataset(apStats);
         var barChart = ChartFactory.createBarChart("Airport-Significance", "Airports", "Flight-Count", dataset, PlotOrientation.HORIZONTAL, true, true, false);
@@ -236,7 +234,7 @@ public class Test {
     }
 
     private void bitmapWriteTest(File file) throws DataNotFoundException {
-        var positions = new DBOut().getAllTrackingPositions();
+        var positions = DBOut.getDBOut().getAllTrackingPositions();
         var heat = new RasterHeatMap(0.1f)
                 .heat(positions);
 
@@ -297,10 +295,10 @@ public class Test {
             var label = new JLabel(new ImageIcon(img));
             panel.setSize(img.getWidth() + 100, img.getHeight() + 100);
             panel.add(label);
-        } else if (source instanceof Diagram dia) {
+       /* } else if (source instanceof Diagram dia) {
             panel.setLayout(null);
             panel.setSize(dia.getSize());
-            panel.add(dia);
+            panel.add(dia);*/
         } else if (source instanceof Component cmp){
             panel.setSize(cmp.getSize());
             panel.add(cmp);
@@ -316,7 +314,7 @@ public class Test {
     {
         Vector<Position> trackingPositions;
         try {
-            trackingPositions = new DBOut().getAllTrackingPositions();
+            trackingPositions = DBOut.getDBOut().getAllTrackingPositions();
         } catch (DataNotFoundException e) {
             trackingPositions = null;
         }
@@ -328,7 +326,7 @@ public class Test {
         System.out.println("Loading heat map...");
         System.out.println();
 
-        DBOut dbOut = new DBOut();
+        DBOut dbOut = DBOut.getDBOut();
         //var tracking = dbOut.getLiveTrackingBetween(10000, 20000);
         var posVector = dbOut.getAllTrackingPositions();
         var rectHeatMap = new RasterHeatMap(1f)
@@ -370,7 +368,7 @@ public class Test {
         var statistics = new Statistics();
         Vector<DataPoint> liveTrackingBetween = null;
         try {
-            liveTrackingBetween = new DBOut().getLiveTrackingBetween(0, 25000);
+            liveTrackingBetween = DBOut.getDBOut().getLiveTrackingBetween(0, 25000);
         } catch (DataNotFoundException e) {
             e.printStackTrace();
         }

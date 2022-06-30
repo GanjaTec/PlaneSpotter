@@ -1,6 +1,7 @@
-package planespotter.model.nio;
+package planespotter.model;
 
 import planespotter.constants.Areas;
+import planespotter.model.nio.Fr24Supplier;
 import planespotter.unused.KeeperOfTheArchives;
 
 import java.util.concurrent.Executors;

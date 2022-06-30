@@ -34,7 +34,7 @@ public class Search {
         var id = inputs[0];
         var callsign = inputs[1];
         try {
-            var out = new DBOut();
+            var out = DBOut.getDBOut();
             var ctrl = Controller.getInstance();
             if (!id.isBlank()) {
                 int fid = Integer.parseInt(id);
@@ -82,7 +82,7 @@ public class Search {
         var icao = inputs[2]; // find ICAOs
         var tailNr = inputs[3]; // find TailNr
         // TODO registration
-        var out = new DBOut();
+        var out = DBOut.getDBOut();
         var fids = new ArrayDeque<Integer>();
         if (!id.isBlank()) {
             fids.add(Integer.parseInt(id));
@@ -114,7 +114,7 @@ public class Search {
         var id = inputs[0];
         var tag = inputs[1];
         var name = inputs[2];
-        var out = new DBOut();
+        var out = DBOut.getDBOut();
         var ctrl = Controller.getInstance();
         if (!id.isBlank()) {
             // trackings with airport id (-> airport join)
@@ -151,7 +151,7 @@ public class Search {
     private ArrayDeque<String> findPlanetypes(String input)
             throws DataNotFoundException {
 
-        var allPlanetypes = new DBOut().getAllPlanetypesLike(input);
+        var allPlanetypes = DBOut.getDBOut().getAllPlanetypesLike(input);
         if (allPlanetypes.isEmpty()) {
             throw new DataNotFoundException("no existing planetype found for " + input + "!");
         }
@@ -168,7 +168,7 @@ public class Search {
     private ArrayDeque<String> findCallsigns(String input)
             throws DataNotFoundException { // TODO evtl. hier catchen!! in DBout Werfen
 
-        var allCallsigns = new DBOut().getAllCallsignsLike(input);
+        var allCallsigns = DBOut.getDBOut().getAllCallsignsLike(input);
         if (allCallsigns.isEmpty()) {
             throw new DataNotFoundException("no existing callsign found for " + input + "!");
         }

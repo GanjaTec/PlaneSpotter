@@ -56,8 +56,8 @@ public class Fr24Supplier implements Supplier {
 		this.ThreadName = "SupplierThread-" + threadNumber;
 		this.area = area;
 		this.httpClient = HttpClient.newHttpClient();
-		this.dbIn = new DBIn();
-		this.dbOut = new DBOut();
+		this.dbIn = DBIn.getDBIn();
+		this.dbOut = DBOut.getDBOut();
 	}
 
 	@Override

@@ -61,7 +61,7 @@ public abstract class Controller {
     // only GUI instance
     private static final GUI gui;
     // gui adapter
-    public static final GUIAdapter guiAdapter;
+    public static final GUIAdapter guiAdapter; // TODO private with GETTER
     // proto test-cache
     public static final LRUCache<String, Object> cache;
     // live data loading period
@@ -280,7 +280,7 @@ public abstract class Controller {
                                   @Nullable String... data) {
         var mapManager = gui.getMapManager();
         this.setLoading(true);
-        var dbOut = new DBOut();
+        var dbOut = DBOut.getDBOut();
         // TODO ONLY HERE: dispose GUI view(s)
         guiAdapter.disposeView();
         gui.setCurrentViewType(type);
@@ -390,7 +390,7 @@ public abstract class Controller {
             var ctrl = Controller.getInstance();
             int counter = 0;
             var data = ctrl.loadedData;
-            var dbOut = new DBOut();
+            var dbOut = DBOut.getDBOut();
             var tpl = gui.getTreePlantation();
             var logger = Controller.getLogger();
             var menu = (JPanel) gui.getContainer("menuPanel");
@@ -459,7 +459,7 @@ public abstract class Controller {
         int flightID;
         Flight flight;
         var tpl = gui.getTreePlantation();
-        var dbOut = new DBOut();
+        var dbOut =  DBOut.getDBOut();
         for (var m : markers) {
             markerCoord = m.getCoordinate();
             if (bbn.isMarkerHit(markerCoord, clickedCoord)) {
@@ -600,7 +600,7 @@ public abstract class Controller {
     private void showTrackingMapNoPoints(String headText, MapManager bbn, @Nullable String[] data) {
         try {
             loadedData = new Vector<>();
-            var out = new DBOut();
+            var out = DBOut.getDBOut();
             int flightID = -1;
             if (data.length == 1) {
                 assert data[0] != null;

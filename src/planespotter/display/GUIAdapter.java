@@ -2,7 +2,9 @@ package planespotter.display;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.jfree.chart.ChartPanel;
+
 import planespotter.constants.SearchType;
 import planespotter.constants.Warning;
 import planespotter.display.models.PaneModels;
@@ -11,7 +13,6 @@ import planespotter.throwables.IllegalInputException;
 import planespotter.util.Utilities;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 
@@ -22,7 +23,7 @@ import static planespotter.constants.Sound.SOUND_DEFAULT;
  * @name GUIAdapter
  * @author jml04
  * @version 1.1
- *
+ * @description
  * class GUIAdapter contains methods to do some actions for the GUI (that the GUI class is not too full)
  */
 public final class GUIAdapter {
@@ -32,7 +33,9 @@ public final class GUIAdapter {
     private static boolean warningShown = false;
 
     /**
-     * empty constructor
+     * GUIAdapter-constructor with GUI
+     *
+     * @param gui is the GUI instance
      */
     public GUIAdapter(GUI gui) {
         this.gui = gui;
@@ -83,11 +86,13 @@ public final class GUIAdapter {
 
     public void receiveChart(ChartPanel chartPanel) {
         this.disposeView();
-        gui.chartPanel = chartPanel;
+
         var rightDP = (JDesktopPane) gui.getContainer("rightDP");
-        rightDP.add(gui.chartPanel);
-        rightDP.moveToFront(gui.chartPanel);
-        gui.chartPanel.setVisible(true);
+        rightDP.add(chartPanel);
+        rightDP.moveToFront(chartPanel);
+        chartPanel.setVisible(true);
+
+        gui.chartPanel = chartPanel;
     }
 
     /**
@@ -229,7 +234,6 @@ public final class GUIAdapter {
             var listView = gui.getContainer("listView");
             listPanel.remove(listView);
             listView.setVisible(false);
-            listView = null;
             listPanel.setVisible(false);
         } if (gui.getMap() != null) {
             final var viewer = gui.getMap();
@@ -242,7 +246,6 @@ public final class GUIAdapter {
         } if (gui.hasContainer("flightInfoTree")) {
             var flightInfo = gui.getContainer("flightInfoTree");
             flightInfo.setVisible(false);
-            flightInfo = null;
             gui.getContainer("infoPanel").setVisible(false);
         }
         var menuPanel = gui.getContainer("menuPanel");

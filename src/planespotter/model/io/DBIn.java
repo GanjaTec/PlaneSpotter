@@ -11,6 +11,28 @@ import planespotter.dataclasses.Fr24Frame;
  *
  */
 public class DBIn extends DBConnector {
+	// (ONE and ONLY) main instance
+	private static final DBIn INSTANCE;
+	// static initializer
+	static {
+		INSTANCE = new DBIn();
+	}
+
+	/**
+	 * getter for DBIn main instance
+	 *
+	 * @return main instance of DBIn class
+	 */
+	public static DBIn getDBIn() {
+		return INSTANCE;
+	}
+
+	/**
+	 * private constructor, for main instance
+	 */
+	private DBIn() {
+		// do nothing, no fields to initialize
+	}
 
 	public int insertPlane(Fr24Frame f, int airlineID) {
 		try {

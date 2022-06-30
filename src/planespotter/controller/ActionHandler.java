@@ -87,7 +87,7 @@ public record ActionHandler()
 
             } else if (button == gui.getContainer("settingsConfirmButton")) {
                 var settingsMaxLoadTxtField = (JTextField) gui.getContainer("settingsMaxLoadTxtField");
-                var settingsMapTypeCmbBox = (JComboBox<String>) gui.getContainer("settingsMapTypeCmbBox");
+                var settingsMapTypeCmbBox = (JComboBox<?>) gui.getContainer("settingsMapTypeCmbBox");
                 ctrl.confirmSettings(settingsMaxLoadTxtField.getText(), (String) settingsMapTypeCmbBox.getSelectedItem());
                 gui.getContainer("settingsDialog").setVisible(false);
 

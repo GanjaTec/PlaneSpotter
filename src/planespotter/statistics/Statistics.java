@@ -58,7 +58,7 @@ public class Statistics {
     }
 
     public JFreeChart topAirports(int limit) {
-        var dbOut = new DBOut();
+        var dbOut = DBOut.getDBOut();
         Deque<String> airportTags = null;
         try {
             airportTags = dbOut.getAllAirportTags();
@@ -80,7 +80,7 @@ public class Statistics {
     }
 
     public Map<Position, double[]> flightHeadwind(int flightID) {
-        var dbOut = new DBOut();
+        var dbOut = DBOut.getDBOut();
         try {
             var tracking = dbOut.getTrackingByFlight(flightID);
             var map = new HashMap<Position, double[]>();
@@ -151,7 +151,7 @@ public class Statistics {
     public final Map<String, Map<Long, Integer>> windSpeed(final Position topLeft, final Position bottomRight, Deque<DataPoint>... dataPoints) {
         var maps = new HashMap<String, Map<Long, Integer>>();
         var counter = new AtomicInteger(0);
-        var dbOut = new DBOut();
+        var dbOut = DBOut.getDBOut();
         for (int i = 0; i < dataPoints.length; i++) {
             var dpArr = Utilities.parseArray(dataPoints[counter.getAndIncrement()]);
             var fid = dpArr[0].flightID();
@@ -170,7 +170,7 @@ public class Statistics {
     }
 
     public JFreeChart airlineSignificance(int minCount) {
-        var dbOut = new DBOut();
+        var dbOut = DBOut.getDBOut();
         Deque<String> airlineTags = null;
         try {
             airlineTags = dbOut.getAllAirlineTags();
@@ -185,7 +185,7 @@ public class Statistics {
     }
 
     public JFreeChart airportSignificance(int minCount) {
-        var dbOut = new DBOut();
+        var dbOut = DBOut.getDBOut();
         Deque<String> airportTags = null;
         try {
             airportTags = dbOut.getAllAirportTags();

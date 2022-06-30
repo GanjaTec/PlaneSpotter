@@ -5,7 +5,7 @@ import planespotter.controller.Scheduler;
 import planespotter.model.io.DBWriter;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
-import planespotter.model.nio.FastKeeper;
+import planespotter.model.io.FastKeeper;
 
 /**
  * @name Fr24Collector
