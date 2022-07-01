@@ -69,7 +69,7 @@ public class GUI {
         this.actionHandler = actionHandler;
         this.loadingScreen = new PaneModels().loadingScreen();
         this.addContainer("window", this.initialize());
-        this.getContainer("window").add(this.getContainer("mainPanel"));
+        this.getComponent("window").add(this.getComponent("mainPanel"));
         this.currentViewType = null;
         this.currentSearchType = SearchType.FLIGHT;
     }
@@ -98,22 +98,22 @@ public class GUI {
         this.addContainer("rightDP", desktopPanes[1]);
         var titlePanel = panelModels.titlePanel(mainPanel);
         this.addContainer("titlePanel", titlePanel);
-        var viewHeadPanel = panelModels.viewHeadPanel((JDesktopPane) this.getContainer("rightDP"));
+        var viewHeadPanel = panelModels.viewHeadPanel((JDesktopPane) this.getComponent("rightDP"));
         this.addContainer("viewHeadPanel", viewHeadPanel);
-        var listPanel = panelModels.listPanel((JDesktopPane) this.getContainer("rightDP"));
+        var listPanel = panelModels.listPanel((JDesktopPane) this.getComponent("rightDP"));
         this.addContainer("listPanel", listPanel);
-        var mapPanel = panelModels.mapPanel((JDesktopPane) this.getContainer("rightDP"));
+        var mapPanel = panelModels.mapPanel((JDesktopPane) this.getComponent("rightDP"));
         this.addContainer("mapPanel", mapPanel);
 
         // initializing map viewer
         this.mapManager = new MapManager(this, mapPanel, this.actionHandler);
         this.treePlantation = new TreePlantation();
 
-        var menuPanel = panelModels.menuPanel((JDesktopPane) this.getContainer("leftDP"));
+        var menuPanel = panelModels.menuPanel((JDesktopPane) this.getComponent("leftDP"));
         this.addContainer("menuPanel", menuPanel);
-        var infoPanel = panelModels.infoPanel((JDesktopPane) this.getContainer("leftDP"));
+        var infoPanel = panelModels.infoPanel((JDesktopPane) this.getComponent("leftDP"));
         this.addContainer("infoPanel", infoPanel);
-        var startPanel = panelModels.startPanel((JDesktopPane) this.getContainer("rightDP"));
+        var startPanel = panelModels.startPanel((JDesktopPane) this.getComponent("rightDP"));
         this.addContainer("startPanel", startPanel);
         var searchPanel = panelModels.searchPanel(menuPanel);
         this.addContainer("searchPanel", searchPanel);
@@ -130,9 +130,9 @@ public class GUI {
                 this.flightSearch = searchModels.flightSearch(searchPanel, this, this.actionHandler);
                 this.planeSearch = searchModels.planeSearch(searchPanel, this, this.actionHandler);
                 this.airportSearch = searchModels.airportSearch(searchPanel, this, this.actionHandler);
-            var bgLabel = panelModels.backgroundLabel((JDesktopPane) this.getContainer("rightDP"));
+            var bgLabel = panelModels.backgroundLabel((JDesktopPane) this.getComponent("rightDP"));
             this.addContainer("bgLabel", bgLabel);
-            var menuBgLabel = panelModels.menuBgLabel((JDesktopPane) this.getContainer("leftDP"));
+            var menuBgLabel = panelModels.menuBgLabel((JDesktopPane) this.getComponent("leftDP"));
             this.addContainer("menuBgLabel", menuBgLabel);
             var menuBar = menuModels.menuBar(menuPanel);
             this.addContainer("menuBar", menuBar);
@@ -158,13 +158,15 @@ public class GUI {
                 this.addContainer("settingsMaxLoadTxtField", settings_maxLoadTxtField);
                 var settings_mapTypeCmbBox = menuModels.settings_mapTypeCmbBox(this.actionHandler);
                 this.addContainer("settingsMapTypeCmbBox", settings_mapTypeCmbBox);
+                var settingsLivePeriodSlider = menuModels.settingsLivePeriodSlider();
+                this.addContainer("settingsLivePeriodSlider", settingsLivePeriodSlider);
                 var settingsButtons = menuModels.settingsButtons(settingsDialog, this.actionHandler);
                 this.addContainer("settingsCancelButton", settingsButtons[0]);
                 this.addContainer("settingsConfirmButton", settingsButtons[1]);
 
             var viewHeadTxtLabel = panelModels.headTxtLabel();
             this.addContainer("viewHeadTxtLabel", viewHeadTxtLabel);
-            var fileButton = menuModels.fileButton((JDesktopPane) this.getContainer("rightDP"), this.actionHandler);
+            var fileButton = menuModels.fileButton((JDesktopPane) this.getComponent("rightDP"), this.actionHandler);
             this.addContainer("fileButton", fileButton);
             //this.btFile.addActionListener(this.actionHandler);
             var fileMenu = menuModels.fileMenu(viewHeadPanel, this.actionHandler);
@@ -172,7 +174,7 @@ public class GUI {
             this.addContainer("fileBackButton", fileMenu[0]);
             this.addContainer("fileSaveButton", fileMenu[1]);
             this.addContainer("fileOpenButton", fileMenu[2]);
-            var closeViewButton = menuModels.closeViewButton((JDesktopPane) this.getContainer("rightDP"), this.actionHandler);
+            var closeViewButton = menuModels.closeViewButton((JDesktopPane) this.getComponent("rightDP"), this.actionHandler);
             this.addContainer("closeViewButton", closeViewButton);
             //this.closeView.addActionListener(this.actionHandler);
             var titleBackgroundLabel = panelModels.titleBackgroundLabel(titlePanel);
@@ -186,8 +188,8 @@ public class GUI {
         // adding all generated components to window
         this.addAllToWinow();
 
-        this.getContainer("mapPanel").setVisible(false);
-        this.getContainer("startPanel").setVisible(true);
+        this.getComponent("mapPanel").setVisible(false);
+        this.getComponent("startPanel").setVisible(true);
 
         return window;
     }
@@ -200,19 +202,19 @@ public class GUI {
         // TODO: 28.05.2022 HashMap mit key verwenden, statt Klassenvariablen
         // Adding to Window
         // adding everything to menubar
-        var menubar = this.getContainer("menuBar");
-        menubar.add(this.getContainer("listButton"));
-        menubar.add(this.getContainer("mapButton"));
-        menubar.add(this.getContainer("statsButton"));
-        menubar.add(this.getContainer("supplierButton"));
-        menubar.add(this.getContainer("settingsButton")); // TODO gehört das nicht alles in SearchPanel
-        menubar.add(this.getContainer("searchButton"));
+        var menubar = this.getComponent("menuBar");
+        menubar.add(this.getComponent("listButton"));
+        menubar.add(this.getComponent("mapButton"));
+        menubar.add(this.getComponent("statsButton"));
+        menubar.add(this.getComponent("supplierButton"));
+        menubar.add(this.getComponent("settingsButton")); // TODO gehört das nicht alles in SearchPanel
+        menubar.add(this.getComponent("searchButton"));
         // adding everything to search panel
-        var searchPanel = this.getContainer("searchPanel");
-        searchPanel.add(this.getContainer("searchForLabel"));
-        searchPanel.add(this.getContainer("searchForCmbBox"));
-        searchPanel.add(this.getContainer("searchSeperator"));
-        searchPanel.add(this.getContainer("searchMessage"));
+        var searchPanel = this.getComponent("searchPanel");
+        searchPanel.add(this.getComponent("searchForLabel"));
+        searchPanel.add(this.getComponent("searchForCmbBox"));
+        searchPanel.add(this.getComponent("searchSeperator"));
+        searchPanel.add(this.getComponent("searchMessage"));
         searchPanel.addKeyListener(this.actionHandler);
         for (var comps : this.allSearchModels()) {
             if (comps != null) {
@@ -224,39 +226,40 @@ public class GUI {
                 }
             }
         }
-        var menuPanel = this.getContainer("menuPanel");
+        var menuPanel = this.getComponent("menuPanel");
         menuPanel.add(searchPanel);
         menuPanel.add(menubar);
-        this.getContainer("startPanel").add(this.getContainer("startLabel"));
-        var viewHeadPanel = this.getContainer("viewHeadPanel");
-        viewHeadPanel.add(this.getContainer("fileBackButton"));
-        viewHeadPanel.add(this.getContainer("fileSaveButton"));
-        viewHeadPanel.add(this.getContainer("fileOpenButton"));
-        viewHeadPanel.add(this.getContainer("viewHeadTxtLabel"));
-        viewHeadPanel.add(this.getContainer("closeViewButton"));
-        viewHeadPanel.add(this.getContainer("fileButton"));
-        viewHeadPanel.add(this.getContainer("progressBar"));
+        this.getComponent("startPanel").add(this.getComponent("startLabel"));
+        var viewHeadPanel = this.getComponent("viewHeadPanel");
+        viewHeadPanel.add(this.getComponent("fileBackButton"));
+        viewHeadPanel.add(this.getComponent("fileSaveButton"));
+        viewHeadPanel.add(this.getComponent("fileOpenButton"));
+        viewHeadPanel.add(this.getComponent("viewHeadTxtLabel"));
+        viewHeadPanel.add(this.getComponent("closeViewButton"));
+        viewHeadPanel.add(this.getComponent("fileButton"));
+        viewHeadPanel.add(this.getComponent("progressBar"));
         // adding everything to right desktop pane
-        var rightDP = this.getContainer("rightDP");
+        var rightDP = this.getComponent("rightDP");
         rightDP.add(viewHeadPanel);
-        rightDP.add(this.getContainer("listPanel"));
-        rightDP.add(this.getContainer("mapPanel"));
-        rightDP.add(this.getContainer("startPanel"));
-        rightDP.add(this.getContainer("bgLabel"));
-        var leftDP = this.getContainer("leftDP");
+        rightDP.add(this.getComponent("listPanel"));
+        rightDP.add(this.getComponent("mapPanel"));
+        rightDP.add(this.getComponent("startPanel"));
+        rightDP.add(this.getComponent("bgLabel"));
+        var leftDP = this.getComponent("leftDP");
         leftDP.add(menuPanel);
-        leftDP.add(this.getContainer("infoPanel"));
-        leftDP.add(this.getContainer("menuBgLabel"));
-        var titlePanel = this.getContainer("titlePanel");
-        titlePanel.add(this.getContainer("titleBgLabel"));
-        var settingsMaxLoadTxtField = (JTextField) this.getContainer("settingsMaxLoadTxtField");
+        leftDP.add(this.getComponent("infoPanel"));
+        leftDP.add(this.getComponent("menuBgLabel"));
+        var titlePanel = this.getComponent("titlePanel");
+        titlePanel.add(this.getComponent("titleBgLabel"));
+        var settingsMaxLoadTxtField = (JTextField) this.getComponent("settingsMaxLoadTxtField");
         settingsMaxLoadTxtField.setText(UserSettings.getMaxLoadedData() + "");
-        var settingsDialog = this.getContainer("settingsDialog");
+        var settingsDialog = this.getComponent("settingsDialog");
         settingsDialog.add(settingsMaxLoadTxtField);
-        settingsDialog.add(this.getContainer("settingsMapTypeCmbBox"));
-        settingsDialog.add(this.getContainer("settingsCancelButton"));
-        settingsDialog.add(this.getContainer("settingsConfirmButton"));
-        var mainPanel = this.getContainer("mainPanel");
+        settingsDialog.add(this.getComponent("settingsMapTypeCmbBox"));
+        settingsDialog.add(this.getComponent("settingsLivePeriodSlider"));
+        settingsDialog.add(this.getComponent("settingsCancelButton"));
+        settingsDialog.add(this.getComponent("settingsConfirmButton"));
+        var mainPanel = this.getComponent("mainPanel");
         mainPanel.add(titlePanel);
         // adding desktop panes to mainpanel
         mainPanel.add(rightDP);
@@ -272,7 +275,7 @@ public class GUI {
         this.components.put(key, c);
     }
 
-    public final Container getContainer(final String name) {
+    public final Container getComponent(final String name) {
         final var comp = this.components.getOrDefault(name, null);
         if (comp == null) {
             throw new NoSuchContainerException();

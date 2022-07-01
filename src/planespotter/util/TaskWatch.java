@@ -1,5 +1,6 @@
 package planespotter.util;
 
+@SuppressWarnings(value = "unused")
 public class TaskWatch {
 
     // counters

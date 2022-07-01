@@ -57,16 +57,17 @@ public class Statistics {
         return dataset;
     }
 
+    @SuppressWarnings(value = "Wrong output!")
     public JFreeChart topAirports(int limit) {
         var dbOut = DBOut.getDBOut();
-        Deque<String> airportTags = null;
+        Deque<String> airportTags;
         try {
             airportTags = dbOut.getAllAirportTags();
         } catch (DataNotFoundException e) {
             Controller.getInstance().handleException(e);
+            return null;
         }
-        assert airportTags != null;
-        var apStats = this.onlySignificant(this.tagCount(airportTags), 500);
+        var apStats = this.onlySignificant(this.tagCount(airportTags), 10);
         // filtering top airports
         var sortedMap = new HashMap<String, Integer>();
         apStats.entrySet()
@@ -75,7 +76,7 @@ public class Statistics {
                 .limit(limit)
                 .forEach(entry -> sortedMap.put(entry.getKey(), entry.getValue()));
         var dataset = Statistics.createBarDataset(sortedMap);
-        return ChartFactory.createBarChart("Airport-Significance", "Airports", "Flight-Count",
+        return ChartFactory.createBarChart("Top-Airports", "Airports", "Flight-Count",
                                             dataset, PlotOrientation.HORIZONTAL, true, true, false);
     }
 

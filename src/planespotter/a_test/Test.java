@@ -32,53 +32,19 @@ import java.util.stream.Stream;
 
 @TestOnly
 public class Test {
+
+    private static final String bitmapPath = Paths.RESOURCE_PATH + "newTestBitMap.bmp";
     // TEST-MAIN
     public static void main(String[] args) throws Exception {
 
         var test = new Test();
 
-        var stats = new Statistics();
-
-        var bitmapPath = Paths.RESOURCE_PATH + "newTestBitMap.bmp";
-
-        var allAirportTags = DBOut.getDBOut().getAllAirportTags();
-        var dataset = Statistics.createBarDataset(stats.onlySignificant(stats.tagCount(allAirportTags),600));
-        //var image = Diagrams.barChartFromPosVector(600, 400, "Airport-Significance", "Count", "Airports", dataset);
-
-        //test.createTestJFrame(image);
-
-        //test.topAirports(20);
-
-        /*if (true) {
-            var bitmap = Bitmap.read(bitmapPath);
-            System.out.println(bitmap.width + ", " + bitmap.heigth);
-            System.out.println("Read Bitmap equals written Bitmap? '" + bitmap.equals(bmp) + "'");
-        } else {
-            Bitmap.write(bmp, bitmapPath);
-        }*/
-
-
-       /* int a = 23;
-        int b = 10;
-        // 23 - 10 / a plus Komplement von b plus 1
-        int erg = a + ~b + 1;
-        System.out.println(erg);*/
-
-
-/*
-        var wind = stats.flightHeadwind(7326);
-        var dataset = new DefaultCategoryDataset();
-        for (var pos : wind.keySet()) {
-            double[] values = wind.get(pos);
-            var posString = String.valueOf(pos);
-            dataset.addValue(values[0], "Groundspeed", posString);
-            dataset.addValue(values[1], "VectorSpeed", posString);
-        }
-        var chart = ChartFactory.createLineChart("Speed-Diagram", "Positions", "Speed (km/h & direction)", dataset);
-        var frame = new ChartFrame("Speed-Statistic", chart);
-        frame.pack();
-        frame.setVisible(true);
-*/
+        String dir = System.getProperty("user.dir");
+        System.out.println(dir);
+        //String classpath = System.getProperty("java.class.path");
+        //Arrays.stream(classpath.split(";")).forEach(System.out::println);
+        //var props = System.getProperties().toString().split(", ");
+        //Arrays.stream(props).forEach(System.out::println);
 
     }
 

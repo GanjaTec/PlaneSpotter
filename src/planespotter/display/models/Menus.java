@@ -9,7 +9,6 @@ import planespotter.constants.Warning;
 import planespotter.controller.Controller;
 import planespotter.display.Diagrams;
 import planespotter.model.Fr24Collector;
-import planespotter.constants.DefaultColor;
 import planespotter.statistics.Statistics;
 
 import javax.swing.*;
@@ -63,7 +62,7 @@ public abstract class Menus {
             super(owner, "Statistics-Menu");
             super.setLayout(null);
             super.setSize(width, height);
-            super.setBackground(DefaultColor.DEFAULT_BG_COLOR.get());
+            super.setBackground(DEFAULT_BG_COLOR.get());
             super.setLocationRelativeTo(null);
             super.setResizable(false);
             super.addWindowListener(new Listener());
@@ -83,36 +82,36 @@ public abstract class Menus {
             supList.setListData(data);
             supList.addListSelectionListener(e -> {
                 var value = supList.getSelectedValue();
-                var rightDP = (JDesktopPane) Controller.getGUI().getContainer("rightDP");
+                var rightDP = (JDesktopPane) Controller.getGUI().getComponent("rightDP");
                 var stats = new Statistics();
-                var guiAdapter = Controller.guiAdapter;
+                var guiAdapter = Controller.GUI_ADAPTER;
                 switch (value) {
                     // TODO: 30.06.2022 User-Input for parameters
                     case STATS_TOP_AIRPORTS -> guiAdapter.receiveChart(Diagrams.barChartPanel(rightDP, stats.topAirports(20)));
                     case STATS_AIRPORT_SIGNIFICANCE -> {
                         // TODO: 30.06.2022 move to controller
                         var input = JOptionPane.showInputDialog("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
-                        if (input.isBlank()) {
+                        if (input == null || input.isBlank()) {
                             return;
                         }
                         try {
                             int minCount = Integer.parseInt(input);
                             guiAdapter.receiveChart(Diagrams.barChartPanel(rightDP, stats.airportSignificance(minCount)));
                         } catch (NumberFormatException nfe) {
-                            Controller.guiAdapter.showWarning(Warning.INT_EXPECTED);
+                            Controller.GUI_ADAPTER.showWarning(Warning.INT_EXPECTED);
                         }
                     }
                     case STATS_AIRLINE_SIGNIFICANCE -> {
                         // TODO: 30.06.2022 move to controller
-                        var input = JOptionPane.showInputDialog("Please enter a minimum significance (0-" + UnicodeChar.INFINITY + ")", 250);
-                        if (input.isBlank()) {
+                        var input = JOptionPane.showInputDialog("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
+                        if (input == null || input.isBlank()) {
                             return;
                         }
                         try {
                             int minCount = Integer.parseInt(input);
                             guiAdapter.receiveChart(Diagrams.barChartPanel(rightDP, stats.airlineSignificance(minCount)));
                         } catch (NumberFormatException nfe) {
-                            Controller.guiAdapter.showWarning(Warning.INT_EXPECTED);
+                            Controller.GUI_ADAPTER.showWarning(Warning.INT_EXPECTED);
                         }
                     }
                     case STATS_HEATMAP -> {/* show heat map */}
@@ -134,7 +133,7 @@ public abstract class Menus {
             super(owner, "Supplier-Menu");
             super.setLayout(null);
             super.setSize(width, height);
-            super.setBackground(DefaultColor.DEFAULT_BG_COLOR.get());
+            super.setBackground(DEFAULT_BG_COLOR.get());
             super.setLocationRelativeTo(null);
             super.setResizable(false);
             super.addWindowListener(new Listener());
@@ -187,7 +186,7 @@ public abstract class Menus {
             super(owner, "Statistics");
             super.setLayout(null);
             super.setSize(width, height);
-            super.setBackground(DefaultColor.DEFAULT_BG_COLOR.get());
+            super.setBackground(DEFAULT_BG_COLOR.get());
             super.setLocationRelativeTo(null);
             super.setResizable(false);
             super.addWindowListener(new Listener());

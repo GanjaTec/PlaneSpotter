@@ -1,10 +1,13 @@
 package planespotter.display.models;
 
 import libs.UWPButton;
+import planespotter.constants.DefaultColor;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
+import javax.swing.plaf.SliderUI;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
@@ -177,30 +180,43 @@ public final class MenuModels {
         return closeView;
     }
 
+    // TODO: 01.07.2022 man könnte die kompletten Settings mit einer
+    //  JTable machen, linke spalte keys, rechte spalte values
+
+    // TODO: 01.07.2022 Settings class oder inner class
+
     /**
      * @return settings option pane (which pops up)
      */
     public JDialog settingsDialog(JFrame parent) {
             var maxLoadLbl = new JLabel("Max. loaded Data:");
-            maxLoadLbl.setBounds(20, 20, 180, 30);
-            maxLoadLbl.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-            maxLoadLbl.setFont(FONT_MENU);
-            maxLoadLbl.setOpaque(false);
+                maxLoadLbl.setBounds(20, 20, 300, 30);
+                maxLoadLbl.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                maxLoadLbl.setFont(FONT_MENU);
+                maxLoadLbl.setOpaque(false);
             var mapType = new JLabel("Map Type:");
-            mapType.setBounds(20, 70, 300, 30);
-            mapType.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-            mapType.setFont(FONT_MENU);
-            mapType.setOpaque(false);
+                mapType.setBounds(20, 70, 300, 30);
+                mapType.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                mapType.setFont(FONT_MENU);
+                mapType.setOpaque(false);
+            var livePeriod = new JLabel("Live Data Period (sec):");
+                livePeriod.setBounds(20, 120, 300, 30);
+                livePeriod.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                livePeriod.setFont(FONT_MENU);
+                livePeriod.setOpaque(false);
         var settings = new JDialog(parent);
-        settings.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 500, 400);
+        settings.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 550, 400);
         settings.setLayout(null);
         settings.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         settings.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         settings.setType(Window.Type.POPUP);
         settings.setResizable(false);
         settings.setFocusable(false);
+        // adding labels
         settings.add(maxLoadLbl);
         settings.add(mapType);
+        settings.add(livePeriod);
+
         settings.setVisible(false);
 
         return settings;
@@ -211,10 +227,10 @@ public final class MenuModels {
      */
     public JTextField settings_maxLoadTxtField(KeyListener listener) {
         var maxLoadTxtfield = new JTextField();
-        maxLoadTxtfield.setBounds(200, 20, 50, 30);
+        maxLoadTxtfield.setBounds(350, 20, 150, 30);
         maxLoadTxtfield.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR.get()));
-        maxLoadTxtfield.setBackground(DEFAULT_BG_COLOR.get());
-        maxLoadTxtfield.setForeground(DEFAULT_MAP_ICON_COLOR.get());
+        maxLoadTxtfield.setBackground(DEFAULT_FONT_COLOR.get());
+        maxLoadTxtfield.setForeground(DEFAULT_ACCENT_COLOR.get());
         maxLoadTxtfield.setFont(FONT_MENU);
         maxLoadTxtfield.addKeyListener(listener);
 
@@ -247,14 +263,22 @@ public final class MenuModels {
                 "Default Map",
                 "Transport Map"
         });
-        mapTypeCmbBox.setBounds(200, 70, 100,  30);
+        mapTypeCmbBox.setBounds(350, 70, 150,  30);
         mapTypeCmbBox.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR.get()));
-        mapTypeCmbBox.setBackground(DEFAULT_BG_COLOR.get());
-        mapTypeCmbBox.setForeground(DEFAULT_MAP_ICON_COLOR.get());
+        mapTypeCmbBox.setBackground(DEFAULT_FONT_COLOR.get());
+        mapTypeCmbBox.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         mapTypeCmbBox.setFont(FONT_MENU);
         mapTypeCmbBox.addItemListener(listener);
 
         return mapTypeCmbBox;
+    }
+
+    public JSlider settingsLivePeriodSlider() {
+        var slider = new JSlider(JSlider.HORIZONTAL, 1, 10, 2);
+        slider.setBounds(350, 120, 150, 30);
+        slider.setToolTipText("Live-Data loading period in seconds (1-10)");
+
+        return slider;
     }
 
     /**
