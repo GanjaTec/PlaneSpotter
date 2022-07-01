@@ -1,4 +1,4 @@
-package planespotter.model.nio;
+package planespotter.model.io;
 
 /**
  * @name Keeper

@@ -5,7 +5,7 @@ import planespotter.controller.Scheduler;
 import planespotter.model.io.DBWriter;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
-import planespotter.model.nio.FastKeeper;
+import planespotter.model.io.FastKeeper;
 
 /**
  * @name Fr24Collector
@@ -49,7 +49,6 @@ public class Fr24Collector extends Collector {
     @Override
     public void startCollecting() {
         super.startNewMainThread(() -> this.collect(
-                new Scheduler(),
                 new Fr24Supplier(),
                 new Fr24Deserializer(),
                 new FastKeeper(1200L)
@@ -59,10 +58,8 @@ public class Fr24Collector extends Collector {
     /**
      *
      */
-    private synchronized void collect(Scheduler mainScheduler, Fr24Supplier supplier,
-                                      Fr24Deserializer deserializer, FastKeeper keeper) {
+    private synchronized void collect(Fr24Supplier supplier, Fr24Deserializer deserializer, FastKeeper keeper) {
 
-        super.scheduler = mainScheduler;
         super.scheduler.schedule(() -> {
             synchronized (Collector.SYNC) {
                 // executing suppliers to collect Fr24-Data

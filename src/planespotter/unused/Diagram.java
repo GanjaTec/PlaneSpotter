@@ -1,45 +1,38 @@
-package planespotter.display.models;
+package planespotter.unused;
 
-import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.CategoryPlot;
-import org.jfree.chart.plot.Plot;
-import org.jfree.data.category.DefaultCategoryDataset;
-import org.jfree.data.xy.DefaultXYDataset;
-import org.jfree.data.xy.XYBarDataset;
-import planespotter.constants.DefaultColor;
 import planespotter.constants.GUIConstants;
+import planespotter.throwables.InvalidDataException;
 
 import javax.swing.*;
 import java.awt.*;
 
-// TODO: 16.06.2022 include JFreeChart
+@Deprecated(since = "JFreeChart", forRemoval = true)
 public class Diagram extends JPanel {
 
-    public static final int TYPE_BAR_CHART = 0,
-                            TYPE_CAKE_CHART = 1,
-                            TYPE_GRAPH_CHART = 2,
-                            TYPE_HEATMAP_CHART = 3;
+    public static final int TYPE_IMAGE = 0,
+                            TYPE_COMPONENT = 1;
 
     // diagram type
     private final int type;
-    private final short[][] heatMap;
+    private Image image;
+    private Component component;
 
     // TODO eventuell Klasse DiagramBuilder mit static create..Diagram methoden
-    public Diagram(final int diagramType,
-                   int width,
-                   int heigth,
-                   final short[]... heatMap) {
+    public <D> Diagram(final int diagramType,
+                       int width,
+                       int heigth,
+                       final D data) {
         this.type = diagramType;
         super.setBorder(GUIConstants.LINE_BORDER);
-        if (heatMap != null) {
-            width = heatMap.length * 2;
-            heigth = heatMap[0].length * 2;
-            this.heatMap = heatMap;
-        } else {
-            this.heatMap = null;
-        }
         super.setSize(width, heigth);
+        switch (this.type) {
+            case 0 -> this.image = (data instanceof Image img) ? img : null;
+            case 1 -> this.component = (data instanceof Component cmp) ? cmp : null;
+        }
+        if (this.image == null && this.component == null) {
+            throw new InvalidDataException("Data input is incorrect, check diagramType and data format");
+        }
     }
 
     @Override
@@ -47,14 +40,8 @@ public class Diagram extends JPanel {
         super.paintComponent(g);
         var g2d = (Graphics2D) g;
         switch (this.type) {
-            case TYPE_BAR_CHART -> this.paintBarChart(g2d);
-            case TYPE_CAKE_CHART -> this.paintTestCake(g2d);
-            case TYPE_GRAPH_CHART -> {}
-            case TYPE_HEATMAP_CHART -> {
-                if (this.heatMap != null) {
-                    this.paintHeatMap(g2d, this.heatMap);
-                }
-            }
+            case 0 -> g2d.drawImage(this.image, 0, 0, null);
+            case 1 -> this.component.paint(g2d);
         }
     }
 
@@ -127,23 +114,6 @@ public class Diagram extends JPanel {
             g2d.setColor(new Color(red, green, blue));
             g2d.fillArc(310, 140, 80, 80, a, 1);
         }
-    }
-
-    private void paintBarChart(Graphics2D g2d) {
-        var dataset = new DefaultCategoryDataset();
-
-        int lengthX = this.heatMap.length;
-        int lengthY = this.heatMap[0].length;
-        for (int x = 0; x < lengthX; x++) {
-            for (int y = 0; y < lengthY; y++) {
-                dataset.addValue((Number) this.heatMap[x][y], x, y);
-            }
-        }
-
-        var barChart = ChartFactory.createBarChart("", "", "", dataset);
-        var chartImg = barChart.createBufferedImage(800, 500);
-
-        g2d.drawImage(chartImg, 0, 0, null);
     }
 
 }

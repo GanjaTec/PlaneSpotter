@@ -8,7 +8,7 @@ import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBConnector;
 import planespotter.model.io.DBOut;
 import planespotter.model.nio.Fr24Deserializer;
-import planespotter.model.nio.FastKeeper;
+import planespotter.model.io.FastKeeper;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.throwables.DataNotFoundException;
 
@@ -62,7 +62,7 @@ public class ProtoSupplier extends DBConnector implements Runnable {
             // grabbing data from Fr24 and deserializing to Frames
             var frames = new Fr24Supplier().getFrames(areas, this.deserializer, new Scheduler());
             // writing the frames to DB
-            this.writeToDB(frames, new DBOut());
+            this.writeToDB(frames, DBOut.getDBOut());
             /*try {
                 while (busyLock) {
                     synchronized (this) {

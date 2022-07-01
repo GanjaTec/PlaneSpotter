@@ -2,6 +2,9 @@ package planespotter.display;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import org.jfree.chart.ChartPanel;
+
 import planespotter.constants.SearchType;
 import planespotter.constants.Warning;
 import planespotter.display.models.PaneModels;
@@ -14,12 +17,13 @@ import java.util.List;
 import java.util.Objects;
 
 import static planespotter.constants.GUIConstants.*;
+import static planespotter.constants.Sound.SOUND_DEFAULT;
 
 /**
  * @name GUIAdapter
  * @author jml04
  * @version 1.1
- *
+ * @description
  * class GUIAdapter contains methods to do some actions for the GUI (that the GUI class is not too full)
  */
 public final class GUIAdapter {
@@ -29,7 +33,9 @@ public final class GUIAdapter {
     private static boolean warningShown = false;
 
     /**
-     * empty constructor
+     * GUIAdapter-constructor with GUI
+     *
+     * @param gui is the GUI instance
      */
     public GUIAdapter(GUI gui) {
         this.gui = gui;
@@ -56,15 +62,40 @@ public final class GUIAdapter {
                 message += "\n" + addTxt;
             }
             warningShown = true;
-            JOptionPane.showOptionDialog(
-                    gui.getContainer("window"),
-                    message,
-                    "Warning",
-                    JOptionPane.DEFAULT_OPTION,
-                    JOptionPane.WARNING_MESSAGE,
-                    null, null, null); // TODO: 06.06.2022 warning icon
-            warningShown = false;
+            try {
+                JOptionPane.showOptionDialog(
+                        gui.getComponent("window"),
+                        message,
+                        "Warning",
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null, null, null); // TODO: 30.06.2022 warning icon
+            } finally {
+                warningShown = false;
+            }
         }
+    }
+
+    /**
+     * this method is executed when pre-loading is done
+     */
+    public void onInitFinish() {
+        Utilities.playSound(SOUND_DEFAULT.get());
+        gui.loadingScreen.dispose();
+        var window = gui.getComponent("window");
+        window.setVisible(true);
+        window.requestFocus();
+    }
+
+    public void receiveChart(ChartPanel chartPanel) {
+        this.disposeView();
+
+        var rightDP = (JDesktopPane) gui.getComponent("rightDP");
+        rightDP.add(chartPanel);
+        rightDP.moveToFront(chartPanel);
+        chartPanel.setVisible(true);
+
+        gui.chartPanel = chartPanel;
     }
 
     /**
@@ -72,17 +103,16 @@ public final class GUIAdapter {
      *
      * @param tree is the tree to set
      */
-    public void recieveTree(JTree tree) {
-        var listPanel = (JPanel) gui.getContainer("listPanel");
+    public void receiveTree(JTree tree) {
+        var listPanel = (JPanel) gui.getComponent("listPanel");
         tree.setBounds(0, 0, listPanel.getWidth(), listPanel.getHeight());
-        //gui.listView = tree;
         gui.addContainer("listScrollPane", new PaneModels().listScrollPane(tree, listPanel));
-        var listScrollPane = gui.getContainer("listScrollPane");
-        gui.getContainer("listPanel").add(listScrollPane);
-        var rightDP = (JDesktopPane) gui.getContainer("rightDP");
+        var listScrollPane = gui.getComponent("listScrollPane");
+        gui.getComponent("listPanel").add(listScrollPane);
+        var rightDP = (JDesktopPane) gui.getComponent("rightDP");
         rightDP.moveToFront(listPanel);
         listPanel.setVisible(true);
-        var viewHeadText = (JTextField) gui.getContainer("viewHeadText");
+        var viewHeadText = (JTextField) gui.getComponent("viewHeadText");
         viewHeadText.setText(DEFAULT_HEAD_TEXT + "Flight-List"); // TODO: 21.05.2022 add text
         // revalidate window -> making the tree visible
         this.requestComponentFocus(gui.listView);
@@ -93,13 +123,13 @@ public final class GUIAdapter {
      * @param flightTree is the flight tree to set
      * @param dpInfoTree is the @Nullable data point info tree
      */
-    public void recieveInfoTree(@NotNull final JTree flightTree,
+    public void receiveInfoTree(@NotNull final JTree flightTree,
                                 @Nullable final JTree dpInfoTree) {
-        var infoPanel = gui.getContainer("infoPanel");
+        var infoPanel = gui.getComponent("infoPanel");
         infoPanel.removeAll();
         int width = infoPanel.getWidth();
         int height = infoPanel.getHeight() / 2;
-        gui.getContainer("menuPanel").setVisible(false);
+        gui.getComponent("menuPanel").setVisible(false);
         flightTree.setBounds(0, 0, width, height + 50);
         flightTree.setMaximumSize(infoPanel.getSize());
         flightTree.setBorder(LINE_BORDER);
@@ -107,18 +137,18 @@ public final class GUIAdapter {
         infoPanel.add(flightTree);
         gui.addContainer("flightInfoTree", flightTree);
         if (dpInfoTree != null) {
-            this.recieveDataPointInfoTree(dpInfoTree, width, height);
+            this.receiveDataPointInfoTree(dpInfoTree, width, height);
         }
-        var leftDP = (JDesktopPane) gui.getContainer("leftDP");
+        var leftDP = (JDesktopPane) gui.getComponent("leftDP");
         leftDP.moveToFront(infoPanel);
         infoPanel.setVisible(true);
     }
 
-    private void recieveDataPointInfoTree(@NotNull JTree dpInfoTree, int width, int height) {
+    private void receiveDataPointInfoTree(@NotNull JTree dpInfoTree, int width, int height) {
         dpInfoTree.setBounds(0, height + 50, width, height - 50);
         dpInfoTree.setBorder(LINE_BORDER);
         dpInfoTree.setFont(FONT_MENU.deriveFont(12f));
-        gui.getContainer("infoPanel").add(dpInfoTree);
+        gui.getComponent("infoPanel").add(dpInfoTree);
         gui.addContainer("dpInfoTree", dpInfoTree);
     }
 
@@ -126,7 +156,7 @@ public final class GUIAdapter {
      * starts a indeterminate progressBar
      */
     public void startProgressBar() {
-        var progressBar = (JProgressBar) gui.getContainer("progressBar");
+        var progressBar = (JProgressBar) gui.getComponent("progressBar");
         progressBar.setVisible(true);
         progressBar.setIndeterminate(true);
         progressBar.setString("Loading data...");
@@ -138,14 +168,14 @@ public final class GUIAdapter {
      *
      */
     public void stopProgressBar() {
-        gui.getContainer("progressBar").setVisible(false);
+        gui.getComponent("progressBar").setVisible(false);
     }
 
     /**
      * revalidates all swing components
      */
     public void update() {
-        gui.getContainer("window").revalidate();
+        gui.getComponent("window").revalidate();
     }
 
     /**
@@ -196,34 +226,36 @@ public final class GUIAdapter {
      * if no other view is opened, nothing is done
      */
     public synchronized void disposeView() {
+        if (gui.chartPanel != null) {
+            var rightDP = (JDesktopPane) gui.getComponent("rightDP");
+            rightDP.remove(gui.chartPanel);
+        }
         if (gui.hasContainer("startPanel")) {
-            gui.getContainer("startPanel").setVisible(false);
+            gui.getComponent("startPanel").setVisible(false);
         } if (gui.hasContainer("listView")) {
-            final var listPanel = gui.getContainer("listPanel");
-            var listView = gui.getContainer("listView");
+            final var listPanel = gui.getComponent("listPanel");
+            var listView = gui.getComponent("listView");
             listPanel.remove(listView);
             listView.setVisible(false);
-            listView = null;
             listPanel.setVisible(false);
         } if (gui.getMap() != null) {
             final var viewer = gui.getMap();
-            final var mapPanel = gui.getContainer("mapPanel");
+            final var mapPanel = gui.getComponent("mapPanel");
             viewer.removeAllMapMarkers();
             viewer.removeAllMapPolygons();
             viewer.setVisible(false);
             mapPanel.remove(viewer);
             mapPanel.setVisible(false);
         } if (gui.hasContainer("flightInfoTree")) {
-            var flightInfo = gui.getContainer("flightInfoTree");
+            var flightInfo = gui.getComponent("flightInfoTree");
             flightInfo.setVisible(false);
-            flightInfo = null;
-            gui.getContainer("infoPanel").setVisible(false);
+            gui.getComponent("infoPanel").setVisible(false);
         }
-        var menuPanel = gui.getContainer("menuPanel");
+        var menuPanel = gui.getComponent("menuPanel");
         menuPanel.setVisible(true);
-        var leftDP = (JDesktopPane) gui.getContainer("leftDP");
+        var leftDP = (JDesktopPane) gui.getComponent("leftDP");
         leftDP.moveToFront(menuPanel);
-        var viewHeadTxtLabel = (JLabel) gui.getContainer("viewHeadTxtLabel");
+        var viewHeadTxtLabel = (JLabel) gui.getComponent("viewHeadTxtLabel");
         viewHeadTxtLabel.setText(DEFAULT_HEAD_TEXT); // TODO EXTRA methode
         gui.setCurrentViewType(null);
         gui.getMap().setHeatMap(null);
@@ -232,8 +264,8 @@ public final class GUIAdapter {
     }
 
     public void setViewHeadBtVisible(boolean b) {
-        gui.getContainer("fileButton").setVisible(b);
-        gui.getContainer("closeViewButton").setVisible(b);
+        gui.getComponent("fileButton").setVisible(b);
+        gui.getComponent("closeViewButton").setVisible(b);
     }
 
     public void setFileMenuVisible(boolean b) {

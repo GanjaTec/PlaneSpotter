@@ -2,7 +2,6 @@ package planespotter.model.io;
 
 import planespotter.constants.SQLQueries;
 import planespotter.dataclasses.*;
-import planespotter.dataclasses.Fr24Frame;
 import planespotter.constants.UserSettings;
 import planespotter.dataclasses.DBResult;
 import planespotter.throwables.NoAccessException;
@@ -18,13 +17,39 @@ import java.util.*;
  * @author Bennet
  * @author jml04
  * @version 1.1
- *
- * This class is used to get Output from the DB
- * It relies heavily on planespotter.SQLQuerrys
+ * @description
+ * This DBConnector-child-class is used to get Output from
+ * the DB and uses Queries provided by the SQLQueries Class
+ * some methods are deprecated and will be removed, others will
+ * be updated and/or improved...
+ * @see planespotter.constants.SQLQueries
+ * @see planespotter.model.io.DBConnector
  *
  */
 
 public class DBOut extends DBConnector {
+	// (ONE and ONLY) main instance
+	private static final DBOut INSTANCE;
+	// static initializer
+	static {
+		INSTANCE = new DBOut();
+	}
+
+	/**
+	 * getter for main DBOut-instance
+	 *
+	 * @return main instance of the DBOut class
+	 */
+	public static DBOut getDBOut() {
+		return INSTANCE;
+	}
+
+	/**
+	 * private constructor for main instance
+	 */
+	protected DBOut() {
+		// do nothing, no fields to initialize
+	}
 
 	/**
 	 * This method is a quick botch because i messed up the Airports Table in the DB
@@ -75,68 +100,41 @@ public class DBOut extends DBConnector {
 		} 
 		return a;
 	}
-	
-	public final int getAirlineIDByTag(String tag) {
-
-		int id = -1;
-		if (tag == null) { // vorrübergehende Notlösung
-			return id;
-		}
-
-		try {
-			tag = Utilities.packString(tag);
-			synchronized (DB_SYNC) {
-				var result = super.queryDB(SQLQueries.GET_AIRLINE_ID_BY_TAG + tag);
-				var rs = result.resultSet();
-				if (rs.next()) {
-					id = rs.getInt(1);
-				}
-				result.close();
-			}
-		} catch (SQLException | NoAccessException e) {
-			e.printStackTrace();
-		} 
-
-		return id;
-	}
 
 	/**
-	 * This Method is used to Querry both the Departure (src) and the Arrival (dst)
+	 * This Method is used to query both: the Departure (src) and the Arrival (dest)
 	 * Airports of a Flight and returns a List containing two Airport Objects
 	 *
 	 * @param srcAirport String containing the Departure Airports IATA Tag
 	 * @param destAirport String containing the Arrival Airports IATA Tag
-	 * @return List<Airport> the list containing the Airport Objects
+	 * @return Airport array with length of 2, containing the Airport Objects
 	 */
 
-	public final List<Airport> getAirports(String srcAirport, String destAirport)
-			throws DataNotFoundException { // TODO man könnte return array machen (länge ist immer 2) !!
-
-		final var aps = new ArrayList<Airport>();
+	public final Airport[] getAirports(final String srcAirport, final String destAirport) {
+		// source- and dest-airport
+		Airport src, dest;
+		// airport-output array
+		final var aps = new Airport[2];
+		// null-Airport, stands for 'no airport found'
+		var nullAirport = new Airport(-1, "None", "None", new Position(0., 0.));
 		try {
+			// synchronizing on DB-sync to prevent SQLITE_BUSY error
 			synchronized (DB_SYNC) {
+				// getting db-results
 				var srcResult = super.queryDB(SQLQueries.GET_AIRPORT_BY_TAG + Utilities.packString(srcAirport));
 				var destResult = super.queryDB(SQLQueries.GET_AIRPORT_BY_TAG + Utilities.packString(destAirport));
-
+				// getting result sets
 				var rsSrc = srcResult.resultSet();
 				var rsDst = destResult.resultSet();
-
-				if (rsSrc.next()) {
-					var srcAp = new Airport(rsSrc.getInt("ID"), rsSrc.getString("iatatag"), rsSrc.getString("name"), convertCoords(rsSrc.getString("coords")));
-					aps.add(srcAp);
-
-				} else {
-					var srcAp = new Airport(0, "None", "None", new Position(0.0f, 0.0f));
-					aps.add(srcAp);
-				}
-
-				if (rsDst.next()) {
-					var dstAp = new Airport(rsDst.getInt("ID"), rsDst.getString("iatatag"), rsDst.getString("name"), convertCoords(rsDst.getString("coords")));
-					aps.add(dstAp);
-				} else {
-					var dstAp = new Airport(0, "None", "None", new Position(0.0f, 0.0f));
-					aps.add(dstAp);
-				}
+				// getting airports
+				src = (rsSrc.next()) ? new Airport(rsSrc.getInt("ID"), rsSrc.getString("iatatag"), rsSrc.getString("name"), convertCoords(rsSrc.getString("coords")))
+						: nullAirport;
+				dest = (rsDst.next()) ? new Airport(rsDst.getInt("ID"), rsDst.getString("iatatag"), rsDst.getString("name"), convertCoords(rsDst.getString("coords")))
+						: nullAirport;
+				// filling airport array
+				aps[0] = src;
+				aps[1] = dest;
+				// closing db-results
 				srcResult.close();
 				destResult.close();
 			}
@@ -187,27 +185,25 @@ public class DBOut extends DBConnector {
 	public final Plane getPlaneByID(int id)
 			throws DataNotFoundException {
 
-		Plane p = null;
+		Airline airline;
+		Plane plane = null;
 		try {
 			synchronized (DB_SYNC) {
 				var result = super.queryDB(SQLQueries.GET_PLANE_BY_ID + id);
 				var rs = result.resultSet();
 				if (rs.next()) {
-					//var a = new Airline(-1, "BIA", "BUFU Int. Airlines");
-					//Airline a = getAirlineByTag(rs.getString("airline"));
-					var airline = this.getAirlineByID(rs.getInt("airline"));
-					p = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailnr"), rs.getString("type"), rs.getString("registration"), airline);
-				} else {
-					var a = new Airline(-1, "None", "None", "None");
-					p = new Plane(-1, "None", "None", "None", "None", a);
-					throw new DataNotFoundException("Plane not found!");
+					airline = this.getAirlineByID(rs.getInt("airline"));
+					plane = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailnr"), rs.getString("type"), rs.getString("registration"), airline);
 				}
 				result.close();
+				if (plane == null) {
+					throw new DataNotFoundException("No plane found for ID " + id + "!");
+				}
 			}
 		} catch (SQLException | NoAccessException e) {
 			e.printStackTrace();
 		} 
-		return p;
+		return plane;
 	}
 
 	public final Airline getAirlineByID(final int id)
@@ -244,7 +240,6 @@ public class DBOut extends DBConnector {
 	/**
 	 * @param icao
 	 * @return
-	 * @throws Exception
 	 */
 	public final int checkPlaneInDB(String icao) {
 
@@ -275,7 +270,7 @@ public class DBOut extends DBConnector {
 	 *
 	 * @param flightID int representing the Flights Database ID
 	 * @return HashMap<Integer, DataPoint> containing all Datapoints keyed with Timestamp
-	 * @throws Exception
+	 * @throws DataNotFoundException
 	 */
 	// TODO fix: HashMap lentgh was 1, but last Tracking id was about 23000
 	// TODO hier muss der Fehler sein
@@ -438,7 +433,7 @@ public class DBOut extends DBConnector {
 					var dps = this.getCompleteTrackingByFlight(rs.getInt("ID"));
 					var aps = this.getAirports(rs.getString("src"), rs.getString("dest"));
 					var plane = this.getPlaneByID(rs.getInt("plane"));
-					var flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
+					var flight = new Flight(rs.getInt("ID"), aps[0], aps[1], rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
 					flights.add(flight);
 					counter++;
 				}
@@ -501,31 +496,6 @@ public class DBOut extends DBConnector {
 			e.printStackTrace();
 		} 
 		return -9999; // weil es -1 schon gibt -> zum besseren debuggen
-	} 
-
-	/**
-	 * @param f
-	 * @param planeid
-	 * @return
-	 */
-	public int checkFlightInDB(Fr24Frame f, int planeid) {
-		try {
-			synchronized (DB_SYNC) {
-				var result = this.queryDB("SELECT ID FROM flights WHERE plane == " + planeid + " AND flightnr == '" + f.getFlightnumber() + "' AND endTime IS NULL");
-				var rs = result.resultSet();
-				int flightID;
-				if (rs.next()) {
-					flightID = rs.getInt("ID");
-				} else {
-					flightID = -1;
-				}
-				result.close();
-				return flightID;
-			}
-		} catch (SQLException | NoAccessException e) {
-			e.printStackTrace();
-		} 
-		return -9999; // weil es -1 schon gibt -> zum besseren debuggen
 	}
 
 	public List<Integer> checkEnded()
@@ -558,9 +528,9 @@ public class DBOut extends DBConnector {
 				ResultSet rs = result.resultSet();
 
 				if (rs.next()) {
-					var airports = this.getAirports(rs.getString("src"), rs.getString("dest")).toArray();
+					var airports = this.getAirports(rs.getString("src"), rs.getString("dest"));
 					var tracking = this.getCompleteTrackingByFlight(rs.getInt("ID"));
-					f = new Flight(rs.getInt("ID"), (Airport) airports[0], (Airport) airports[1], rs.getString("callsign"), getPlaneByID(rs.getInt("plane")), rs.getString("flightnr"), tracking);
+					f = new Flight(rs.getInt("ID"), airports[0], airports[1], rs.getString("callsign"), getPlaneByID(rs.getInt("plane")), rs.getString("flightnr"), tracking);
 				} else {
 					throw new DataNotFoundException("No Flight found for id " + id + "!");
 				}
@@ -587,7 +557,7 @@ public class DBOut extends DBConnector {
 					var dps = getCompleteTrackingByFlight(rs.getInt("ID"));
 					var aps = getAirports(rs.getString("src"), rs.getString("dest"));
 					var plane = getPlaneByID(rs.getInt("plane"));
-					var flight = new Flight(rs.getInt("ID"), aps.get(0), aps.get(1), rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
+					var flight = new Flight(rs.getInt("ID"), aps[0], aps[1], rs.getString("callsign"), plane, rs.getString("flightnr"), dps);
 					flights.add(flight);
 					counter++;
 				}
@@ -832,11 +802,12 @@ public class DBOut extends DBConnector {
 					"FROM flights f, tracking t " +
 					"WHERE (f.endTime IS NULL) " +
 					"AND (f.ID = t.flightid) " +
-					"AND flightid BETWEEN " + from + " and " + to + " GROUP BY flightid "; // evtl JOIN ?? läuft aber gut, schneller als die obere querry
+					"AND flightid BETWEEN " + from + " and " + to + " GROUP BY flightid"; // evtl JOIN ?? läuft aber gut, schneller als die obere querry
 			/*var querry = 	"SELECT t.*, max(t.ID) FROM tracking t " +
 							"JOIN flights f ON ((f.ID = t.flightid) " +
 							"AND (f.endTime IS NULL)) " +
-							"WHERE (t.flightid BETWEEN " + from + " AND " + to + ")";*/
+							"WHERE (t.flightid BETWEEN " + from + " AND " + to + ") "
+							"GROUP BY flightid";*/
 			synchronized (DB_SYNC) {
 				var result = super.queryDB(querry);
 				var rs = result.resultSet();
@@ -955,8 +926,7 @@ public class DBOut extends DBConnector {
 				while (rs.next() && counter < 5000) { // TODO remove counter for all airports // could take a little time
 					var src = rs.getString("src");
 					var dest = rs.getString("dest");
-					var nonNullAps = this.getAirports(src, dest)
-							.stream()
+					var nonNullAps = Arrays.stream(this.getAirports(src, dest))
 							.filter(a -> !a.iataTag().equalsIgnoreCase("None"))
 							.toList();
 					aps.addAll(nonNullAps);
@@ -1304,8 +1274,14 @@ public class DBOut extends DBConnector {
 				 var result = super.queryDB(query);
 				 var rs = result.resultSet();
 				 while (rs.next()) {
-					 tags.add(rs.getString("src"));
-					 tags.add(rs.getString("dest"));
+					 String src = rs.getString("src");
+					 String dest = rs.getString("dest");
+					 if (src != null && !src.isBlank()) {
+						 tags.add(src);
+					 }
+					 if (dest != null && !dest.isBlank()) {
+						 tags.add(dest);
+					 }
 				 }
 				 result.close();
 			 }

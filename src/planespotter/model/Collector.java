@@ -1,5 +1,6 @@
 package planespotter.model;
 
+import planespotter.controller.Controller;
 import planespotter.controller.Scheduler;
 import planespotter.display.models.SupplierDisplay;
 
@@ -19,18 +20,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class Collector {
     // insert period in seconds
     protected static final int INSERT_PERIOD_SEC;
-    // runtime instance
-    public static final Runtime RUNTIME;
     // monitor object for Collector and its subclasses
     protected static final Object SYNC;
     // initializer
     static {
         INSERT_PERIOD_SEC = 100;
-        RUNTIME = Runtime.getRuntime();
         SYNC = new Object();
     }
     // 'paused' and 'enabled' flags
-    public volatile boolean paused, enabled;
+    public boolean paused, enabled;
     // display, variations should be added
     protected final SupplierDisplay display; // TODO: 29.06.2022 add variations to Constructor, sth. like TYPE
     // scheduler to execute tasks
@@ -93,6 +91,7 @@ public abstract class Collector {
      */
     public synchronized void start() {
         this.display.start();
+        this.scheduler = new Scheduler();
         this.startCollecting();
     }
 

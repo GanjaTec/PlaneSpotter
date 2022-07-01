@@ -11,6 +11,7 @@ import planespotter.throwables.IllegalInputException;
 import planespotter.util.Utilities;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -46,51 +47,55 @@ public record ActionHandler()
     public synchronized void buttonClicked(JButton button, Controller ctrl, GUI gui, GUIAdapter guiAdapter) {
         Controller.getScheduler().exec(() -> {
 
-            if (button == gui.getContainer("fileButton")) {
+            if (button == gui.getComponent("fileButton")) {
                 guiAdapter.setViewHeadBtVisible(false);
                 guiAdapter.setFileMenuVisible(true);
 
-            } else if (button == gui.getContainer("listButton")) {
+            } else if (button == gui.getComponent("listButton")) {
                 guiAdapter.startProgressBar();
 
-            } else if (button == gui.getContainer("mapButton")) {
+            } else if (button == gui.getComponent("mapButton")) {
                 guiAdapter.startProgressBar();
                 ctrl.show(MAP_LIVE, "Live-Map");
 
-            } else if (button == gui.getContainer("statsButton")) {
-                Menus.show(Menus.TYPE_STATS, (Window) gui.getContainer("window"));
+            } else if (button == gui.getComponent("statsButton")) {
+                Menus.show(Menus.TYPE_STATS, (Window) gui.getComponent("window"));
 
-            } else if (button == gui.getContainer("supplierButton")) {
-                Menus.show(Menus.TYPE_SUPPLIER, (Window) gui.getContainer("window"));
+            } else if (button == gui.getComponent("supplierButton")) {
+                Menus.show(Menus.TYPE_SUPPLIER, (Window) gui.getComponent("window"));
 
-            } else if (button == gui.getContainer("closeViewButton")) {
+            } else if (button == gui.getComponent("closeViewButton")) {
                 guiAdapter.disposeView();
                 ctrl.loadedData = null;
-                var startPanel = gui.getContainer("startPanel");
-                var rightDP = (JDesktopPane) gui.getContainer("rightDP");
+                var startPanel = gui.getComponent("startPanel");
+                var rightDP = (JDesktopPane) gui.getComponent("rightDP");
                 startPanel.setVisible(true);
                 rightDP.moveToFront(startPanel);
 
-            } else if (button == gui.getContainer("settingsButton")) {
-                gui.getContainer("settingsDialog").setVisible(true);
-                var settingsMaxLoadTxtField = (JTextField) gui.getContainer("settingsMaxLoadTxtField");
+            } else if (button == gui.getComponent("settingsButton")) {
+                gui.getComponent("settingsDialog").setVisible(true);
+                var settingsMaxLoadTxtField = (JTextField) gui.getComponent("settingsMaxLoadTxtField");
                 settingsMaxLoadTxtField.setCaretColor(Color.YELLOW);
                 guiAdapter.requestComponentFocus(settingsMaxLoadTxtField);
 
-            } else if (button == gui.getContainer("searchButton")) {
-                var searchPanel = gui.getContainer("searchPanel");
+            } else if (button == gui.getComponent("searchButton")) {
+                var searchPanel = gui.getComponent("searchPanel");
                 searchPanel.setVisible(!searchPanel.isVisible());
-                gui.getContainer("searchTxtField").setVisible(!searchPanel.isVisible());
                 guiAdapter.loadSearch(SearchType.FLIGHT);
 
-            } else if (button == gui.getContainer("settingsCancelButton")) {
-                gui.getContainer("settingsDialog").setVisible(false);
+            } else if (button == gui.getComponent("settingsCancelButton")) {
+                gui.getComponent("settingsDialog").setVisible(false);
 
-            } else if (button == gui.getContainer("settingsConfirmButton")) {
-                var settingsMaxLoadTxtField = (JTextField) gui.getContainer("settingsMaxLoadTxtField");
-                var settingsMapTypeCmbBox = (JComboBox<String>) gui.getContainer("settingsMapTypeCmbBox");
-                ctrl.confirmSettings(settingsMaxLoadTxtField.getText(), (String) settingsMapTypeCmbBox.getSelectedItem());
-                gui.getContainer("settingsDialog").setVisible(false);
+            } else if (button == gui.getComponent("settingsConfirmButton")) {
+                var settingsMaxLoadTxtField = (JTextField) gui.getComponent("settingsMaxLoadTxtField");
+                var settingsMapTypeCmbBox = (JComboBox<?>) gui.getComponent("settingsMapTypeCmbBox");
+                var settingsLivePeriodSlider = (JSlider) gui.getComponent("settingsLivePeriodSlider");
+                ctrl.confirmSettings(
+                        settingsMaxLoadTxtField.getText(), // max loaded data
+                        (String) settingsMapTypeCmbBox.getSelectedItem(), // map type
+                        String.valueOf(settingsLivePeriodSlider.getValue()) // live data loading period
+                        );
+                gui.getComponent("settingsDialog").setVisible(false);
 
             } else if (button.getName().equals("loadList")) {
                 // future
@@ -148,21 +153,21 @@ public record ActionHandler()
      */
     public void keyEntered(Object source, int key, GUI gui, GUIAdapter guiAdapter) {
         try {
-            if (source == gui.getContainer("settingsMaxLoadTxtField")) {
+            if (source == gui.getComponent("settingsMaxLoadTxtField")) {
                 if (key == KeyEvent.VK_ENTER) {
-                    var settingsMaxLoadTxtField = (JTextField) gui.getContainer("settingsMaxLoadTxtField");
+                    var settingsMaxLoadTxtField = (JTextField) gui.getComponent("settingsMaxLoadTxtField");
                     // TODO fixen: settings fenster schließt erst nach loading
                     int newMax = Integer.parseInt(settingsMaxLoadTxtField.getText());
                     if (newMax > 0) {
                         guiAdapter.startProgressBar();
                         UserSettings.setMaxLoadedData(newMax);
                         settingsMaxLoadTxtField.setText("");
-                        gui.getContainer("settingsDialog").setVisible(false);
+                        gui.getComponent("settingsDialog").setVisible(false);
                     } else {
                         settingsMaxLoadTxtField.setText("[x > 0]");
                     }
                 }
-            } else if (source == gui.getContainer("window") /*&& gui.getCurrentViewType() == MAP_LIVE*/) {
+            } else if (source == gui.getComponent("window") /*&& gui.getCurrentViewType() == MAP_LIVE*/) {
                 System.out.println(key);
                 final var viewer = gui.getMap();
                 switch (key) { // FIXME läuft noch nicht
@@ -177,7 +182,7 @@ public record ActionHandler()
                 this.buttonClicked(jButton, Controller.getInstance(), gui, guiAdapter);
             }
         } catch (NumberFormatException ex) {
-            var settingsMaxLoadTxtField = (JTextField) gui.getContainer("settingsMaxLoadTxtField");
+            var settingsMaxLoadTxtField = (JTextField) gui.getComponent("settingsMaxLoadTxtField");
             settingsMaxLoadTxtField.setText("Error");
         } catch (Exception ex){
             ex.printStackTrace();
@@ -190,19 +195,19 @@ public record ActionHandler()
      * @param gui is the GUI instance that owns all components
      */
     public void windowResized(GUI gui) {
-        var window = gui.getContainer("window");
-        var mainPanel = gui.getContainer("mainPanel");
-        var titlePanel = gui.getContainer("titlePanel");
-        var titleBgLabel = (JLabel) gui.getContainer("titleBgLabel");
-        var leftDP = gui.getContainer("leftDP");
-        var rightDP = gui.getContainer("rightDP");
-        var viewHeadPanel = gui.getContainer("viewHeadPanel");
-        var startPanel = gui.getContainer("startPanel");
-        var listPanel = gui.getContainer("listPanel");
-        var mapPanel = gui.getContainer("mapPanel");
-        var menuPanel = gui.getContainer("menuPanel");
-        var infoPanel = gui.getContainer("infoPanel");
-        var menuBar = gui.getContainer("menuBar"); // wird die überhaupt benötigt
+        var window = gui.getComponent("window");
+        var mainPanel = gui.getComponent("mainPanel");
+        var titlePanel = gui.getComponent("titlePanel");
+        var titleBgLabel = (JLabel) gui.getComponent("titleBgLabel");
+        var leftDP = gui.getComponent("leftDP");
+        var rightDP = gui.getComponent("rightDP");
+        var viewHeadPanel = gui.getComponent("viewHeadPanel");
+        var startPanel = gui.getComponent("startPanel");
+        var listPanel = gui.getComponent("listPanel");
+        var mapPanel = gui.getComponent("mapPanel");
+        var menuPanel = gui.getComponent("menuPanel");
+        var infoPanel = gui.getComponent("infoPanel");
+        var menuBar = gui.getComponent("menuBar"); // wird die überhaupt benötigt
 
         mainPanel.setBounds(0, 0, window.getWidth()-14, window.getHeight()-37);
         titlePanel.setBounds(0, 0, mainPanel.getWidth(), 70);
@@ -223,23 +228,25 @@ public record ActionHandler()
         menuPanel.setBounds(0, 0, leftDP.getWidth(), leftDP.getHeight());
         infoPanel.setBounds(0, 0, leftDP.getWidth(), leftDP.getHeight());
 
-        gui.getContainer("bgLabel").setBounds(0, 0, rightDP.getWidth(), rightDP.getHeight());
-        gui.getContainer("menuBgLabel").setBounds(0, 0, leftDP.getWidth(), leftDP.getHeight());
+        gui.getComponent("bgLabel").setBounds(0, 0, rightDP.getWidth(), rightDP.getHeight());
+        gui.getComponent("menuBgLabel").setBounds(0, 0, leftDP.getWidth(), leftDP.getHeight());
 
-        gui.getContainer("closeViewButton").setBounds(viewHeadPanel.getWidth() - 85, 4, 80, 16);
-        gui.getContainer("fileButton").setBounds(viewHeadPanel.getWidth() - 168, 4, 80, 16);
-        gui.getContainer("startLabel").setBounds(0, 0, startPanel.getWidth(), startPanel.getHeight());
+        gui.getComponent("closeViewButton").setBounds(viewHeadPanel.getWidth() - 85, 4, 80, 16);
+        gui.getComponent("fileButton").setBounds(viewHeadPanel.getWidth() - 168, 4, 80, 16);
+        gui.getComponent("startLabel").setBounds(0, 0, startPanel.getWidth(), startPanel.getHeight());
         gui.getMap().setBounds(0, 0, mapPanel.getWidth(), mapPanel.getHeight());
         menuBar.setBounds(menuPanel.getBounds());
-        gui.getContainer("searchTxtField").setBounds(10, menuBar.getHeight() - 80, 255, 25);
-        gui.getContainer("searchButton").setBounds(10, menuBar.getHeight() - 40, 255, 25);
+        gui.getComponent("searchButton").setBounds(10, menuBar.getHeight() - 40, 255, 25);
         if (gui.hasContainer("listScrollPane") && gui.getListView() != null) {
-            var listScrollPane = gui.getContainer("listScrollPane");
+            var listScrollPane = gui.getComponent("listScrollPane");
             listScrollPane.setBounds(0, 0, listPanel.getWidth(), listPanel.getHeight());
             gui.getListView().setBounds(listScrollPane.getBounds());
         }
         if (gui.hasContainer("flightInfoTree")) {
-            gui.getContainer("flightInfoTree").setBounds(infoPanel.getBounds());
+            gui.getComponent("flightInfoTree").setBounds(infoPanel.getBounds());
+        }
+        if (gui.chartPanel != null) {
+            gui.chartPanel.setBounds(0, 24, rightDP.getWidth(), rightDP.getHeight() - 24);
         }
         int minus = 84;
         for (var bt : gui.getFileMenu()) {
@@ -248,6 +255,7 @@ public record ActionHandler()
                 minus += 84;
             }
         }
+
     }
 
     /**
@@ -258,11 +266,11 @@ public record ActionHandler()
      * @param gui is the GUI instance
      */
     private void itemChanged(Object source, String item, GUI gui) {
-        if (source == gui.getContainer("searchForCmbBox")) {
+        if (source == gui.getComponent("searchForCmbBox")) {
             var guiAdapter = new GUIAdapter(gui);
             guiAdapter.clearSearch();
             guiAdapter.loadSearch(SearchType.byItemString(item));
-        } else if (source == gui.getContainer("settingsMapTypeCmbBox")) {
+        } else if (source == gui.getComponent("settingsMapTypeCmbBox")) {
             switch (item) {
                 case "Bing Map" -> UserSettings.setCurrentMapSource(UserSettings.BING_MAP);
                 case "Default Map" -> UserSettings.setCurrentMapSource(UserSettings.DEFAULT_MAP);

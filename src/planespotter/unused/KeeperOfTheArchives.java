@@ -19,8 +19,8 @@ public class KeeperOfTheArchives implements Runnable{ // TODO: 11.06.2022 can im
 	private final long threshold;
 	private final int threadNumber;
 	private final String threadName;
-	private final DBOut dbo = new DBOut();
-	private final DBIn dbi = new DBIn();
+	private final DBOut dbo = DBOut.getDBOut();
+	private final DBIn dbi = DBIn.getDBIn();
 	
 	public KeeperOfTheArchives(int threadNumber, long endThreshold) {
 		this.threadNumber = threadNumber;

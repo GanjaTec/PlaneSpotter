@@ -34,7 +34,7 @@ public class SupplierDisplay implements WindowListener {
     // inserted values indexes:   0 = allFrames,   1 = newPlanes,   2 = newFlights
     private final int[] inserted = {0, 0, 0};
     private final Collector collector;
-    private int totalMemory = divide((int) Collector.RUNTIME.totalMemory(), 10_000);
+    private int totalMemory = divide((int) Controller.RUNTIME.totalMemory(), 10_000);
     // swing components
     private final UWPButton pauseButton = new UWPButton(),
                             startStopButton = new UWPButton();
@@ -143,8 +143,8 @@ public class SupplierDisplay implements WindowListener {
         this.inserted[0] += insertedNow;
         this.inserted[1] += newPlanesNow;
         this.inserted[2] += newFlightsNow;
-        this.totalMemory = divide((int) Collector.RUNTIME.totalMemory(), 10_000);
-        int freeMemory = divide((int) Collector.RUNTIME.freeMemory(), 10_000);
+        this.totalMemory = divide((int) Controller.RUNTIME.totalMemory(), 10_000);
+        int freeMemory = divide((int) Controller.RUNTIME.freeMemory(), 10_000);
         int memoryUsage = this.totalMemory - freeMemory;
 
         this.insertedLabel.setText("Inserted Frames: " + this.inserted[0] + ", " + insertedNow + " per Sec.");
@@ -156,7 +156,7 @@ public class SupplierDisplay implements WindowListener {
             TimeUnit.MILLISECONDS.sleep(500);
         } catch (InterruptedException ignored) {
         }
-        freeMemory = (int) (Collector.RUNTIME.freeMemory() / 10_000);
+        freeMemory = (int) (Controller.RUNTIME.freeMemory() / 10_000);
         memoryUsage = (this.totalMemory - freeMemory);
         this.progressBar.setValue(memoryUsage);
         this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");

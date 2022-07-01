@@ -2,6 +2,7 @@ package planespotter.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
+import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
 import planespotter.throwables.IllegalInputException;
 import planespotter.throwables.InvalidDataException;
@@ -29,6 +30,16 @@ import static planespotter.util.math.MathUtils.divide;
  * class Utilities contains different utilities
  */
 public abstract class Utilities {
+
+    /**
+     * getter for the project root-directory,
+     * should only be invoked while starting the program
+     *
+     * @return absolute root directory name as String
+     */
+    public static String getAbsoluteRootPath() {
+        return (Controller.ROOT_PATH == null) ? System.getProperty("user.dir") : Controller.ROOT_PATH;
+    }
 
     /**
      * plays a sound from the default toolkit
@@ -84,7 +95,7 @@ public abstract class Utilities {
 
     public static byte toByteLevel(int lvl, int max) {
         if (lvl == 0 || max == 0) {
-            return 0;
+            return -128;
         }
         float lvlPercentage = (float) divide((float) lvl, max);
         return (byte) ((255 * lvlPercentage) - 128);

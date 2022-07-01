@@ -63,6 +63,7 @@ public class OutputWizard extends DBOut implements Runnable {
      * @param dataPerTask is the max. number of loaded flights by one OutputWizard
      */
     public OutputWizard(Scheduler scheduler, int from, int to, int dataPerTask, int dataType) {
+        super();
         this.scheduler = scheduler;
         this.from = from;
         this.to = to;

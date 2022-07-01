@@ -2,7 +2,6 @@ package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.*;
-import planespotter.constants.Areas;
 import planespotter.constants.UserSettings;
 import planespotter.constants.ViewType;
 import planespotter.controller.ActionHandler;
@@ -248,15 +247,15 @@ public final class MapManager {
      *
      * @param map is the map to be set
      */
-    public void recieveMap(TreasureMap map, String text, ViewType viewType) {
+    public void receiveMap(TreasureMap map, String text, ViewType viewType) {
         Controller.getGUI().setCurrentViewType(viewType);
         // adding MapViewer to panel (needed?)
         this.mapViewer = map;
-        var mapPanel = gui.getContainer("mapPanel");
+        var mapPanel = gui.getComponent("mapPanel");
         if (mapPanel.getComponentCount() == 0) {
             mapPanel.add(this.mapViewer);
         }
-        var viewHeadTxt = (JLabel) gui.getContainer("viewHeadTxtLabel");
+        var viewHeadTxt = (JLabel) gui.getComponent("viewHeadTxtLabel");
         viewHeadTxt.setText(DEFAULT_HEAD_TEXT + "Map-Viewer > " + text);
         // revalidating window fr24Frame to refresh everything
         mapPanel.setVisible(true);

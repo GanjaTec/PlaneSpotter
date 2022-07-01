@@ -1,6 +1,7 @@
 package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import planespotter.constants.Paths;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
@@ -99,12 +100,13 @@ public class FileWizard {
     }
 
     // TODO will be replaced with log4j (-> saving logs)
-    public synchronized void saveLogFile(String logged) {
+    public synchronized void saveLogFile(@Nullable String prefixName, String logged) {
         try {
             if (logged == null) {
                 throw new IllegalArgumentException("logged data might not be null!");
             }
-            var filename = "log_" + (this.hashCode()/2 + logged.hashCode()/2) + ".log";
+            var prefix = (prefixName == null) ? "log_" : prefixName + "_";
+            var filename = prefix + (this.hashCode()/2 + logged.hashCode()/2) + ".log";
             var file = new File("logs\\" + filename);
             if (!file.exists()) {
                 file.createNewFile();
