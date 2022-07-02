@@ -2,7 +2,7 @@ package planespotter.model;
 
 import planespotter.constants.Areas;
 import planespotter.controller.Scheduler;
-import planespotter.model.io.DBWriter;
+import planespotter.model.io.DBIn;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.io.FastKeeper;
@@ -48,9 +48,12 @@ public class Fr24Collector extends Collector {
 
     @Override
     public void startCollecting() {
+        var deserializer = new Fr24Deserializer();
+        // TODO: 02.07.2022 optional Filters
+        //deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR");
         super.startNewMainThread(() -> this.collect(
                 new Fr24Supplier(),
-                new Fr24Deserializer(),
+                deserializer,
                 new FastKeeper(1200L)
         ), "Collector");
     }
@@ -65,25 +68,23 @@ public class Fr24Collector extends Collector {
                 // executing suppliers to collect Fr24-Data
                 var frames = supplier.getFrames(worldAreaRaster1D, deserializer, super.scheduler);
                 LiveData.insertLater(frames);
-                DBWriter.insertRemaining(super.scheduler, FRAMES_PER_WRITE);
+                DBIn.insertRemaining(super.scheduler, FRAMES_PER_WRITE);
             }
         }, "Supplier-Main", 0, INSERT_PERIOD_SEC);
         // executing the keeper every 400 seconds
         super.scheduler.schedule(() -> super.scheduler.exec(keeper, "Keeper", true, Scheduler.LOW_PRIO, false),
                 100, 400);
-        // executing the GC every 20 seconds
-        super.scheduler.schedule(System::gc, 30, 20);
         // updating display
         super.scheduler.schedule(() -> {
-            super.insertedNow.set(DBWriter.getFrameCount() - super.insertedFrames.get());
-            super.newPlanesNow.set(DBWriter.getPlaneCount() - super.newPlanesAll.get());
-            super.newFlightsNow.set(DBWriter.getFlightCount() - super.newFlightsAll.get());
+            super.insertedNow.set(DBIn.getFrameCount() - super.insertedFrames.get());
+            super.newPlanesNow.set(DBIn.getPlaneCount() - super.newPlanesAll.get());
+            super.newFlightsNow.set(DBIn.getFlightCount() - super.newFlightsAll.get());
 
             super.display.update(super.insertedNow.get(), super.newPlanesNow.get(), super.newFlightsNow.get());
 
-            super.insertedFrames.set(DBWriter.getFrameCount());
-            super.newPlanesAll.set(DBWriter.getPlaneCount());
-            super.newFlightsAll.set(DBWriter.getFlightCount());
+            super.insertedFrames.set(DBIn.getFrameCount());
+            super.newPlanesAll.set(DBIn.getPlaneCount());
+            super.newFlightsAll.set(DBIn.getFlightCount());
         }, 0, 1);
     }
 

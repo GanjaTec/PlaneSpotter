@@ -5,6 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.throwables.Fr24Exception;
 import planespotter.throwables.InvalidDataException;
@@ -23,6 +24,12 @@ import java.util.*;
  */
 public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<String>> {
 
+    private String[] filter = null;
+
+    public void setFilter(@Nullable String... filter) {
+        this.filter = filter;
+    }
+
     /**
      * deserializes incoming http response
      * from json to fr24Frame ArrayDeque
@@ -34,7 +41,7 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
      */
     @Override
     public Deque<Fr24Frame> deserialize(HttpResponse<String> response) {
-        var jsa = this.parseJsonArray(response);
+        var jsa = this.parseJsonArray(response, this.filter);
         var frames = new ArrayDeque<Fr24Frame>();
         var it = jsa.iterator();
         var gson = new Gson();
@@ -57,14 +64,28 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
      * @param resp is the HttpResponse with String body to parse
      * @return JsonArray by HttpResponse
      */
-    private JsonArray parseJsonArray(HttpResponse<String> resp) {
+    private JsonArray parseJsonArray(HttpResponse<String> resp, @Nullable String... filter) {
         var jsa = new JsonArray();
         resp.body().lines()
                 .filter(x -> x.length() != 1)
+                .map(s -> filterBy(s, filter))
+                .filter(Objects::nonNull)
                 .map(this::unwrap)
                 .map(this::parseJsonObject)
                 .forEach(jsa::add);
         return jsa;
+    }
+
+    private String filterBy(String input, @Nullable String... filter) {
+        if (filter == null) {
+            return input;
+        }
+        for (var f : filter) {
+            if (f != null && input.contains(f)) {
+                return input;
+            }
+        }
+        return null;
     }
 
     //TODO check o.getAsJsonArray für ganzes objekt -> könnte viel arbeit ersparen

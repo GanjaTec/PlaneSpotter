@@ -146,12 +146,13 @@ public record ActionHandler()
     /**
      * executed when a key is entered on a certain component
      *
-     * @param source is the source component where the key was entered on
-     * @param key is the key code from the entered key
+     * @param event is the KeyEvent
      * @param gui is the GUI instance
      * @param guiAdapter is the GUIAdapter instance
      */
-    public void keyEntered(Object source, int key, GUI gui, GUIAdapter guiAdapter) {
+    public void keyEntered(KeyEvent event, GUI gui, GUIAdapter guiAdapter) {
+        var source = event.getSource();
+        int key = event.getKeyCode();
         try {
             if (source == gui.getComponent("settingsMaxLoadTxtField")) {
                 if (key == KeyEvent.VK_ENTER) {
@@ -167,14 +168,20 @@ public record ActionHandler()
                         settingsMaxLoadTxtField.setText("[x > 0]");
                     }
                 }
-            } else if (source == gui.getComponent("window") /*&& gui.getCurrentViewType() == MAP_LIVE*/) {
-                System.out.println(key);
+            } else if (source == gui.getComponent("window")) {
                 final var viewer = gui.getMap();
                 switch (key) { // FIXME läuft noch nicht
-                    case VK_PAGE_UP, VK_W -> viewer.moveMap(0, 10);
-                    case VK_HOME, VK_A -> viewer.moveMap(-10, 0);
-                    case VK_END, VK_D -> viewer.moveMap(10, 0);
-                    case VK_PAGE_DOWN, VK_S -> viewer.moveMap(0, -10);
+                    case VK_PAGE_UP -> viewer.moveMap(0, 10);
+                    case VK_HOME -> viewer.moveMap(-10, 0);
+                    case VK_END -> viewer.moveMap(10, 0);
+                    case VK_PAGE_DOWN -> viewer.moveMap(0, -10);
+                    case VK_S -> {
+                        if (event.isShiftDown()) {
+                            var searchButton = gui.getComponent("searchButton");
+                            this.buttonClicked((JButton) searchButton, Controller.getInstance(), gui, guiAdapter);
+                        }
+                    }
+
                 }
             } else if (source instanceof JTextField && key == VK_ENTER) {
                 var jButton = new JButton();
@@ -317,13 +324,14 @@ public record ActionHandler()
      */
     @Override
     public void keyPressed(KeyEvent e) {
-        var src = e.getSource();
         var gui = Controller.getGUI();
-        if (src instanceof JTextField jtf) {
-            int key = e.getKeyCode();
-            var guiAdapter = new GUIAdapter(gui);
-            this.keyEntered(jtf, key, gui, guiAdapter);
-        }
+        var guiAdapter = new GUIAdapter(gui);
+        this.keyEntered(e, gui, guiAdapter);
+        /*if (src instanceof JTextField jtf) {
+
+        } else if (src instanceof JFrame wnd) {
+            this.keyEntered(wnd, key, gui, guiA);
+        }*/
     }
 
     /**

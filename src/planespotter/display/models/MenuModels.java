@@ -1,17 +1,16 @@
 package planespotter.display.models;
 
 import libs.UWPButton;
-import planespotter.constants.DefaultColor;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
-import javax.swing.plaf.SliderUI;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyListener;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.DefaultColor.*;
@@ -190,22 +189,22 @@ public final class MenuModels {
      */
     public JDialog settingsDialog(JFrame parent) {
             var maxLoadLbl = new JLabel("Max. loaded Data:");
-                maxLoadLbl.setBounds(20, 20, 300, 30);
+                maxLoadLbl.setBounds(20, 10, 300, 25);
                 maxLoadLbl.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
                 maxLoadLbl.setFont(FONT_MENU);
                 maxLoadLbl.setOpaque(false);
             var mapType = new JLabel("Map Type:");
-                mapType.setBounds(20, 70, 300, 30);
+                mapType.setBounds(20, 50, 300, 25);
                 mapType.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
                 mapType.setFont(FONT_MENU);
                 mapType.setOpaque(false);
             var livePeriod = new JLabel("Live Data Period (sec):");
-                livePeriod.setBounds(20, 120, 300, 30);
+                livePeriod.setBounds(20, 90, 300, 25);
                 livePeriod.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
                 livePeriod.setFont(FONT_MENU);
                 livePeriod.setOpaque(false);
         var settings = new JDialog(parent);
-        settings.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 550, 400);
+        settings.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 540, 400);
         settings.setLayout(null);
         settings.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         settings.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -213,9 +212,12 @@ public final class MenuModels {
         settings.setResizable(false);
         settings.setFocusable(false);
         // adding labels
+        var seps = this.separators(3, 40, 40);
+        Arrays.stream(seps).forEach(settings::add);
         settings.add(maxLoadLbl);
         settings.add(mapType);
         settings.add(livePeriod);
+
 
         settings.setVisible(false);
 
@@ -227,7 +229,7 @@ public final class MenuModels {
      */
     public JTextField settings_maxLoadTxtField(KeyListener listener) {
         var maxLoadTxtfield = new JTextField();
-        maxLoadTxtfield.setBounds(350, 20, 150, 30);
+        maxLoadTxtfield.setBounds(350, 10, 150, 25);
         maxLoadTxtfield.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR.get()));
         maxLoadTxtfield.setBackground(DEFAULT_FONT_COLOR.get());
         maxLoadTxtfield.setForeground(DEFAULT_ACCENT_COLOR.get());
@@ -244,13 +246,13 @@ public final class MenuModels {
             cancel.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
             cancel.setForeground(DEFAULT_FONT_COLOR.get());
             cancel.setFont(FONT_MENU);
-            cancel.setBounds(mid - 140, height, 120, 30);
+            cancel.setBounds(mid - 140, height, 120, 25);
             cancel.addActionListener(listener);
         var confirm = new UWPButton("Confirm");
             confirm.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
             confirm.setForeground(DEFAULT_FONT_COLOR.get());
             confirm.setFont(FONT_MENU);
-            confirm.setBounds(mid + 20, height, 120, 30);
+            confirm.setBounds(mid + 20, height, 120, 25);
             confirm.addActionListener(listener);
         return new UWPButton[] {
                 cancel, confirm
@@ -258,12 +260,12 @@ public final class MenuModels {
     }
 
     public JComboBox<String> settings_mapTypeCmbBox(ItemListener listener) {
-        var mapTypeCmbBox = new JComboBox<>(new String[]{
-                "Bing Map",
+        var mapTypeCmbBox = new JComboBox<>(new String[] {
                 "Default Map",
+                "Bing Map",
                 "Transport Map"
         });
-        mapTypeCmbBox.setBounds(350, 70, 150,  30);
+        mapTypeCmbBox.setBounds(350, 50, 150,  25);
         mapTypeCmbBox.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR.get()));
         mapTypeCmbBox.setBackground(DEFAULT_FONT_COLOR.get());
         mapTypeCmbBox.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
@@ -275,10 +277,22 @@ public final class MenuModels {
 
     public JSlider settingsLivePeriodSlider() {
         var slider = new JSlider(JSlider.HORIZONTAL, 1, 10, 2);
-        slider.setBounds(350, 120, 150, 30);
+        slider.setBounds(350, 90, 150, 25);
         slider.setToolTipText("Live-Data loading period in seconds (1-10)");
 
         return slider;
+    }
+
+    public JSeparator[] separators(int count, int startY, int plus) {
+        var seps = new JSeparator[count];
+        for (int i = 0; i < count; i++) {
+            var s = new JSeparator();
+            s.setBounds(20, startY, 480, 2);
+            s.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+            seps[i] = s;
+            startY += plus;
+        }
+        return seps;
     }
 
     /**

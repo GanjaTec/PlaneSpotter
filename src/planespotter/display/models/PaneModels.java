@@ -29,6 +29,7 @@ public final class PaneModels {
         window.setLocationRelativeTo(null);
         window.addComponentListener(listener);
         window.addWindowListener(listener);
+        window.addKeyListener(listener);
         window.setIconImage(FLYING_PLANE_ICON.get().getImage());
         window.setVisible(false);
         return window;

@@ -6,7 +6,6 @@ import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.DBOut;
-import planespotter.model.io.DBWriter;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -69,7 +68,7 @@ public class Fr24Supplier implements Supplier {
 			HttpResponse<String> response = this.sendRequest();
 			Deque<Fr24Frame> fr24Frames = deserializer.deserialize(response);
 			// writing frames to DB
-			DBWriter.write(fr24Frames, this.dbOut, this.dbIn);
+			DBIn.write(fr24Frames, this.dbOut, this.dbIn);
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -140,7 +139,7 @@ public class Fr24Supplier implements Supplier {
 		while (!ready.get()) {
 			System.out.print(":");
 			try {
-				TimeUnit.MILLISECONDS.sleep(25);
+				TimeUnit.MILLISECONDS.sleep(50);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

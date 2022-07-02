@@ -1,13 +1,11 @@
 package planespotter.model;
 
 import planespotter.constants.Areas;
-import planespotter.controller.Controller;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Fr24Frame;
-import planespotter.dataclasses.Position;
 import planespotter.display.TreasureMap;
-import planespotter.model.io.DBWriter;
+import planespotter.model.io.DBIn;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
 
@@ -28,7 +26,7 @@ import java.util.stream.Collectors;
  * it is able to load live data directly from Fr24 into Flight Objects,
  * it contains a queue 'insertLater' where all the frames are added to,
  * these frames get collected from there by another class.
- * @see DBWriter
+ * @see DBIn
  * @see Fr24Supplier
  * @see Fr24Deserializer
  * @see Areas
@@ -61,6 +59,7 @@ public abstract class LiveData {
     public static Vector<Flight> directLiveData(final Scheduler scheduler, final TreasureMap map) {
         var supplier = new Fr24Supplier();
         var deserializer = new Fr24Deserializer();
+        //deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR");
         // area with panel size
         var topLeft = map.getPosition(0, 0);
         var bottomRight = map.getPosition(map.getWidth(), map.getHeight());

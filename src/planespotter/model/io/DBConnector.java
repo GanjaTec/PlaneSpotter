@@ -48,6 +48,12 @@ public abstract class DBConnector {
 
 		return database.getConnection();
 	}
+
+	protected PreparedStatement createPreparedStatement(String sql)
+			throws SQLException {
+
+		return getConnection().prepareStatement(sql);
+	}
 	
 	/**
 	 * This method is used to querry the DB

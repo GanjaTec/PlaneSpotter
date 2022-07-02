@@ -4,6 +4,7 @@ import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
 import planespotter.model.io.DBOut;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.util.Utilities;
 
 import java.util.*;
 
@@ -47,14 +48,15 @@ public class Search {
                     fids.addAll(out.getFlightIDsByCallsign(signs.poll()));
                 }
                 int counter = 0;
-                var key = "tracking" + fids;
+                int[] ids = Utilities.parseIntArray(fids);
+                var key = "tracking" + Arrays.toString(ids);
                 ctrl.loadedData = (Vector<DataPoint>) Controller.CACHE.get(key);
                 if (ctrl.loadedData == null) {
-                    ctrl.loadedData = new Vector<>();
-                    for (int i : fids) {
+                    ctrl.loadedData = out.getTrackingsByFlightIDs(ids);
+                    /*for (int i : fids) {
                         ctrl.loadedData.addAll(out.getTrackingByFlight(i)); // TODO trackingByFlightIDs
                         if (counter++ > 20) break; // MAX 10 FLIGHTS
-                    }
+                    }*/
                     Controller.CACHE.put(key, ctrl.loadedData);
                 }
                 if (!ctrl.loadedData.isEmpty()) {

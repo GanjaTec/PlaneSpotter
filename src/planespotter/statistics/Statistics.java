@@ -154,7 +154,7 @@ public class Statistics {
         var counter = new AtomicInteger(0);
         var dbOut = DBOut.getDBOut();
         for (int i = 0; i < dataPoints.length; i++) {
-            var dpArr = Utilities.parseArray(dataPoints[counter.getAndIncrement()]);
+            var dpArr = Utilities.parseDataPointArray(dataPoints[counter.getAndIncrement()]);
             var fid = dpArr[0].flightID();
             try {
                 var key = dbOut.getFlightByID(fid).callsign();
