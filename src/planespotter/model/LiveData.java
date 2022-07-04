@@ -67,7 +67,6 @@ public abstract class LiveData {
                 Areas.newArea(topLeft, bottomRight)
         };
 
-        var worldAreaRaster1D = Areas.getWorldAreaRaster1D();
         var frames = supplier.getFrames(currentArea, deserializer, scheduler);
         // termorary if // daten gehen verloren
         if (!maxSizeReached()) {

@@ -1,6 +1,7 @@
 package planespotter.constants;
 
 import org.jetbrains.annotations.Range;
+import org.jetbrains.annotations.TestOnly;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import planespotter.dataclasses.Position;
 
@@ -30,11 +31,6 @@ public final class Areas {
 	 *
 	 * Bsp.: "86.0%2C-45.8%2C-120.1%2C150.5"
 	 */
-
-	// World Areas
-	public static final String WORLD = "89.0%2C-89.0%2C-170.0%2C170.0";
-	public static final String AMERICA = "84.512%2C-66.357%2C-162.169%2C-23.303";
-	public static final String EURASIA = "85.052%2C-63.86%2C-41.935%2C-170.256";
 
 	//Ukraine War
 	public static final String UKRAINE = "52.567%2C45.909%2C17.843%2C45.967";
@@ -94,17 +90,19 @@ public final class Areas {
 	 *
 	 * @return Array of Areas (whole world)
 	 */
-	public static synchronized String[] getWorldAreaRaster1D() {
-		final var areaRaster2D = new String[6][6]; // 6 * 6 Raster of Areas
-		final var areaRaster1D = new String[36]; // 6 * 6 Raster as 1D-Array
+	public static synchronized String[] getWorldAreaRaster1D(double lonVel, double latVel) {
+		//double latVel = 15., lonVel = 30.; // TODO make parameter(s) for grid size
+		double lat, lon = -180.;
+		byte xLength = (byte) (360 / lonVel),
+			 yLength = (byte) (180 / latVel);
+
+		final var areaRaster2D = new String[xLength][yLength]; // xLength * yLength Raster of Areas
+		final var areaRaster1D = new String[xLength * yLength]; // 6 * 6 Raster as 1D-Array
 		final var index = new AtomicInteger(0);
 
-		double latVel = 30., lonVel = 60.;
-		double lat, lon = -180.;
-
-		for (byte x = 0; x < 6; x++) {
+		for (byte x = 0; x < xLength; x++) {
 			lat = 90.;
-			for (byte y = 0; y < 6; y++) {
+			for (byte y = 0; y < yLength; y++) {
 				areaRaster2D[x][y] = Areas.newArea(new Position(lat, lon), new Position(lat - latVel, lon + lonVel));
 				lat -= latVel;
 			}
@@ -115,10 +113,6 @@ public final class Areas {
 						.forEach(area -> areaRaster1D[index.getAndIncrement()] = area));
 
 		return areaRaster1D;
-	}
-
-	public static synchronized String[] getWorldAreas() {
-		return new String[] { AMERICA, EURASIA };
 	}
 
 	public static synchronized String[] getAllAreas() {

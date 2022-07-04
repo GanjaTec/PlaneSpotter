@@ -197,11 +197,12 @@ public abstract class Controller {
     private void initTasks() {
         if (!this.initialized) {
             logger.log("initializing Executors...", this);
-
+            // executing on-start tasks
             liveThread = SCHEDULER.runThread(this::liveDataTask, "Live-Data Loader", true, Scheduler.HIGH_PRIO);
             SCHEDULER.schedule(() -> {
                         if (!this.loading) FileWizard.getFileWizard().saveConfig();
                     }, 60, 300);
+            // TODO: 02.07.2022 insert-while-live-option (as permanent parallel like live Data task)
             //SCHEDULER.schedule(() -> DBIn.insert(SCHEDULER, 50), "Insert Live Data", 20, 10);
 
             logger.sucsessLog("Executors initialized sucsessfully!", this);

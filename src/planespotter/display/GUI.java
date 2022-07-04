@@ -1,10 +1,7 @@
 package planespotter.display;
 
 import org.jfree.chart.ChartPanel;
-import planespotter.constants.Paths;
-import planespotter.constants.SearchType;
-import planespotter.constants.UserSettings;
-import planespotter.constants.ViewType;
+import planespotter.constants.*;
 import planespotter.controller.ActionHandler;
 import planespotter.display.models.MenuModels;
 import planespotter.display.models.PaneModels;
@@ -58,7 +55,7 @@ public class GUI {
     protected JButton[] fileMenu;
     // data trees
     protected JTree listView, infoTree, dpInfoTree;
-
+    // chartPanel
     public ChartPanel chartPanel;
 
     /**
@@ -179,10 +176,8 @@ public class GUI {
             //this.closeView.addActionListener(this.actionHandler);
             var titleBackgroundLabel = panelModels.titleBackgroundLabel(titlePanel);
             this.addContainer("titleBgLabel", titleBackgroundLabel);
-
-            var test_img = new ImageIcon(Paths.IMAGE_PATH + "ttowers.png"); // FIXME: 28.05.2022 auslagern und anderes bild!
-                                                                                       // (richtiger start screen mit kurzem text oder so)
-            var startLabel = panelModels.startScreenLabel(startPanel, test_img);
+            // TODO: 03.07.2022 remove or improve
+            var startLabel = panelModels.startScreenLabel(startPanel, Images.BGROUND_IMG.get());
             this.addContainer("startLabel", startLabel);
 
         // adding all generated components to window
