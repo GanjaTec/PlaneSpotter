@@ -2,6 +2,7 @@ package planespotter.constants;
 
 import planespotter.util.Utilities;
 
+import java.sql.PreparedStatement;
 import java.util.Deque;
 
 /**
@@ -17,7 +18,7 @@ import java.util.Deque;
  * TODO Sort Querrys by Table
  */
 public final class SQLQueries {
-	
+
 	//insert Querrys
 	public static final String PLANEQUERRY = "INSERT INTO planes(icaonr, tailnr, registration, type, airline) VALUES(?,?,?,?,?)";
 	public static final String FLIGHTQUERRY = "INSERT INTO flights(plane,src,dest,flightnr,callsign,start) VALUES(?,?,?,?,?,?)";

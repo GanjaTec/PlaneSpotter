@@ -5,6 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.throwables.Fr24Exception;
 import planespotter.throwables.InvalidDataException;
@@ -22,6 +23,24 @@ import java.util.*;
  * which can be used to create further dataclasses like flights, planes, etc...
  */
 public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<String>> {
+    // filter expressions, may be null
+    private String[] filter;
+
+    /**
+     * Fr24-Deserializer-constructor
+     */
+    public Fr24Deserializer() {
+        this.filter = null;
+    }
+
+    /**
+     * sets filter-expressions for deserializer
+     *
+     * @param filter are the expressions to set as filters
+     */
+    public void setFilter(@Nullable String... filter) {
+        this.filter = filter;
+    }
 
     /**
      * deserializes incoming http response
@@ -34,7 +53,7 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
      */
     @Override
     public Deque<Fr24Frame> deserialize(HttpResponse<String> response) {
-        var jsa = this.parseJsonArray(response);
+        var jsa = this.parseJsonArray(response, this.filter);
         var frames = new ArrayDeque<Fr24Frame>();
         var it = jsa.iterator();
         var gson = new Gson();
@@ -57,14 +76,39 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
      * @param resp is the HttpResponse with String body to parse
      * @return JsonArray by HttpResponse
      */
-    private JsonArray parseJsonArray(HttpResponse<String> resp) {
-        var jsa = new JsonArray();
-        resp.body().lines()
-                .filter(x -> x.length() != 1)
-                .map(this::unwrap)
-                .map(this::parseJsonObject)
-                .forEach(jsa::add);
+    private JsonArray parseJsonArray(HttpResponse<String> resp, @Nullable String... filter) {
+        var jsa = new JsonArray(); // creating new JsonArray
+        resp.body().lines() // getting stream of body-lines
+                .filter(s -> s.length() != 1 && filterBy(s, filter)) // filtering out valid and filter-allowed lines
+                .map(this::unwrap) // unwrapping line strings from certain expressions
+                .map(this::parseJsonObject) // parsing lines to JsonObjects
+                .forEach(jsa::add); // adding JsonObject to JsonArray
         return jsa;
+    }
+
+    /**
+     * filters an input string by filters
+     *
+     * @param input is the input string which can be null
+     * @param filter are the (nullable) expressions to filter for
+     * @return true if the input string contains one of the filter expressions or,
+     *              if the filter array is null or empty.
+     *         false if no filter-match was found in the input string
+     */
+    private boolean filterBy(String input, @Nullable String... filter) {
+        // checking for null filter
+        if (filter == null) {
+            return true;
+        }
+        // going through filters
+        for (var f : filter) {
+            // checking filter for nonNull and filtering input
+            if (f != null && input.contains(f)) {
+                return true;
+            }
+        }
+        // returning false if no match was found in the input string
+        return false;
     }
 
     //TODO check o.getAsJsonArray für ganzes objekt -> könnte viel arbeit ersparen

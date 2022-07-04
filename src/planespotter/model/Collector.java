@@ -1,8 +1,8 @@
 package planespotter.model;
 
-import planespotter.controller.Controller;
 import planespotter.controller.Scheduler;
 import planespotter.display.models.SupplierDisplay;
+import planespotter.model.nio.Supplier;
 
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Create a subclass to implement a new Collector and implement startCollecting()
  * @see Fr24Collector
  */
-public abstract class Collector {
+public abstract class Collector<S extends Supplier> {
     // insert period in seconds
     protected static final int INSERT_PERIOD_SEC;
     // monitor object for Collector and its subclasses
@@ -27,8 +27,11 @@ public abstract class Collector {
         INSERT_PERIOD_SEC = 100;
         SYNC = new Object();
     }
-    // 'paused' and 'enabled' flags
+
+    // 'paused' and 'enabled' flags | is set by the display events
     public boolean paused, enabled;
+    // supplier instance, can be every Supplier-subclass
+    protected final S supplier;
     // display, variations should be added
     protected final SupplierDisplay display; // TODO: 29.06.2022 add variations to Constructor, sth. like TYPE
     // scheduler to execute tasks
@@ -46,10 +49,11 @@ public abstract class Collector {
      * @param exitOnClose indicates if the whole program should exit
      *                    when the 'X'-button is pressed
      */
-    protected Collector(boolean exitOnClose) {
+    protected Collector(boolean exitOnClose, S supplier) {
         int closeOperation = (exitOnClose)
                 ? WindowConstants.EXIT_ON_CLOSE
                 : WindowConstants.DISPOSE_ON_CLOSE;
+        this.supplier = supplier;
         this.display = new SupplierDisplay(closeOperation, this);
         this.insertedNow = new AtomicInteger(0);
         this.insertedFrames = new AtomicInteger(0);

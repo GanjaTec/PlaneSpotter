@@ -158,8 +158,8 @@ public final class TreePlantation {
      */
     public DefaultMutableTreeNode flightInfoTreeNode(@NotNull Flight f) {
         String strToStrip;
-            var plane = f.plane();
-            var airline = plane.airline();
+        var plane = f.plane();
+        var airline = plane.airline();
         // root node
         var root = new DefaultMutableTreeNode("");
         // Attributes

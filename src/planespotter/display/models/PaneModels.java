@@ -23,14 +23,25 @@ import static planespotter.constants.Images.*;
 public final class PaneModels {
 
     public JFrame windowFrame(ActionHandler listener) {
+        // getting main window object
         var window = new JFrame("PlaneSpotter v0.1");
+        // setting window start size
         window.setSize(1280, 720);
+        // setting default close operation, do nothing for external exit action
         window.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        // setting window location relative to null
         window.setLocationRelativeTo(null);
+        // component listener for component resize
         window.addComponentListener(listener);
+        // window listener for window actions like open/close
         window.addWindowListener(listener);
+        // key listener for hotkeys // TODO only works when starting the program, before doing sth. else
+        //window.addKeyListener(listener);
+        // setting plane icon as window-icon
         window.setIconImage(FLYING_PLANE_ICON.get().getImage());
+        // first setting to not-visible
         window.setVisible(false);
+        // returning window
         return window;
     }
 
@@ -38,7 +49,7 @@ public final class PaneModels {
      * main-panel
      */
     public JPanel mainPanel(JFrame parent) {
-        // TODO: setting up mainpanel
+        // setting up mainpanel
         var mainpanel = new JPanel();
         mainpanel.setBounds(0, 0, parent.getWidth(), parent.getHeight()); // mainpanel width: 1260
         mainpanel.setLayout(null);

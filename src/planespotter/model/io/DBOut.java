@@ -145,13 +145,13 @@ public class DBOut extends DBConnector {
 	}
 
 	/**
-	 * This Method is used to Querry a single Plane by its ICAO Tag
+	 * This Method is used to query a single Plane by its ICAO Tag
 	 * It takes a String containing the ICAO Tag and returns a Plane Object
 	 *
-	 * @param icao Strin containing the ICAO Tag
+	 * @param icao String containing the ICAO Tag
 	 * @return Plane the Object containing all Information about the Plane
 	 */
-	public final ArrayDeque<Integer> getPlaneIDsByICAO (String icao)
+	public final ArrayDeque<Integer> getPlaneIDsByICAO(String icao)
 			throws DataNotFoundException {
 
 		// TODO: Bug fixen
@@ -179,6 +179,8 @@ public class DBOut extends DBConnector {
 	}
 
 	/**
+	 * gets a plane by its ID
+	 *
 	 * @param id is the plane id
 	 * @return plane with the given id
 	 */
@@ -196,21 +198,32 @@ public class DBOut extends DBConnector {
 					plane = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailnr"), rs.getString("type"), rs.getString("registration"), airline);
 				}
 				result.close();
+
+				/*var pstmt = super.createPreparedStatement(SQLQueries.GET_PLANE_BY_ID + "(?)");
+				pstmt.setInt(1, id);
+				pstmt.execute();
+				var rs = pstmt.getGeneratedKeys();
+				if (rs.next()) {
+					airline = this.getAirlineByID(rs.getInt("airline"));
+					plane = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailnr"), rs.getString("type"), rs.getString("registration"), airline);
+				}
+				rs.close();
+				*/
 				if (plane == null) {
 					throw new DataNotFoundException("No plane found for ID " + id + "!");
 				}
 			}
 		} catch (SQLException | NoAccessException e) {
 			e.printStackTrace();
-		} 
+		}
 		return plane;
 	}
 
 	public final Airline getAirlineByID(final int id)
 			throws DataNotFoundException {
 
+		Airline airline = null;
 		try {
-			Airline airline = null;
 			var query = "SELECT * FROM airlines a " +
 					"JOIN planes p " +
 					"ON ((p.airline = a.ID) " +
@@ -227,14 +240,10 @@ public class DBOut extends DBConnector {
 				}
 				result.close();
 			}
-			if (airline == null) {
-				throw new DataNotFoundException("airline with ID " + id + " not found!");
-			}
-			return airline;
 		} catch (SQLException | NoAccessException e) {
 			e.printStackTrace();
-		} 
-		return null;
+		}
+		return (airline != null) ? airline : new Airline(-1, "None", "None", "None");
 	}
 
 	/**
@@ -521,7 +530,8 @@ public class DBOut extends DBConnector {
 	public Flight getFlightByID(int id)
 			throws DataNotFoundException {
 
-		Flight f = null;
+		Flight flight = null;
+		Plane plane;
 		try {
 			synchronized (DB_SYNC) {
 				DBResult result = super.queryDB(SQLQueries.GET_FLIGHT_BY_ID + id);
@@ -530,16 +540,18 @@ public class DBOut extends DBConnector {
 				if (rs.next()) {
 					var airports = this.getAirports(rs.getString("src"), rs.getString("dest"));
 					var tracking = this.getCompleteTrackingByFlight(rs.getInt("ID"));
-					f = new Flight(rs.getInt("ID"), airports[0], airports[1], rs.getString("callsign"), getPlaneByID(rs.getInt("plane")), rs.getString("flightnr"), tracking);
-				} else {
-					throw new DataNotFoundException("No Flight found for id " + id + "!");
+					plane = this.getPlaneByID(rs.getInt("plane"));
+					flight = new Flight(rs.getInt("ID"), airports[0], airports[1], rs.getString("callsign"), plane, rs.getString("flightnr"), tracking);
 				}
 				result.close();
+			}
+			if (flight == null) {
+				throw new DataNotFoundException("No Flight found for id " + id + "!");
 			}
 		} catch (SQLException | NoAccessException e) {
 			e.printStackTrace();
 		} 
-		return f;
+		return flight;
 	}
 
 	public final List<Flight> getAllFlightsBetween(int start_id, int end_id)

@@ -28,14 +28,14 @@ public class Logger extends JFrame implements ComponentListener {
 
     private final JScrollPane scrollPane;
     private final JTextPane out;
-    private final Object mainref;
+    private final Object mainRef;
 
     /**
      * true when logger is logging (writing to text pane)
      */
     public <R> Logger(@Nullable R ref) {
         super();
-        this.mainref = Objects.requireNonNullElse(ref, this);
+        this.mainRef = Objects.requireNonNullElse(ref, this);
         super.setTitle("Logger");
         super.setType(Type.NORMAL);
         super.setSize(700, 400);
@@ -129,7 +129,7 @@ public class Logger extends JFrame implements ComponentListener {
         this.text(time, DEFAULT_FONT_COLOR.get());
         this.sign(3); // TODO make Sign values to Enum
         if (ref == null) {
-            this.text(mainref.getClass().getSimpleName(), DEFAULT_FONT_COLOR.get());
+            this.text(mainRef.getClass().getSimpleName(), DEFAULT_FONT_COLOR.get());
         } else {
             this.text(ref.getClass().getSimpleName(), DEFAULT_FONT_COLOR.get());
         }
@@ -140,7 +140,12 @@ public class Logger extends JFrame implements ComponentListener {
 
     /**
      *
-     * @param val
+     * @param val is the sign index:
+     *            0: [
+     *            1: ]
+     *            2: >
+     *            3: @
+     *            4: ,
      */
     private void sign(int val) {
         switch (val) {

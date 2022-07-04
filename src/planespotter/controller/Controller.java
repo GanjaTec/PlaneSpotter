@@ -9,6 +9,7 @@ import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 
+import planespotter.model.io.DBIn;
 import planespotter.model.io.FileWizard;
 import planespotter.util.LRUCache;
 import planespotter.constants.UserSettings;
@@ -19,7 +20,6 @@ import planespotter.display.*;
 import planespotter.display.models.MenuModels;
 import planespotter.model.*;
 import planespotter.model.io.DBOut;
-import planespotter.model.io.DBWriter;
 import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
@@ -34,7 +34,6 @@ import java.awt.*;
 import java.nio.file.FileAlreadyExistsException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Vector;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -154,6 +153,7 @@ public abstract class Controller {
         return ACTION_HANDLER;
     }
 
+    @SuppressWarnings(value = "unused")
     public static boolean isSupplierRunning() {
         return supplierRunning;
     }
@@ -197,30 +197,13 @@ public abstract class Controller {
     private void initTasks() {
         if (!this.initialized) {
             logger.log("initializing Executors...", this);
-
-            liveThread = SCHEDULER.runThread(this::liveDataTask, "Live-Data PreLoader", true, Scheduler.HIGH_PRIO);
+            // executing on-start tasks
+            liveThread = SCHEDULER.runThread(this::liveDataTask, "Live-Data Loader", true, Scheduler.HIGH_PRIO);
             SCHEDULER.schedule(() -> {
                         if (!this.loading) FileWizard.getFileWizard().saveConfig();
-                    }, 60, 300)
-                    .schedule(() -> {
-                        if (!this.loading && !isSupplierRunning()) {
-                            var current = Thread.currentThread();
-                            current.setName("Data Inserter");
-                            current.setPriority(2);
-                            DBWriter.insert(SCHEDULER, 500);
-                        }
-                    }, 20, 20)
-                    .schedule(() -> {
-                        System.gc();
-                        logger.log("Calling Garbage Collector...", this);
-                    }, 10, 10);
-                    // loading live date if live map is open
-                    /*.schedule(() -> {
-                        if (LiveData.isLive() && !this.isLoading()) {
-                            Thread.currentThread().setName("Live Loader");
-                            this.loadLiveData();
-                        }
-                    }, 0, LIVE_DATA_PERIOD_SEC);*/
+                    }, 60, 300);
+            // TODO: 02.07.2022 insert-while-live-option (as permanent parallel like live Data task)
+            //SCHEDULER.schedule(() -> DBIn.insert(SCHEDULER, 50), "Insert Live Data", 20, 10);
 
             logger.sucsessLog("Executors initialized sucsessfully!", this);
         }
@@ -262,7 +245,7 @@ public abstract class Controller {
             this.setLoading(true);
             FileWizard.getFileWizard().saveConfig();
             if (insertRemainingFrames) {
-                DBWriter.insertRemaining(SCHEDULER, 1000);
+                DBIn.insertRemaining(SCHEDULER, 1000);
             }
             while (SCHEDULER.active() > 0) {
                 try {
@@ -272,7 +255,7 @@ public abstract class Controller {
                 }
             }
             this.notifyAll();
-            DBWriter.setEnabled(false);
+            DBIn.setEnabled(false);
             this.done();
             logger.close();
             boolean shutdown = SCHEDULER.shutdown(1);
@@ -325,7 +308,6 @@ public abstract class Controller {
                     m.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
                     markers.add(m);
                 });
-        //map.removeAllMapMarkers(); // redundant?
         map.setMapMarkerList(markers);
         this.done();
     }
@@ -563,6 +545,7 @@ public abstract class Controller {
                     flight = dbOut.getFlightByID(flightID);
                     tpl.createDataPointInfo(flight, dp, GUI_ADAPTER);
                 } catch (DataNotFoundException e) {
+                    this.handleException(e);
                     Controller.getLogger().errorLog("flight with the ID " + flightID + " doesn't exist!", this);
                 }
                 break;
@@ -718,7 +701,7 @@ public abstract class Controller {
 
     private void showTrackingMap(String headText, MapManager bbn, DBOut dbOut, @Nullable String[] data) {
         try {
-            int flightID = -1;
+            /*int flightID = -1;
 
             Vector<DataPoint> flightTracking;
             String key;
@@ -738,7 +721,7 @@ public abstract class Controller {
                 this.loadedData = (Vector<DataPoint>) CACHE.get(key);
                 if (this.loadedData == null) {
                     this.loadedData = new Vector<>();
-                    for (var id : data) {
+                    for (var id : data) {           // FIXME: 01.07.2022 QUERY IN FOR LOOP
                         assert id != null;
                         flightID = Integer.parseInt(id);
                         flightTracking = dbOut.getTrackingByFlight(flightID);
@@ -748,11 +731,12 @@ public abstract class Controller {
 
                 }
             }
+            // TODO should be deleted, because flight should be loaded before this method
             if (flightID == -1) {
                 throw new InvalidDataException("Flight may not be null!");
             }
-            var flight = dbOut.getFlightByID(flightID);
-            var trackingMap = bbn.createTrackingMap(this.loadedData, flight, true, GUI_ADAPTER);
+            var flight = dbOut.getFlightByID(flightID);*/
+            var trackingMap = bbn.createTrackingMap(this.loadedData, null, true, GUI_ADAPTER);
             bbn.receiveMap(trackingMap, headText, MAP_TRACKING);
         } catch (NumberFormatException e) {
             logger.errorLog("NumberFormatException while trying to parse the ID-String! Must be an int!", this);

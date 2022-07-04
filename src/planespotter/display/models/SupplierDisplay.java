@@ -5,7 +5,7 @@ import planespotter.model.Fr24Collector;
 import planespotter.constants.Images;
 import planespotter.controller.Controller;
 import planespotter.model.Collector;
-import planespotter.model.io.DBWriter;
+import planespotter.model.io.DBIn;
 import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
@@ -90,7 +90,7 @@ public class SupplierDisplay implements WindowListener {
         this.startStopButton.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         this.startStopButton.setText("Start / Stop");
         this.startStopButton.addActionListener(e -> {
-            DBWriter.setEnabled(this.collector.enabled = !this.collector.enabled); // TODO: 29.06.2022 Collector: getter & setter
+            DBIn.setEnabled(this.collector.enabled = !this.collector.enabled); // TODO: 29.06.2022 Collector: getter & setter
             this.collector.paused = !this.collector.enabled;
             switch (MathUtils.toBinary(this.collector.enabled)) {
                 case 0 -> this.collector.startCollecting();
@@ -106,7 +106,7 @@ public class SupplierDisplay implements WindowListener {
         this.pauseButton.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         this.pauseButton.setText("Pause");
         this.pauseButton.addActionListener(e -> {
-            DBWriter.setEnabled(this.collector.paused = !this.collector.paused);
+            DBIn.setEnabled(this.collector.paused = !this.collector.paused);
             this.setStatus((this.collector.enabled ? "enabled, " : "disabled, ") + (this.collector.paused ? "paused" : "running"));
         });
 

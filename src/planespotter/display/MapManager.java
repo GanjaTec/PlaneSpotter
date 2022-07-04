@@ -1,5 +1,6 @@
 package planespotter.display;
 
+import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.*;
 import planespotter.constants.UserSettings;
@@ -50,7 +51,7 @@ public final class MapManager {
     /**
      * creates a map with a flight route from a specific flight
      */
-    public TreasureMap createTrackingMap(Vector<DataPoint> dataPoints, Flight flight, boolean showPoints, GUIAdapter guiAdapter)
+    public TreasureMap createTrackingMap(Vector<DataPoint> dataPoints, @Nullable Flight flight, boolean showPoints, GUIAdapter guiAdapter)
             throws DataNotFoundException {
 
         var viewer = this.mapViewer;

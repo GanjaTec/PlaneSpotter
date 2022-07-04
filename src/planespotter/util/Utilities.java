@@ -223,8 +223,14 @@ public abstract class Utilities {
                 : new ArrayDeque<>((Collection<R>) List.of(arrayOrCollection));
     }
 
-    public static DataPoint[] parseArray(Deque<DataPoint> deque) {
+    public static DataPoint[] parseDataPointArray(Deque<DataPoint> deque) {
         return deque.toArray(DataPoint[]::new);
+    }
+
+    public static int[] parseIntArray(Deque<Integer> deque) {
+        return Arrays.stream(deque.toArray(Integer[]::new))
+                .mapToInt(Integer::intValue)
+                .toArray();
     }
 
     /**

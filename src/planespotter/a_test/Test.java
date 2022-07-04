@@ -39,8 +39,7 @@ public class Test {
 
         var test = new Test();
 
-        String dir = System.getProperty("user.dir");
-        System.out.println(dir);
+        System.out.println(DBOut.getDBOut().getFlightByID(6101));
         //String classpath = System.getProperty("java.class.path");
         //Arrays.stream(classpath.split(";")).forEach(System.out::println);
         //var props = System.getProperties().toString().split(", ");

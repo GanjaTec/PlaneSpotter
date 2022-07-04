@@ -18,7 +18,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * @param <V> is the Value class
  *
  * Class LRUCache represents a Cache with Least-Recently-Used strategy and any key and value.
- * @see CacheElement
+ * The LRU-algorithm is not finished, should probably be improved in the future.
+ * @see planespotter.util.LRUCache.CacheElement
+ * @see java.util.LinkedHashMap
  */
 public class LRUCache<K, V> {
 

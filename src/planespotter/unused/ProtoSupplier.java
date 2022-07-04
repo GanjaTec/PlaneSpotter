@@ -128,7 +128,7 @@ public class ProtoSupplier extends DBConnector implements Runnable {
                             planeQuery.setString(2, f.getTailnr());
                             planeQuery.setString(3, f.getRegistration());
                             planeQuery.setString(4, f.getPlanetype());
-                            planeQuery.setString(5, DefaultObject.DEFAULT_AIRLINE.iataTag());
+                            planeQuery.setString(5, "None");
                             planeQuery.addBatch();
                             planeQuery.clearParameters();
                         } catch (SQLException e) {
@@ -267,7 +267,8 @@ public class ProtoSupplier extends DBConnector implements Runnable {
                             planeQuery.setString(2, f.getTailnr());
                             planeQuery.setString(3, f.getRegistration());
                             planeQuery.setString(4, f.getPlanetype());
-                            planeQuery.setString(5, DefaultObject.DEFAULT_AIRLINE.iataTag());
+                            // FIXME: 03.07.2022 wo shouldnt use default here
+                            planeQuery.setString(5, "None");
                             planeQuery.addBatch();
                             planeQuery.clearParameters();
                         }

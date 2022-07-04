@@ -11,9 +11,9 @@ import planespotter.throwables.IllegalInputException;
 import planespotter.util.Utilities;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.awt.event.KeyEvent.*;
 import static planespotter.constants.ViewType.MAP_LIVE;
@@ -33,6 +33,32 @@ public record ActionHandler()
         implements ActionListener, KeyListener,
                    ComponentListener, MouseListener,
                    ItemListener, WindowListener {
+
+    private static final KeyEventDispatcher hotkeyEventDispatcher;
+
+    static {
+        AtomicBoolean event = new AtomicBoolean(false);
+        hotkeyEventDispatcher = e -> {
+            if (!event.get() && e.getID() == KEY_PRESSED) {
+                event.set(true);
+                // search hotkey
+                if (e.isShiftDown() && e.getKeyCode() == VK_S) {
+                    System.out.println("hotkey-event");
+                    // TODO: 04.07.2022 evtl. replace with ActionHandler.getActionHandler()
+                    var gui = Controller.getGUI();
+                    var searchButton = (JButton) gui.getComponent("searchButton");
+                    Controller.getActionHandler().buttonClicked(searchButton, Controller.getInstance(), gui, Controller.GUI_ADAPTER);
+                    event.set(false);
+                    return true;
+                }
+                event.set(false);
+            }
+            return false;
+        };
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(hotkeyEventDispatcher);
+
+
+    }
 
     /**
      * executed when a button is clicked,
@@ -146,12 +172,13 @@ public record ActionHandler()
     /**
      * executed when a key is entered on a certain component
      *
-     * @param source is the source component where the key was entered on
-     * @param key is the key code from the entered key
+     * @param event is the KeyEvent
      * @param gui is the GUI instance
      * @param guiAdapter is the GUIAdapter instance
      */
-    public void keyEntered(Object source, int key, GUI gui, GUIAdapter guiAdapter) {
+    public void keyEntered(KeyEvent event, GUI gui, GUIAdapter guiAdapter) {
+        var source = event.getSource();
+        int key = event.getKeyCode();
         try {
             if (source == gui.getComponent("settingsMaxLoadTxtField")) {
                 if (key == KeyEvent.VK_ENTER) {
@@ -167,19 +194,18 @@ public record ActionHandler()
                         settingsMaxLoadTxtField.setText("[x > 0]");
                     }
                 }
-            } else if (source == gui.getComponent("window") /*&& gui.getCurrentViewType() == MAP_LIVE*/) {
-                System.out.println(key);
-                final var viewer = gui.getMap();
-                switch (key) { // FIXME läuft noch nicht
-                    case VK_PAGE_UP, VK_W -> viewer.moveMap(0, 10);
-                    case VK_HOME, VK_A -> viewer.moveMap(-10, 0);
-                    case VK_END, VK_D -> viewer.moveMap(10, 0);
-                    case VK_PAGE_DOWN, VK_S -> viewer.moveMap(0, -10);
-                }
             } else if (source instanceof JTextField && key == VK_ENTER) {
                 var jButton = new JButton();
                 jButton.setName("loadMap");
                 this.buttonClicked(jButton, Controller.getInstance(), gui, guiAdapter);
+            } else /*if (source == gui.getComponent("window"))*/ {
+                final var viewer = gui.getMap();
+                switch (key) { // FIXME läuft noch nicht
+                    case VK_PAGE_UP -> viewer.moveMap(0, 10);
+                    case VK_HOME -> viewer.moveMap(-10, 0);
+                    case VK_END -> viewer.moveMap(10, 0);
+                    case VK_PAGE_DOWN -> viewer.moveMap(0, -10);
+                }
             }
         } catch (NumberFormatException ex) {
             var settingsMaxLoadTxtField = (JTextField) gui.getComponent("settingsMaxLoadTxtField");
@@ -292,7 +318,9 @@ public record ActionHandler()
             var ctrl = Controller.getInstance();
             var gui = Controller.getGUI();
             var guiAdapter = new GUIAdapter(gui);
-            this.buttonClicked(bt, ctrl, gui, guiAdapter);
+            if (e.getID() != KEY_TYPED) {
+                this.buttonClicked(bt, ctrl, gui, guiAdapter);
+            }
         }
     }
 
@@ -317,13 +345,9 @@ public record ActionHandler()
      */
     @Override
     public void keyPressed(KeyEvent e) {
-        var src = e.getSource();
         var gui = Controller.getGUI();
-        if (src instanceof JTextField jtf) {
-            int key = e.getKeyCode();
-            var guiAdapter = new GUIAdapter(gui);
-            this.keyEntered(jtf, key, gui, guiAdapter);
-        }
+        var guiAdapter = new GUIAdapter(gui);
+        this.keyEntered(e, gui, guiAdapter);
     }
 
     /**
