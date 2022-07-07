@@ -5,6 +5,7 @@ import planespotter.constants.SQLQueries;
 import java.sql.*;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import planespotter.controller.Controller;
 import planespotter.controller.Scheduler;
@@ -12,6 +13,7 @@ import planespotter.dataclasses.Fr24Frame;
 import planespotter.throwables.DataNotFoundException;
 
 import static planespotter.model.LiveData.*;
+import static planespotter.model.io.DBOut.getDBOut;
 import static planespotter.util.Time.elapsedSeconds;
 import static planespotter.util.Time.nowMillis;
 
@@ -24,12 +26,15 @@ public class DBIn extends DBConnector {
 	private static final DBIn INSTANCE;
 	// 'data loader enabled' flag
 	private static boolean enabled;
+	// last inserted frame
+	private static Fr24Frame lastFrame;
 	// inserted frames counter for all writeToDB inserts
 	private static int frameCount, planeCount, flightCount;
 	// static initializer
 	static {
 		INSTANCE = new DBIn();
 
+		lastFrame = null;
 		frameCount = 0;
 		planeCount = 0;
 		flightCount = 0;
@@ -56,6 +61,7 @@ public class DBIn extends DBConnector {
 	 * @param fr24Frames are the Fr24Frames to write, could be extended to '<? extends Frame>'
 	 * @param dbo is a DBOut Object for DB-Output
 	 * @param dbi is a DBIn Object for DB-Inserts
+	 * @return last inserted frame or null, if nothing was inserted
 	 */
 	public static synchronized void write(final Deque<Fr24Frame> fr24Frames, final DBOut dbo, final DBIn dbi) {
 		if (enabled) {
@@ -72,9 +78,9 @@ public class DBIn extends DBConnector {
 				// this usually happens when the DB has empty tables.
 				// ( For example when the DB gets cleared )
 			}
+			Fr24Frame frame;
 			int airlineID, planeID, flightID;
 			boolean checkPlane, checkFlight;
-			Fr24Frame frame;
 			while (!fr24Frames.isEmpty()) {
 				frame = fr24Frames.poll();
 				// insert into planes
@@ -83,6 +89,7 @@ public class DBIn extends DBConnector {
 				checkPlane = planeID > -1;
 				if (!checkPlane) {
 					planeID = dbi.insertPlane(frame, airlineID);
+					// increasing inserted planes value
 					increasePlaneCount();
 				}
 				// insert into flights
@@ -90,18 +97,18 @@ public class DBIn extends DBConnector {
 				checkFlight = flightID > -1;
 				if (!checkFlight) {
 					flightID = dbi.insertFlight(frame, planeID);
+					// increasing inserted flights value
 					increaseFlightCount();
 				}
 				// insert into tracking
 				dbi.insertTracking(frame, flightID);
 				// increasing the inserted frames value
 				increaseFrameCount();
+				// setting current frame as last frame
+				lastFrame = frame;
 			}
 			System.out.println("[DBWriter] filled DB in " + elapsedSeconds(ts1) + " seconds!");
-			// collecting garbage that was created during the insert
-			System.gc();
 		}
-
 	}
 
 	/**
@@ -118,7 +125,7 @@ public class DBIn extends DBConnector {
 			log.log("Trying to insert frames...", INSTANCE);
 			if (ableCollect(count)) {
 				// insert live data with normal writeToDB
-				var dbOut = DBOut.getDBOut();
+				var dbOut = getDBOut();
 				var dbIn = getDBIn();
 				var frames = pollFrames(count);
 
@@ -143,18 +150,29 @@ public class DBIn extends DBConnector {
 	public static synchronized int insertRemaining(final Scheduler scheduler, int framesPerWrite) {
 		int inserted = 0;
 		if (enabled) {
-			final var dbOut = DBOut.getDBOut();
-			final var dbIn = getDBIn();
+			final DBOut dbOut = getDBOut();
+			final DBIn dbIn = getDBIn();
 
 			while (!isEmpty()) {
-				var frames = pollFrames(framesPerWrite);
+				Deque<Fr24Frame> frames = pollFrames(framesPerWrite);
+
 				scheduler.exec(() -> write(frames, dbOut, dbIn),
 						"Inserter", false, Scheduler.HIGH_PRIO, false);
+
 				inserted += framesPerWrite;
 			}
 			System.out.println("Inserting " + inserted + " frames...");
 		}
 		return inserted;
+	}
+
+	/**
+	 * getter for the last inserted frame (into DB), which is given by the write method
+	 *
+	 * @return last inserted frame, or null if there is no last frame
+	 */
+	public static Fr24Frame getLastFrame() {
+		return lastFrame;
 	}
 
 	/**

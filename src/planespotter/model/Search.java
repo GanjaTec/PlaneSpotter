@@ -1,9 +1,12 @@
 package planespotter.model;
 
+import org.jetbrains.annotations.NotNull;
 import planespotter.controller.Controller;
+import planespotter.dataclasses.Airline;
 import planespotter.dataclasses.DataPoint;
 import planespotter.model.io.DBOut;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.InvalidArrayException;
 import planespotter.util.Utilities;
 
 import java.util.*;
@@ -29,7 +32,7 @@ public class Search {
      *
      * @param inputs are the input strings
      */
-    public Vector<DataPoint> verifyFlight(String[] inputs)
+    public Vector<DataPoint> forFlight(String[] inputs)
             throws DataNotFoundException {
 
         var id = inputs[0];
@@ -50,14 +53,14 @@ public class Search {
                 int counter = 0;
                 int[] ids = Utilities.parseIntArray(fids);
                 var key = "tracking" + Arrays.toString(ids);
-                ctrl.loadedData = (Vector<DataPoint>) Controller.CACHE.get(key);
+                ctrl.loadedData = (Vector<DataPoint>) Controller.cache.get(key);
                 if (ctrl.loadedData == null) {
                     ctrl.loadedData = out.getTrackingsByFlightIDs(ids);
                     /*for (int i : fids) {
                         ctrl.loadedData.addAll(out.getTrackingByFlight(i)); // TODO trackingByFlightIDs
                         if (counter++ > 20) break; // MAX 10 FLIGHTS
                     }*/
-                    Controller.CACHE.put(key, ctrl.loadedData);
+                    Controller.cache.put(key, ctrl.loadedData);
                 }
                 if (!ctrl.loadedData.isEmpty()) {
                     return ctrl.loadedData;
@@ -76,7 +79,7 @@ public class Search {
      *
      * @param inputs are the input strings
      */
-    public Vector<DataPoint> verifyPlane(String[] inputs)
+    public Vector<DataPoint> forPlane(String[] inputs)
             throws DataNotFoundException {
 
         var id = inputs[0]; // FIXME: 11.05.2022 ID ist 5 statt 56
@@ -110,7 +113,7 @@ public class Search {
      * @throws DataNotFoundException if no airport or no flights where found
      */
     // TODO: 25.05.2022 Airport suche mit Start und Ziel Airport
-    public Vector<DataPoint> verifyAirport(String[] inputs)
+    public Vector<DataPoint> forAirport(String[] inputs)
             throws DataNotFoundException {
 
         var id = inputs[0];
@@ -122,26 +125,55 @@ public class Search {
             // trackings with airport id (-> airport join)
         } else if (!tag.isBlank()) {
             var key = "airport" + tag.toUpperCase();
-            ctrl.loadedData = (Vector<DataPoint>) Controller.CACHE.get(key);
+            ctrl.loadedData = (Vector<DataPoint>) Controller.cache.get(key);
             if (ctrl.loadedData == null) {
                 int[] fids = out.getFlightIDsIDsByAirportTag(tag);
                 ctrl.loadedData = new Vector<>(out.getTrackingsByFlightIDs(fids));
-                Controller.CACHE.put(key, ctrl.loadedData);
+                Controller.cache.put(key, ctrl.loadedData);
             }
         } else if (!name.isBlank()) {
             var key = "airport" + name.toUpperCase();
-            ctrl.loadedData = (Vector<DataPoint>) Controller.CACHE.get(key);
+            ctrl.loadedData = (Vector<DataPoint>) Controller.cache.get(key);
             if (ctrl.loadedData == null) {
                 // FIXME too slow
                 int[] fids = out.getFlightIDsByAirportName(name);
                 ctrl.loadedData = new Vector<>(out.getTrackingsByFlightIDs(fids));
-                Controller.CACHE.put(key, ctrl.loadedData);
+                Controller.cache.put(key, ctrl.loadedData);
             }
         }
         if (ctrl.loadedData.isEmpty()) {
             throw new DataNotFoundException("No airports found for these inputs!");
         }
         return ctrl.loadedData;
+    }
+
+    public Vector<DataPoint> forAirline(@NotNull String[] inputs)
+            throws DataNotFoundException {
+
+        if (inputs.length != 4) {
+            throw new InvalidArrayException("Array length must be 4!");
+        }
+        var id = inputs[0];
+        var tag = inputs[1];
+        var name = inputs[2];
+        var country = inputs[3];
+        var out = DBOut.getDBOut();
+        Vector<DataPoint> data = null;
+        int idInt = -1;
+        try {
+            idInt = Integer.parseInt(id);
+        } catch (NumberFormatException ignored) {
+        }
+        Airline airline = new Airline(idInt, tag, name, country);
+        try {
+            data = out.getTrackingPositionsByAirline(airline);
+        } catch (DataNotFoundException dnf) {
+            Controller.getInstance().handleException(dnf);
+        }
+        if (data == null || data.isEmpty()) {
+            throw new DataNotFoundException("No airports found for these inputs!");
+        }
+        return data;
     }
 
     /**

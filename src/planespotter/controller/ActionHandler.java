@@ -5,7 +5,6 @@ import planespotter.constants.SearchType;
 import planespotter.constants.UserSettings;
 import planespotter.constants.ViewType;
 import planespotter.display.GUI;
-import planespotter.display.GUIAdapter;
 import planespotter.display.models.Menus;
 import planespotter.throwables.IllegalInputException;
 import planespotter.util.Utilities;
@@ -13,7 +12,6 @@ import planespotter.util.Utilities;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.awt.event.KeyEvent.*;
 import static planespotter.constants.ViewType.MAP_LIVE;
@@ -29,35 +27,52 @@ import static planespotter.constants.ViewType.MAP_LIVE;
  * @see Controller
  * @see Scheduler
  */
-public record ActionHandler()
-        implements ActionListener, KeyListener,
-                   ComponentListener, MouseListener,
-                   ItemListener, WindowListener {
+public final class ActionHandler implements ActionListener, KeyListener,
+                                            ComponentListener, MouseListener,
+                                            ItemListener, WindowListener {
 
-    private static final KeyEventDispatcher hotkeyEventDispatcher;
+    private static final ActionHandler INSTANCE;
+    private static final KeyEventDispatcher globalEventDispatcher;
 
     static {
-        AtomicBoolean event = new AtomicBoolean(false);
-        hotkeyEventDispatcher = e -> {
-            if (!event.get() && e.getID() == KEY_PRESSED) {
-                event.set(true);
+        INSTANCE = new ActionHandler();
+        globalEventDispatcher = initGlobalEventDispatcher();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(globalEventDispatcher);
+    }
+
+    private static KeyEventDispatcher initGlobalEventDispatcher() {
+        return keyEvent -> {
+            GUI gui;
+            JButton searchButton;
+            int eventID = keyEvent.getID(), keyCode;
+            boolean shiftDown;
+            if (eventID == KEY_PRESSED) {
+                shiftDown = keyEvent.isShiftDown();
+                keyCode = keyEvent.getKeyCode();
                 // search hotkey
-                if (e.isShiftDown() && e.getKeyCode() == VK_S) {
-                    System.out.println("hotkey-event");
-                    // TODO: 04.07.2022 evtl. replace with ActionHandler.getActionHandler()
-                    var gui = Controller.getGUI();
-                    var searchButton = (JButton) gui.getComponent("searchButton");
-                    Controller.getActionHandler().buttonClicked(searchButton, Controller.getInstance(), gui, Controller.GUI_ADAPTER);
-                    event.set(false);
+                if (keyEvent.isShiftDown() && keyEvent.getKeyCode() == VK_S) {
+                    gui = Controller.getGUI();
+                    searchButton = (JButton) gui.getComponent("searchButton");
+                    getActionHandler().buttonClicked(searchButton, Controller.getInstance(), gui);
                     return true;
                 }
-                event.set(false);
             }
             return false;
         };
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(hotkeyEventDispatcher);
+    }
 
+    /**
+     * @return main ActionHandler
+     */
+    public static ActionHandler getActionHandler() {
+        return INSTANCE;
+    }
 
+    /**
+     * private ActionHandler constructor for main instance
+     */
+    private ActionHandler() {
+        // nothing to do
     }
 
     /**
@@ -68,20 +83,19 @@ public record ActionHandler()
      * @param button is the clicked button
      * @param ctrl is the main controller instance
      * @param gui is the main GUI instance
-     * @param guiAdapter is the main GUIAdapter instance
      */
-    public synchronized void buttonClicked(JButton button, Controller ctrl, GUI gui, GUIAdapter guiAdapter) {
+    public synchronized void buttonClicked(JButton button, Controller ctrl, GUI gui) {
         Controller.getScheduler().exec(() -> {
 
             if (button == gui.getComponent("fileButton")) {
-                guiAdapter.setViewHeadBtVisible(false);
-                guiAdapter.setFileMenuVisible(true);
+                gui.setViewHeadBtVisible(false);
+                gui.setFileMenuVisible(true);
 
             } else if (button == gui.getComponent("listButton")) {
-                guiAdapter.startProgressBar();
+                gui.startProgressBar();
 
             } else if (button == gui.getComponent("mapButton")) {
-                guiAdapter.startProgressBar();
+                gui.startProgressBar();
                 ctrl.show(MAP_LIVE, "Live-Map");
 
             } else if (button == gui.getComponent("statsButton")) {
@@ -91,7 +105,7 @@ public record ActionHandler()
                 Menus.show(Menus.TYPE_SUPPLIER, (Window) gui.getComponent("window"));
 
             } else if (button == gui.getComponent("closeViewButton")) {
-                guiAdapter.disposeView();
+                gui.disposeView();
                 ctrl.loadedData = null;
                 var startPanel = gui.getComponent("startPanel");
                 var rightDP = (JDesktopPane) gui.getComponent("rightDP");
@@ -102,12 +116,12 @@ public record ActionHandler()
                 gui.getComponent("settingsDialog").setVisible(true);
                 var settingsMaxLoadTxtField = (JTextField) gui.getComponent("settingsMaxLoadTxtField");
                 settingsMaxLoadTxtField.setCaretColor(Color.YELLOW);
-                guiAdapter.requestComponentFocus(settingsMaxLoadTxtField);
+                gui.requestComponentFocus(settingsMaxLoadTxtField);
 
             } else if (button == gui.getComponent("searchButton")) {
                 var searchPanel = gui.getComponent("searchPanel");
                 searchPanel.setVisible(!searchPanel.isVisible());
-                guiAdapter.loadSearch(SearchType.FLIGHT);
+                gui.loadSearch(SearchType.FLIGHT);
 
             } else if (button == gui.getComponent("settingsCancelButton")) {
                 gui.getComponent("settingsDialog").setVisible(false);
@@ -120,7 +134,7 @@ public record ActionHandler()
                         settingsMaxLoadTxtField.getText(), // max loaded data
                         (String) settingsMapTypeCmbBox.getSelectedItem(), // map type
                         String.valueOf(settingsLivePeriodSlider.getValue()) // live data loading period
-                        );
+                );
                 gui.getComponent("settingsDialog").setVisible(false);
 
             } else if (button.getName().equals("loadList")) {
@@ -129,8 +143,10 @@ public record ActionHandler()
 
             } else if (button.getName().equals("loadMap")) {
                 try {
-                    var inputs = guiAdapter.searchInput();
-                    ctrl.search(inputs, 1);
+                    var inputs = gui.searchInput();
+                    if (inputs != null) {
+                        ctrl.search(inputs, 1);
+                    }
                 } catch (IllegalInputException e) {
                     ctrl.handleException(e);
                 }
@@ -141,8 +157,8 @@ public record ActionHandler()
                 Controller.getInstance().saveFile();
 
             } else if (button.getName().equals("back")) {
-                guiAdapter.setFileMenuVisible(false);
-                guiAdapter.setViewHeadBtVisible(true);
+                gui.setFileMenuVisible(false);
+                gui.setViewHeadBtVisible(true);
 
             }
         }, "Action Handler", false, Scheduler.MID_PRIO, true);
@@ -174,19 +190,18 @@ public record ActionHandler()
      *
      * @param event is the KeyEvent
      * @param gui is the GUI instance
-     * @param guiAdapter is the GUIAdapter instance
      */
-    public void keyEntered(KeyEvent event, GUI gui, GUIAdapter guiAdapter) {
+    public void keyEntered(KeyEvent event, GUI gui) {
         var source = event.getSource();
         int key = event.getKeyCode();
         try {
             if (source == gui.getComponent("settingsMaxLoadTxtField")) {
-                if (key == KeyEvent.VK_ENTER) {
+                if (key == VK_ENTER) {
                     var settingsMaxLoadTxtField = (JTextField) gui.getComponent("settingsMaxLoadTxtField");
                     // TODO fixen: settings fenster schließt erst nach loading
                     int newMax = Integer.parseInt(settingsMaxLoadTxtField.getText());
                     if (newMax > 0) {
-                        guiAdapter.startProgressBar();
+                        gui.startProgressBar();
                         UserSettings.setMaxLoadedData(newMax);
                         settingsMaxLoadTxtField.setText("");
                         gui.getComponent("settingsDialog").setVisible(false);
@@ -197,7 +212,7 @@ public record ActionHandler()
             } else if (source instanceof JTextField && key == VK_ENTER) {
                 var jButton = new JButton();
                 jButton.setName("loadMap");
-                this.buttonClicked(jButton, Controller.getInstance(), gui, guiAdapter);
+                this.buttonClicked(jButton, Controller.getInstance(), gui);
             } else /*if (source == gui.getComponent("window"))*/ {
                 final var viewer = gui.getMap();
                 switch (key) { // FIXME läuft noch nicht
@@ -210,7 +225,7 @@ public record ActionHandler()
         } catch (NumberFormatException ex) {
             var settingsMaxLoadTxtField = (JTextField) gui.getComponent("settingsMaxLoadTxtField");
             settingsMaxLoadTxtField.setText("Error");
-        } catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
@@ -235,7 +250,7 @@ public record ActionHandler()
         var infoPanel = gui.getComponent("infoPanel");
         var menuBar = gui.getComponent("menuBar"); // wird die überhaupt benötigt
 
-        mainPanel.setBounds(0, 0, window.getWidth()-14, window.getHeight()-37);
+        mainPanel.setBounds(0, 0, window.getWidth() - 14, window.getHeight() - 37);
         titlePanel.setBounds(0, 0, mainPanel.getWidth(), 70);
 
         int width = titlePanel.getWidth();
@@ -293,14 +308,13 @@ public record ActionHandler()
      */
     private void itemChanged(Object source, String item, GUI gui) {
         if (source == gui.getComponent("searchForCmbBox")) {
-            var guiAdapter = new GUIAdapter(gui);
-            guiAdapter.clearSearch();
-            guiAdapter.loadSearch(SearchType.byItemString(item));
+            gui.clearSearch();
+            gui.loadSearch(SearchType.byItemString(item));
         } else if (source == gui.getComponent("settingsMapTypeCmbBox")) {
             switch (item) {
                 case "Bing Map" -> UserSettings.setCurrentMapSource(UserSettings.BING_MAP);
                 case "Default Map" -> UserSettings.setCurrentMapSource(UserSettings.DEFAULT_MAP);
-                case "Transport Map" ->  UserSettings.setCurrentMapSource(UserSettings.TRANSPORT_MAP);
+                case "Transport Map" -> UserSettings.setCurrentMapSource(UserSettings.TRANSPORT_MAP);
             }
         }
     }
@@ -317,9 +331,8 @@ public record ActionHandler()
         if (src instanceof JButton bt) {
             var ctrl = Controller.getInstance();
             var gui = Controller.getGUI();
-            var guiAdapter = new GUIAdapter(gui);
             if (e.getID() != KEY_TYPED) {
-                this.buttonClicked(bt, ctrl, gui, guiAdapter);
+                this.buttonClicked(bt, ctrl, gui);
             }
         }
     }
@@ -346,8 +359,7 @@ public record ActionHandler()
     @Override
     public void keyPressed(KeyEvent e) {
         var gui = Controller.getGUI();
-        var guiAdapter = new GUIAdapter(gui);
-        this.keyEntered(e, gui, guiAdapter);
+        this.keyEntered(e, gui);
     }
 
     /**
@@ -402,18 +414,75 @@ public record ActionHandler()
      * the following listener-methods are unused
      */
 
-    @Override public void keyTyped(KeyEvent e) {}
-    @Override public void keyReleased(KeyEvent e) {}
-    @Override public void componentHidden(ComponentEvent e) {}
-    @Override public void componentMoved(ComponentEvent e) {}
-    @Override public void mouseClicked(MouseEvent e) {}
-    @Override public void mouseReleased(MouseEvent e) {}
-    @Override public void mouseEntered(MouseEvent e) {}
-    @Override public void mouseExited(MouseEvent e) {}
-    @Override public void windowOpened(WindowEvent e) {}
-    @Override public void windowClosed(WindowEvent e) {}
-    @Override public void windowIconified(WindowEvent e) {}
-    @Override public void windowDeiconified(WindowEvent e) {}
-    @Override public void windowActivated(WindowEvent e) {}
-    @Override public void windowDeactivated(WindowEvent e) {}
+    @Override
+    public void keyTyped(KeyEvent e) {
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+    }
+
+    @Override
+    public void componentHidden(ComponentEvent e) {
+    }
+
+    @Override
+    public void componentMoved(ComponentEvent e) {
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+    }
+
+    @Override
+    public void windowOpened(WindowEvent e) {
+    }
+
+    @Override
+    public void windowClosed(WindowEvent e) {
+    }
+
+    @Override
+    public void windowIconified(WindowEvent e) {
+    }
+
+    @Override
+    public void windowDeiconified(WindowEvent e) {
+    }
+
+    @Override
+    public void windowActivated(WindowEvent e) {
+    }
+
+    @Override
+    public void windowDeactivated(WindowEvent e) {
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this || obj != null && obj.getClass() == this.getClass();
+    }
+
+    @Override
+    public int hashCode() {
+        return 1;
+    }
+
+    @Override
+    public String toString() {
+        return "ActionHandler[]";
+    }
+
 }

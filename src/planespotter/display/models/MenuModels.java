@@ -203,6 +203,12 @@ public final class MenuModels {
                 livePeriod.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
                 livePeriod.setFont(FONT_MENU);
                 livePeriod.setOpaque(false);
+            var liveMapFilters = new JLabel("Live Map Filters: ");
+                liveMapFilters.setBounds(20, 130, 300, 25);
+                liveMapFilters.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                liveMapFilters.setFont(FONT_MENU);
+                liveMapFilters.setOpaque(false);
+
         var settings = new JDialog(parent);
         settings.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 540, 400);
         settings.setLayout(null);
@@ -212,12 +218,12 @@ public final class MenuModels {
         settings.setResizable(false);
         settings.setFocusable(false);
         // adding labels
-        var seps = this.separators(3, 40, 40);
+        var seps = this.separators(4, 40, 40);
         Arrays.stream(seps).forEach(settings::add);
         settings.add(maxLoadLbl);
         settings.add(mapType);
         settings.add(livePeriod);
-
+        settings.add(liveMapFilters);
 
         settings.setVisible(false);
 
@@ -259,6 +265,8 @@ public final class MenuModels {
         };
     }
 
+    // TODO: 05.07.2022 Settings class
+
     public JComboBox<String> settings_mapTypeCmbBox(ItemListener listener) {
         var mapTypeCmbBox = new JComboBox<>(new String[] {
                 "Default Map",
@@ -281,6 +289,18 @@ public final class MenuModels {
         slider.setToolTipText("Live-Data loading period in seconds (1-10)");
 
         return slider;
+    }
+
+    public UWPButton settingsFilterButton(ActionListener listener) {
+        var button = new UWPButton("Filters");
+        button.setBounds(350, 130, 150, 25);
+        button.setEffectColor(DEFAULT_FONT_COLOR.get());
+        button.setSelectedColor(DEFAULT_MAP_ICON_COLOR.get());
+        button.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+        button.setFont(FONT_MENU);
+        button.addActionListener(listener);
+
+        return button;
     }
 
     public JSeparator[] separators(int count, int startY, int plus) {

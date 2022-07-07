@@ -1,6 +1,7 @@
 package planespotter.display.models;
 
 import libs.UWPButton;
+import org.jetbrains.annotations.NotNull;
 import planespotter.controller.ActionHandler;
 import planespotter.display.GUI;
 
@@ -229,6 +230,65 @@ public final class SearchModels {
         var name = new JTextField();
         gui.search_airpName = name;
         components.add(name);
+        var loadList = new UWPButton();
+        loadList.setText("Load List");
+        components.add(loadList);
+        var loadMap = new UWPButton();
+        loadMap.setText("Load Map");
+        components.add(loadMap);
+        int width = (parent.getWidth()-20)/2;
+        int y = 55;
+        for (var c : components) {
+            if (c instanceof JLabel) {
+                c.setBounds(10, y, width, 25);
+                c.setBackground(DEFAULT_BG_COLOR.get());
+                c.setForeground(DEFAULT_MAP_ICON_COLOR.get());
+                c.setOpaque(false);
+            } else if (c instanceof JTextField) {
+                c.setBounds(parent.getWidth()/2, y, width, 25);
+                c.setBackground(DEFAULT_FONT_COLOR.get());
+                c.setForeground(DEFAULT_FG_COLOR.get());
+                c.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
+                c.addKeyListener(listener);
+                y += 35;
+            } else if (c instanceof JButton bt) {
+                var buttonText = bt.getText();
+                if (buttonText.equals("Load List")) {
+                    bt.setBounds(10, parent.getHeight()-35, width-5, 25);
+                    bt.setName("loadList");
+                } else if (buttonText.equals("Load Map")) {
+                    bt.setBounds((parent.getWidth()/2)+5, parent.getHeight()-35, width-5, 25);
+                    bt.setName("loadMap");
+                }
+                bt.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                bt.setForeground(DEFAULT_FONT_COLOR.get());
+                bt.setBorder(MENU_BORDER);
+                bt.addActionListener(listener);
+            }
+            c.setFont(FONT_MENU);
+            c.setVisible(false);
+        }
+        return components;
+    }
+
+    public List<JComponent> airlineSearch(@NotNull JPanel parent, @NotNull GUI gui, @NotNull ActionHandler listener) {
+        var components = new ArrayList<JComponent>();
+        components.add(new JLabel("ID:"));
+        var id = new JTextField();
+        gui.search_airlID = id;
+        components.add(id);
+        components.add(new JLabel("Tag:"));
+        var tag = new JTextField();
+        gui.search_airlTag = tag;
+        components.add(tag);
+        components.add(new JLabel("Name:"));
+        var name = new JTextField();
+        gui.search_airlName = name;
+        components.add(name);
+        components.add(new JLabel("Country:"));
+        var country = new JTextField();
+        gui.search_airlCountry = country;
+        components.add(country);
         var loadList = new UWPButton();
         loadList.setText("Load List");
         components.add(loadList);

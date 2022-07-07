@@ -51,8 +51,7 @@ public final class MapManager {
     /**
      * creates a map with a flight route from a specific flight
      */
-    public TreasureMap createTrackingMap(Vector<DataPoint> dataPoints, @Nullable Flight flight, boolean showPoints, GUIAdapter guiAdapter)
-            throws DataNotFoundException {
+    public TreasureMap createTrackingMap(Vector<DataPoint> dataPoints, @Nullable Flight flight, boolean showPoints, GUI gui) {
 
         var viewer = this.mapViewer;
         int size = dataPoints.size(),
@@ -100,7 +99,7 @@ public final class MapManager {
             lastdp = dp;
         }
 
-        guiAdapter.disposeView();
+        gui.disposeView();
 
         if (!dataPoints.isEmpty()) {
             if (showPoints) {
@@ -108,10 +107,8 @@ public final class MapManager {
             }
             viewer.setMapPolygonList(polys);
             if (dataPoints.size() == 1 && flight != null) {
-                gui.getTreePlantation().createFlightInfo(flight, guiAdapter);
+                gui.getTreePlantation().createFlightInfo(flight, gui);
             }
-        } else {
-            throw new DataNotFoundException("Couldn't create Flight Route for this flightID!");
         }
         return viewer;
     }
@@ -249,6 +246,7 @@ public final class MapManager {
      * @param map is the map to be set
      */
     public void receiveMap(TreasureMap map, String text, ViewType viewType) {
+        text = (text == null) ? "" : text;
         Controller.getGUI().setCurrentViewType(viewType);
         // adding MapViewer to panel (needed?)
         this.mapViewer = map;
@@ -261,7 +259,7 @@ public final class MapManager {
         // revalidating window fr24Frame to refresh everything
         mapPanel.setVisible(true);
         this.mapViewer.setVisible(true);
-        new GUIAdapter(this.gui).requestComponentFocus(this.mapViewer);
+        Controller.getGUI().requestComponentFocus(this.mapViewer);
     }
 
     TreasureMap getMapViewer() {

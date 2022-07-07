@@ -20,7 +20,6 @@ import java.time.Instant;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -111,14 +110,45 @@ public class Fr24Supplier implements Supplier {
 	 * @param scheduler is the Scheduler to allow parallelism
 	 * @return Deque of deserialized Frames
 	 */
-	public synchronized Deque<Fr24Frame> getFrames(String[] areas, final Fr24Deserializer deserializer, final Scheduler scheduler) {
+	public static synchronized Deque<Fr24Frame> framesForArea(String[] areas, final Fr24Deserializer deserializer, final Scheduler scheduler) {
 		var concurrentDeque = new ConcurrentLinkedDeque<Fr24Frame>();
 		System.out.println("Deserializing Fr24-Data...");
 
 		var ready = new AtomicBoolean(false);
 		var counter = new AtomicInteger(areas.length - 1);
 
-		scheduler.exec(() -> {
+		var areaDQ = new ConcurrentLinkedDeque<>(List.of(areas));
+
+		Runnable getAndDeserialize = () -> {
+			String area;
+			Fr24Supplier supplier;
+			Deque<Fr24Frame> data;
+
+			while (!areaDQ.isEmpty()) {
+				area = areaDQ.poll();
+				if (area != null) {
+					supplier = new Fr24Supplier(0, area);
+					try {
+						data = deserializer.deserialize(supplier.sendRequest());
+						while (!data.isEmpty()) {
+							concurrentDeque.add(data.poll());
+						}
+					} catch (IOException | InterruptedException e) {
+						e.printStackTrace();
+					}
+					if (counter.get() == 0) {
+						ready.set(true);
+					}
+					counter.getAndDecrement();
+				}
+			}
+		};
+
+		for (int i = 0; i < 4; i++) {
+			scheduler.exec(getAndDeserialize, "Fr24-Deserializer-" + i, false, Scheduler.HIGH_PRIO, true);
+		}
+
+		/*scheduler.exec(() -> {
 			for (var area : areas) {
 
 				var supplier = new Fr24Supplier(0, area);
@@ -135,14 +165,10 @@ public class Fr24Supplier implements Supplier {
 				}
 				counter.getAndDecrement();
 			}
-		}, "Fr24-Deserializer", false, Scheduler.MID_PRIO, true);
+		}, "Fr24-Deserializer", false, Scheduler.MID_PRIO, true);*/
 		while (!ready.get()) {
 			System.out.print(":");
-			try {
-				TimeUnit.MILLISECONDS.sleep(50);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			Scheduler.sleep(100);
 		}
 		System.out.println();
 		return concurrentDeque;
@@ -154,7 +180,8 @@ public class Fr24Supplier implements Supplier {
 	 * @param data
 	 * @throws Exception
 	 */
-	public void writeToCSV(List<String> data) throws Exception {
+	@Deprecated
+	public void writeToCSV(List<String> data) throws IOException {
 		// Create File and write to it
 		Timestamp ts = new Timestamp(System.currentTimeMillis());
 		Instant inst = ts.toInstant();

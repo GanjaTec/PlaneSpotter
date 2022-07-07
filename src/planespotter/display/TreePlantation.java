@@ -43,11 +43,11 @@ public final class TreePlantation {
      *
      * @param treeNode is the root node of the given tree
      */
-    public void createTree(DefaultMutableTreeNode treeNode, GUIAdapter guiAdapter) {
+    public void createTree(DefaultMutableTreeNode treeNode, GUI gui) {
         // initialisation new JTree
         var tree = this.defaultTree(treeNode);
         tree.setVisible(true);
-        guiAdapter.receiveTree(tree);
+        gui.receiveTree(tree);
     }
 
     /**
@@ -55,10 +55,10 @@ public final class TreePlantation {
      *
      * @param flight is the flight to show
      */
-    public void createFlightInfo(Flight flight, GUIAdapter guiAdapter) {
+    public void createFlightInfo(Flight flight, GUI gui) {
         JTree tree = this.defaultTree(this.flightInfoTreeNode(flight));
         tree.setVisible(true);
-        guiAdapter.receiveInfoTree(tree, null);
+        gui.receiveInfoTree(tree, null);
     }
 
     /**
@@ -66,10 +66,10 @@ public final class TreePlantation {
      *
      * @param dp is the data point to show
      */
-    public void createDataPointInfo(Flight flight, DataPoint dp, GUIAdapter guiAdapter) {
+    public void createDataPointInfo(Flight flight, DataPoint dp, GUI gui) {
         var flightInfo = this.defaultTree(this.flightInfoTreeNode(flight));
         var dpInfo = this.defaultTree(this.dataPointInfoTreeNode(dp));
-        guiAdapter.receiveInfoTree(flightInfo, dpInfo);
+        gui.receiveInfoTree(flightInfo, dpInfo);
         dpInfo.setVisible(true);
     }
 

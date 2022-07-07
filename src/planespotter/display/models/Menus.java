@@ -8,6 +8,7 @@ import planespotter.constants.UnicodeChar;
 import planespotter.constants.Warning;
 import planespotter.controller.Controller;
 import planespotter.display.Diagrams;
+import planespotter.display.GUI;
 import planespotter.model.Fr24Collector;
 import planespotter.statistics.Statistics;
 
@@ -82,12 +83,12 @@ public abstract class Menus {
             supList.setListData(data);
             supList.addListSelectionListener(e -> {
                 var value = supList.getSelectedValue();
-                var rightDP = (JDesktopPane) Controller.getGUI().getComponent("rightDP");
+                var gui = Controller.getGUI();
+                var rightDP = (JDesktopPane) gui.getComponent("rightDP");
                 var stats = new Statistics();
-                var guiAdapter = Controller.GUI_ADAPTER;
                 switch (value) {
                     // TODO: 30.06.2022 User-Input for parameters
-                    case STATS_TOP_AIRPORTS -> guiAdapter.receiveChart(Diagrams.barChartPanel(rightDP, stats.topAirports(20)));
+                    case STATS_TOP_AIRPORTS -> gui.receiveChart(Diagrams.barChartPanel(rightDP, stats.topAirports(20)));
                     case STATS_AIRPORT_SIGNIFICANCE -> {
                         // TODO: 30.06.2022 move to controller
                         var input = JOptionPane.showInputDialog("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
@@ -96,9 +97,9 @@ public abstract class Menus {
                         }
                         try {
                             int minCount = Integer.parseInt(input);
-                            guiAdapter.receiveChart(Diagrams.barChartPanel(rightDP, stats.airportSignificance(minCount)));
+                            gui.receiveChart(Diagrams.barChartPanel(rightDP, stats.airportSignificance(minCount)));
                         } catch (NumberFormatException nfe) {
-                            Controller.GUI_ADAPTER.showWarning(Warning.INT_EXPECTED);
+                            gui.showWarning(Warning.INT_EXPECTED);
                         }
                     }
                     case STATS_AIRLINE_SIGNIFICANCE -> {
@@ -109,9 +110,9 @@ public abstract class Menus {
                         }
                         try {
                             int minCount = Integer.parseInt(input);
-                            guiAdapter.receiveChart(Diagrams.barChartPanel(rightDP, stats.airlineSignificance(minCount)));
+                            gui.receiveChart(Diagrams.barChartPanel(rightDP, stats.airlineSignificance(minCount)));
                         } catch (NumberFormatException nfe) {
-                            Controller.GUI_ADAPTER.showWarning(Warning.INT_EXPECTED);
+                            gui.showWarning(Warning.INT_EXPECTED);
                         }
                     }
                     case STATS_HEATMAP -> {/* show heat map */}

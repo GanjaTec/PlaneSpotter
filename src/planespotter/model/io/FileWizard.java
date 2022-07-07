@@ -37,20 +37,21 @@ public class FileWizard {
      * saves the config as a .cfg file
      */
     public synchronized void saveConfig() {
+        File config;
+        Writer writer;
         try {
             Controller.getLogger().log("saving config...", fileWizard);
-            var config = new File(Paths.RESOURCE_PATH + "config.psconfig");
-            if (!config.exists()) { // creating new file if there is no existing one
-                config.createNewFile();
+            config = new File(Paths.RESOURCE_PATH + "config.psc");
+            if (!config.exists() && config.createNewFile()) { // creating new file if there is no existing one
+                writer = new FileWriter(config);
+                writer.write("maxThreadPoolSize: " + MAX_THREADPOOL_SIZE + "\n");
+                writer.write("maxLoadedFlights: " + UserSettings.getMaxLoadedData() + "\n");
+                writer.close();
             }
-            var writer = new FileWriter(config);
-            writer.write("maxThreadPoolSize: " + MAX_THREADPOOL_SIZE + "\n");
-            writer.write("maxLoadedFlights: " + UserSettings.getMaxLoadedData() + "\n");
-            writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            Controller.getLogger().sucsessLog("configuration saved sucsessfully!", fileWizard);
+            Controller.getLogger().successLog("configuration saved sucsessfully!", fileWizard);
         }
     }
 

@@ -57,9 +57,8 @@ public abstract class LiveData {
      * @return Vector of Flight objects, loaded directly by a supplier
      */
     public static Vector<Flight> directLiveData(final Scheduler scheduler, final TreasureMap map) {
-        var supplier = new Fr24Supplier();
         var deserializer = new Fr24Deserializer();
-        //deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR");
+        //deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF");
         // area with panel size
         var topLeft = map.getPosition(0, 0);
         var bottomRight = map.getPosition(map.getWidth(), map.getHeight());
@@ -67,7 +66,7 @@ public abstract class LiveData {
                 Areas.newArea(topLeft, bottomRight)
         };
 
-        var frames = supplier.getFrames(currentArea, deserializer, scheduler);
+        var frames = Fr24Supplier.framesForArea(currentArea, deserializer, scheduler);
         // termorary if // daten gehen verloren
         if (!maxSizeReached()) {
             insertLater(frames);
@@ -133,7 +132,7 @@ public abstract class LiveData {
     }
 
     /**
-     * indicates if the insertLater-deque is emoty
+     * indicates if the insertLater-deque is empty
      *
      * @return true if the insert-later-deque is empty, else false
      */
