@@ -9,6 +9,8 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyListener;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.DefaultColor.*;
@@ -131,34 +133,18 @@ public final class MenuModels {
     /**
      *
      */
-    public JProgressBar progressBar(JMenuBar parent) {
+    public JProgressBar progressBar(JPanel parent) {
         // seting up progress bar
         var progressbar = new JProgressBar();
-        progressbar.setBorder(LINE_BORDER);
+        progressbar.setBorder(MENU_BORDER);
         progressbar.setBackground(DEFAULT_FONT_COLOR.get());
         progressbar.setBorderPainted(true);
         progressbar.setForeground(new Color(92, 214, 92));
-        progressbar.setBounds(10, 90, parent.getWidth()-20, 15);
+        progressbar.setBounds(parent.getWidth() - 386, 4, 200, 16);
         progressbar.setIndeterminate(true);
         progressbar.setVisible(false);
 
         return progressbar;
-    }
-
-    /**
-     * search text field
-     */
-    public JTextField searchTextField(JMenuBar parent, KeyListener listener) {
-        // setting up search text field
-        var search = new JTextField();
-        search.setToolTipText("Search");
-        search.setBounds(10, parent.getHeight()-60, parent.getWidth()-20, 25);
-        search.setBackground(Color.WHITE);
-        search.setFont(FONT_MENU);
-        search.setBorder(LINE_BORDER);
-        search.addKeyListener(listener);
-
-        return search;
     }
 
     /**
@@ -193,30 +179,52 @@ public final class MenuModels {
         return closeView;
     }
 
+    // TODO: 01.07.2022 man könnte die kompletten Settings mit einer
+    //  JTable machen, linke spalte keys, rechte spalte values
+
+    // TODO: 01.07.2022 Settings class oder inner class
+
     /**
      * @return settings option pane (which pops up)
      */
     public JDialog settingsDialog(JFrame parent) {
             var maxLoadLbl = new JLabel("Max. loaded Data:");
-            maxLoadLbl.setBounds(20, 20, 180, 30);
-            maxLoadLbl.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-            maxLoadLbl.setFont(FONT_MENU);
-            maxLoadLbl.setOpaque(false);
+                maxLoadLbl.setBounds(20, 10, 300, 25);
+                maxLoadLbl.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                maxLoadLbl.setFont(FONT_MENU);
+                maxLoadLbl.setOpaque(false);
             var mapType = new JLabel("Map Type:");
-            mapType.setBounds(20, 70, 300, 30);
-            mapType.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-            mapType.setFont(FONT_MENU);
-            mapType.setOpaque(false);
+                mapType.setBounds(20, 50, 300, 25);
+                mapType.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                mapType.setFont(FONT_MENU);
+                mapType.setOpaque(false);
+            var livePeriod = new JLabel("Live Data Period (sec):");
+                livePeriod.setBounds(20, 90, 300, 25);
+                livePeriod.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                livePeriod.setFont(FONT_MENU);
+                livePeriod.setOpaque(false);
+            var liveMapFilters = new JLabel("Live Map Filters: ");
+                liveMapFilters.setBounds(20, 130, 300, 25);
+                liveMapFilters.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+                liveMapFilters.setFont(FONT_MENU);
+                liveMapFilters.setOpaque(false);
+
         var settings = new JDialog(parent);
-        settings.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 500, 400);
+        settings.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 540, 400);
         settings.setLayout(null);
         settings.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         settings.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         settings.setType(Window.Type.POPUP);
         settings.setResizable(false);
         settings.setFocusable(false);
+        // adding labels
+        var seps = this.separators(4, 40, 40);
+        Arrays.stream(seps).forEach(settings::add);
         settings.add(maxLoadLbl);
         settings.add(mapType);
+        settings.add(livePeriod);
+        settings.add(liveMapFilters);
+
         settings.setVisible(false);
 
         return settings;
@@ -227,10 +235,10 @@ public final class MenuModels {
      */
     public JTextField settings_maxLoadTxtField(KeyListener listener) {
         var maxLoadTxtfield = new JTextField();
-        maxLoadTxtfield.setBounds(200, 20, 50, 30);
+        maxLoadTxtfield.setBounds(350, 10, 150, 25);
         maxLoadTxtfield.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR.get()));
-        maxLoadTxtfield.setBackground(DEFAULT_BG_COLOR.get());
-        maxLoadTxtfield.setForeground(DEFAULT_MAP_ICON_COLOR.get());
+        maxLoadTxtfield.setBackground(DEFAULT_FONT_COLOR.get());
+        maxLoadTxtfield.setForeground(DEFAULT_ACCENT_COLOR.get());
         maxLoadTxtfield.setFont(FONT_MENU);
         maxLoadTxtfield.addKeyListener(listener);
 
@@ -244,33 +252,67 @@ public final class MenuModels {
             cancel.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
             cancel.setForeground(DEFAULT_FONT_COLOR.get());
             cancel.setFont(FONT_MENU);
-            cancel.setBounds(mid - 140, height, 120, 30);
+            cancel.setBounds(mid - 140, height, 120, 25);
             cancel.addActionListener(listener);
         var confirm = new UWPButton("Confirm");
             confirm.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
             confirm.setForeground(DEFAULT_FONT_COLOR.get());
             confirm.setFont(FONT_MENU);
-            confirm.setBounds(mid + 20, height, 120, 30);
+            confirm.setBounds(mid + 20, height, 120, 25);
             confirm.addActionListener(listener);
         return new UWPButton[] {
                 cancel, confirm
         };
     }
 
+    // TODO: 05.07.2022 Settings class
+
     public JComboBox<String> settings_mapTypeCmbBox(ItemListener listener) {
-        var mapTypeCmbBox = new JComboBox<>(new String[]{
-                "Bing Map",
+        var mapTypeCmbBox = new JComboBox<>(new String[] {
                 "Default Map",
+                "Bing Map",
                 "Transport Map"
         });
-        mapTypeCmbBox.setBounds(200, 70, 100,  30);
+        mapTypeCmbBox.setBounds(350, 50, 150,  25);
         mapTypeCmbBox.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR.get()));
-        mapTypeCmbBox.setBackground(DEFAULT_BG_COLOR.get());
-        mapTypeCmbBox.setForeground(DEFAULT_MAP_ICON_COLOR.get());
+        mapTypeCmbBox.setBackground(DEFAULT_FONT_COLOR.get());
+        mapTypeCmbBox.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         mapTypeCmbBox.setFont(FONT_MENU);
         mapTypeCmbBox.addItemListener(listener);
 
         return mapTypeCmbBox;
+    }
+
+    public JSlider settingsLivePeriodSlider() {
+        var slider = new JSlider(JSlider.HORIZONTAL, 1, 10, 2);
+        slider.setBounds(350, 90, 150, 25);
+        slider.setToolTipText("Live-Data loading period in seconds (1-10)");
+
+        return slider;
+    }
+
+    public UWPButton settingsFilterButton(ActionListener listener) {
+        var button = new UWPButton("Filters");
+        button.setBounds(350, 130, 150, 25);
+        button.setEffectColor(DEFAULT_FONT_COLOR.get());
+        button.setSelectedColor(DEFAULT_MAP_ICON_COLOR.get());
+        button.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+        button.setFont(FONT_MENU);
+        button.addActionListener(listener);
+
+        return button;
+    }
+
+    public JSeparator[] separators(int count, int startY, int plus) {
+        var seps = new JSeparator[count];
+        for (int i = 0; i < count; i++) {
+            var s = new JSeparator();
+            s.setBounds(20, startY, 480, 2);
+            s.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+            seps[i] = s;
+            startY += plus;
+        }
+        return seps;
     }
 
     /**

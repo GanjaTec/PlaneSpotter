@@ -22,20 +22,21 @@ import static planespotter.constants.Images.PAPER_PLANE_ICON;
  * @author jml04
  * version 1.0
  *
- * class Logger represents the logger for console this.output
+ * class Logger represents a logger which logs
+ * on a JTextPane in an external JFrame
  */
 public class Logger extends JFrame implements ComponentListener {
 
     private final JScrollPane scrollPane;
     private final JTextPane out;
-    private final Object mainref;
+    private final Object mainRef;
 
     /**
      * true when logger is logging (writing to text pane)
      */
-    public Logger (@Nullable Object ref) {
+    public <R> Logger(@Nullable R ref) {
         super();
-        this.mainref = Objects.requireNonNullElse(ref, this);
+        this.mainRef = Objects.requireNonNullElse(ref, this);
         super.setTitle("Logger");
         super.setType(Type.NORMAL);
         super.setSize(700, 400);
@@ -79,7 +80,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param txt
      * @param ref
      */
-    public void errorLog (String txt, @Nullable Object ref) {
+    public void errorLog(String txt, @Nullable Object ref) {
         this.logInColor(txt, new Color(240, 40, 20), ref);
     }
 
@@ -88,7 +89,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param txt
      * @param ref
      */
-    public void sucsessLog (String txt, @Nullable Object ref) {
+    public void successLog(String txt, @Nullable Object ref) {
         this.logInColor(txt, new Color(40, 220, 70), ref);
     }
 
@@ -97,7 +98,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param txt
      * @param ref
      */
-    public void infoLog (String txt, @Nullable Object ref) {
+    public void infoLog(String txt, @Nullable Object ref) {
         this.logInColor(txt, new Color(230, 230, 70), ref);
     }
 
@@ -106,7 +107,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param txt
      * @param ref
      */
-    public void log (String txt, @Nullable Object ref) {
+    public void log(String txt, @Nullable Object ref) {
         this.logInColor(txt, DEFAULT_FONT_COLOR.get(), ref);
     }
 
@@ -116,7 +117,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param col
      * @param ref
      */
-    private synchronized void logInColor (String txt, Color col, Object ref) {
+    private synchronized void logInColor(String txt, Color col, Object ref) {
         this.sign(0);
         var now = LocalDateTime.now();
         var dateFormat = new DateTimeFormatterBuilder().appendPattern("dd.MM.yyyy").toFormatter();
@@ -128,7 +129,7 @@ public class Logger extends JFrame implements ComponentListener {
         this.text(time, DEFAULT_FONT_COLOR.get());
         this.sign(3); // TODO make Sign values to Enum
         if (ref == null) {
-            this.text(mainref.getClass().getSimpleName(), DEFAULT_FONT_COLOR.get());
+            this.text(mainRef.getClass().getSimpleName(), DEFAULT_FONT_COLOR.get());
         } else {
             this.text(ref.getClass().getSimpleName(), DEFAULT_FONT_COLOR.get());
         }
@@ -139,9 +140,14 @@ public class Logger extends JFrame implements ComponentListener {
 
     /**
      *
-     * @param val
+     * @param val is the sign index:
+     *            0: [
+     *            1: ]
+     *            2: >
+     *            3: @
+     *            4: ,
      */
-    private void sign (int val) {
+    private void sign(int val) {
         switch (val) {
             case 0 -> this.text("[", DEFAULT_MAP_ICON_COLOR.get());
             case 1 -> this.text("]", DEFAULT_MAP_ICON_COLOR.get());
@@ -169,8 +175,8 @@ public class Logger extends JFrame implements ComponentListener {
 
     public void close() {
         var loggedText = out.getText();
-        FileWizard.getFileWizard().saveLogFile(loggedText);
-        this.dispose();
+        FileWizard.getFileWizard().saveLogFile("logged", loggedText);
+        super.dispose();
     }
 
     // overrides / implemented methods

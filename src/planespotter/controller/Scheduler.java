@@ -2,12 +2,12 @@ package planespotter.controller;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
+import planespotter.constants.Configuration;
+import planespotter.throwables.OutOfRangeException;
+import planespotter.util.Logger;
 
-import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static planespotter.constants.Configuration.*;
 
 /**
  * @name Scheduler
@@ -51,8 +51,8 @@ public class Scheduler {
      * constant as max. ThreadPool-size
      */
     public Scheduler() {
-        this.exe = new ThreadPoolExecutor(CORE_POOLSIZE, MAX_THREADPOOL_SIZE,
-                                          KEEP_ALIVE_TIME, TimeUnit.SECONDS,
+        this.exe = new ThreadPoolExecutor(Configuration.CORE_POOLSIZE, Configuration.MAX_THREADPOOL_SIZE,
+                                          Configuration.KEEP_ALIVE_TIME, TimeUnit.SECONDS,
                                           new SynchronousQueue<>(), threadMaker);
         this.scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker);
     }
@@ -63,8 +63,8 @@ public class Scheduler {
      * @param maxPoolsize is the max. ThreadPool-size
      */
     public Scheduler(int maxPoolsize) {
-        this.exe = new ThreadPoolExecutor(CORE_POOLSIZE, maxPoolsize,
-                KEEP_ALIVE_TIME, TimeUnit.SECONDS,
+        this.exe = new ThreadPoolExecutor(Configuration.CORE_POOLSIZE, maxPoolsize,
+                Configuration.KEEP_ALIVE_TIME, TimeUnit.SECONDS,
                 new SynchronousQueue<>(), threadMaker);
         this.scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker);
     }
@@ -186,26 +186,12 @@ public class Scheduler {
     }
 
     /**
-     * cancels tasks (removes them from the thread pool executor queue)
-     *
-     * @param targets are the tasks to cancel, min. 1
-     */
-    public synchronized void cancel(@NotNull Runnable... targets) {
-        if (targets.length == 0) {
-            throw new IllegalArgumentException("No targets to cancel");
-        }
-        Controller.getLogger().infoLog("Task cancelled!", this);
-        Arrays.stream(targets)
-                .forEach(this.exe::remove);
-    }
-
-    /**
      * tries to interrupt a certain thread
      *
      * @param target is the thread to interrupt
      */
     public synchronized void interruptThread(@NotNull Thread target) {
-        var log = Controller.getLogger();
+        Logger log = Controller.getInstance().getLogger();
         if (target.isAlive()) {
             target.interrupt();
             if (!target.isInterrupted()) {
@@ -308,11 +294,12 @@ public class Scheduler {
          */
         @Override
         public Thread newThread(@NotNull Runnable r) {
-            var thread = new Thread(r);
+            Thread thread = new Thread(r);
             this.setThreadProperties(thread);
             thread.setUncaughtExceptionHandler((t, e) -> { // t is the thread, e is the exception
+                Logger log = Controller.getInstance().getLogger();
                 e.printStackTrace();
-                Controller.getLogger().errorLog("Exception " + e.getMessage() +
+                log.errorLog("Exception " + e.getMessage() +
                                 " occured in thread " + t.getName(),
                                 Controller.getInstance());
                 Controller.getInstance().handleException(e);
@@ -329,7 +316,7 @@ public class Scheduler {
          */
         public synchronized void addThreadProperties(@NotNull String name, boolean daemon, int prio) {
             if (prio < 1 || prio > 10) {
-                throw new IllegalArgumentException("Thread priority out of range! (1-10)");
+                throw new OutOfRangeException("Thread priority out of range! (1-10)");
             }
             this.name = name;
             this.daemon = daemon;

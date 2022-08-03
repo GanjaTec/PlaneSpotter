@@ -1,5 +1,6 @@
 package planespotter.util;
 
+@SuppressWarnings(value = "unused")
 public class TaskWatch {
 
     // counters
@@ -12,9 +13,7 @@ public class TaskWatch {
     }
 
     public final TaskWatch allocation(final int count) {
-        for (int i = 0; i < count; i++) {
-            this.allocations++;
-        }
+        this.allocations += count;
         return this;
     }
 
@@ -23,9 +22,7 @@ public class TaskWatch {
     }
 
     public final TaskWatch comparison(final int count) {
-        for (int i = 0; i < count; i++) {
-            this.comparisons++;
-        }
+        this.comparisons += count;
         return this;
     }
 
@@ -39,7 +36,7 @@ public class TaskWatch {
     }
 
     public void print() {
-        var str = "Allocations: " + this.allocations +
+        String str = "Allocations: " + this.allocations +
                   "\nComparisons: " + this.comparisons +
                   "\nArrays: " + this.arrays;
         System.out.println(str);

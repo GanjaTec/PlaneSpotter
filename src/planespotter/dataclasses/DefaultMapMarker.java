@@ -1,6 +1,7 @@
 package planespotter.dataclasses;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.MapMarkerCircle;
 import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
@@ -21,6 +22,7 @@ import java.awt.*;
  *
  * class CustomMapMarker is a custom map marker which extends from a normal MapMarkerDot
  */
+@TestOnly
 public class DefaultMapMarker extends MapMarkerDot implements MapMarker {
 
     public static final Image img = Images.FLYING_PLANE_ICON.get().getImage();

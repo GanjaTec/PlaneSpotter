@@ -2,6 +2,7 @@ package planespotter.model;
 
 import planespotter.controller.Scheduler;
 import planespotter.display.models.SupplierDisplay;
+import planespotter.model.nio.Supplier;
 
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,27 +17,27 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Create a subclass to implement a new Collector and implement startCollecting()
  * @see Fr24Collector
  */
-public abstract class Collector {
+public abstract class Collector<S extends Supplier> {
     // insert period in seconds
     protected static final int INSERT_PERIOD_SEC;
-    // runtime instance
-    public static final Runtime RUNTIME;
     // monitor object for Collector and its subclasses
     protected static final Object SYNC;
-    // initializer
+    // static initializer
     static {
         INSERT_PERIOD_SEC = 100;
-        RUNTIME = Runtime.getRuntime();
         SYNC = new Object();
     }
-    // 'paused' and 'enabled' flags
-    public volatile boolean paused, enabled;
+
+    // 'paused' and 'enabled' flags | is set by the display events
+    private boolean paused, enabled;
+    // main thread instance, should be implemented in startCollecting()
+    private Thread mainThread;
+    // supplier instance, can be every Supplier-subclass
+    protected final S supplier;
     // display, variations should be added
-    protected final SupplierDisplay display; // TODO: 29.06.2022 add variations to Constructor, sth. like TYPE
+    protected final SupplierDisplay display;
     // scheduler to execute tasks
     protected Scheduler scheduler;
-    // main thread instance, should be implemented in startCollecting()
-    protected Thread mainThread;
     // atomic integers as Frame-, Flight- and Plane-counter
     protected final AtomicInteger insertedNow, insertedFrames,
                                   newPlanesNow, newPlanesAll,
@@ -48,10 +49,11 @@ public abstract class Collector {
      * @param exitOnClose indicates if the whole program should exit
      *                    when the 'X'-button is pressed
      */
-    protected Collector(boolean exitOnClose) {
+    protected Collector(boolean exitOnClose, S supplier) {
         int closeOperation = (exitOnClose)
                 ? WindowConstants.EXIT_ON_CLOSE
                 : WindowConstants.DISPOSE_ON_CLOSE;
+        this.supplier = supplier;
         this.display = new SupplierDisplay(closeOperation, this);
         this.insertedNow = new AtomicInteger(0);
         this.insertedFrames = new AtomicInteger(0);
@@ -75,12 +77,10 @@ public abstract class Collector {
      * {@code // start code block
      * @Override
      * public void startCollecting() {
-     *     super.startNewMainThread(() -> {
      *         .....................
      *         ...collecting task...
      *         .....................
-     *     }),  "Collector");
-     * }
+     *      }
      * } // end code block
      *
      * you could also create a new class implementing runnable and
@@ -93,6 +93,7 @@ public abstract class Collector {
      */
     public synchronized void start() {
         this.display.start();
+        this.scheduler = new Scheduler();
         this.startCollecting();
     }
 
@@ -126,4 +127,19 @@ public abstract class Collector {
         this.mainThread.start();
     }
 
+    public boolean isPaused() {
+        return this.paused;
+    }
+
+    public boolean setPaused(boolean paused) {
+        return this.paused = paused;
+    }
+
+    public boolean isEnabled() {
+        return this.enabled;
+    }
+
+    public boolean setEnabled(boolean enabled) {
+        return this.enabled = enabled;
+    }
 }

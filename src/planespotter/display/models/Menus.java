@@ -1,9 +1,16 @@
 package planespotter.display.models;
 
 import libs.UWPButton;
+
 import org.jetbrains.annotations.Range;
+
+import planespotter.constants.UnicodeChar;
+import planespotter.constants.Warning;
+import planespotter.controller.Controller;
+import planespotter.display.Diagrams;
+import planespotter.display.GUI;
 import planespotter.model.Fr24Collector;
-import planespotter.constants.DefaultColor;
+import planespotter.statistics.Statistics;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +28,7 @@ public abstract class Menus {
                              TYPE_SUPPLIER = 1,
                              TYPE_AREA = 2;
 
-    private static final int width = 300, heigth = 400;
+    private static final int width = 300, height = 400;
     private static final int compWidth = width - 35, compHeight = 20;
 
     private static boolean shown = false;
@@ -41,32 +48,79 @@ public abstract class Menus {
                 case 2 -> new AreaMenu(owner);
                 default -> throw new IllegalStateException("Unexpected value: " + menuType);
             };
-            //shown = true;
             menu.setVisible(true);
         }
     }
 
     private static class StatisticMenu extends JDialog {
 
+        static final String STATS_TOP_AIRPORTS          = "Top-Airports",
+                            STATS_AIRPORT_SIGNIFICANCE  = "Airport-Significance",
+                            STATS_AIRLINE_SIGNIFICANCE  = "Airline-Significance",
+                            STATS_HEATMAP               = "Position-HeatMap";
+
         StatisticMenu(Window owner) {
             super(owner, "Statistics-Menu");
             super.setLayout(null);
-            super.setSize(width, heigth);
-            super.setBackground(DefaultColor.DEFAULT_BG_COLOR.get());
+            super.setSize(width, height);
+            super.setBackground(DEFAULT_BG_COLOR.get());
             super.setLocationRelativeTo(null);
             super.setResizable(false);
             super.addWindowListener(new Listener());
 
-            super.add(this.createShowButton());
+            super.add(this.createStatsList());
         }
 
-        private UWPButton createShowButton() {
-            var showButton = new UWPButton("Show");
-            showButton.setBounds(10, heigth - 70, compWidth, compHeight);
-            showButton.setEffectColor(DEFAULT_FONT_COLOR.get());
-            showButton.setSelectedColor(DEFAULT_MAP_ICON_COLOR.get());
-            showButton.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-            return showButton;
+        private JList<String> createStatsList() {
+            var data= Stream.of(STATS_TOP_AIRPORTS, STATS_AIRPORT_SIGNIFICANCE, STATS_AIRLINE_SIGNIFICANCE, STATS_HEATMAP)
+                    .collect(Collectors.toCollection(Vector::new));
+            var supList = new JList<String>();
+            supList.setBounds(10, 10, compWidth, height -70);
+            supList.setFixedCellWidth(compWidth);
+            supList.setFixedCellHeight(compHeight);
+            supList.setSelectionBackground(DEFAULT_MAP_ICON_COLOR.get());
+            supList.setVisibleRowCount(10); // max 10 suppliers
+            supList.setListData(data);
+            supList.addListSelectionListener(e -> {
+                var value = supList.getSelectedValue();
+                var gui = Controller.getInstance().getGUI();
+                var rightDP = (JDesktopPane) gui.getComponent("rightDP");
+                var stats = new Statistics();
+                switch (value) {
+                    // TODO: 30.06.2022 User-Input for parameters
+                    case STATS_TOP_AIRPORTS -> gui.receiveChart(Diagrams.barChartPanel(rightDP, stats.topAirports(20)));
+                    case STATS_AIRPORT_SIGNIFICANCE -> {
+                        // TODO: 30.06.2022 move to controller
+                        var input = JOptionPane.showInputDialog("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
+                        if (input == null || input.isBlank()) {
+                            return;
+                        }
+                        try {
+                            int minCount = Integer.parseInt(input);
+                            gui.receiveChart(Diagrams.barChartPanel(rightDP, stats.airportSignificance(minCount)));
+                        } catch (NumberFormatException nfe) {
+                            gui.showWarning(Warning.INT_EXPECTED);
+                        }
+                    }
+                    case STATS_AIRLINE_SIGNIFICANCE -> {
+                        // TODO: 30.06.2022 move to controller
+                        var input = JOptionPane.showInputDialog("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
+                        if (input == null || input.isBlank()) {
+                            return;
+                        }
+                        try {
+                            int minCount = Integer.parseInt(input);
+                            gui.receiveChart(Diagrams.barChartPanel(rightDP, stats.airlineSignificance(minCount)));
+                        } catch (NumberFormatException nfe) {
+                            gui.showWarning(Warning.INT_EXPECTED);
+                        }
+                    }
+                    case STATS_HEATMAP -> {/* show heat map */}
+                }
+                super.setVisible(false);
+            });
+
+            return supList;
         }
     }
 
@@ -79,8 +133,8 @@ public abstract class Menus {
         SupplierMenu(Window owner) {
             super(owner, "Supplier-Menu");
             super.setLayout(null);
-            super.setSize(width, heigth);
-            super.setBackground(DefaultColor.DEFAULT_BG_COLOR.get());
+            super.setSize(width, height);
+            super.setBackground(DEFAULT_BG_COLOR.get());
             super.setLocationRelativeTo(null);
             super.setResizable(false);
             super.addWindowListener(new Listener());
@@ -92,15 +146,14 @@ public abstract class Menus {
 
         private UWPButton createRunButton() {
             var runButton = new UWPButton("Run Supplier");
-            runButton.setBounds(10, heigth - 70, compWidth, compHeight);
+            runButton.setBounds(10, height - 70, compWidth, compHeight);
             runButton.setEffectColor(DEFAULT_FONT_COLOR.get());
             runButton.setSelectedColor(DEFAULT_MAP_ICON_COLOR.get());
             runButton.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
             runButton.addActionListener(e -> {
-                //SupplierMain.start(false);
                 while (!this.activateDQ.isEmpty()) {
-                    var smain = this.activateDQ.pollFirst();
-                    smain.start();
+                    var collector = this.activateDQ.pollFirst();
+                    collector.start();
                 }
                 super.setVisible(false);
             });
@@ -111,7 +164,7 @@ public abstract class Menus {
             var data= Stream.of("Test1", "Fr24-Supplier", "Test3")
                     .collect(Collectors.toCollection(Vector::new));
             var supList = new JList<String>();
-            supList.setBounds(10, 10, compWidth, heigth-70);
+            supList.setBounds(10, 10, compWidth, height -70);
             supList.setFixedCellWidth(compWidth);
             supList.setFixedCellHeight(compHeight);
             supList.setVisibleRowCount(10); // max 10 suppliers
@@ -120,7 +173,7 @@ public abstract class Menus {
                 var suppliers = supList.getSelectedValuesList()
                         .stream()
                         .filter(s -> s.contains("Fr24"))  // TODO: 29.06.2022 filter for type and create fitting Collectors
-                        .map(s -> new Fr24Collector(false))
+                        .map(s -> new Fr24Collector(false, false)) // TODO add filters option
                         .toList();
                 this.activateDQ = new ArrayDeque<>(suppliers);
             });
@@ -133,8 +186,8 @@ public abstract class Menus {
         AreaMenu(Window owner) {
             super(owner, "Statistics");
             super.setLayout(null);
-            super.setSize(width, heigth);
-            super.setBackground(DefaultColor.DEFAULT_BG_COLOR.get());
+            super.setSize(width, height);
+            super.setBackground(DEFAULT_BG_COLOR.get());
             super.setLocationRelativeTo(null);
             super.setResizable(false);
             super.addWindowListener(new Listener());
@@ -146,20 +199,21 @@ public abstract class Menus {
 
     private static class Listener implements WindowListener {
         @Override
-        public void windowOpened(WindowEvent e) {
+        public void windowActivated(WindowEvent e) {
             shown = true;
         }
 
         @Override
-        public void windowClosing(WindowEvent e) {
+        public void windowDeactivated(WindowEvent e) {
             shown = false;
         }
 
+        @Override public void windowOpened(WindowEvent e) {}
+        @Override public void windowClosing(WindowEvent e) {}
         @Override public void windowClosed(WindowEvent e) {}
         @Override public void windowIconified(WindowEvent e) {}
         @Override public void windowDeiconified(WindowEvent e) {}
-        @Override public void windowActivated(WindowEvent e) {}
-        @Override public void windowDeactivated(WindowEvent e) {}
+
     }
 
 }

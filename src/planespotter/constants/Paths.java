@@ -1,5 +1,7 @@
 package planespotter.constants;
 
+import planespotter.controller.Controller;
+
 /**
  * @name Paths
  * @author jml04
@@ -13,10 +15,23 @@ package planespotter.constants;
 public final class Paths {
 
     /**
+     * absolute root-path, project folder, given by System property 'user.dir'
+     * initialized with the working directory when the program is started
+     */
+    @SuppressWarnings(value = "Does not work yet")
+    public static final String ROOT_PATH = Controller.ROOT_PATH;
+
+    /**
      * src-path
      * contains all project sources
      */
     public static final String SRC_PATH = "src\\";
+
+    /**
+     * python-helper-path
+     * contains all python-helper-scripts
+     */
+    public static final String PY_RUNTIME_HELPER = "python-helper\\runtime-helper\\";
 
     /**
      * libs-path
@@ -26,18 +41,19 @@ public final class Paths {
 
     /**
      * code path
+     * contains all project code
      */
     public static final String CODE_PATH = SRC_PATH + "planespotter\\";
 
     /**
-     * ressource-path
+     * resource-path
      * contains all project resources
      */
     public static final String RESOURCE_PATH = CODE_PATH + "resource\\";
 
     /**
      * image-path
-     * contains all used images, etc.
+     * contains all used images
      */
     public static final String IMAGE_PATH = RESOURCE_PATH + "img\\";
 

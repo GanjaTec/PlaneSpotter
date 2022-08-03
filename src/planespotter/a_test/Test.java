@@ -14,99 +14,97 @@ import planespotter.constants.Paths;
 import planespotter.util.Bitmap;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
-import planespotter.display.models.Diagram;
-import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.model.io.DBOut;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.util.Utilities;
+import sun.misc.Unsafe;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @TestOnly
 public class Test {
+
+    private static final String bitmapPath = Paths.RESOURCE_PATH + "newTestBitMap.bmp";
     // TEST-MAIN
     public static void main(String[] args) throws Exception {
 
-        var test = new Test();
+        // testing python scripts and functions in java
+/*
+        int a = 99, b = 111;
+        var func = "result = " + a + "+" + b;
+        var result = PyAdapter.runFunction(func);
+        System.out.println(result);
+        result = PyAdapter.runScript(Paths.PY_RUNTIME_HELPER + "testprint.py");
+        System.out.println(result);
+*/
 
-        var stats = new Statistics();
+        System.out.println(Utilities.linesCode("", ".java", ".py", ".md"));
+        //unsafeTest();
 
-        var bitmapPath = Paths.RESOURCE_PATH + "newTestBitMap.bmp";
+    }
 
-        System.out.println(Utilities.linesCode("", ".py", ".java", ".log"));
+    private static Unsafe getUnsafe() {
+        try {
+            Field field = Unsafe.class.getDeclaredField("theUnsafe");
+            field.setAccessible(true);
+            return (Unsafe) field.get(null);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        throw new NullPointerException("couldn't load the Unsafe class!");
+    }
 
-   /*     var positions = test.testPosVector();*//*new DBOut()
-                .getTrackingsWithAirportTag("CGN")
+    /**
+     * unsafe class is able to do 'JVM-actions' like allocating memory or sth. like that
+     */
+    private static void unsafeTest() {
+        Unsafe unsafe = getUnsafe();
+        System.out.println(unsafe.addressSize());
+        unsafe.allocateMemory(4);
+        // this throws a JVM error because of illegal access // or maybe wrong address
+        /*long a_pointer = unsafe.getAddress(a);
+        long a = 555;
+        System.out.println(a_pointer);*/
+    }
+
+    private void testBitmapWrite() throws IOException {
+        var positions = new Test().TEST_POS_VECTOR;/*new DBOut()
+                .getTrackingsWithAirportTag("FRA")
                 .stream()
                 .map(DataPoint::pos)
-                .collect(Collectors.toCollection(Vector::new));*//*
+                .collect(Collectors.toCollection(Vector::new));*/
         assert positions != null;
         var bmp = Bitmap.fromPosVector(positions, 0.5f);
         //test.createTestJFrame(bmp.toImage());
         // bitmap write & read funktioniert
-        Bitmap.writeBmp(bmp, new File(Paths.RESOURCE_PATH + "bmpBitmap.bmp"));
-*/
-        /*if (true) {
-            var bitmap = Bitmap.read(bitmapPath);
-            System.out.println(bitmap.width + ", " + bitmap.heigth);
-            System.out.println("Read Bitmap equals written Bitmap? '" + bitmap.equals(bmp) + "'");
-        } else {
-            Bitmap.write(bmp, bitmapPath);
-        }*/
-
-
-       /* int a = 23;
-        int b = 10;
-        // 23 - 10 / a plus Komplement von b plus 1
-        int erg = a + ~b + 1;
-        System.out.println(erg);*/
-
-
-/*
-        var wind = stats.flightHeadwind(7326);
-        var dataset = new DefaultCategoryDataset();
-        for (var pos : wind.keySet()) {
-            double[] values = wind.get(pos);
-            var posString = String.valueOf(pos);
-            dataset.addValue(values[0], "Groundspeed", posString);
-            dataset.addValue(values[1], "VectorSpeed", posString);
-        }
-        var chart = ChartFactory.createLineChart("Speed-Diagram", "Positions", "Speed (km/h & direction)", dataset);
-        var frame = new ChartFrame("Speed-Statistic", chart);
-        frame.pack();
-        frame.setVisible(true);
-*/
-
+        Bitmap.write(bmp, new File(Paths.RESOURCE_PATH + "bmpBitmap.bmp"));
     }
 
     private void speedChartTest() throws DataNotFoundException {
-        var ptps = new DBOut().getAllPlanetypesLike("c20");
-        var fids = new DBOut().getFlightIDsByPlaneTypes(ptps);
+        var ptps = DBOut.getDBOut().getAllPlanetypesLike("c20");
+        var fids = DBOut.getDBOut().getFlightIDsByPlaneTypes(ptps);
         var arr = fids.toArray(new Integer[0]);
 
         this.testSpeedChartByFlightID(Stream.of(arr).mapToInt(i -> i).toArray());
     }
 
     private void testSpeedChartByFlightID(@Range(from = 0, to = Integer.MAX_VALUE) int... flightIDs) {
-        var dbOut = new DBOut();
+        var dbOut = DBOut.getDBOut();
         var inputDeques = new ArrayDeque<?>[0];
         for (int fid : flightIDs) {
             try {
                 int length = inputDeques.length;
                 inputDeques = Arrays.copyOf(inputDeques, length + 1);
-                var dps = new Vector<>(dbOut.getTrackingByFlight(fid));
+                var dps = new Vector<>(dbOut.getTrackingByFlight(fid)); // TODO not in for
                 inputDeques[length] = (ArrayDeque<?>) Utilities.parseDeque(dps);
             } catch (DataNotFoundException e) {
                 e.printStackTrace();
@@ -123,7 +121,7 @@ public class Test {
 
     private void testChart1() throws DataNotFoundException {
         var stats = new Statistics();
-        var airportTags = new DBOut().getAllAirportTags();
+        var airportTags = DBOut.getDBOut().getAllAirportTags();
         var apStats = stats.onlySignificant(stats.tagCount(airportTags), 900);
         var dataset = Statistics.createBarDataset(apStats);
         DefaultCategoryDataset defaultCategoryDataset = new DefaultCategoryDataset();
@@ -143,7 +141,7 @@ public class Test {
 
     private void testAirlineChart() throws DataNotFoundException {
         var stats = new Statistics();
-        var airlineTags = new DBOut().getAllAirlineTags();
+        var airlineTags = DBOut.getDBOut().getAllAirlineTags();
         var airlineStats = stats.onlySignificant(stats.tagCount(airlineTags), 150);
         var dataset = Statistics.createBarDataset(airlineStats);
         var barChart = ChartFactory.createBarChart("Airline Counter", "Airlines", "Count/Significance", dataset, PlotOrientation.HORIZONTAL, true, true, false);
@@ -158,7 +156,7 @@ public class Test {
 
     private void topAirports(int limit) throws DataNotFoundException {
         var stats = new Statistics();
-        var airportTags = new DBOut().getAllAirportTags();
+        var airportTags = DBOut.getDBOut().getAllAirportTags();
         var apStats = stats.onlySignificant(stats.tagCount(airportTags), 500);
         // filtering top airports
         var sortedMap = new HashMap<String, Integer>();
@@ -174,7 +172,7 @@ public class Test {
 
     private void testAirportChart(int minCount) throws DataNotFoundException {
         var stats = new Statistics();
-        var airportTags = new DBOut().getAllAirportTags();
+        var airportTags = DBOut.getDBOut().getAllAirportTags();
         var apStats = stats.onlySignificant(stats.tagCount(airportTags), minCount);
         var dataset = Statistics.createBarDataset(apStats);
         var barChart = ChartFactory.createBarChart("Airport-Significance", "Airports", "Flight-Count", dataset, PlotOrientation.HORIZONTAL, true, true, false);
@@ -229,37 +227,6 @@ public class Test {
                 ));
     }
 
-    private void bitmapWriteTest(File file) throws DataNotFoundException {
-        var positions = new DBOut().getAllTrackingPositions();
-        var heat = new RasterHeatMap(0.1f)
-                .heat(positions);
-
-        Bitmap.write(new Bitmap(heat.getHeatMap()), file);
-    }
-
-    private void bitmapReadTest(File file) throws FileNotFoundException {
-        var heatMap = new RasterHeatMap(0.01f).getHeatMap();
-        Bitmap input = null;
-        try {
-            input = Bitmap.read(file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        int counter = 0;
-        String str;
-        assert input != null;
-        for (var arr : input.getBitmap()) {
-            for (var by : arr) {
-                if (by != 0) {
-                    str = (counter == 0) ? ("" + by) : (", " + by);
-                    System.out.print(str);
-                    counter++;
-                }
-            }
-        }
-        System.out.println();
-    }
-
     public void bufferedImageTest() {
         var img = new BufferedImage(1920, 1200, BufferedImage.TYPE_INT_RGB);
         Color color;
@@ -291,10 +258,10 @@ public class Test {
             var label = new JLabel(new ImageIcon(img));
             panel.setSize(img.getWidth() + 100, img.getHeight() + 100);
             panel.add(label);
-        } else if (source instanceof Diagram dia) {
+       /* } else if (source instanceof Diagram dia) {
             panel.setLayout(null);
             panel.setSize(dia.getSize());
-            panel.add(dia);
+            panel.add(dia);*/
         } else if (source instanceof Component cmp){
             panel.setSize(cmp.getSize());
             panel.add(cmp);
@@ -306,53 +273,16 @@ public class Test {
         frame.setVisible(true);
     }
 
-    public final Vector<Position> testPosVector() {
+    public final Vector<Position> TEST_POS_VECTOR;
+    {
+        Vector<Position> trackingPositions;
         try {
-            return new DBOut().getAllTrackingPositions();
+            trackingPositions = DBOut.getDBOut().getAllTrackingPositions();
         } catch (DataNotFoundException e) {
-            e.printStackTrace();
+            trackingPositions = null;
         }
-        return null;
+        TEST_POS_VECTOR = trackingPositions;
     }
-
-    private void printRectHeatMap() throws DataNotFoundException {
-        long startTime = System.currentTimeMillis();
-        System.out.println("Loading heat map...");
-        System.out.println();
-
-        DBOut dbOut = new DBOut();
-        //var tracking = dbOut.getLiveTrackingBetween(10000, 20000);
-        var posVector = dbOut.getAllTrackingPositions();
-        var rectHeatMap = new RasterHeatMap(1f)
-                .heat(posVector);
-
-        Arrays.stream(rectHeatMap.getHeatMap())
-                //.map(lv -> (Arrays.toString(lv).replaceAll("0, ", "")))
-                .forEach(s -> System.out.println(Arrays.toString(s)));
-
-        var img = rectHeatMap.createImage();
-        var file = new File(Paths.RESOURCE_PATH + "testHeatMap.bmp");
-        try {
-            ImageIO.write(img, "bmp", file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        JLabel jLabel = new JLabel(new ImageIcon(img));
-        JPanel jPanel = new JPanel();
-        jPanel.setSize(img.getWidth() + 100, img.getHeight()+ 100);
-        jPanel.add(jLabel);
-        JFrame r = new JFrame();
-        r.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        r.setSize(jPanel.getSize());
-        r.add(jPanel);
-        r.setVisible(true);
-
-        System.out.println();
-        long elapsedMillis = System.currentTimeMillis() - startTime;
-        System.out.println(ANSIColor.ORANGE.get() + "elapsed time: " +
-                elapsedMillis/1000 + "s" + ANSIColor.RESET.get());
-    }
-
 
     private void printPositionHeatMap() {
         long startTime = System.currentTimeMillis();
@@ -362,7 +292,7 @@ public class Test {
         var statistics = new Statistics();
         Vector<DataPoint> liveTrackingBetween = null;
         try {
-            liveTrackingBetween = new DBOut().getLiveTrackingBetween(0, 25000);
+            liveTrackingBetween = DBOut.getDBOut().getLiveTrackingBetween(0, 25000);
         } catch (DataNotFoundException e) {
             e.printStackTrace();
         }

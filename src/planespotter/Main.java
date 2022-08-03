@@ -18,7 +18,7 @@ public abstract class Main {
     public static void main(String[] args) {
         // getting controller
         final var control = Controller.getInstance();
-        // starting program
+        // starting program with controller
         control.start();
     }
 

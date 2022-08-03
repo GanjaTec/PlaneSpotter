@@ -1,6 +1,7 @@
 package planespotter.unused;
 
 import com.google.gson.Gson;
+import org.jetbrains.annotations.NotNull;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.nio.AbstractDeserializer;
 
@@ -71,7 +72,7 @@ public class Deserializer implements AbstractDeserializer<HttpResponse<String>> 
 	
 	//Convert String to Frame-Objects
 	@Override
-	public List<Fr24Frame> deserialize(HttpResponse<String> resp) {
+	public @NotNull List<Fr24Frame> deserialize(@NotNull HttpResponse<String> resp) {
 		List<Fr24Frame> fr24Frames = new ArrayList<>();
 		for(String row : stringMagic(resp)) {
 			String[] r = row.split(",");

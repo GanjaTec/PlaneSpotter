@@ -1,8 +1,10 @@
 package planespotter.model.io;
 
+import org.jetbrains.annotations.NotNull;
 import org.sqlite.SQLiteDataSource;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DBResult;
+import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.NoAccessException;
 
 import java.sql.*;
@@ -32,7 +34,7 @@ public abstract class DBConnector {
 	private static final SQLiteDataSource database;
 	// static initializer
 	static {
-		// setting sqlBusy to false
+		// setting database monitor object
 		DB_SYNC = new Object();
 		// setting final database Strings
 		DB_NAME = "plane.db";
@@ -43,28 +45,55 @@ public abstract class DBConnector {
 		database.setDatabaseName(DB_NAME);
 	}
 
+	/**
+	 * opens a database-connection
+	 *
+	 * @return the database connection
+	 * @throws SQLException if the database cannot be accessed
+	 */
+	@NotNull
 	protected static Connection getConnection()
 			throws SQLException {
 
 		return database.getConnection();
 	}
+
+	/**
+	 * creates a PreparedStatement with given SQL-statement
+	 * in the form 'SELECT ... FROM ... WHERE ID = (?)',
+	 * where (?) are placeholders
+	 *
+	 * @param sql is the SQL-statement
+	 * @return PreparedStatement created by the given SQL-statement
+	 * @throws SQLException if an error occurs while creating the PreparedStatement
+	 */
+	@NotNull
+	protected PreparedStatement createPreparedStatement(@NotNull String sql)
+			throws SQLException {
+
+		if (sql.isBlank()) {
+			throw new InvalidDataException("SQL-String must not be blank!");
+		}
+		return getConnection().prepareStatement(sql);
+	}
 	
 	/**
-	 * This method is used to querry the DB
-	 * it takes a String and returns a ResultSet
+	 * This method is used to query the DB
+	 * it takes a String and returns a DBResult
 	 * 
-	 * @param querry String to use for the Query
-	 * @return ResultSet containing the queried Data
+	 * @param query String to use for the Query
+	 * @return DBResult containing the queried Data and the DB-connection
 	 */
-	protected DBResult queryDB(final String querry)
+	@NotNull
+	protected DBResult queryDB(@NotNull final String query)
 			throws NoAccessException {
 
 			try {
 				Connection conn = getConnection();
 				Statement stmt = conn.createStatement();
-				ResultSet query = stmt.executeQuery(querry);
+				ResultSet rs = stmt.executeQuery(query);
 				// returning new DBResult Object
-				return new DBResult(query, conn);
+				return new DBResult(rs, conn);
 			} catch (SQLException e) {
 				Controller.getInstance().handleException(e);
 				e.printStackTrace();
@@ -79,7 +108,8 @@ public abstract class DBConnector {
 	 * @return ID's of the inserted records (generated Keys)
 	 * @throws SQLException if there is an error with SQL
 	 */
-	public static int[] executeSQL(PreparedStatement pstmt)
+	@Deprecated(since = "SupplierTry, too specific", forRemoval = true)
+	public static int[] executeSQL(@NotNull PreparedStatement pstmt)
 			throws SQLException {
 
 		int[] ids = new int[0];
@@ -105,7 +135,8 @@ public abstract class DBConnector {
 	 * @param stmts are the PreparedStatements
 	 * @throws SQLException if there is an error with SQL
 	 */
-	public static void executeSQL(Connection conn, PreparedStatement... stmts)
+	@Deprecated(since = "SupplierTry, too specific", forRemoval = true)
+	public static void executeSQL(@NotNull Connection conn, @NotNull PreparedStatement... stmts)
 			throws SQLException {
 
 		for (PreparedStatement stmt : stmts) {

@@ -70,11 +70,6 @@ public abstract class HeatMap {
         for (byte[] bytes : this.heatMap) {
             Arrays.fill(bytes, (byte) -128);
         }
-        /*for (int lat = 0; lat < x; lat++) {
-            for (int lon = 0; lon < y; lon++) {
-            this.heatMap[lat][lon] = 0;
-        }
-    }*/
     }
 
     /**

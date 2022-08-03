@@ -5,7 +5,8 @@ import planespotter.model.Fr24Collector;
 import planespotter.constants.Images;
 import planespotter.controller.Controller;
 import planespotter.model.Collector;
-import planespotter.model.io.DBWriter;
+import planespotter.model.io.DBIn;
+import planespotter.model.nio.Supplier;
 import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
@@ -30,11 +31,12 @@ import static planespotter.util.math.MathUtils.divide;
  */
 public class SupplierDisplay implements WindowListener {
 
-    private static final String STATUS_TXT = "Status: ";
+    private static final String STATUS_TXT = "Status: ",
+                                LAST_FRAME_TEXT = "Last Frame: ";
     // inserted values indexes:   0 = allFrames,   1 = newPlanes,   2 = newFlights
     private final int[] inserted = {0, 0, 0};
-    private final Collector collector;
-    private int totalMemory = divide((int) Collector.RUNTIME.totalMemory(), 10_000);
+    private final Collector<? extends Supplier> collector;
+    private int totalMemory = divide((int) Controller.runtime.totalMemory(), 10_000);
     // swing components
     private final UWPButton pauseButton = new UWPButton(),
                             startStopButton = new UWPButton();
@@ -43,11 +45,12 @@ public class SupplierDisplay implements WindowListener {
                          memoryLabel = new JLabel(),
                          newPlanesLabel = new JLabel(),
                          newFlightsLabel = new JLabel(),
-                         statusLabel = new JLabel();
-    private final JLabel[] labels = {insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel, statusLabel};
+                         statusLabel = new JLabel(),
+                         nextFrameLabel = new JLabel();
+    private final JLabel[] labels = {insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel, statusLabel, nextFrameLabel};
     private final JFrame frame;
 
-    public SupplierDisplay(int defaultCloseOperation, Collector collector) {
+    public SupplierDisplay(int defaultCloseOperation, Collector<? extends Supplier> collector) {
         this.frame = this.frame(defaultCloseOperation);
         this.collector = collector;
     }
@@ -73,7 +76,8 @@ public class SupplierDisplay implements WindowListener {
 
         var seps = new JSeparator[] {
                 new JSeparator(), new JSeparator(), new JSeparator(),
-                new JSeparator(), new JSeparator(), new JSeparator()
+                new JSeparator(), new JSeparator(), new JSeparator(),
+                new JSeparator()
         };
         y = 30;
         for (var sep : seps) {
@@ -90,13 +94,14 @@ public class SupplierDisplay implements WindowListener {
         this.startStopButton.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         this.startStopButton.setText("Start / Stop");
         this.startStopButton.addActionListener(e -> {
-            DBWriter.setEnabled(this.collector.enabled = !this.collector.enabled); // TODO: 29.06.2022 Collector: getter & setter
-            this.collector.paused = !this.collector.enabled;
-            switch (MathUtils.toBinary(this.collector.enabled)) {
+            DBIn.setEnabled(this.collector.setEnabled(!this.collector.isEnabled()));
+            this.collector.setPaused(this.collector.isEnabled());
+            switch (MathUtils.toBinary(this.collector.isEnabled())) {
                 case 0 -> this.collector.startCollecting();
                 case 1 -> System.out.println(this.collector.stopCollecting() ? "Interrupted successfully!" : "Couldn't stop the Collector!");
             }
-            this.setStatus((this.collector.enabled ? "enabled, " : "disabled, ") + (this.collector.paused ? "paused" : "running"));
+            this.setStatus( (this.collector.isEnabled() ? "enabled, " : "disabled, ") +
+                            (this.collector.isPaused() ? "paused" : "running"));
         });
 
         this.pauseButton.setBounds(10, size.height - 100, compWidth - 20, 20);
@@ -106,8 +111,9 @@ public class SupplierDisplay implements WindowListener {
         this.pauseButton.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         this.pauseButton.setText("Pause");
         this.pauseButton.addActionListener(e -> {
-            DBWriter.setEnabled(this.collector.paused = !this.collector.paused);
-            this.setStatus((this.collector.enabled ? "enabled, " : "disabled, ") + (this.collector.paused ? "paused" : "running"));
+            DBIn.setEnabled(this.collector.setPaused(!this.collector.isPaused()));
+            this.setStatus( (this.collector.isEnabled() ? "enabled, " : "disabled, ") +
+                            (this.collector.isPaused() ? "paused" : "running"));
         });
 
         this.statusLabel.setForeground(DEFAULT_ACCENT_COLOR.get());
@@ -135,16 +141,20 @@ public class SupplierDisplay implements WindowListener {
         return frame;
     }
 
+    private void setNextFrame(String frame) {
+        this.nextFrameLabel.setText(LAST_FRAME_TEXT + frame);
+    }
+
     private void setStatus(String text) {
         this.statusLabel.setText(STATUS_TXT + text);
     }
 
-    public synchronized void update(final int insertedNow, final int newPlanesNow, final int newFlightsNow) {
+    public synchronized void update(final int insertedNow, final int newPlanesNow, final int newFlightsNow, String lastFrame) {
         this.inserted[0] += insertedNow;
         this.inserted[1] += newPlanesNow;
         this.inserted[2] += newFlightsNow;
-        this.totalMemory = divide((int) Collector.RUNTIME.totalMemory(), 10_000);
-        int freeMemory = divide((int) Collector.RUNTIME.freeMemory(), 10_000);
+        this.totalMemory = divide((int) Controller.runtime.totalMemory(), 10_000);
+        int freeMemory = divide((int) Controller.runtime.freeMemory(), 10_000);
         int memoryUsage = this.totalMemory - freeMemory;
 
         this.insertedLabel.setText("Inserted Frames: " + this.inserted[0] + ", " + insertedNow + " per Sec.");
@@ -152,11 +162,12 @@ public class SupplierDisplay implements WindowListener {
         this.newPlanesLabel.setText("New Planes: " + this.inserted[1] + ", " + newPlanesNow + " per Sec.");
         this.newFlightsLabel.setText("New Flights: " + this.inserted[2] + ", " + newFlightsNow + " per Sec.");
         this.progressBar.setValue(memoryUsage);
+        this.setNextFrame(lastFrame);
         try {
             TimeUnit.MILLISECONDS.sleep(500);
         } catch (InterruptedException ignored) {
         }
-        freeMemory = (int) (Collector.RUNTIME.freeMemory() / 10_000);
+        freeMemory = (int) (Controller.runtime.freeMemory() / 10_000);
         memoryUsage = (this.totalMemory - freeMemory);
         this.progressBar.setValue(memoryUsage);
         this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");
@@ -177,12 +188,12 @@ public class SupplierDisplay implements WindowListener {
 
     @Override
     public void windowOpened(WindowEvent e) {
-        Controller.setSupplierRunning(true);
+        // add supplier somewhere
     }
 
     @Override
     public void windowClosing(WindowEvent e) {
-        Controller.setSupplierRunning(false);
+        // remove supplier somewhere
     }
 
     @Override public void windowClosed(WindowEvent e) {}
