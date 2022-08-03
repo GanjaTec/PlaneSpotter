@@ -16,10 +16,16 @@ import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 public class UserSettings {
     // max loaded data
     private static int maxLoadedData;
+
     // current tile source
     private static TileSource currentMapSource;
+
+    private static int GRIDSIZE_LAT;
+    private static int GRIDSIZE_LON;
+
     // default map base url
     private static final String BASE_URL;
+
     // map types
     public static final TileSource BING_MAP, TRANSPORT_MAP, DEFAULT_MAP;
 
@@ -34,6 +40,8 @@ public class UserSettings {
         // setting current max-load and map-source
         maxLoadedData = 50000;
         currentMapSource = DEFAULT_MAP;
+        GRIDSIZE_LAT = 3;
+        GRIDSIZE_LON = 3;
     }
 
 
@@ -69,4 +77,19 @@ public class UserSettings {
         UserSettings.currentMapSource = currentMapSource;
     }
 
+    public static int getGridsizeLat() {
+        return GRIDSIZE_LAT;
+    }
+
+    public static void setGridsizeLat(int gridsizeLat) {
+        GRIDSIZE_LAT = gridsizeLat;
+    }
+
+    public static int getGridsizeLon() {
+        return GRIDSIZE_LON;
+    }
+
+    public static void setGridsizeLon(int gridsizeLon) {
+        GRIDSIZE_LON = gridsizeLon;
+    }
 }

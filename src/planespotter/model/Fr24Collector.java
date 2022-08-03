@@ -3,6 +3,7 @@ package planespotter.model;
 import org.jetbrains.annotations.Nullable;
 
 import planespotter.constants.Areas;
+import planespotter.constants.UserSettings;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
@@ -34,7 +35,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
     // static initializer
     static {
         FRAMES_PER_WRITE = 800;
-        WORLD_AREA_RASTER_1D = Areas.getWorldAreaRaster1D(12, 6);
+        WORLD_AREA_RASTER_1D = Areas.getWorldAreaRaster1D(UserSettings.getGridsizeLon(), UserSettings.getGridsizeLat());
     }
     // 'filters enabled' flag
     private final boolean withFilters;
