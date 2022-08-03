@@ -3,6 +3,7 @@ package planespotter.a_test;
 import org.jetbrains.annotations.TestOnly;
 import planespotter.controller.Scheduler;
 import planespotter.model.nio.ADSBSupplier;
+import planespotter.util.Utilities;
 
 @TestOnly
 public class TestMain {
@@ -10,11 +11,11 @@ public class TestMain {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		//decimal(255);
-		ADSBSupplier adsb = new ADSBSupplier("localhost", 47806, true);
-		Scheduler s = new Scheduler();
-		s.exec(adsb, "Supplier");
+		//ADSBSupplier adsb = new ADSBSupplier("localhost", 47806, true);
+		//Scheduler s = new Scheduler();
+		//s.exec(adsb, "Supplier");
 		//s.exec(()-> SupplierMain.main(null), "supllier");
-
+		System.out.println(Utilities.linesCode("", ".db"));
 
 
 
