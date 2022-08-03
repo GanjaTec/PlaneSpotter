@@ -7,11 +7,11 @@ Ordnerstruktur
 |-> python-helper         #Python Helper Scripts
 --> src                   #Sourcecode
      |
-     |->libs              #Librarys
+     |->libs              #Libraries
      -->planespotter      #Main Package
         |
-        |->dataclasses    # Package for Datastructure
+        |->dataclasses    # Package for datastructure-records
         |->display        # Package for View
         |->model          # Package for the Data Model
-        |->exceptions     # Package Exceptions
+        |->throwables     # Package Exceptions and other Throwables
         -->unused         # Package for unused or deprecated classes
