@@ -144,7 +144,8 @@ public class Fr24Supplier implements Supplier {
 			}
 		};
 
-		for (int i = 0; i < 4; i++) {
+		int threadCount = 10;
+		for (int i = 0; i < threadCount; i++) {
 			scheduler.exec(getAndDeserialize, "Fr24-Deserializer-" + i, false, Scheduler.HIGH_PRIO, true);
 		}
 

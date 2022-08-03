@@ -14,18 +14,18 @@ import planespotter.constants.Paths;
 import planespotter.util.Bitmap;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
-import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.model.io.DBOut;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.util.Utilities;
+import sun.misc.Unsafe;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -37,14 +37,43 @@ public class Test {
     // TEST-MAIN
     public static void main(String[] args) throws Exception {
 
-        var test = new Test();
+        // testing python scripts and functions in java
+/*
+        int a = 99, b = 111;
+        var func = "result = " + a + "+" + b;
+        var result = PyAdapter.runFunction(func);
+        System.out.println(result);
+        result = PyAdapter.runScript(Paths.PY_RUNTIME_HELPER + "testprint.py");
+        System.out.println(result);
+*/
 
-        System.out.println(DBOut.getDBOut().getFlightByID(6101));
-        //String classpath = System.getProperty("java.class.path");
-        //Arrays.stream(classpath.split(";")).forEach(System.out::println);
-        //var props = System.getProperties().toString().split(", ");
-        //Arrays.stream(props).forEach(System.out::println);
+        System.out.println(Utilities.linesCode("", ".java", ".py", ".md"));
+        //unsafeTest();
 
+    }
+
+    private static Unsafe getUnsafe() {
+        try {
+            Field field = Unsafe.class.getDeclaredField("theUnsafe");
+            field.setAccessible(true);
+            return (Unsafe) field.get(null);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        throw new NullPointerException("couldn't load the Unsafe class!");
+    }
+
+    /**
+     * unsafe class is able to do 'JVM-actions' like allocating memory or sth. like that
+     */
+    private static void unsafeTest() {
+        Unsafe unsafe = getUnsafe();
+        System.out.println(unsafe.addressSize());
+        unsafe.allocateMemory(4);
+        // this throws a JVM error because of illegal access // or maybe wrong address
+        /*long a_pointer = unsafe.getAddress(a);
+        long a = 555;
+        System.out.println(a_pointer);*/
     }
 
     private void testBitmapWrite() throws IOException {
@@ -57,7 +86,7 @@ public class Test {
         var bmp = Bitmap.fromPosVector(positions, 0.5f);
         //test.createTestJFrame(bmp.toImage());
         // bitmap write & read funktioniert
-        Bitmap.writeBmp(bmp, new File(Paths.RESOURCE_PATH + "bmpBitmap.bmp"));
+        Bitmap.write(bmp, new File(Paths.RESOURCE_PATH + "bmpBitmap.bmp"));
     }
 
     private void speedChartTest() throws DataNotFoundException {
@@ -75,7 +104,7 @@ public class Test {
             try {
                 int length = inputDeques.length;
                 inputDeques = Arrays.copyOf(inputDeques, length + 1);
-                var dps = new Vector<>(dbOut.getTrackingByFlight(fid));
+                var dps = new Vector<>(dbOut.getTrackingByFlight(fid)); // TODO not in for
                 inputDeques[length] = (ArrayDeque<?>) Utilities.parseDeque(dps);
             } catch (DataNotFoundException e) {
                 e.printStackTrace();
@@ -198,37 +227,6 @@ public class Test {
                 ));
     }
 
-    private void bitmapWriteTest(File file) throws DataNotFoundException {
-        var positions = DBOut.getDBOut().getAllTrackingPositions();
-        var heat = new RasterHeatMap(0.1f)
-                .heat(positions);
-
-        Bitmap.write(new Bitmap(heat.getHeatMap()), file);
-    }
-
-    private void bitmapReadTest(File file) throws FileNotFoundException {
-        var heatMap = new RasterHeatMap(0.01f).getHeatMap();
-        Bitmap input = null;
-        try {
-            input = Bitmap.read(file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        int counter = 0;
-        String str;
-        assert input != null;
-        for (var arr : input.getBitmap()) {
-            for (var by : arr) {
-                if (by != 0) {
-                    str = (counter == 0) ? ("" + by) : (", " + by);
-                    System.out.print(str);
-                    counter++;
-                }
-            }
-        }
-        System.out.println();
-    }
-
     public void bufferedImageTest() {
         var img = new BufferedImage(1920, 1200, BufferedImage.TYPE_INT_RGB);
         Color color;
@@ -285,45 +283,6 @@ public class Test {
         }
         TEST_POS_VECTOR = trackingPositions;
     }
-
-    private void printRectHeatMap() throws DataNotFoundException {
-        long startTime = System.currentTimeMillis();
-        System.out.println("Loading heat map...");
-        System.out.println();
-
-        DBOut dbOut = DBOut.getDBOut();
-        //var tracking = dbOut.getLiveTrackingBetween(10000, 20000);
-        var posVector = dbOut.getAllTrackingPositions();
-        var rectHeatMap = new RasterHeatMap(1f)
-                .heat(posVector);
-
-        Arrays.stream(rectHeatMap.getHeatMap())
-                //.map(lv -> (Arrays.toString(lv).replaceAll("0, ", "")))
-                .forEach(s -> System.out.println(Arrays.toString(s)));
-
-        var img = rectHeatMap.createImage();
-        var file = new File(Paths.RESOURCE_PATH + "testHeatMap.bmp");
-        try {
-            ImageIO.write(img, "bmp", file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        JLabel jLabel = new JLabel(new ImageIcon(img));
-        JPanel jPanel = new JPanel();
-        jPanel.setSize(img.getWidth() + 100, img.getHeight()+ 100);
-        jPanel.add(jLabel);
-        JFrame r = new JFrame();
-        r.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        r.setSize(jPanel.getSize());
-        r.add(jPanel);
-        r.setVisible(true);
-
-        System.out.println();
-        long elapsedMillis = System.currentTimeMillis() - startTime;
-        System.out.println(ANSIColor.ORANGE.get() + "elapsed time: " +
-                elapsedMillis/1000 + "s" + ANSIColor.RESET.get());
-    }
-
 
     private void printPositionHeatMap() {
         long startTime = System.currentTimeMillis();

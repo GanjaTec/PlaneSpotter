@@ -26,7 +26,7 @@ import static planespotter.constants.GUIConstants.LINE_BORDER;
 
 
 /**
- * @name BlackBeardsNavigator
+ * @name MapManager
  * @author jml04
  * @version 1.1
  *
@@ -64,9 +64,9 @@ public final class MapManager {
         Coordinate coord1, coord2;
         MapPolygonImpl line;
         Color markerColor;
-        var polys = new ArrayList<MapPolygon>(size);
-        var markers = new ArrayList<MapMarker>(size);
-        for (var dp : dataPoints) {
+        List<MapPolygon> polys = new ArrayList<>(size);
+        List<MapMarker> markers = new ArrayList<>(size);
+        for (DataPoint dp : dataPoints) {
             dpPos = dp.pos();
             altitude = dp.altitude();
             heading = dp.heading();
@@ -75,14 +75,13 @@ public final class MapManager {
                 double lon0 = lastdp.pos().lon();
                 double lon1 = dp.pos().lon();
                 boolean lonJump = (lon0 < -90 && lon1 > 90) || (lon0 > 90 && lon1 < -90);
-                //boolean lonFit = (lon0 < 140 && lon1 > lon0) || (lon0 < -140 && lon1 < lon0);
-                //double lonDiff = Math.abs(lon0) - Math.abs(lon1);
-                //boolean lonDiffFit = (lonDiff < 100) && (-lonDiff > -100);
-                //boolean lonFit = (lon0 + lonDiff <= 180) || (lon0 - lonDiff >= -180);
-
-                if (dp.flightID() == lastdp.flightID() // check if the data points belong to eachother
+                // checking if the data points belong to the same flight,
+                //          if they are in correct order and
+                //          if they make a lon-jump
+                if (       dp.flightID() == lastdp.flightID()
                         && dp.timestamp() >= lastdp.timestamp()
-                        && !lonJump) { // TODO: 22.06.2022 FIX lonFit
+                        && !lonJump) {
+
                     coord1 = Position.toCoordinate(dpPos);
                     coord2 = Position.toCoordinate(lastdp.pos());
                     line = new MapPolygonImpl(coord1, coord2, coord1);
@@ -123,6 +122,7 @@ public final class MapManager {
             newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
             viewer.addMapMarker(newMarker);
         }
+        // testing areas with raster over map
         /*var areas = Areas.getWorldAreaRaster1D();
         var coords = new ArrayDeque<Coordinate[]>();
         for (var a : areas) {
@@ -247,7 +247,8 @@ public final class MapManager {
      */
     public void receiveMap(TreasureMap map, String text, ViewType viewType) {
         text = (text == null) ? "" : text;
-        Controller.getGUI().setCurrentViewType(viewType);
+        GUI gui = Controller.getInstance().getGUI();
+        gui.setCurrentViewType(viewType);
         // adding MapViewer to panel (needed?)
         this.mapViewer = map;
         var mapPanel = gui.getComponent("mapPanel");
@@ -259,7 +260,7 @@ public final class MapManager {
         // revalidating window fr24Frame to refresh everything
         mapPanel.setVisible(true);
         this.mapViewer.setVisible(true);
-        Controller.getGUI().requestComponentFocus(this.mapViewer);
+        gui.requestComponentFocus(this.mapViewer);
     }
 
     TreasureMap getMapViewer() {

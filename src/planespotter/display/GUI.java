@@ -8,14 +8,13 @@ import planespotter.controller.ActionHandler;
 import planespotter.display.models.MenuModels;
 import planespotter.display.models.PaneModels;
 import planespotter.display.models.SearchModels;
-import planespotter.model.LiveData;
+import planespotter.model.nio.LiveLoader;
 import planespotter.throwables.IllegalInputException;
 import planespotter.throwables.NoSuchContainerException;
 import planespotter.util.Utilities;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.BreakIterator;
 import java.util.*;
 import java.util.List;
 
@@ -99,52 +98,52 @@ public class GUI {
      * creates new GUI window
      */
     protected JFrame initialize() {
-        var menuModels = new MenuModels();
-        var panelModels = new PaneModels();
-        var searchModels = new SearchModels();
+        MenuModels menuModels = new MenuModels();
+        PaneModels panelModels = new PaneModels();
+        SearchModels searchModels = new SearchModels();
         // setting up window
-        var window = panelModels.windowFrame(this.actionHandler);
-        var mainPanel = panelModels.mainPanel(window);
+        JFrame window = panelModels.windowFrame(this.actionHandler);
+        JPanel mainPanel = panelModels.mainPanel(window);
         this.addContainer("mainPanel", mainPanel);
-        var desktopPanes = panelModels.desktopPanes(mainPanel);
+        JDesktopPane[] desktopPanes = panelModels.desktopPanes(mainPanel);
         this.addContainer("leftDP", desktopPanes[0]);
         this.addContainer("rightDP", desktopPanes[1]);
-        var titlePanel = panelModels.titlePanel(mainPanel);
+        JPanel titlePanel = panelModels.titlePanel(mainPanel);
         this.addContainer("titlePanel", titlePanel);
-        var viewHeadPanel = panelModels.viewHeadPanel((JDesktopPane) this.getComponent("rightDP"));
+        JPanel viewHeadPanel = panelModels.viewHeadPanel((JDesktopPane) this.getComponent("rightDP"));
         this.addContainer("viewHeadPanel", viewHeadPanel);
-        var listPanel = panelModels.listPanel((JDesktopPane) this.getComponent("rightDP"));
+        JPanel listPanel = panelModels.listPanel((JDesktopPane) this.getComponent("rightDP"));
         this.addContainer("listPanel", listPanel);
-        var mapPanel = panelModels.mapPanel((JDesktopPane) this.getComponent("rightDP"));
+        JPanel mapPanel = panelModels.mapPanel((JDesktopPane) this.getComponent("rightDP"));
         this.addContainer("mapPanel", mapPanel);
 
         // initializing map viewer
         this.mapManager = new MapManager(this, mapPanel, this.actionHandler);
         this.treePlantation = new TreePlantation();
 
-        var menuPanel = panelModels.menuPanel((JDesktopPane) this.getComponent("leftDP"));
+        JPanel menuPanel = panelModels.menuPanel((JDesktopPane) this.getComponent("leftDP"));
         this.addContainer("menuPanel", menuPanel);
-        var infoPanel = panelModels.infoPanel((JDesktopPane) this.getComponent("leftDP"));
+        JPanel infoPanel = panelModels.infoPanel((JDesktopPane) this.getComponent("leftDP"));
         this.addContainer("infoPanel", infoPanel);
-        var startPanel = panelModels.startPanel((JDesktopPane) this.getComponent("rightDP"));
+        JPanel startPanel = panelModels.startPanel((JDesktopPane) this.getComponent("rightDP"));
         this.addContainer("startPanel", startPanel);
-        var searchPanel = panelModels.searchPanel(menuPanel);
+        JPanel searchPanel = panelModels.searchPanel(menuPanel);
         this.addContainer("searchPanel", searchPanel);
                 // initializing search panel components
-                var searchForLabel = searchModels.cmbBoxLabel(searchPanel);
+                JLabel searchForLabel = searchModels.cmbBoxLabel(searchPanel);
                 this.addContainer("searchForLabel", searchForLabel);
-                var searchForCmbBox = searchModels.searchFor_cmbBox(searchPanel, this.actionHandler);
+                JComboBox<String> searchForCmbBox = searchModels.searchFor_cmbBox(searchPanel, this.actionHandler);
                 this.addContainer("searchForCmbBox", searchForCmbBox);
                 //this.searchFor_cmbBox.addItemListener(this.actionHandler);
-                var searchSeperator = searchModels.searchSeperator(searchPanel);
+                JSeparator searchSeperator = searchModels.searchSeperator(searchPanel);
                 this.addContainer("searchSeperator", searchSeperator);
-                var searchMessage = searchModels.searchMessage(searchPanel);
+                JTextArea searchMessage = searchModels.searchMessage(searchPanel);
                 this.addContainer("searchMessage", searchMessage);
                 this.flightSearch = searchModels.flightSearch(searchPanel, this, this.actionHandler);
                 this.planeSearch = searchModels.planeSearch(searchPanel, this, this.actionHandler);
                 this.airportSearch = searchModels.airportSearch(searchPanel, this, this.actionHandler);
                 this.airlineSearch = searchModels.airlineSearch(searchPanel, this, this.actionHandler);
-            var bgLabel = panelModels.backgroundLabel((JDesktopPane) this.getComponent("rightDP"));
+            JLabel bgLabel = panelModels.backgroundLabel((JDesktopPane) this.getComponent("rightDP"));
             this.addContainer("bgLabel", bgLabel);
             var menuBgLabel = panelModels.menuBgLabel((JDesktopPane) this.getComponent("leftDP"));
             this.addContainer("menuBgLabel", menuBgLabel);
@@ -530,7 +529,7 @@ public class GUI {
         this.setCurrentViewType(null);
         this.getMap().setHeatMap(null);
         //LiveMap.close();
-        LiveData.setLive(false);
+        LiveLoader.setLive(false);
     }
 
     public void setViewHeadBtVisible(boolean b) {

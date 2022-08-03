@@ -17,7 +17,7 @@ public class GrabSupplier implements Supplier {
      */
 
     // getting duke directly from fr24-database (not allowed)
-    public static final String dukeRequest0 = "https://api.flightradar24.com/common/v1/search.json?fetchBy=flight&query=1I145";
+    private final String dukeRequest0 = "https://api.flightradar24.com/common/v1/search.json?fetchBy=flight&query=1I145";
 
     @Override
     public void supply() {

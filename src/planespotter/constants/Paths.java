@@ -1,7 +1,6 @@
 package planespotter.constants;
 
 import planespotter.controller.Controller;
-import planespotter.util.Utilities;
 
 /**
  * @name Paths
@@ -27,6 +26,12 @@ public final class Paths {
      * contains all project sources
      */
     public static final String SRC_PATH = "src\\";
+
+    /**
+     * python-helper-path
+     * contains all python-helper-scripts
+     */
+    public static final String PY_RUNTIME_HELPER = "python-helper\\runtime-helper\\";
 
     /**
      * libs-path

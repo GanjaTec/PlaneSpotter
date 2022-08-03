@@ -1,13 +1,16 @@
 package planespotter.model;
 
 import org.jetbrains.annotations.Nullable;
+
 import planespotter.constants.Areas;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
+import planespotter.model.io.Keeper;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
-import planespotter.model.io.FastKeeper;
+import planespotter.model.io.KeeperOfTheArchives;
+import planespotter.model.nio.LiveLoader;
 
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -28,13 +31,13 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
     public static final int FRAMES_PER_WRITE;
     // raster of areas (whole world) in 1D-Array
     private static final String[] WORLD_AREA_RASTER_1D;
-    // initializer
+    // static initializer
     static {
         FRAMES_PER_WRITE = 800;
         WORLD_AREA_RASTER_1D = Areas.getWorldAreaRaster1D(12, 6);
     }
-
-    private Fr24Frame lastFrame;
+    // 'filters enabled' flag
+    private final boolean withFilters;
 
     /**
      * Fr24-Collector Main-method
@@ -42,7 +45,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
      * @param args can be ignored
      */
     public static void main(String[] args) {
-        new Fr24Collector(true).start();
+        new Fr24Collector(true, false).start();
     }
 
     /**
@@ -50,24 +53,31 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
      *
      * @param exitOnClose indicates if the program should exit when the 'X'-button is clicked
      */
-    public Fr24Collector(boolean exitOnClose) {
+    public Fr24Collector(boolean exitOnClose, boolean withFilters) {
         super(exitOnClose, new Fr24Supplier());
-    }
-
-    @Override
-    public void startCollecting() {
-        var deserializer = new Fr24Deserializer();
-        var keeper = new FastKeeper(1200L);
-        // TODO: 02.07.2022 optional Filters
-        //deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF");
-        var specialAreas = Areas.EASTERN_FRONT;
-        super.startNewMainThread(() -> this.collect(deserializer, keeper, specialAreas), "Collector");
+        this.withFilters = withFilters;
     }
 
     /**
-     *
+     * starts the collecting task for the collector by
+     * creating a new Deserializer and Keeper,
+     * optional filters and collecting task in a new thread
      */
-    private synchronized void collect(final Fr24Deserializer deserializer, final FastKeeper keeper, @Nullable String... extAreas) {
+    @Override
+    public void startCollecting() {
+        Fr24Deserializer deserializer = new Fr24Deserializer();
+        Keeper keeper = new KeeperOfTheArchives(1200L);
+        if (this.withFilters) {
+            deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF", "CASA", "VIVI");
+        }
+        String[] specialAreas = Areas.EASTERN_FRONT;
+        super.startNewMainThread(() -> this.collect(deserializer, keeper, specialAreas), "Fr24-Collector");
+    }
+
+    /**
+     * collecting task for the collector
+     */
+    private synchronized void collect(final Fr24Deserializer deserializer, final Keeper keeper, @Nullable String... extAreas) {
 
         super.scheduler.schedule(() -> {
             // concurrent linked deque for collected frames
@@ -82,7 +92,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
                 // adding all deserialized world-raster-areas to frames deque
                 frames.addAll(Fr24Supplier.framesForArea(WORLD_AREA_RASTER_1D, deserializer, super.scheduler));
                 // adding all deserialized frames to insertLater-queue
-                LiveData.insertLater(frames);
+                LiveLoader.insertLater(frames);
                 // inserting all Fr24Frames from insertLater-queue into database
                 DBIn.insertRemaining(super.scheduler, FRAMES_PER_WRITE);
             }
@@ -96,9 +106,9 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
             super.newPlanesNow.set(DBIn.getPlaneCount() - super.newPlanesAll.get());
             super.newFlightsNow.set(DBIn.getFlightCount() - super.newFlightsAll.get());
 
-            this.lastFrame = DBIn.getLastFrame();
+            Fr24Frame lastFrame = DBIn.getLastFrame();
             super.display.update(super.insertedNow.get(), super.newPlanesNow.get(), super.newFlightsNow.get(),
-                                 (this.lastFrame != null) ? this.lastFrame.toShortString() : "None");
+                                 (lastFrame != null) ? lastFrame.toShortString() : "None");
 
             super.insertedFrames.set(DBIn.getFrameCount());
             super.newPlanesAll.set(DBIn.getPlaneCount());

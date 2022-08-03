@@ -77,12 +77,10 @@ public abstract class Collector<S extends Supplier> {
      * {@code // start code block
      * @Override
      * public void startCollecting() {
-     *     super.startNewMainThread(() -> {
      *         .....................
      *         ...collecting task...
      *         .....................
-     *     }),  "Collector");
-     * }
+     *      }
      * } // end code block
      *
      * you could also create a new class implementing runnable and

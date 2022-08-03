@@ -4,8 +4,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.throwables.Fr24Exception;
 import planespotter.throwables.InvalidDataException;
@@ -14,16 +16,17 @@ import java.net.http.HttpResponse;
 import java.util.*;
 
 /**
- * @name ProtoDeserializer
+ * @name Fr24Deserializer
  * @author jml04
  * @version 1.0
  *
+ * @description
  * Class ProtoDeserializer represents a Deserializer for Fr24-data.
- * It converts the HttpResponse to a Collection of Frames,
+ * It converts a HttpResponse to a Collection of Frames,
  * which can be used to create further dataclasses like flights, planes, etc...
  */
 public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<String>> {
-    // filter expressions, may be null
+    // filter expressions, may be null or empty
     private String[] filter;
 
     /**
@@ -44,7 +47,7 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
 
     /**
      * deserializes incoming http response
-     * from json to fr24Frame ArrayDeque
+     * from json to Fr24Frame ArrayDeque
      *
      * @param response is the HttpResponse to deserialize
      * @return ArrayDeque of deserialized Frames
@@ -52,11 +55,12 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
      * @indev
      */
     @Override
-    public Deque<Fr24Frame> deserialize(HttpResponse<String> response) {
-        var jsa = this.parseJsonArray(response, this.filter);
-        var frames = new ArrayDeque<Fr24Frame>();
-        var it = jsa.iterator();
-        var gson = new Gson();
+    @NotNull
+    public Deque<Fr24Frame> deserialize(@NotNull HttpResponse<String> response) {
+        JsonArray jsa = this.parseJsonArray(response, this.filter);
+        ArrayDeque<Fr24Frame> frames = new ArrayDeque<>();
+        Iterator<JsonElement> it = jsa.iterator();
+        Gson gson = new Gson();
         Fr24Frame fr24Frame;
         for (JsonElement j; it.hasNext(); /**/) {
             j = it.next();
@@ -76,8 +80,9 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
      * @param resp is the HttpResponse with String body to parse
      * @return JsonArray by HttpResponse
      */
-    private JsonArray parseJsonArray(HttpResponse<String> resp, @Nullable String... filter) {
-        var jsa = new JsonArray(); // creating new JsonArray
+    @NotNull
+    private JsonArray parseJsonArray(@NotNull HttpResponse<String> resp, @Nullable String... filter) {
+        JsonArray jsa = new JsonArray(); // creating new JsonArray
         resp.body().lines() // getting stream of body-lines
                 .filter(s -> s.length() != 1 && filterBy(s, filter)) // filtering out valid and filter-allowed lines
                 .map(this::unwrap) // unwrapping line strings from certain expressions
@@ -95,13 +100,13 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
      *              if the filter array is null or empty.
      *         false if no filter-match was found in the input string
      */
-    private boolean filterBy(String input, @Nullable String... filter) {
+    private boolean filterBy(@NotNull String input, @Nullable String... filter) {
         // checking for null filter
         if (filter == null) {
             return true;
         }
         // going through filters
-        for (var f : filter) {
+        for (String f : filter) {
             // checking filter for nonNull and filtering input
             if (f != null && input.contains(f)) {
                 return true;
@@ -123,10 +128,10 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
      */
     private JsonObject parseJsonObject(@NotNull String line) {
         if (line.isBlank()) {
-            throw new InvalidDataException("line may not be blank / null!");
+            throw new InvalidDataException("line may not be blank!");
         }
-        var cols = line.split(",");
-        var o = new JsonObject();
+        String[] cols = line.split(",");
+        JsonObject o = new JsonObject();
         try {
             o.addProperty("icaoaddr", cols[0]);
             o.addProperty("lat", this.parseOrElse(cols[1], 0.0));
@@ -149,10 +154,20 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
             o.addProperty("airline", cols[18]);
         } catch (ArrayIndexOutOfBoundsException | NumberFormatException ignored) {
             // NumberFormatException occurs when the given area does not contain any data
+            // ArrayIndexOutOfBoundsException occurs when the given data is invalid
         }
         return o;
     }
 
+    /**
+     *
+     *
+     * @param toParse
+     * @param orElse
+     * @param <N>
+     * @return
+     */
+    @NotNull
     private <N extends Number> Number parseOrElse(@NotNull String toParse, final N orElse) {
         boolean notBlank = !toParse.isBlank();
         if (orElse instanceof Integer) {
@@ -160,9 +175,15 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
         } else if (orElse instanceof Double) {
             return notBlank ? Double.parseDouble(toParse) : orElse;
         }
-        return null;
+        throw new InvalidDataException("input data is invalid!");
     }
 
+    /**
+     *
+     *
+     * @param line
+     * @return
+     */
     private String unwrap(@NotNull final String line) {
         String out;
         try {

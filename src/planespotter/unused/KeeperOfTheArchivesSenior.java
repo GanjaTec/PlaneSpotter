@@ -15,14 +15,14 @@ import java.util.List;
  *
  */
 @Deprecated(since = "faster keeper update")
-public class KeeperOfTheArchives implements Runnable{ // TODO: 11.06.2022 can implement Keeper
+public class KeeperOfTheArchivesSenior implements Runnable{ // TODO: 11.06.2022 can implement Keeper
 	private final long threshold;
 	private final int threadNumber;
 	private final String threadName;
 	private final DBOut dbo = DBOut.getDBOut();
 	private final DBIn dbi = DBIn.getDBIn();
 	
-	public KeeperOfTheArchives(int threadNumber, long endThreshold) {
+	public KeeperOfTheArchivesSenior(int threadNumber, long endThreshold) {
 		this.threadNumber = threadNumber;
 		this.threshold = endThreshold;
 		this.threadName = "KeeperOfTheArchives   |";

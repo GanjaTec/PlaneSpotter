@@ -1,14 +1,17 @@
-package planespotter.model;
+package planespotter.model.nio;
 
+import org.jetbrains.annotations.Range;
 import planespotter.constants.Areas;
+import planespotter.controller.Controller;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.display.TreasureMap;
 import planespotter.model.io.DBIn;
-import planespotter.model.nio.Fr24Deserializer;
-import planespotter.model.nio.Fr24Supplier;
+import planespotter.throwables.Fr24Exception;
+import planespotter.util.Logger;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.Vector;
@@ -32,7 +35,7 @@ import java.util.stream.Collectors;
  * @see Areas
  * @see ConcurrentLinkedDeque
  */
-public abstract class LiveData {
+public abstract class LiveLoader {
     /**
      * boolean live represents a live-flag and
      * indicates if the live map is shown at the moment
@@ -56,7 +59,7 @@ public abstract class LiveData {
      * @param scheduler is the Scheduler which executes tasks
      * @return Vector of Flight objects, loaded directly by a supplier
      */
-    public static Vector<Flight> directLiveData(final Scheduler scheduler, final TreasureMap map) {
+    public static Vector<Flight> loadDirectly(final Scheduler scheduler, final TreasureMap map) {
         var deserializer = new Fr24Deserializer();
         //deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF");
         // area with panel size
@@ -84,25 +87,24 @@ public abstract class LiveData {
      * @param count is the pull count
      * @return Deque of Frames with @param count es length
      */
-    public static Deque<Fr24Frame> pollFrames(final int count) {
+    public static Deque<Fr24Frame> pollFrames(@Range(from = 1, to = Integer.MAX_VALUE) int count) {
+        // checking for empty queue
         if (isEmpty()) {
-            throw new NullPointerException("Insert-later-Deque is empty, use isEmpty() first!");
+            throw new Fr24Exception("Insert-later-Queue is empty, make sure it is not empty!");
+        } else if (!ableCollect(count)) {
+            Logger log = Controller.getInstance().getLogger();
+            log.infoLog("Insert-later-Queue has not that much content, limiting frames to size...", new LiveLoader() {});
+            count = insertLater.size();
         }
-        var counter = new AtomicInteger();
-        var frames = new ConcurrentLinkedDeque<Fr24Frame>();
-
-        insertLater.parallelStream()
-                .forEach(frame -> {
-                    if (counter.get() < count) {
-                        frames.add(insertLater.poll());
-                        counter.getAndIncrement();
-                    }
-                });
-        return frames;
+        // streaming insertLater-queue and returning frames (parallel)
+        return insertLater.parallelStream()
+                .limit(count)
+                .collect(Collectors.toCollection(ArrayDeque::new));
     }
 
     /**
-     * adds a Collection of Frames
+     * adds a Collection of Frames to the insertLater-queue,
+     * from where the frames are inserted into DB later
      *
      * @param data is the data to add to insert later
      */
@@ -117,7 +119,7 @@ public abstract class LiveData {
      * @return true if the insertLater-size is greater than 10000, else false
      */
     protected static boolean maxSizeReached() {
-        return insertLater.size() > 10000;
+        return insertLater.size() > 20000;
     }
 
     /**

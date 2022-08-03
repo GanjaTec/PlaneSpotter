@@ -50,17 +50,12 @@ public class Search {
                 while (!signs.isEmpty()) {
                     fids.addAll(out.getFlightIDsByCallsign(signs.poll()));
                 }
-                int counter = 0;
                 int[] ids = Utilities.parseIntArray(fids);
                 var key = "tracking" + Arrays.toString(ids);
-                ctrl.loadedData = (Vector<DataPoint>) Controller.cache.get(key);
+                ctrl.loadedData = (Vector<DataPoint>) ctrl.cache.get(key);
                 if (ctrl.loadedData == null) {
                     ctrl.loadedData = out.getTrackingsByFlightIDs(ids);
-                    /*for (int i : fids) {
-                        ctrl.loadedData.addAll(out.getTrackingByFlight(i)); // TODO trackingByFlightIDs
-                        if (counter++ > 20) break; // MAX 10 FLIGHTS
-                    }*/
-                    Controller.cache.put(key, ctrl.loadedData);
+                    ctrl.cache.put(key, ctrl.loadedData);
                 }
                 if (!ctrl.loadedData.isEmpty()) {
                     return ctrl.loadedData;
@@ -125,20 +120,20 @@ public class Search {
             // trackings with airport id (-> airport join)
         } else if (!tag.isBlank()) {
             var key = "airport" + tag.toUpperCase();
-            ctrl.loadedData = (Vector<DataPoint>) Controller.cache.get(key);
+            ctrl.loadedData = (Vector<DataPoint>) ctrl.cache.get(key);
             if (ctrl.loadedData == null) {
                 int[] fids = out.getFlightIDsIDsByAirportTag(tag);
                 ctrl.loadedData = new Vector<>(out.getTrackingsByFlightIDs(fids));
-                Controller.cache.put(key, ctrl.loadedData);
+                ctrl.cache.put(key, ctrl.loadedData);
             }
         } else if (!name.isBlank()) {
             var key = "airport" + name.toUpperCase();
-            ctrl.loadedData = (Vector<DataPoint>) Controller.cache.get(key);
+            ctrl.loadedData = (Vector<DataPoint>) ctrl.cache.get(key);
             if (ctrl.loadedData == null) {
                 // FIXME too slow
                 int[] fids = out.getFlightIDsByAirportName(name);
                 ctrl.loadedData = new Vector<>(out.getTrackingsByFlightIDs(fids));
-                Controller.cache.put(key, ctrl.loadedData);
+                ctrl.cache.put(key, ctrl.loadedData);
             }
         }
         if (ctrl.loadedData.isEmpty()) {

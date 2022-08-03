@@ -44,14 +44,11 @@ public final class ActionHandler implements ActionListener, KeyListener,
         return keyEvent -> {
             GUI gui;
             JButton searchButton;
-            int eventID = keyEvent.getID(), keyCode;
-            boolean shiftDown;
+            int eventID = keyEvent.getID();
             if (eventID == KEY_PRESSED) {
-                shiftDown = keyEvent.isShiftDown();
-                keyCode = keyEvent.getKeyCode();
                 // search hotkey
                 if (keyEvent.isShiftDown() && keyEvent.getKeyCode() == VK_S) {
-                    gui = Controller.getGUI();
+                    gui = Controller.getInstance().getGUI();
                     searchButton = (JButton) gui.getComponent("searchButton");
                     getActionHandler().buttonClicked(searchButton, Controller.getInstance(), gui);
                     return true;
@@ -67,6 +64,9 @@ public final class ActionHandler implements ActionListener, KeyListener,
     public static ActionHandler getActionHandler() {
         return INSTANCE;
     }
+
+    // ActionHandler hash code
+    private final int hashCode = System.identityHashCode(this);
 
     /**
      * private ActionHandler constructor for main instance
@@ -85,7 +85,7 @@ public final class ActionHandler implements ActionListener, KeyListener,
      * @param gui is the main GUI instance
      */
     public synchronized void buttonClicked(JButton button, Controller ctrl, GUI gui) {
-        Controller.getScheduler().exec(() -> {
+        ctrl.getScheduler().exec(() -> {
 
             if (button == gui.getComponent("fileButton")) {
                 gui.setViewHeadBtVisible(false);
@@ -330,7 +330,7 @@ public final class ActionHandler implements ActionListener, KeyListener,
         var src = e.getSource();
         if (src instanceof JButton bt) {
             var ctrl = Controller.getInstance();
-            var gui = Controller.getGUI();
+            var gui = ctrl.getGUI();
             if (e.getID() != KEY_TYPED) {
                 this.buttonClicked(bt, ctrl, gui);
             }
@@ -346,7 +346,7 @@ public final class ActionHandler implements ActionListener, KeyListener,
     @Override
     public void mousePressed(MouseEvent e) {
         var ctrl = Controller.getInstance();
-        var gui = Controller.getGUI();
+        var gui = ctrl.getGUI();
         this.mapClicked(e, ctrl, gui);
     }
 
@@ -358,7 +358,7 @@ public final class ActionHandler implements ActionListener, KeyListener,
      */
     @Override
     public void keyPressed(KeyEvent e) {
-        var gui = Controller.getGUI();
+        var gui = Controller.getInstance().getGUI();
         this.keyEntered(e, gui);
     }
 
@@ -370,7 +370,7 @@ public final class ActionHandler implements ActionListener, KeyListener,
      */
     @Override
     public void componentResized(ComponentEvent e) {
-        var gui = Controller.getGUI();
+        var gui = Controller.getInstance().getGUI();
         this.windowResized(gui);
     }
 
@@ -395,7 +395,7 @@ public final class ActionHandler implements ActionListener, KeyListener,
     public void itemStateChanged(ItemEvent e) {
         var src = e.getSource();
         var item = (String) e.getItem();
-        var gui = Controller.getGUI();
+        var gui = Controller.getInstance().getGUI();
         this.itemChanged(src, item, gui);
     }
 
@@ -410,65 +410,24 @@ public final class ActionHandler implements ActionListener, KeyListener,
         Controller.getInstance().shutdown(false);
     }
 
-    /**
+    /*
      * the following listener-methods are unused
      */
 
-    @Override
-    public void keyTyped(KeyEvent e) {
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-    }
-
-    @Override
-    public void componentHidden(ComponentEvent e) {
-    }
-
-    @Override
-    public void componentMoved(ComponentEvent e) {
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-    }
-
-    @Override
-    public void windowOpened(WindowEvent e) {
-    }
-
-    @Override
-    public void windowClosed(WindowEvent e) {
-    }
-
-    @Override
-    public void windowIconified(WindowEvent e) {
-    }
-
-    @Override
-    public void windowDeiconified(WindowEvent e) {
-    }
-
-    @Override
-    public void windowActivated(WindowEvent e) {
-    }
-
-    @Override
-    public void windowDeactivated(WindowEvent e) {
-    }
+    @Override public void keyTyped(KeyEvent e) {}
+    @Override public void keyReleased(KeyEvent e) {}
+    @Override public void componentHidden(ComponentEvent e) {}
+    @Override public void componentMoved(ComponentEvent e) {}
+    @Override public void mouseClicked(MouseEvent e) {}
+    @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) {}
+    @Override public void windowOpened(WindowEvent e) {}
+    @Override public void windowClosed(WindowEvent e) {}
+    @Override public void windowIconified(WindowEvent e) {}
+    @Override public void windowDeiconified(WindowEvent e) {}
+    @Override public void windowActivated(WindowEvent e) {}
+    @Override public void windowDeactivated(WindowEvent e) {}
 
     @Override
     public boolean equals(Object obj) {
@@ -477,12 +436,12 @@ public final class ActionHandler implements ActionListener, KeyListener,
 
     @Override
     public int hashCode() {
-        return 1;
+        return this.hashCode;
     }
 
     @Override
     public String toString() {
-        return "ActionHandler[]";
+        return "ActionHandler";
     }
 
 }

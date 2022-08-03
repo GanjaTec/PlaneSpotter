@@ -2,34 +2,62 @@ package planespotter.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
+
 import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
 import planespotter.throwables.IllegalInputException;
+import planespotter.throwables.InvalidArrayException;
 import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.OutOfRangeException;
+import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static planespotter.util.math.MathUtils.divide;
-
 /**
  * @name Utilities
- * @author @all
+ * @author jml04
+ * @author Lukas
+ * @author Bennet
  * @version 1.0
- *
- * class Utilities contains different utilities
+ * @description
+ * class Utilities contains different utility-methods for different usages
  */
 public abstract class Utilities {
+    // char-values connected to hex-int-values
+    public static final Map<Character, Integer> charIntValues = new HashMap<>(16);
+    // initializer
+    static {
+        initCharInts();
+    }
+
+    /**
+     * initializes the charIntValues-Map which contains char-values connected to hex-int-values
+     */
+    private static void initCharInts() {
+        charIntValues.put('0', 0x000000);
+        charIntValues.put('1', 0x000001);
+        charIntValues.put('2', 0x000002);
+        charIntValues.put('3', 0x000003);
+        charIntValues.put('4', 0x000004);
+        charIntValues.put('5', 0x000005);
+        charIntValues.put('6', 0x000006);
+        charIntValues.put('7', 0x000007);
+        charIntValues.put('8', 0x000008);
+        charIntValues.put('9', 0x000009);
+        charIntValues.put('a', 0x00000A);
+        charIntValues.put('b', 0x00000B);
+        charIntValues.put('c', 0x00000C);
+        charIntValues.put('d', 0x00000D);
+        charIntValues.put('e', 0x00000E);
+        charIntValues.put('f', 0x00000F);
+    }
 
     /**
      * getter for the project root-directory,
@@ -56,30 +84,57 @@ public abstract class Utilities {
         return false;
     }
 
+    public static int maxValue(int[][] of) {
+        if (of == null || of.length == 0) {
+            throw new InvalidArrayException("Invalid input, no empty arrays allowed!");
+        }
+        return findMax2D(of);
+    }
+
+    /**
+     * finds the highest value in a 2D-array in O(n)
+     *
+     * @param in is the input-2D-array to search in
+     * @return max value of the input int-array
+     */
+    private static int findMax2D(int[][] in) {
+        int width = in.length;
+        if (width == 0) {
+            return 0;
+        }
+        int height = in[0].length;
+        if (height == 0) {
+            return 0;
+        }
+        int max = 0;
+        // TODO maybe this could be done parallel for huge 2d arrays
+        for (int[] line : in) {
+            for (int curr : line) {
+                if (curr > max) {
+                    max = curr;
+                }
+            }
+        }
+        return max;
+    }
+
+    /**
+     * converts a decimal-int to hex-int,
+     * does not work yet
+     *
+     * @param dec is the decimal
+     * @return hexadecimal of the decimal-input
+     */
     public static long decToHex(int dec) {
         return Long.parseLong(Integer.toHexString(dec), 16);
     }
 
-    public static final Map<Character, Integer> charIntValues = new HashMap<>(16);
-    static {
-        charIntValues.put('0', 0x000000);
-        charIntValues.put('1', 0x000001);
-        charIntValues.put('2', 0x000002);
-        charIntValues.put('3', 0x000003);
-        charIntValues.put('4', 0x000004);
-        charIntValues.put('5', 0x000005);
-        charIntValues.put('6', 0x000006);
-        charIntValues.put('7', 0x000007);
-        charIntValues.put('8', 0x000008);
-        charIntValues.put('9', 0x000009);
-        charIntValues.put('a', 0x00000A);
-        charIntValues.put('b', 0x00000B);
-        charIntValues.put('c', 0x00000C);
-        charIntValues.put('d', 0x00000D);
-        charIntValues.put('e', 0x00000E);
-        charIntValues.put('f', 0x00000F);
-    }
-
+    /**
+     * converts a hex-string (e.g. "0xF62BA5" or "0xffa5b3") to an int
+     *
+     * @param hexStr is the hexadecimal input value as String
+     * @return hex string as int
+     */
     public static int hexStrToInt(String hexStr) {
         char[] chars = hexStr.toCharArray();
         int pow = 0x000000,
@@ -93,11 +148,21 @@ public abstract class Utilities {
         return hex;
     }
 
+    /**
+     * converts an int-level to a byte-level depending on
+     * the max-int-level (calculated before)
+     *
+     * @param lvl is the level to convert
+     * @param max is the max level, which must be calculated before this method
+     * @return input level as byte level (-128 - 127)
+     */
     public static byte toByteLevel(int lvl, int max) {
-        if (lvl == 0 || max == 0) {
+        if (lvl < 0 || max <= 0) {
+            throw new OutOfRangeException("level or max-level is out of range (0-inf)");
+        } else if (lvl == 0) {
             return -128;
         }
-        float lvlPercentage = (float) divide((float) lvl, max);
+        float lvlPercentage = (float) MathUtils.divide((float) lvl, max);
         return (byte) ((255 * lvlPercentage) - 128);
     }
 
@@ -106,7 +171,7 @@ public abstract class Utilities {
      * @return a feet value in meters
      */
     public static int feetToMeters(@Range(from = 0, to = Integer.MAX_VALUE) int feet) {
-        return asInt(feet / 3.2808);
+        return asInt(MathUtils.divide(feet, 3.2808));
     }
 
     /**
@@ -120,11 +185,11 @@ public abstract class Utilities {
     /**
      * packs a string in the format 'myText'
      *
-     * @param input is the string to pack
+     * @param str is the string to pack
      * @return packed input string with 's
      */
-    public static String packString(@NotNull String input) {
-        return "'" + input + "'";
+    public static String packString(@NotNull String str) {
+        return "'" + str + "'";
     }
 
     /**
@@ -153,14 +218,16 @@ public abstract class Utilities {
                 || check.contains("DROP")   || check.contains("drop")
                 || check.contains("INSERT") || check.contains("insert")
                 || check.contains("FROM")   || check.contains("from")
-                || check.contains("TABLE")) {
-            throw new IllegalInputException();
+                || check.contains("TABLE")  || check.contains("--")) {
+            throw new IllegalInputException("Input expressions or characters not allowed!");
         }
+        // replacing all '%', to prevent inputs like '%.....%', which take too much time to search for
+        // '%' is a SQL-placeholder for everything with any length
         return check.replaceAll("%", "");
     }
 
     /**
-     * @param number is the number to be casted to an int
+     * @param number is the number to be cast to an int
      * @param <N> is an instance of Number
      * @return number cast as int
      */
@@ -186,7 +253,7 @@ public abstract class Utilities {
         } else if (firstElement instanceof Flight) {
             return toParse.stream()
                     .map(flight -> {
-                        var dps = ((Flight) flight).dataPoints();
+                        Map<Integer, DataPoint> dps = ((Flight) flight).dataPoints();
                         return dps.get(dps.size() - 1).pos();
                     })
                     .collect(Collectors.toCollection(Vector::new));
@@ -204,23 +271,27 @@ public abstract class Utilities {
         if (flights.isEmpty()) {
             throw new IllegalArgumentException("input may not be empty!");
         }
-        var dataPoints = new Vector<DataPoint>();
+        Vector<DataPoint> dataPoints = new Vector<>();
         flights.parallelStream()
                 .forEach(flight -> dataPoints.addAll(flight.dataPoints().values()));
         return dataPoints;
     }
 
     /**
+     * converts an array or a collection to Deque
      *
-     *
-     * @param arrayOrCollection
-     * @param <T>
-     * @return
+     * @param arrayOrCollection is the input value, any array or collection
+     * @param <T> is the input type, stands for array or collection
+     * @return Deque consisting of the input values
      */
-    public static <T, R> Deque<R> parseDeque(T arrayOrCollection) {
-        return (arrayOrCollection instanceof Collection<?> collection)
-                ? new ArrayDeque<>((Collection<R>) collection)
-                : new ArrayDeque<>((Collection<R>) List.of(arrayOrCollection));
+    public static <T> Deque<?> parseDeque(T arrayOrCollection) {
+        if (arrayOrCollection instanceof Collection<?> collection) {
+            return new ArrayDeque<>(collection);
+        } else try {
+            return new ArrayDeque<>(List.of(arrayOrCollection));
+        } catch (Throwable thr) {
+            throw new InvalidDataException("incorrect input, array or collection expected");
+        }
     }
 
     public static DataPoint[] parseDataPointArray(Deque<DataPoint> deque) {
@@ -234,13 +305,14 @@ public abstract class Utilities {
     }
 
     /**
+     * checks if a given position fits in the given area, spanned by topLeft and bottomRight position
      *
-     *
-     * @param toCheck
-     * @param topLeft
-     * @param bottomRight
-     * @return
+     * @param toCheck is the position to check
+     * @param topLeft is the top left position of the area
+     * @param bottomRight is the bottom right position of the area
+     * @return true if toCheck fits in the given area, else false
      */
+    @SuppressWarnings(value = "is this needed?")
     public static boolean fitArea(final Position toCheck, final Position topLeft, final Position bottomRight) {
         double checkLat = toCheck.lat(),
                checkLon = toCheck.lon();
@@ -273,7 +345,7 @@ public abstract class Utilities {
                 } else {
                     if (r > 0) {
                         r -= factor * 4;
-                        if (r < 0) { // gebraucht?
+                        if (r < 0) {
                             r = 0;
                         }
                     } else {
@@ -286,7 +358,14 @@ public abstract class Utilities {
         return new Color(r, g, 255);
     }
 
-    // TODO: 24.06.2022 auf BYTES umstellen
+    /**
+     * creates a certain color, depending on input level
+     *
+     * @param level is the input level for certain a color,
+     *              must be between 0 and 255
+     * @return color by level
+     */
+    // TODO: 24.06.2022 change to byte input
     public static Color colorByLevel(final int level) { // max level: 255 TODO change to 127
         if (level < 0 || level > 255) {
             throw new OutOfRangeException("level out of range! (0-255)");
@@ -298,7 +377,6 @@ public abstract class Utilities {
         if (level == 0) {
             return new Color(r, g, b, a);
         }
-        a = 0;
         r = 100;
         g = 100;
         for (int i = 0; i < 255 && i < level; i++) {
@@ -316,16 +394,34 @@ public abstract class Utilities {
         return new Color(r, g, b);
     }
 
-    public static ImageIcon scaledImage(ImageIcon input, int width, int height) {
-        var scaled = input.getImage().getScaledInstance(width, height, 4);
+    /**
+     * brings an image on a certain scale
+     *
+     * @param img is the input image that should be scaled
+     * @param width is the image output width
+     * @param height is the image output height
+     * @return a scaled instance of the input image
+     */
+    public static ImageIcon scaledImage(ImageIcon img, int width, int height) {
+        Image scaled = img.getImage().getScaledInstance(width, height, 4);
         return new ImageIcon(scaled);
     }
 
+    /**
+     * counts the lines of code with given file extensions
+     *
+     * @param rootPath is the root path to start counting
+     * @param extensions are the file extensions
+     * @return count of lines code (with the given extension)
+     */
     public static int linesCode(@NotNull final String rootPath, @NotNull String... extensions) {
-        var linesCode = new AtomicInteger(0);
-        var allFiles = new ArrayDeque<Deque<File>>();
+        if (extensions.length == 0) {
+            throw new InvalidDataException("No given extensions!");
+        }
+        AtomicInteger linesCode = new AtomicInteger(0);
+        Deque<Deque<File>> allFiles = new ArrayDeque<>();
 
-        for (var ext : extensions) {
+        for (String ext : extensions) {
             allFiles.add(allFilesWithExtension(rootPath, ext));
         }
 
@@ -333,8 +429,8 @@ public abstract class Utilities {
             var files = allFiles.poll();
             while (!files.isEmpty()) {
                 try {
-                    var fr = new FileReader(files.poll());
-                    var br = new BufferedReader(fr);
+                    Reader fr = new FileReader(files.poll());
+                    BufferedReader br = new BufferedReader(fr);
                     br.lines().forEach(l -> {
                         if (!l.isBlank()) {
                             linesCode.getAndIncrement();
@@ -350,14 +446,22 @@ public abstract class Utilities {
         return linesCode.get();
     }
 
+    /**
+     * returns all files, which have the given extension
+     *
+     * @param path is the root path to search in
+     * @param extension is the file extension to search for (e.g. '.java')
+     * @return Deque of all files with the given extension
+     */
     private static Deque<File> allFilesWithExtension(final String path, String extension) {
         if (!extension.startsWith(".")) {
             throw new InvalidDataException("extension must begin with '.'");
         }
-        var files = new ArrayDeque<File>();
+        Deque<File> files = new ArrayDeque<>();
+        // try with resource // Paths is not equal to our Paths-class
         try (var paths = Files.walk(java.nio.file.Paths.get(path))) {
             paths.forEach(p -> {
-                var file = p.toFile();
+                File file = p.toFile();
                 if (!file.isDirectory() && file.getName().endsWith(extension)) {
                     files.add(file);
                 }

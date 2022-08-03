@@ -19,6 +19,7 @@ import java.util.*;
  * @author Bennet
  * @author jml04
  * @version 1.1
+ *
  * @description
  * This DBConnector-child-class is used to get Output from
  * the DB and uses Queries provided by the SQLQueries Class
@@ -30,7 +31,7 @@ import java.util.*;
  */
 
 public class DBOut extends DBConnector {
-	// (ONE and ONLY) main instance
+	// (ONE and ONLY) DBOut instance
 	private static final DBOut INSTANCE;
 	// static initializer
 	static {
@@ -61,7 +62,8 @@ public class DBOut extends DBConnector {
 	 * @param coords The string containing the Coords
 	 * @return Position containing Latitude and Longitude
 	 */
-	private Position convertCoords(String coords) {
+	@NotNull
+	private Position convertCoords(@NotNull String coords) {
 		// TODO: 12.06.2022 glaube man kann hier auch ein 2er Array machen
 		String[] splitCoords = coords.split(",");
 		List<Double> processedCoords = new ArrayList<>();
@@ -82,7 +84,8 @@ public class DBOut extends DBConnector {
 	 * @param tag the ICAO-Tag used in the Querry
 	 * @return Airline Object
 	 */
-	public Airline getAirlineByTag(String tag)
+	@NotNull
+	public Airline getAirlineByTag(@NotNull String tag)
 			throws DataNotFoundException {
 
 		DBResult result;
@@ -114,7 +117,8 @@ public class DBOut extends DBConnector {
 	 * @return Airport array with length of 2, containing the Airport Objects
 	 */
 
-	public Airport[] getAirports(final String srcAirport, final String destAirport) {
+	@NotNull
+	public Airport[] getAirports(@NotNull final String srcAirport, @NotNull final String destAirport) {
 		// source- and dest-airport
 		Airport src, dest;
 		DBResult srcResult, destResult;
@@ -157,32 +161,30 @@ public class DBOut extends DBConnector {
 	 * @param icao String containing the ICAO Tag
 	 * @return Plane the Object containing all Information about the Plane
 	 */
-	public Deque<Integer> getPlaneIDsByICAO(String icao)
+	@NotNull
+	public Deque<Integer> getPlaneIDsByICAO(@NotNull String icao)
 			throws DataNotFoundException {
 
 		// TODO: Bug fixen // gibt es den bug noch?
 		// org.sqlite.SQLiteException: [SQLITE_ERROR] SQL error or missing database (unrecognized token: "06A1EB")
-		//icao = stripString(icao);
-		DBResult result;
 		ResultSet rs;
 		icao = Utilities.packString(icao);
 		final Deque<Integer> ids = new ArrayDeque<>();
-		try {
-			synchronized (DB_SYNC) {
-				result = super.queryDB(SQLQueries.GET_PLANE_IDS_BY_ICAO + icao);
+		synchronized (DB_SYNC) {
+			try (DBResult result = super.queryDB(SQLQueries.GET_PLANE_IDS_BY_ICAO + icao)) {
 				rs = result.resultSet();
+				int id;
 				while (rs.next()) {
-					int id = rs.getInt("ID");
+					id = rs.getInt("ID");
 					ids.add(id);
 				}
-				result.close();
+			} catch (NoAccessException | SQLException e) {
+				e.printStackTrace();
 			}
-			if (ids.isEmpty()) {
-				throw new DataNotFoundException("No plane id found for icao " + icao + "!");
-			}
-		} catch (SQLException | NoAccessException e) {
-			e.printStackTrace();
-		} 
+		}
+		if (ids.isEmpty()) {
+			throw new DataNotFoundException("No plane id found for icao " + icao + "!");
+		}
 		return ids;
 	}
 
@@ -191,36 +193,41 @@ public class DBOut extends DBConnector {
 	 *
 	 * @param id is the plane id
 	 * @return plane with the given id
+	 * @throws DataNotFoundException if there was no plane found
 	 */
+	@NotNull
 	public Plane getPlaneByID(int id)
 			throws DataNotFoundException {
 
-		DBResult result;
 		ResultSet rs;
 		Airline airline;
 		Plane plane = null;
-		try {
-			synchronized (DB_SYNC) {
-				result = super.queryDB(SQLQueries.GET_PLANE_BY_ID + id);
+		synchronized (DB_SYNC) {
+			try (DBResult result = super.queryDB(SQLQueries.GET_PLANE_BY_ID + id)) {
 				rs = result.resultSet();
 				if (rs.next()) {
 					airline = this.getAirlineByID(rs.getInt("airline"));
 					plane = new Plane(rs.getInt("ID"), rs.getString("icaonr"), rs.getString("tailnr"), rs.getString("type"), rs.getString("registration"), airline);
 				}
-				result.close();
-
-				if (plane == null) {
-					throw new DataNotFoundException("No plane found for ID " + id + "!");
-				}
+			} catch (SQLException | NoAccessException e) {
+				e.printStackTrace();
 			}
-		} catch (SQLException | NoAccessException e) {
-			e.printStackTrace();
+		}
+		if (plane == null) {
+			throw new DataNotFoundException("No plane found for ID " + id + "!");
 		}
 		return plane;
 	}
 
-	public Airline getAirlineByID(final int id)
-			throws DataNotFoundException {
+	/**
+	 * gets an Airline by its ID
+	 *
+	 * @param id is the airline ID
+	 * @return Airline with the given ID, or None-Airline,
+	 * 		   if no Airline was found with the given ID
+	 */
+	@NotNull
+	public Airline getAirlineByID(final int id) {
 
 		DBResult result;
 		ResultSet rs;
@@ -251,10 +258,13 @@ public class DBOut extends DBConnector {
 	}
 
 	/**
-	 * @param icao
-	 * @return
+	 * checks, if the plane with the given ICAO-address
+	 * exists in the database
+	 *
+	 * @param icao is the ICAO-address to search for
+	 * @return ID of the plane that was found, or -9999, if nothing was found
 	 */
-	public int checkPlaneInDB(String icao) {
+	public int checkPlaneInDB(@NotNull String icao) {
 
 		DBResult result;
 		ResultSet rs;
@@ -279,49 +289,55 @@ public class DBOut extends DBConnector {
 	}
 
 	/**
-	 * This Method is used to Querry all Datapoints belonging to a single Flight
-	 * It takes an int FlightID and returns a HashMap<Long, DataPoint> containing the Tracking Data
+	 * This method is used to query all DataPoints belonging to a single Flight
+	 * It takes a FlightID (int) and returns a Vector of DataPoints containing the Tracking Data
 	 *
 	 *
-	 * @param flightID int representing the Flights Database ID
-	 * @return HashMap<Integer, DataPoint> containing all Datapoints keyed with Timestamp
-	 * @throws DataNotFoundException
+	 * @param flightID represents the Flights Database ID
+	 * @return Vector of DataPoints, the tracking data for the given flight
+	 * @throws DataNotFoundException if no tracking or no flight was found
 	 */
-	// TODO fix: HashMap lentgh was 1, but last Tracking id was about 23000
-	// TODO hier muss der Fehler sein
+	@NotNull
 	public Vector<DataPoint> getTrackingByFlight(int flightID)
 			throws DataNotFoundException {
 
-		final var dps = new Vector<DataPoint>();
-		//var flight_id = Utilities.packString(flightID);
-		try {
-			synchronized (DB_SYNC) {
-				var result = queryDB("SELECT * FROM tracking WHERE flightid = " + flightID);
-				var rs = result.resultSet();
+		final Vector<DataPoint> dps = new Vector<>();
+		String query = "SELECT * FROM tracking WHERE flightid = " + flightID;
+		synchronized (DB_SYNC) {
+			try (DBResult result = super.queryDB(query)) {
+				ResultSet rs = result.resultSet();
+				Position pos;
+				DataPoint dp;
 				while (rs.next()) {
 					// TODO: IF STATEMENT
-					var p = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
-					var dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"), p, rs.getInt("timestamp"),
+					pos = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
+					dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"), pos, rs.getInt("timestamp"),
 							rs.getInt("squawk"), rs.getInt("groundspeed"), rs.getInt("heading"), rs.getInt("altitude"));
 					dps.add(dp);
 				}
-				if (dps.isEmpty()) {
-					throw new DataNotFoundException("No tracking found for flight id " + flightID);
-				}
-				result.close();
+			} catch (NoAccessException | SQLException e) {
+				e.printStackTrace();
 			}
-		} catch (SQLException | NoAccessException e) {
-			e.printStackTrace();
-		} 
+		}
+		if (dps.isEmpty()) {
+			throw new DataNotFoundException("No tracking found for flight id " + flightID);
+		}
 		return dps;
 
 	}
 
+	/**
+	 * gets a complete tracking-HashMap with tracking IDs and DataPoint
+	 *
+	 * @param flightID is the flight ID of the flight, the tracking is loaded from
+	 * @return tracking-HashMap with tracking-ID as key and DataPoint as value
+	 * @throws DataNotFoundException if no flight or no tracking was found
+	 */
+	@NotNull
 	public final HashMap<Integer, DataPoint> getCompleteTrackingByFlight(int flightID)
 			throws DataNotFoundException {
 
 		final var dps = new HashMap<Integer, DataPoint>();
-		//var flight_id = Utilities.packString(flightID);
 		try {
 			synchronized (DB_SYNC) {
 				var result = queryDB("SELECT * FROM tracking WHERE flightid = " + flightID);
@@ -345,14 +361,18 @@ public class DBOut extends DBConnector {
 
 	}
 
-
+	/**
+	 *
+	 *
+	 * @param id
+	 * @return
+	 * @throws DataNotFoundException
+	 */
 	public final long getLastTimestempByFlightID(int id)
 			throws DataNotFoundException {
 
 		long timestamp = -1;
-		// TODO eventuell ist das neue schneller
 		var getLastTracking = "SELECT max(timestamp) FROM tracking WHERE flightid = " + id;
-		//var getLastTracking = "SELECT timestamp FROM tracking WHERE flightid == "+ id +" ORDER BY ID DESC LIMIT 1";
 		try {
 			synchronized (DB_SYNC) {
 				var result = this.queryDB(getLastTracking);
