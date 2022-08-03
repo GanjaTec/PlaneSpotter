@@ -1,5 +1,6 @@
 package planespotter.model.io;
 
+import org.jetbrains.annotations.NotNull;
 import planespotter.constants.SQLQueries;
 
 import java.sql.*;
@@ -9,9 +10,12 @@ import java.util.HashMap;
 import planespotter.controller.Controller;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
+import planespotter.model.nio.LiveLoader;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.util.Logger;
 
-import static planespotter.model.LiveData.*;
+import static planespotter.model.nio.LiveLoader.*;
+import static planespotter.model.io.DBOut.getDBOut;
 import static planespotter.util.Time.elapsedSeconds;
 import static planespotter.util.Time.nowMillis;
 
@@ -24,12 +28,15 @@ public class DBIn extends DBConnector {
 	private static final DBIn INSTANCE;
 	// 'data loader enabled' flag
 	private static boolean enabled;
+	// last inserted frame
+	private static Fr24Frame lastFrame;
 	// inserted frames counter for all writeToDB inserts
 	private static int frameCount, planeCount, flightCount;
 	// static initializer
 	static {
 		INSTANCE = new DBIn();
 
+		lastFrame = null;
 		frameCount = 0;
 		planeCount = 0;
 		flightCount = 0;
@@ -45,7 +52,7 @@ public class DBIn extends DBConnector {
 	 * The DBWriter class is an important model part that is responsible for
 	 * filling the database with data, uses methods from LiveData and takes its data
 	 * from the insertLater-queue in LiveData
-	 * @see planespotter.model.LiveData
+	 * @see LiveLoader
 	 */
 
 	/**
@@ -56,13 +63,14 @@ public class DBIn extends DBConnector {
 	 * @param fr24Frames are the Fr24Frames to write, could be extended to '<? extends Frame>'
 	 * @param dbo is a DBOut Object for DB-Output
 	 * @param dbi is a DBIn Object for DB-Inserts
+	 * @return last inserted frame or null, if nothing was inserted
 	 */
 	public static synchronized void write(final Deque<Fr24Frame> fr24Frames, final DBOut dbo, final DBIn dbi) {
 		if (enabled) {
-			long ts1 = nowMillis();
-			var airlineTagsIDs = new HashMap<String, Integer>();
-			var planeIcaoIDs = new HashMap<String, Integer>();
-			var flightNRsIDs = new HashMap<String, Integer>();
+			long startTime = nowMillis();
+			HashMap<String, Integer> airlineTagsIDs = new HashMap<>(),
+									 planeIcaoIDs = new HashMap<>(),
+									 flightNRsIDs = new HashMap<>();
 			try {
 				airlineTagsIDs = dbo.getAirlineTagsIDs();
 				planeIcaoIDs = dbo.getPlaneIcaosIDs();
@@ -72,9 +80,9 @@ public class DBIn extends DBConnector {
 				// this usually happens when the DB has empty tables.
 				// ( For example when the DB gets cleared )
 			}
+			Fr24Frame frame;
 			int airlineID, planeID, flightID;
 			boolean checkPlane, checkFlight;
-			Fr24Frame frame;
 			while (!fr24Frames.isEmpty()) {
 				frame = fr24Frames.poll();
 				// insert into planes
@@ -83,6 +91,7 @@ public class DBIn extends DBConnector {
 				checkPlane = planeID > -1;
 				if (!checkPlane) {
 					planeID = dbi.insertPlane(frame, airlineID);
+					// increasing inserted planes value
 					increasePlaneCount();
 				}
 				// insert into flights
@@ -90,18 +99,18 @@ public class DBIn extends DBConnector {
 				checkFlight = flightID > -1;
 				if (!checkFlight) {
 					flightID = dbi.insertFlight(frame, planeID);
+					// increasing inserted flights value
 					increaseFlightCount();
 				}
 				// insert into tracking
 				dbi.insertTracking(frame, flightID);
 				// increasing the inserted frames value
 				increaseFrameCount();
+				// setting current frame as last frame
+				lastFrame = frame;
 			}
-			System.out.println("[DBWriter] filled DB in " + elapsedSeconds(ts1) + " seconds!");
-			// collecting garbage that was created during the insert
-			System.gc();
+			System.out.println("[DBWriter] filled DB in " + elapsedSeconds(startTime) + " seconds!");
 		}
-
 	}
 
 	/**
@@ -111,16 +120,16 @@ public class DBIn extends DBConnector {
 	 * @param count is the frame count that should be written to DB
 	 * @return inserted frames count as an int
 	 */
-	public static synchronized int insert(final Scheduler scheduler, final int count) {
+	public static synchronized int insert(@NotNull final Scheduler scheduler, final int count) {
 		int insertCount = 0;
 		if (enabled) {
-			var log = Controller.getLogger();
+			Logger log = Controller.getInstance().getLogger();
 			log.log("Trying to insert frames...", INSTANCE);
 			if (ableCollect(count)) {
 				// insert live data with normal writeToDB
-				var dbOut = DBOut.getDBOut();
-				var dbIn = getDBIn();
-				var frames = pollFrames(count);
+				DBOut dbOut = getDBOut();
+				DBIn dbIn = getDBIn();
+				Deque<Fr24Frame> frames = pollFrames(count);
 
 				scheduler.exec(() -> write(frames, dbOut, dbIn),
 						"DB-LiveData Writer", true, Scheduler.LOW_PRIO, true);
@@ -140,21 +149,32 @@ public class DBIn extends DBConnector {
 	 * @param framesPerWrite is the frame count that should be written per one write task
 	 * @return inserted frames count as an int
 	 */
-	public static synchronized int insertRemaining(final Scheduler scheduler, int framesPerWrite) {
+	public static synchronized int insertRemaining(@NotNull final Scheduler scheduler, int framesPerWrite) {
 		int inserted = 0;
 		if (enabled) {
-			final var dbOut = DBOut.getDBOut();
-			final var dbIn = getDBIn();
+			final DBOut dbOut = getDBOut();
+			final DBIn dbIn = getDBIn();
 
 			while (!isEmpty()) {
-				var frames = pollFrames(framesPerWrite);
+				Deque<Fr24Frame> frames = pollFrames(framesPerWrite);
+
 				scheduler.exec(() -> write(frames, dbOut, dbIn),
 						"Inserter", false, Scheduler.HIGH_PRIO, false);
+
 				inserted += framesPerWrite;
 			}
 			System.out.println("Inserting " + inserted + " frames...");
 		}
 		return inserted;
+	}
+
+	/**
+	 * getter for the last inserted frame (into DB), which is given by the write method
+	 *
+	 * @return last inserted frame, or null if there is no last frame
+	 */
+	public static Fr24Frame getLastFrame() {
+		return lastFrame;
 	}
 
 	/**
@@ -224,6 +244,9 @@ public class DBIn extends DBConnector {
 		return INSTANCE;
 	}
 
+
+	// vvv instance vvv
+
 	/**
 	 * private constructor, for main instance
 	 */
@@ -231,11 +254,18 @@ public class DBIn extends DBConnector {
 		// do nothing, no fields to initialize
 	}
 
-	public int insertPlane(Fr24Frame f, int airlineID) {
+	/**
+	 *
+	 *
+	 * @param f
+	 * @param airlineID
+	 * @return
+	 */
+	public int insertPlane(@NotNull Fr24Frame f, int airlineID) {
 		try {
 			synchronized (DB_SYNC) {
 				Connection conn = DBConnector.getConnection();
-				//TODO Airline ID anfrage
+				// TODO Airline ID anfrage
 				// insert into planes
 				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.PLANEQUERRY, Statement.RETURN_GENERATED_KEYS);
 				pstmt.setString(1, f.getIcaoAdr());
@@ -259,7 +289,14 @@ public class DBIn extends DBConnector {
 		return -1;
 	}
 
-	public int insertFlight(Fr24Frame f, int planeID) {
+	/**
+	 *
+	 *
+	 * @param f
+	 * @param planeID
+	 * @return
+	 */
+	public int insertFlight(@NotNull Fr24Frame f, int planeID) {
 		try {
 			synchronized (DB_SYNC) {
 				Connection conn = getConnection();
@@ -287,7 +324,13 @@ public class DBIn extends DBConnector {
 		return -1;
 	}
 
-	public void insertTracking(Fr24Frame f, int id) {
+	/**
+	 *
+	 *
+	 * @param f
+	 * @param id
+	 */
+	public void insertTracking(@NotNull Fr24Frame f, int id) {
 		try {
 			synchronized (DB_SYNC) {
 				Connection conn = DBConnector.getConnection();
@@ -309,6 +352,12 @@ public class DBIn extends DBConnector {
 		}
 	}
 
+	/**
+	 *
+	 *
+	 * @param id
+	 * @param timestamp
+	 */
 	public void updateFlightEnd(int id, long timestamp) {
 		try {
 			synchronized (DB_SYNC) {

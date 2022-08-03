@@ -1,17 +1,26 @@
 package planespotter.display;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jfree.chart.ChartPanel;
 import planespotter.constants.*;
 import planespotter.controller.ActionHandler;
 import planespotter.display.models.MenuModels;
 import planespotter.display.models.PaneModels;
 import planespotter.display.models.SearchModels;
+import planespotter.model.nio.LiveLoader;
+import planespotter.throwables.IllegalInputException;
 import planespotter.throwables.NoSuchContainerException;
+import planespotter.util.Utilities;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static planespotter.constants.GUIConstants.*;
+import static planespotter.constants.GUIConstants.DEFAULT_HEAD_TEXT;
+import static planespotter.constants.Sound.SOUND_DEFAULT;
 
 /**
  * @name GUI
@@ -22,6 +31,8 @@ import java.util.List;
  * and has all components -> it contains window that the user sees
  */
 public class GUI {
+    // 'warning shown' flag
+    private static boolean warningShown = false;
     // action  handler
     private final ActionHandler actionHandler;
     // map manager
@@ -51,6 +62,10 @@ public class GUI {
     public JTextField search_airpName;
     public JTextField search_airpTag;
     public JTextField search_airpID;
+    public JTextField search_airlID;
+    public JTextField search_airlTag;
+    public JTextField search_airlName;
+    public JTextField search_airlCountry;
     // file menu
     protected JButton[] fileMenu;
     // data trees
@@ -83,51 +98,52 @@ public class GUI {
      * creates new GUI window
      */
     protected JFrame initialize() {
-        var menuModels = new MenuModels();
-        var panelModels = new PaneModels();
-        var searchModels = new SearchModels();
+        MenuModels menuModels = new MenuModels();
+        PaneModels panelModels = new PaneModels();
+        SearchModels searchModels = new SearchModels();
         // setting up window
-        var window = panelModels.windowFrame(this.actionHandler);
-        var mainPanel = panelModels.mainPanel(window);
+        JFrame window = panelModels.windowFrame(this.actionHandler);
+        JPanel mainPanel = panelModels.mainPanel(window);
         this.addContainer("mainPanel", mainPanel);
-        var desktopPanes = panelModels.desktopPanes(mainPanel);
+        JDesktopPane[] desktopPanes = panelModels.desktopPanes(mainPanel);
         this.addContainer("leftDP", desktopPanes[0]);
         this.addContainer("rightDP", desktopPanes[1]);
-        var titlePanel = panelModels.titlePanel(mainPanel);
+        JPanel titlePanel = panelModels.titlePanel(mainPanel);
         this.addContainer("titlePanel", titlePanel);
-        var viewHeadPanel = panelModels.viewHeadPanel((JDesktopPane) this.getComponent("rightDP"));
+        JPanel viewHeadPanel = panelModels.viewHeadPanel((JDesktopPane) this.getComponent("rightDP"));
         this.addContainer("viewHeadPanel", viewHeadPanel);
-        var listPanel = panelModels.listPanel((JDesktopPane) this.getComponent("rightDP"));
+        JPanel listPanel = panelModels.listPanel((JDesktopPane) this.getComponent("rightDP"));
         this.addContainer("listPanel", listPanel);
-        var mapPanel = panelModels.mapPanel((JDesktopPane) this.getComponent("rightDP"));
+        JPanel mapPanel = panelModels.mapPanel((JDesktopPane) this.getComponent("rightDP"));
         this.addContainer("mapPanel", mapPanel);
 
         // initializing map viewer
         this.mapManager = new MapManager(this, mapPanel, this.actionHandler);
         this.treePlantation = new TreePlantation();
 
-        var menuPanel = panelModels.menuPanel((JDesktopPane) this.getComponent("leftDP"));
+        JPanel menuPanel = panelModels.menuPanel((JDesktopPane) this.getComponent("leftDP"));
         this.addContainer("menuPanel", menuPanel);
-        var infoPanel = panelModels.infoPanel((JDesktopPane) this.getComponent("leftDP"));
+        JPanel infoPanel = panelModels.infoPanel((JDesktopPane) this.getComponent("leftDP"));
         this.addContainer("infoPanel", infoPanel);
-        var startPanel = panelModels.startPanel((JDesktopPane) this.getComponent("rightDP"));
+        JPanel startPanel = panelModels.startPanel((JDesktopPane) this.getComponent("rightDP"));
         this.addContainer("startPanel", startPanel);
-        var searchPanel = panelModels.searchPanel(menuPanel);
+        JPanel searchPanel = panelModels.searchPanel(menuPanel);
         this.addContainer("searchPanel", searchPanel);
                 // initializing search panel components
-                var searchForLabel = searchModels.cmbBoxLabel(searchPanel);
+                JLabel searchForLabel = searchModels.cmbBoxLabel(searchPanel);
                 this.addContainer("searchForLabel", searchForLabel);
-                var searchForCmbBox = searchModels.searchFor_cmbBox(searchPanel, this.actionHandler);
+                JComboBox<String> searchForCmbBox = searchModels.searchFor_cmbBox(searchPanel, this.actionHandler);
                 this.addContainer("searchForCmbBox", searchForCmbBox);
                 //this.searchFor_cmbBox.addItemListener(this.actionHandler);
-                var searchSeperator = searchModels.searchSeperator(searchPanel);
+                JSeparator searchSeperator = searchModels.searchSeperator(searchPanel);
                 this.addContainer("searchSeperator", searchSeperator);
-                var searchMessage = searchModels.searchMessage(searchPanel);
+                JTextArea searchMessage = searchModels.searchMessage(searchPanel);
                 this.addContainer("searchMessage", searchMessage);
                 this.flightSearch = searchModels.flightSearch(searchPanel, this, this.actionHandler);
                 this.planeSearch = searchModels.planeSearch(searchPanel, this, this.actionHandler);
                 this.airportSearch = searchModels.airportSearch(searchPanel, this, this.actionHandler);
-            var bgLabel = panelModels.backgroundLabel((JDesktopPane) this.getComponent("rightDP"));
+                this.airlineSearch = searchModels.airlineSearch(searchPanel, this, this.actionHandler);
+            JLabel bgLabel = panelModels.backgroundLabel((JDesktopPane) this.getComponent("rightDP"));
             this.addContainer("bgLabel", bgLabel);
             var menuBgLabel = panelModels.menuBgLabel((JDesktopPane) this.getComponent("leftDP"));
             this.addContainer("menuBgLabel", menuBgLabel);
@@ -157,6 +173,8 @@ public class GUI {
                 this.addContainer("settingsMapTypeCmbBox", settings_mapTypeCmbBox);
                 var settingsLivePeriodSlider = menuModels.settingsLivePeriodSlider();
                 this.addContainer("settingsLivePeriodSlider", settingsLivePeriodSlider);
+                var settingsFilterButton = menuModels.settingsFilterButton(this.actionHandler);
+                this.addContainer("settingsFilterButton", settingsFilterButton);
                 var settingsButtons = menuModels.settingsButtons(settingsDialog, this.actionHandler);
                 this.addContainer("settingsCancelButton", settingsButtons[0]);
                 this.addContainer("settingsConfirmButton", settingsButtons[1]);
@@ -252,6 +270,7 @@ public class GUI {
         settingsDialog.add(settingsMaxLoadTxtField);
         settingsDialog.add(this.getComponent("settingsMapTypeCmbBox"));
         settingsDialog.add(this.getComponent("settingsLivePeriodSlider"));
+        settingsDialog.add(this.getComponent("settingsFilterButton"));
         settingsDialog.add(this.getComponent("settingsCancelButton"));
         settingsDialog.add(this.getComponent("settingsConfirmButton"));
         var mainPanel = this.getComponent("mainPanel");
@@ -289,6 +308,291 @@ public class GUI {
         allSearchComps.add(this.airportSearch);
         allSearchComps.add(this.areaSearch);
         return allSearchComps;
+    }
+
+    /**
+     * shows a specific warning dialog
+     *
+     * @param type is the warning type which contains the warning message
+     */
+    public void showWarning(Warning type) {
+        this.showWarning(type, null);
+    }
+
+    /**
+     * shows a specific warning dialog
+     *
+     * @param type is the warning type which contains the warning message
+     */
+    public void showWarning(Warning type, @Nullable String addTxt) {
+        if (!warningShown) {
+            var message = type.message();
+            if (addTxt != null) {
+                message += "\n" + addTxt;
+            }
+            warningShown = true;
+            try {
+                JOptionPane.showOptionDialog(
+                        this.getComponent("window"),
+                        message,
+                        "Warning",
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null, null, null); // TODO: 30.06.2022 warning icon
+            } finally {
+                warningShown = false;
+            }
+        }
+    }
+
+    /**
+     * this method is executed when pre-loading is done
+     */
+    public void onInitFinish() {
+        Utilities.playSound(SOUND_DEFAULT.get());
+        this.loadingScreen.dispose();
+        var window = this.getComponent("window");
+        window.setVisible(true);
+        window.requestFocus();
+    }
+
+    public void receiveChart(ChartPanel chartPanel) {
+        this.disposeView();
+
+        var rightDP = (JDesktopPane) this.getComponent("rightDP");
+        rightDP.add(chartPanel);
+        rightDP.moveToFront(chartPanel);
+        chartPanel.setVisible(true);
+
+        this.chartPanel = chartPanel;
+    }
+
+    /**
+     * sets the JTree in listView and makes it visible
+     *
+     * @param tree is the tree to set
+     */
+    public void receiveTree(JTree tree) {
+        var listPanel = (JPanel) this.getComponent("listPanel");
+        tree.setBounds(0, 0, listPanel.getWidth(), listPanel.getHeight());
+        this.addContainer("listScrollPane", new PaneModels().listScrollPane(tree, listPanel));
+        var listScrollPane = this.getComponent("listScrollPane");
+        this.getComponent("listPanel").add(listScrollPane);
+        var rightDP = (JDesktopPane) this.getComponent("rightDP");
+        rightDP.moveToFront(listPanel);
+        listPanel.setVisible(true);
+        var viewHeadText = (JTextField) this.getComponent("viewHeadText");
+        viewHeadText.setText(DEFAULT_HEAD_TEXT + "Flight-List"); // TODO: 21.05.2022 add text
+        // revalidate window -> making the tree visible
+        this.requestComponentFocus(this.listView);
+    }
+
+    /**
+     *
+     * @param flightTree is the flight tree to set
+     * @param dpInfoTree is the @Nullable data point info tree
+     */
+    public void receiveInfoTree(@NotNull final JTree flightTree,
+                                @Nullable final JTree dpInfoTree) {
+        var infoPanel = this.getComponent("infoPanel");
+        infoPanel.removeAll();
+        int width = infoPanel.getWidth();
+        int height = infoPanel.getHeight() / 2;
+        this.getComponent("menuPanel").setVisible(false);
+        flightTree.setBounds(0, 0, width, height + 50);
+        flightTree.setMaximumSize(infoPanel.getSize());
+        flightTree.setBorder(LINE_BORDER);
+        flightTree.setFont(FONT_MENU.deriveFont(12f));
+        infoPanel.add(flightTree);
+        this.addContainer("flightInfoTree", flightTree);
+        if (dpInfoTree != null) {
+            this.receiveDataPointInfoTree(dpInfoTree, width, height);
+        }
+        var leftDP = (JDesktopPane) this.getComponent("leftDP");
+        leftDP.moveToFront(infoPanel);
+        infoPanel.setVisible(true);
+    }
+
+    private void receiveDataPointInfoTree(@NotNull JTree dpInfoTree, int width, int height) {
+        dpInfoTree.setBounds(0, height + 50, width, height - 50);
+        dpInfoTree.setBorder(LINE_BORDER);
+        dpInfoTree.setFont(FONT_MENU.deriveFont(12f));
+        this.getComponent("infoPanel").add(dpInfoTree);
+        this.addContainer("dpInfoTree", dpInfoTree);
+    }
+
+    /**
+     * starts a indeterminate progressBar
+     */
+    public void startProgressBar() {
+        var progressBar = (JProgressBar) this.getComponent("progressBar");
+        progressBar.setVisible(true);
+        progressBar.setIndeterminate(true);
+        progressBar.setString("Loading data...");
+        progressBar.setStringPainted(true);
+    }
+
+    /**
+     * sets the visibility of the progressBar
+     *
+     */
+    public void stopProgressBar() {
+        this.getComponent("progressBar").setVisible(false);
+    }
+
+    /**
+     * revalidates all swing components
+     */
+    public void update() {
+        this.getComponent("window").revalidate();
+    }
+
+    /**
+     * requests focus for a specific component
+     *
+     * @param comp is the component that requests the focus
+     */
+    public void requestComponentFocus(JComponent comp) {
+        comp.requestFocus();
+    }
+
+    /**
+     * loads all search components for a certain search type
+     *
+     * @param type is the search type
+     */
+    public void loadSearch(SearchType type) {
+        this.setCurrentSearchType(type);
+        switch (type) {
+            case FLIGHT -> this.showSearch(this.flightSearch);
+            case PLANE -> this.showSearch(this.planeSearch);
+            case AIRLINE -> this.showSearch(this.airlineSearch);
+            case AIRPORT -> this.showSearch(this.airportSearch);
+            // @deprecated, TODO remove
+            case AREA -> this.showSearch(this.areaSearch);
+        }
+    }
+
+    /**
+     * sets every component from the given search visible
+     *
+     * @param search is the given list of search components
+     */
+    private void showSearch(List<JComponent> search) {
+        var searchModels = this.allSearchModels();
+        for (var comps : searchModels) {
+            var equals = (comps == search);
+            if (comps != null) {
+                for (var c : comps) {
+                    c.setVisible(equals);
+                }
+            }
+        }
+    }
+
+    /**
+     * disposes all views (and opens the src screen)
+     * if no other view is opened, nothing is done
+     */
+    public synchronized void disposeView() {
+        if (this.chartPanel != null) {
+            var rightDP = (JDesktopPane) this.getComponent("rightDP");
+            rightDP.remove(this.chartPanel);
+        }
+        if (this.hasContainer("startPanel")) {
+            this.getComponent("startPanel").setVisible(false);
+        } if (this.hasContainer("listView")) {
+            final var listPanel = this.getComponent("listPanel");
+            var listView = this.getComponent("listView");
+            listPanel.remove(listView);
+            listView.setVisible(false);
+            listPanel.setVisible(false);
+        } if (this.getMap() != null) {
+            final var viewer = this.getMap();
+            final var mapPanel = this.getComponent("mapPanel");
+            viewer.removeAllMapMarkers();
+            viewer.removeAllMapPolygons();
+            viewer.setVisible(false);
+            mapPanel.remove(viewer);
+            mapPanel.setVisible(false);
+        } if (this.hasContainer("flightInfoTree")) {
+            var flightInfo = this.getComponent("flightInfoTree");
+            flightInfo.setVisible(false);
+            this.getComponent("infoPanel").setVisible(false);
+        }
+        var menuPanel = this.getComponent("menuPanel");
+        menuPanel.setVisible(true);
+        var leftDP = (JDesktopPane) this.getComponent("leftDP");
+        leftDP.moveToFront(menuPanel);
+        var viewHeadTxtLabel = (JLabel) this.getComponent("viewHeadTxtLabel");
+        viewHeadTxtLabel.setText(DEFAULT_HEAD_TEXT); // TODO EXTRA methode
+        this.setCurrentViewType(null);
+        this.getMap().setHeatMap(null);
+        //LiveMap.close();
+        LiveLoader.setLive(false);
+    }
+
+    public void setViewHeadBtVisible(boolean b) {
+        this.getComponent("fileButton").setVisible(b);
+        this.getComponent("closeViewButton").setVisible(b);
+    }
+
+    public void setFileMenuVisible(boolean b) {
+        assert this.fileMenu != null;
+        for (var bt : this.fileMenu) {
+            bt.setVisible(b);
+        }
+    }
+
+    public String[] searchInput() throws IllegalInputException {
+        SearchType currentSearchType = this.getCurrentSearchType();
+        String[] inputFields = switch (currentSearchType) {
+            case FLIGHT -> new String[] {
+                    this.search_flightID.getText(),
+                    this.search_callsign.getText()
+            };
+            case PLANE -> new String[] {
+                    this.search_planeID.getText(),
+                    this.search_planetype.getText(),
+                    this.search_icao.getText(),
+                    this.search_tailNr.getText()
+            };
+            case AIRPORT -> new String[] {
+                    this.search_airpID.getText(),
+                    this.search_airpTag.getText(),
+                    this.search_airpName.getText()
+            };
+            case AIRLINE -> new String[] {
+                    this.search_airlID.getText(),
+                    this.search_airlTag.getText(),
+                    this.search_airlName.getText(),
+                    this.search_airlCountry.getText()
+            };
+            default -> null;
+        };
+        if (inputFields == null) {
+            return null;
+        }
+
+        int length = inputFields.length;
+        for (int i = 0; i < length; i++) {
+            // checking strings for illegal characters
+            // or expressions before returning them
+            inputFields[i] = Utilities.checkString(inputFields[i]);
+        }
+        return inputFields;
+    }
+
+    public void clearSearch() {
+        final String blank = "";
+        this.allSearchModels().stream()
+                .filter(Objects::nonNull)
+                .forEach(models -> models.forEach(m -> {
+                    if (m instanceof JTextField jtf) {
+                        jtf.setText(blank);
+                    }
+                }));
+
     }
 
     public TreasureMap getMap() {

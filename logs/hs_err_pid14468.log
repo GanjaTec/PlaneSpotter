@@ -72,7 +72,7 @@ j  org.sqlite.core.DB.newSQLException(I)Lorg/sqlite/SQLiteException;+5
 j  org.sqlite.core.DB.execute(Lorg/sqlite/core/CoreStatement;[Ljava/lang/Object;)Z+214
 J 3529 c2 org.sqlite.jdbc3.JDBC3PreparedStatement.executeUpdate()I (59 bytes) @ 0x000001d0ec8c46dc [0x000001d0ec8c4400+0x00000000000002dc]
 j  planespotter.model.io.DBIn.updateFlightEnd(IJ)V+36
-j  planespotter.unused.KeeperOfTheArchives.run()V+96
+j  planespotter.unused.KeeperOfTheArchivesSenior.run()V+96
 j  java.util.concurrent.ThreadPoolExecutor.runWorker(Ljava/util/concurrent/ThreadPoolExecutor$Worker;)V+92 java.base@17.0.1
 j  java.util.concurrent.ThreadPoolExecutor$Worker.run()V+5 java.base@17.0.1
 j  java.lang.Thread.run()V+11 java.base@17.0.1

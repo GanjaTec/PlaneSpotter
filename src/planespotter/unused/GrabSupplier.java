@@ -16,8 +16,8 @@ public class GrabSupplier implements Supplier {
      * the prior written permission of Flightradar24 AB is not allowed and may result in prosecutions."
      */
 
-    // get duke directly from fr24-database, ATTENTION, this is illegal!
-    public static final String dukeRequest0 = "https://api.flightradar24.com/common/v1/search.json?fetchBy=flight&query=1I145";
+    // getting duke directly from fr24-database (not allowed)
+    private final String dukeRequest0 = "https://api.flightradar24.com/common/v1/search.json?fetchBy=flight&query=1I145";
 
     @Override
     public void supply() {

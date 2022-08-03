@@ -22,22 +22,22 @@ public abstract class Collector<S extends Supplier> {
     protected static final int INSERT_PERIOD_SEC;
     // monitor object for Collector and its subclasses
     protected static final Object SYNC;
-    // initializer
+    // static initializer
     static {
         INSERT_PERIOD_SEC = 100;
         SYNC = new Object();
     }
 
     // 'paused' and 'enabled' flags | is set by the display events
-    public boolean paused, enabled;
+    private boolean paused, enabled;
+    // main thread instance, should be implemented in startCollecting()
+    private Thread mainThread;
     // supplier instance, can be every Supplier-subclass
     protected final S supplier;
     // display, variations should be added
-    protected final SupplierDisplay display; // TODO: 29.06.2022 add variations to Constructor, sth. like TYPE
+    protected final SupplierDisplay display;
     // scheduler to execute tasks
     protected Scheduler scheduler;
-    // main thread instance, should be implemented in startCollecting()
-    protected Thread mainThread;
     // atomic integers as Frame-, Flight- and Plane-counter
     protected final AtomicInteger insertedNow, insertedFrames,
                                   newPlanesNow, newPlanesAll,
@@ -77,12 +77,10 @@ public abstract class Collector<S extends Supplier> {
      * {@code // start code block
      * @Override
      * public void startCollecting() {
-     *     super.startNewMainThread(() -> {
      *         .....................
      *         ...collecting task...
      *         .....................
-     *     }),  "Collector");
-     * }
+     *      }
      * } // end code block
      *
      * you could also create a new class implementing runnable and
@@ -129,4 +127,19 @@ public abstract class Collector<S extends Supplier> {
         this.mainThread.start();
     }
 
+    public boolean isPaused() {
+        return this.paused;
+    }
+
+    public boolean setPaused(boolean paused) {
+        return this.paused = paused;
+    }
+
+    public boolean isEnabled() {
+        return this.enabled;
+    }
+
+    public boolean setEnabled(boolean enabled) {
+        return this.enabled = enabled;
+    }
 }

@@ -1,12 +1,14 @@
 package planespotter.util;
 
+import org.jetbrains.annotations.Range;
+
 import planespotter.dataclasses.Position;
-import planespotter.statistics.HeatMap;
 import planespotter.throwables.InvalidArrayException;
 
 import javax.imageio.ImageIO;
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.FileImageOutputStream;
+import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -17,22 +19,27 @@ import java.util.Vector;
 
 import static planespotter.util.math.MathUtils.divide;
 
-// TODO: 24.06.2022 MOVE BitmapIO methods to this class
-public final class Bitmap {
+/**
+ * @name Bitmap
+ * @author jml04
+ * @version 1.0
+ * @description
+ * the Bitmap class represents a 2D-bitmap,
+ * each value stands e.g. for a certain
+ */
+public class Bitmap {
 
-    private final byte[][] bitmap;
-    public final int width, heigth;
+    // static components
 
-    public Bitmap(byte[][] bitmap) {
-        this.bitmap = bitmap;
-        this.width = bitmap.length;
-        if (this.width == 0) {
-            throw new InvalidArrayException("Array width and length must be higher or equals one!");
-        }
-        this.heigth = bitmap[0].length;
-    }
-
+    /**
+     * creates a Bitmap from pre-filled 2D-int-array
+     * (much easier than creating a Bitmap per constructor)
+     *
+     * @param ints2d is the input 2D-int array, which is automatically converted to byte-array
+     * @return Bitmap from 2D-int array
+     */
     public static Bitmap fromInt2d(int[][] ints2d) {
+
         int width = ints2d.length;
         if (width == 0) {
             throw new InvalidArrayException("input array is empty, width out of range!");
@@ -42,7 +49,7 @@ public final class Bitmap {
             throw new InvalidArrayException("input array is empty, height out of range!");
         }
 
-        int max = HeatMap.maxValue(ints2d); // TODO move method to Utilities or MathUtils
+        int max = Utilities.maxValue(ints2d);
         byte[][] bytes = new byte[width][height];
         int level;
         for (int x = 0; x < width; x++) {
@@ -54,8 +61,17 @@ public final class Bitmap {
         return new Bitmap(bytes);
     }
 
-    public static Bitmap fromPosVector(Vector<Position> positions, float gridSize) {
-        //gridSize = (gridSize == 1) ? (float) 0.9972 : gridSize; // FIXME: 25.06.2022
+    /**
+     * creates a Bitmap from position-vector,
+     * the higher a field value, the more positions in this field
+     *
+     * @param positions is the position vector, where each bitmap field
+     *                  represents specific coordinates and each value stands
+     *                  for the number of positions in a certain field
+     * @param gridSize is the bitmap grid size, 1 is normal (360x180), 0.5 is the double (720x360)
+     * @return Bitmap instance, created by pos-vector under a certain grid size
+     */
+    public static Bitmap fromPosVector(Vector<Position> positions, @Range(from = 0, to = 2) float gridSize) {
 
         int width = (int) divide(360., gridSize) + 1;
         int height = (int) divide(180., gridSize) + 1;
@@ -65,21 +81,27 @@ public final class Bitmap {
                 .forEach(arr -> Arrays.fill(arr, 0));
 
         int posX, posY;
-        for (var pos : positions) {
+        for (Position pos : positions) {
             posX = (int) divide(pos.lon() + 180, gridSize); // FIXME: 26.06.2022
             posY = (int) divide(pos.lat() + 90, gridSize); // FIXME: 26.06.2022
-            // if ?
-            if (posX < width && posY < height) {
+            // if ? TODO if necessary
+            //if (posX < width && posY < height) {
                 ints2d[posX][posY]++;
-            } else {
+            /*} else {
                 ints2d[posX - 1][posY - 1]++;
-            }
+            }*/
         }
         return Bitmap.fromInt2d(ints2d);
     }
 
-    public static Bitmap fromHeatMap(HeatMap heatMap) {
-        return new Bitmap(heatMap.getHeatMap());
+    /**
+     *
+     *
+     * @param img
+     * @return
+     */
+    public static Bitmap fromImage(BufferedImage img) {
+        return null;
     }
 
     /**
@@ -89,11 +111,15 @@ public final class Bitmap {
      * @param file
      * @return
      */
-    public static File write(Bitmap bitmap, File file) {
-        long startTime = System.currentTimeMillis();
+    @Deprecated(since = ".bmp with ImageIO")
+    public static File write0000(Bitmap bitmap, File file) {
+
+        byte[] bytes;
+        ImageOutputStream outputStream;
+        long startTime = Time.nowMillis();
         try {
-            byte[] bytes = bitmap.getByteArray();
-            var outputStream = new FileImageOutputStream(file);
+            bytes = bitmap.getByteArray();
+            outputStream = new FileImageOutputStream(file);
             outputStream.writeInt(bitmap.width);
             outputStream.writeInt(bitmap.heigth);
             outputStream.write(bytes);
@@ -101,8 +127,8 @@ public final class Bitmap {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            float elapsed = (float) (System.currentTimeMillis() - startTime) / 1000;
-            System.out.println("Wrote Bitmap file '" + file.getName() + "' in " + elapsed + " seconds!");
+            long elapsed = Time.elapsedMillis(startTime);
+            System.out.println("Wrote Bitmap file '" + file.getName() + "' in " + elapsed + " milliseconds!");
         }
         return file;
     }
@@ -114,11 +140,23 @@ public final class Bitmap {
      * @param filename
      * @return
      */
-    public static File write(Bitmap bitmap, String filename) {
+    @Deprecated(since = ".bmp with ImageIO")
+    public static File write(Bitmap bitmap, String filename)
+            throws IOException {
+
+        // using write method with file parameter
         return write(bitmap, new File(filename));
     }
 
-    public static File writeBmp(Bitmap bitmap, File file)
+    /**
+     *
+     *
+     * @param bitmap
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    public static File write(Bitmap bitmap, File file)
             throws IOException {
 
         ImageIO.write(bitmap.toImage(), "BMP", file);
@@ -132,20 +170,21 @@ public final class Bitmap {
      * @return
      * @throws FileNotFoundException
      */
-    public static Bitmap read(File file)
+    @Deprecated(since = ".bmp with ImageIO")
+    public static Bitmap read0000(File file)
             throws IOException {
 
         if (!file.exists()) {
             throw new FileNotFoundException("File not found!");
         }
         FileImageInputStream inputStream;
-        int width, heigth;
+        int width, heigth, length;
         byte[] bytes;
         byte[][] bitmap;
         inputStream = new FileImageInputStream(file);
         width = inputStream.readInt();
         heigth = inputStream.readInt();
-        int length = width * heigth;
+        length = width * heigth;
         bytes = new byte[length];
         inputStream.read(bytes);
         inputStream.close();
@@ -160,6 +199,12 @@ public final class Bitmap {
         return new Bitmap(bitmap);
     }
 
+    public static BufferedImage readImage(File file)
+        throws IOException {
+
+        return ImageIO.read(file);
+    }
+
     /**
      *
      *
@@ -170,29 +215,64 @@ public final class Bitmap {
     public static Bitmap read(String filename)
             throws IOException {
 
-        return read(new File(filename));
+        return /*read(new File(filename));*/null;
     }
 
+    // instance fields
+
+    // bitmap as 2D-byte array (memory-efficient)
+    private final byte[][] bitmap;
+    // bitmap width and height
+    public final int width, heigth;
+
+    /**
+     * constructor for Bitmap,
+     * needs a filled 2D-bitmap-array which must be created before.
+     * not easy to use, maybe look at static methods
+     * Bitmap.fromInt2d(...) or Bitmap.fromPosVector(...)
+     *
+     * @param bitmap is the bitmap 2D-array (pre-filled)
+     */
+    public Bitmap(byte[][] bitmap) {
+        this.bitmap = bitmap;
+        this.width = bitmap.length;
+        if (this.width == 0) {
+            throw new InvalidArrayException("Array width and length must be higher or equals one!");
+        }
+        this.heigth = bitmap[0].length;
+    }
+
+    /**
+     *
+     *
+     * @return
+     */
     public BufferedImage toImage() {
         var img = new BufferedImage(this.width, this.heigth, BufferedImage.TYPE_INT_RGB);
         short lvl;
-        //var hexStr = new StringBuilder();
+        Color color;
         for (int x = 0; x < this.width; x++) {
             for (int y = 0; y < this.heigth; y++) {
+                // this should be an unsigned byte,
+                //  but there is no unsigned byte in Java,
+                //  so we use short here
                 lvl = (short) (255 - (this.bitmap[x][y] + 128));
-                //hexStr.append(Utilities.decToHex(lvl)).append(Utilities.decToHex(lvl)).append(Utilities.decToHex(lvl));
-                //img.setRGB(x, y, (int) (lvl * MathUtils.x3(16))); // FIXME: 25.06.2022 right color code!
-                //img.setRGB(x, y, (lvl == 0) ? Utilities.hexStrToInt(Integer.toHexString(Color.WHITE.getRGB())) : Utilities.hexStrToInt(Integer.toHexString(Color.BLACK.getRGB())));
-                var color = new Color(lvl, lvl, lvl);
+                color = new Color(lvl, lvl, lvl);
                 img.setRGB(x, y, color.getRGB());
                 // TODO: 27.06.2022
-                var graphics = img.createGraphics();
+ /*               var graphics = img.createGraphics();
                 graphics.rotate(StrictMath.toRadians(180));
+*/
             }
         }
         return img;
     }
 
+    /**
+     *
+     *
+     * @return
+     */
     public byte[] getByteArray() {
         byte[] bytes = new byte[this.width * this.heigth];
         int i = 0;
@@ -204,23 +284,44 @@ public final class Bitmap {
         return bytes;
     }
 
+    /**
+     *
+     *
+     * @return
+     */
     public byte[][] getBitmap() {
         return this.bitmap;
     }
 
+    /**
+     *
+     *
+     * @param obj
+     * @return
+     */
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
-        var that = (Bitmap) obj;
+        Bitmap that = (Bitmap) obj;
         return Arrays.deepEquals(this.bitmap, that.bitmap);
     }
 
+    /**
+     *
+     *
+     * @return
+     */
     @Override
     public int hashCode() {
         return System.identityHashCode(this);
     }
 
+    /**
+     *
+     *
+     * @return
+     */
     @Override
     public String toString() {
         return String.valueOf(this);

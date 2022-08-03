@@ -90,15 +90,15 @@ public final class Areas {
 	 *
 	 * @return Array of Areas (whole world)
 	 */
+	// TODO: 02.08.2022 2. method getWorldAreaRaster1D(float gridSize) which uses this one
 	public static synchronized String[] getWorldAreaRaster1D(double lonVel, double latVel) {
-		//double latVel = 15., lonVel = 30.; // TODO make parameter(s) for grid size
 		double lat, lon = -180.;
 		byte xLength = (byte) (360 / lonVel),
 			 yLength = (byte) (180 / latVel);
 
-		final var areaRaster2D = new String[xLength][yLength]; // xLength * yLength Raster of Areas
-		final var areaRaster1D = new String[xLength * yLength]; // 6 * 6 Raster as 1D-Array
-		final var index = new AtomicInteger(0);
+		final String[][] areaRaster2D = new String[xLength][yLength]; // xLength * yLength Raster of Areas
+		final String[] areaRaster1D = new String[xLength * yLength]; // 6 * 6 Raster as 1D-Array
+		final AtomicInteger index = new AtomicInteger(0);
 
 		for (byte x = 0; x < xLength; x++) {
 			lat = 90.;
@@ -121,7 +121,7 @@ public final class Areas {
 		int itaSwiAuLength = ITA_SWI_AU.length;
 		final int length = eastLength + gerLength + itaSwiAuLength;
 		var areas = new String[length];
-		int a = 0, b = 0, c = 0; // counter
+		int a = 0, b = 0, c = 0; // counters
 		for (int addIdx = 0; addIdx < length; addIdx++) {
 			if (a < eastLength) {
 				areas[addIdx] = EASTERN_FRONT[a];

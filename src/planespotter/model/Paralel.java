@@ -2,7 +2,7 @@ package planespotter.model;
 
 import planespotter.constants.Areas;
 import planespotter.model.nio.Fr24Supplier;
-import planespotter.unused.KeeperOfTheArchives;
+import planespotter.unused.KeeperOfTheArchivesSenior;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,7 +25,7 @@ public class Paralel {
 			ses.scheduleAtFixedRate(s, 10+(i*5), 60, TimeUnit.SECONDS);
 		}
 
-		KeeperOfTheArchives bofh = new KeeperOfTheArchives(areay.length, 1200L);
+		KeeperOfTheArchivesSenior bofh = new KeeperOfTheArchivesSenior(areay.length, 1200L);
 		ses.scheduleAtFixedRate(bofh, 0, 20, TimeUnit.MINUTES);
 	}
 	
@@ -46,7 +46,7 @@ public class Paralel {
 			i += 1;
 	    }
 
-		KeeperOfTheArchives bofh = new KeeperOfTheArchives(resultList.length, 1200L);
+		KeeperOfTheArchivesSenior bofh = new KeeperOfTheArchivesSenior(resultList.length, 1200L);
 		executor.execute(bofh);
 		executor.shutdown();
 		}

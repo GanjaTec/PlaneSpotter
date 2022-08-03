@@ -11,7 +11,8 @@ import java.sql.SQLException;
  *
  * record DBResult is a DB-Result that contains a ResultSet and a Connection
  */
-public record DBResult(ResultSet resultSet, Connection connection) {
+public record DBResult(ResultSet resultSet, Connection connection)
+        implements AutoCloseable {
 
     /**
      * closes a db result

@@ -8,6 +8,8 @@ import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.MapData;
 import planespotter.constants.UserSettings;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.util.Logger;
+import planespotter.util.Time;
 
 import javax.swing.*;
 import java.io.*;
@@ -34,80 +36,84 @@ public class FileWizard {
     }
 
     /**
-     * saves the config as a .cfg file
+     * saves the config as a .psc file
+     * uses a FileWriter to write the config file,
+     * no special file format, just '.psc' ending
      */
     public synchronized void saveConfig() {
-        try {
-            Controller.getLogger().log("saving config...", fileWizard);
-            var config = new File(Paths.RESOURCE_PATH + "config.psconfig");
-            if (!config.exists()) { // creating new file if there is no existing one
+        File config;
+        Logger log = Controller.getInstance().getLogger();
+        log.log("saving config...", fileWizard);
+        config = new File(Paths.RESOURCE_PATH + "config.psc");
+        if (!config.exists()) {// creating new file if there is no existing one
+            try {
                 config.createNewFile();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                return;
             }
-            var writer = new FileWriter(config);
-            writer.write("maxThreadPoolSize: " + MAX_THREADPOOL_SIZE + "\n");
-            writer.write("maxLoadedFlights: " + UserSettings.getMaxLoadedData() + "\n");
-            writer.close();
+        }
+        try (Writer writer = new FileWriter(config)) {
+
+                writer.write("maxThreadPoolSize: " + MAX_THREADPOOL_SIZE + "\n");
+                writer.write("maxLoadedFlights: " + UserSettings.getMaxLoadedData() + "\n");
+                log.successLog("configuration saved successfully!", fileWizard);
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            Controller.getLogger().sucsessLog("configuration saved sucsessfully!", fileWizard);
         }
     }
 
     /**
-     * saves a flight route in a .psp (.planespotter) file
+     * reads a flight route from a '.pls' file
+     * takes the route data from a MapData object,
+     * which is loaded from file
+     *
+     * @param selected is the selected file from the file chooser
      * @return the loaded route as a data point vector
      */
-    public synchronized Vector<DataPoint> loadPlsFile(JFileChooser chooser) throws DataNotFoundException {
-        var ctrl = Controller.getInstance();
-        var file = chooser.getSelectedFile();
-        if (file.exists()) {
+    @NotNull
+    public synchronized MapData loadPlsFile(@NotNull File selected) throws DataNotFoundException {
+        if (selected.exists()) {
             try {
-                var route = this.readMapData(file).data();
-                ctrl.done();
-                return route;
+                return this.readMapData(selected);
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }
-        throw new DataNotFoundException("file couldn't be found!");
+        throw new DataNotFoundException("Error! File not found or invalid MapData!");
     }
 
     /**
-     * saves a flight route in a .psp (.planespotter) file
+     * saves a flight route in a .pls file,
+     * uses a MapData object to store the data
      */
-    public synchronized void savePlsFile(@NotNull MapData mapData, File file, Controller ctrl)
+    public synchronized void savePlsFile(@NotNull MapData mapData, @NotNull File file)
             throws DataNotFoundException, FileAlreadyExistsException {
 
         try {
             if (!file.exists()) {
                 if (!file.createNewFile()) {
-                    throw new FileAlreadyExistsException("");
+                    throw new FileAlreadyExistsException("File already exists!");
                 }
             }
-            if (!mapData.data().isEmpty()) {
-                this.writeMapData(file, mapData);
-            } else {
+            if (mapData.data().isEmpty()) {
                 throw new DataNotFoundException("Couldn't save flight route, loaded data is empty!");
             }
+            this.writeMapData(file, mapData);
+
         } catch (FileAlreadyExistsException fae) {
             throw new FileAlreadyExistsException("File already exists");
         } catch (IOException ioe) {
             ioe.printStackTrace();
-        } finally {
-            ctrl.done();
         }
     }
 
     // TODO will be replaced with log4j (-> saving logs)
-    public synchronized void saveLogFile(@Nullable String prefixName, String logged) {
+    public synchronized void saveLogFile(@Nullable String prefixName, @NotNull String logged) {
         try {
-            if (logged == null) {
-                throw new IllegalArgumentException("logged data might not be null!");
-            }
-            var prefix = (prefixName == null) ? "log_" : prefixName + "_";
-            var filename = prefix + (this.hashCode()/2 + logged.hashCode()/2) + ".log";
-            var file = new File("logs\\" + filename);
+            String prefix = (prefixName == null) ? "log_" : prefixName + "_";
+            String filename = prefix + Time.nowMillis() + ".log";
+            File file = new File("logs\\" + filename);
             if (!file.exists()) {
                 file.createNewFile();
             }
@@ -121,37 +127,41 @@ public class FileWizard {
      * @param file is the file to read from
      * @return the flight route hash map
      */
-    private synchronized MapData readMapData(File file)
+    @NotNull
+    private synchronized MapData readMapData(@NotNull File file)
             throws ClassCastException, IOException, ClassNotFoundException {
-        var fis = new FileInputStream(file);
-        var ois = new ObjectInputStream(fis);
-        var mapData = (MapData) ois.readObject();
-        ois.close();
-        fis.close();
-        return mapData;
+
+        // replaced default try-finally block with try-with-resource block,
+        //  which has automatic resource-management
+        try (FileInputStream fis = new FileInputStream(file);
+             ObjectInputStream ois = new ObjectInputStream(fis)) {
+
+            return (MapData) ois.readObject();
+        }
     }
 
     /**
      *
      */
-    private synchronized void writeMapData(File toWrite, MapData mapData)
+    private synchronized void writeMapData(@NotNull File toWrite, @NotNull MapData mapData)
             throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(toWrite);
+             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
 
-        var fos = new FileOutputStream(toWrite);
-        var oos = new ObjectOutputStream(fos);
-        oos.writeObject(mapData);
-        oos.close();
-        fos.close();
+            oos.writeObject(mapData);
+        }
     }
 
-    private synchronized void writeLog(File file, String text)
+    private synchronized void writeLog(@NotNull File file, @NotNull String text)
             throws IOException {
 
-        var writer = new FileWriter(file);
-        writer.write(text);
-        writer.close();
+        try (FileWriter writer = new FileWriter(file)) {
+
+            writer.write(text);
+        }
     }
 
+    @NotNull
     public static FileWizard getFileWizard() {
         return fileWizard;
     }

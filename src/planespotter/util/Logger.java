@@ -22,7 +22,8 @@ import static planespotter.constants.Images.PAPER_PLANE_ICON;
  * @author jml04
  * version 1.0
  *
- * class Logger represents the logger for console this.output
+ * class Logger represents a logger which logs
+ * on a JTextPane in an external JFrame
  */
 public class Logger extends JFrame implements ComponentListener {
 
@@ -72,7 +73,6 @@ public class Logger extends JFrame implements ComponentListener {
         super.add(this.scrollPane);
         super.setVisible(true);
         this.sign(2);
-        this.sign(2);
     }
 
     /**
@@ -89,7 +89,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param txt
      * @param ref
      */
-    public void sucsessLog(String txt, @Nullable Object ref) {
+    public void successLog(String txt, @Nullable Object ref) {
         this.logInColor(txt, new Color(40, 220, 70), ref);
     }
 
@@ -175,8 +175,8 @@ public class Logger extends JFrame implements ComponentListener {
 
     public void close() {
         var loggedText = out.getText();
-        FileWizard.getFileWizard().saveLogFile(null, loggedText);
-        this.dispose();
+        FileWizard.getFileWizard().saveLogFile("logged", loggedText);
+        super.dispose();
     }
 
     // overrides / implemented methods

@@ -2,15 +2,17 @@ package planespotter.controller;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.jetbrains.annotations.Range;
+
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
+import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
 
 import planespotter.model.io.DBIn;
 import planespotter.model.io.FileWizard;
+import planespotter.model.nio.LiveLoader;
 import planespotter.util.LRUCache;
 import planespotter.constants.UserSettings;
 import planespotter.constants.ViewType;
@@ -20,7 +22,6 @@ import planespotter.display.*;
 import planespotter.display.models.MenuModels;
 import planespotter.model.*;
 import planespotter.model.io.DBOut;
-import planespotter.statistics.RasterHeatMap;
 import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.IllegalInputException;
@@ -31,13 +32,15 @@ import planespotter.util.Utilities;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.nio.file.FileAlreadyExistsException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Vector;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static planespotter.constants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
 import static planespotter.constants.ViewType.*;
@@ -52,48 +55,29 @@ import static planespotter.constants.ViewType.*;
  * main controller - responsible for connection between model and view
  * has static controller, scheduler, gui, action handler and logger instance
  */
+// TODO: 15.07.2022 make most instances not static anymore
 public abstract class Controller {
 
     // static fields
 
     // runtime instance
-    public static final Runtime RUNTIME;
+    public static final Runtime runtime;
     // project root path / working directory
     public static final String ROOT_PATH;
     // ONLY Controller instance
     private static final Controller INSTANCE;
-    // scheduler, contains executor services / thread pools
-    private static final Scheduler SCHEDULER;
-    // gui action handler (contains listeners)
-    private static final ActionHandler ACTION_HANDLER;
-    // only GUI instance
-    private static final GUI GUI;
-    // gui adapter
-    public static final GUIAdapter GUI_ADAPTER; // TODO private with GETTER
-    // proto test-cache
-    public static final LRUCache<String, Object> CACHE;
     // live data loading period
-    private static int LIVE_DATA_PERIOD_SEC = 2;
-    // supplier enabled flag, indicates if the supplier is running right now
-    // TODO: 28.06.2022 move to Supplier Mains
-    private static boolean supplierRunning;
+    private int LIVE_DATA_PERIOD_SEC = 2;
     // logger for whole program
-    private static Logger logger;
+    private Logger logger;
     // live data thread
-    private static Thread liveThread;
+    private Thread liveThread;
     // static initializer
     static {
         // initializing 'root' members
-        RUNTIME = Runtime.getRuntime();
+        runtime = Runtime.getRuntime();
         INSTANCE = new Controller() {};
         ROOT_PATH = Utilities.getAbsoluteRootPath();
-        // initializing one-instance members
-        SCHEDULER = new Scheduler();
-        ACTION_HANDLER = new ActionHandler();
-        GUI = new GUI(ACTION_HANDLER);
-        GUI_ADAPTER = new GUIAdapter(GUI);
-        CACHE = new LRUCache<>(40); // TODO best cache size
-        setSupplierRunning(false);
     }
 
     // instance fields
@@ -108,14 +92,23 @@ public abstract class Controller {
     public volatile Vector<DataPoint> loadedData;
     // liveData contains all loaded live-Flights
     public volatile Vector<Flight> liveData;
+    // scheduler, contains executor services / thread pools
+    private final Scheduler scheduler;
+    // only GUI instance
+    private final GUI gui;
+    // proto test-cache
+    public final LRUCache<String, Object> cache;
 
     /**
-     * private constructor for Controller,
+     * private constructor for Controller main instance,
      * get instance with Controller.getInstance()
      */
     private Controller() {
         this.hashCode = System.identityHashCode(INSTANCE);
         this.clicking = false;
+        this.scheduler = new Scheduler();
+        this.gui = new GUI(ActionHandler.getActionHandler());
+        this.cache = new LRUCache<>(40); // TODO best cache size
     }
 
     /**
@@ -128,42 +121,31 @@ public abstract class Controller {
     /**
      * @return main logger
      */
-    public static Logger getLogger() {
-        return logger;
+    public Logger getLogger() {
+        return this.logger;
     }
 
     /**
      * @return main scheduler
      */
-    public static Scheduler getScheduler() {
-        return SCHEDULER;
+    public Scheduler getScheduler() {
+        return scheduler;
     }
 
     /**
-     * @return main gui
+     * @return main GUI instance
      */
-    public static GUI getGUI() {
-        return GUI;
+    public GUI getGUI() {
+        return this.gui;
     }
 
     /**
-     * @return main ActionHandler
+     * sets the period for the live-data loader in seconds
+     *
+     * @param sec is the period in seconds
      */
-    public static ActionHandler getActionHandler() {
-        return ACTION_HANDLER;
-    }
-
-    @SuppressWarnings(value = "unused")
-    public static boolean isSupplierRunning() {
-        return supplierRunning;
-    }
-
-    public static void setLiveDataPeriodSec(@Range(from = 1, to = 10) int s) {
-        LIVE_DATA_PERIOD_SEC = s;
-    }
-
-    public static void setSupplierRunning(boolean run) {
-        supplierRunning = run;
+    public void setLiveDataPeriod(@Range(from = 1, to = 10) int sec) {
+        LIVE_DATA_PERIOD_SEC = sec;
     }
 
     /**
@@ -173,7 +155,7 @@ public abstract class Controller {
     public synchronized void start() {
         this.initialize();
         this.openWindow();
-        GUI_ADAPTER.onInitFinish();
+        this.gui.onInitFinish();
         this.done();
     }
 
@@ -186,7 +168,7 @@ public abstract class Controller {
             logger = new Logger(this);
             logger.log("initializing Controller...", this);
             this.initTasks();
-            logger.sucsessLog("Controller initialized sucsessfully!", this);
+            logger.successLog("Controller initialized sucsessfully!", this);
             this.initialized = true;
         }
     }
@@ -198,14 +180,14 @@ public abstract class Controller {
         if (!this.initialized) {
             logger.log("initializing Executors...", this);
             // executing on-start tasks
-            liveThread = SCHEDULER.runThread(this::liveDataTask, "Live-Data Loader", true, Scheduler.HIGH_PRIO);
-            SCHEDULER.schedule(() -> {
+            liveThread = scheduler.runThread(this::liveDataTask, "Live-Data Loader", true, Scheduler.HIGH_PRIO);
+            scheduler.schedule(() -> {
                         if (!this.loading) FileWizard.getFileWizard().saveConfig();
                     }, 60, 300);
             // TODO: 02.07.2022 insert-while-live-option (as permanent parallel like live Data task)
             //SCHEDULER.schedule(() -> DBIn.insert(SCHEDULER, 50), "Insert Live Data", 20, 10);
 
-            logger.sucsessLog("Executors initialized sucsessfully!", this);
+            logger.successLog("Executors initialized sucsessfully!", this);
         }
     }
 
@@ -214,12 +196,12 @@ public abstract class Controller {
      */
     private synchronized void openWindow() {
         this.setLoading(true);
-        logger.log("initialising GUI...", GUI);
+        logger.log("initialising GUI...", this.gui);
         // starting loading screen
-        SCHEDULER.exec(GUI::startLoadingScreen, "Loading Screen", false, Scheduler.MID_PRIO, false);
+        scheduler.exec(this.gui::startLoadingScreen, "Loading Screen", false, Scheduler.MID_PRIO, false);
 
-        logger.sucsessLog("GUI initialized sucsessfully!", GUI);
-        GUI.getComponent("window").setVisible(true);
+        logger.successLog("GUI initialized sucsessfully!", this.gui);
+        this.gui.getComponent("window").setVisible(true);
         this.done();
     }
 
@@ -232,22 +214,28 @@ public abstract class Controller {
      *                              should be inserted or removed
      */
     public synchronized void shutdown(boolean insertRemainingFrames) {
-        int option = JOptionPane.showConfirmDialog(GUI.getComponent("window"),
+        // confirm dialog for shutdown
+        int option = JOptionPane.showConfirmDialog(this.gui.getComponent("window"),
                 "Do you really want to exit PlaneSpotter?",
                     "Exit", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        // yes-option
         if (option == JOptionPane.YES_OPTION) {
             logger.infoLog("Shutting down program, please wait...", this);
-            GUI.getComponent("progressBar").setVisible(true);
-            LiveData.setLive(false);
-            if (liveThread != null) {
+            // disabling tasks
+            this.gui.getComponent("progressBar").setVisible(true);
+            LiveLoader.setLive(false);
+            if (liveThread != null && liveThread.isAlive()) {
                 liveThread.interrupt();
             }
             this.setLoading(true);
+            // saving the configuration in 'config.psc'
             FileWizard.getFileWizard().saveConfig();
+            // inserting remaining frames, if option is enabled
             if (insertRemainingFrames) {
-                DBIn.insertRemaining(SCHEDULER, 1000);
+                DBIn.insertRemaining(scheduler, 1000);
             }
-            while (SCHEDULER.active() > 0) {
+            // waiting for remaining tasks
+            while (scheduler.active() > 0) {
                 try {
                     this.wait(1000);
                 } catch (InterruptedException e) {
@@ -255,25 +243,36 @@ public abstract class Controller {
                 }
             }
             this.notifyAll();
+            // disabling last tasks
             DBIn.setEnabled(false);
             this.done();
             logger.close();
-            boolean shutdown = SCHEDULER.shutdown(1);
+            // shutting down scheduler
+            boolean shutdown = scheduler.shutdown(1);
             byte out = MathUtils.toBinary(shutdown);
+            // shutting down the VM
             System.exit(out);
 
         }
     }
 
-    private void emergencyShutdown(Throwable problem) {
-        problem.printStackTrace();
-        FileWizard.getFileWizard().saveLogFile("error", System.out.toString());
-        RUNTIME.halt(-1);
+    private void emergencyShutdown(@Nullable Throwable problem) {
+        // printing error stacktrace
+        if (problem != null) {
+            problem.printStackTrace();
+        }
+        // saving last error log
+        FileWizard.getFileWizard().saveLogFile("ps-crash", System.out.toString());
+        // shutting down VM directly, won't wait for any tasks
+        runtime.halt(-1);
     }
 
     private synchronized void liveDataTask() {
+        // loading init-live-data
         this.loadLiveData();
+        // endless live-data task
         for (;;) {
+            // trying to await the live-data period
             try {
                 this.wait(TimeUnit.SECONDS.toMillis(LIVE_DATA_PERIOD_SEC));
             } catch (InterruptedException e) {
@@ -281,45 +280,54 @@ public abstract class Controller {
             } finally {
                 this.notify();
             }
-            if (LiveData.isLive()) {
+            // loading live-data, if live-map is enabled
+            if (LiveLoader.isLive()) {
                 this.loadLiveData();
             }
         }
     }
 
     /**
-     * loads the live data from Fr24 directly into the View
-     * @indev
+     * loads Fr24-data directly into the liveData-Collection,
+     * but not into the DB
+     * @see LiveLoader
      */
     private synchronized void loadLiveData() {
-        this.setLoading(true);
 
-        this.liveData = LiveData.directLiveData(SCHEDULER, GUI.getMap());
-        var map = GUI.getMap();
-        var markers = new ArrayList<MapMarker>();
-        this.liveData.stream()
-                .map(flight -> {
-                    final var pos = flight.dataPoints().get(0).pos();
-                    final double lat = pos.lat(),
-                            lon = pos.lon();
-                    return new MapMarkerDot(new Coordinate(lat, lon));
-                })
-                .forEach(m -> {
-                    m.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
-                    markers.add(m);
-                });
-        map.setMapMarkerList(markers);
-        this.done();
+        List<MapMarker> markerList;
+        TreasureMap map;
+        // checking for 'already loading' and setting controller loading
+        if (!this.isLoading()) {
+            this.setLoading(true);
+            map = this.gui.getMap();
+            // loading direct live-data
+            this.liveData = LiveLoader.loadDirectly(scheduler, map);
+            // transforming liveData-flight-Vector into list of MapMarkers
+            markerList = this.liveData.stream()
+                    .map(flight -> {
+                        // transforming to MapMarker
+                        final Position pos = flight.dataPoints().get(0).pos();
+                        final double lat = pos.lat(),
+                                     lon = pos.lon();
+                        final MapMarkerDot marker = new MapMarkerDot(new Coordinate(lat, lon));
+                        marker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
+                        return marker;
+                    })
+                    .collect(Collectors.toList());
+            // setting new map marker list on the map
+            map.setMapMarkerList(markerList);
+            this.done();
+        }
     }
 
     /**
-     * this method is executed when a loading process is done
-     * sets this.loading to false
+     * executed when a loading process is done, will turn
+     * loading-flag to false and stop the GUI-progressBar
      */
     public void done() {
         this.loading = false;
-        if (GUI != null) {
-            GUI_ADAPTER.stopProgressBar();
+        if (this.gui != null) {
+            this.gui.stopProgressBar();
         }
     }
 
@@ -329,54 +337,69 @@ public abstract class Controller {
      * @param type is the ViewType, sets the content type for the
      *             created view (e.g. different List-View-Types)
      * @param headText is the view-head-text
-     * @param data are the flight-ids to show, may be null if the data is
-     *             collected directly from this.loadedData
      */
     public synchronized void show(@NotNull ViewType type,
-                                  @NotNull final String headText,
-                                  @Nullable String... data) {
-        var mapManager = GUI.getMapManager();
+                                  @NotNull final String headText) {
+
+        MapManager mapManager = this.gui.getMapManager();
+        DBOut dbOut = DBOut.getDBOut();
+
         this.setLoading(true);
-        var dbOut = DBOut.getDBOut();
-        // TODO ONLY HERE: dispose GUI view(s)
-        GUI_ADAPTER.disposeView();
-        GUI.setCurrentViewType(type);
+
+        this.gui.disposeView();
+        this.gui.setCurrentViewType(type);
         switch (type) {
             case LIST_FLIGHT -> this.showFlightList(dbOut);
             case MAP_LIVE -> this.showLiveMap(headText, mapManager);
             case MAP_FROMSEARCH -> this.showSearchMap(headText, mapManager);
-            case MAP_TRACKING -> this.showTrackingMap(headText, mapManager, dbOut, data);
-            case MAP_TRACKING_NP -> this.showTrackingMapNoPoints(headText, mapManager, data);
+            case MAP_TRACKING -> this.showTrackingMap(headText, mapManager);
+            case MAP_TRACKING_NP -> this.showTrackingMapNoPoints(headText, mapManager);
+            // significance map should be improved
             case MAP_SIGNIFICANCE -> this.showSignificanceMap(headText, mapManager, dbOut);
-            case MAP_HEATMAP -> this.showRasterHeatMap(headText, mapManager, dbOut);
+            case MAP_HEATMAP -> {}
         }
         this.done();
-        logger.sucsessLog("view loaded!", this);
+        logger.successLog("view loaded!", this);
     }
 
     /**
-     * search method for the GUI-search
+     * search method for the this.gui-search
      *
      * @param inputs are the inputs in the search fields
      * @param button is the clicked search button, 0 = LIST, 1 = MAP
      */
-    // TODO: 24.05.2022 DEBUG PLANE SEARCH
-    public void search(String[] inputs, int button) { // TODO button abfragen??
-        var gad = GUI_ADAPTER;
-        this.setLoading(true);
-        try {
-            gad.startProgressBar();
-            var search = new Search();
-            switch (GUI.getCurrentSearchType()) {
-                case AIRLINE -> {} // TODO implement
-                case AIRPORT -> this.searchForAirport(inputs, button, search);
-                case FLIGHT -> this.searchForFlight(inputs, button, search);
-                case PLANE -> this.searchForPlane(inputs, button, search);
+    // TODO: 24.05.2022 DEBUG PLANE SEARCH, AIRLINE SEARCH
+    public void search(String[] inputs, int button) {
+
+        Search search;
+        if (button == 1) {
+            this.setLoading(true);
+            this.gui.startProgressBar();
+            search = new Search();
+            try {
+                switch (this.gui.getCurrentSearchType()) {
+                    case AIRLINE -> {
+                        this.loadedData = search.forAirline(inputs);
+                        this.show(ViewType.MAP_TRACKING_NP, "Flight Search Results");
+                    }
+                    case AIRPORT -> {
+                        this.loadedData = search.forAirport(inputs);
+                        this.show(ViewType.MAP_TRACKING_NP, "Flight Search Results");
+                    }
+                    case FLIGHT -> {
+                        this.loadedData = search.forFlight(inputs);
+                        this.show(ViewType.MAP_TRACKING, "Flight Search Results");
+                    }
+                    case PLANE -> {
+                        this.loadedData = search.forPlane(inputs);
+                        this.show(ViewType.MAP_FROMSEARCH, "Plane Search Results");
+                    }
+                }
+            } catch (DataNotFoundException e) {
+                this.handleException(e);
+            } finally {
+                this.gui.stopProgressBar();
             }
-        } catch (DataNotFoundException e) {
-            this.handleException(e);
-        } finally {
-            gad.stopProgressBar();
         }
     }
 
@@ -385,50 +408,64 @@ public abstract class Controller {
      * @param data [0] and [1] must be filled
      */
     public void confirmSettings(String... data) {
+
+        TileSource currentMapSource;
+        int maxLoadedData, livePeriodSec;
+
         if (data[0] == null || data[1] == null || data[2] == null) {
             throw new IllegalArgumentException("Please fill all fields! (with the right params)");
         }
-        GUI_ADAPTER.startProgressBar();
+        this.gui.startProgressBar();
         try {
             // data[0]
-            int maxLoadedData = Integer.parseInt(data[0]);
+            maxLoadedData = Integer.parseInt(data[0]);
             UserSettings.setMaxLoadedData(maxLoadedData);
-            var map = UserSettings.getCurrentMapSource();
+            currentMapSource = UserSettings.getCurrentMapSource();
             // data[1]
             switch (data[1]) {
-                case "Bing Map" -> map = UserSettings.BING_MAP;
-                case "Default Map" -> map = UserSettings.DEFAULT_MAP;
-                case "Transport Map" -> map = UserSettings.TRANSPORT_MAP;
+                case "Bing Map" -> currentMapSource = UserSettings.BING_MAP;
+                case "Default Map" -> currentMapSource = UserSettings.DEFAULT_MAP;
+                case "Transport Map" -> currentMapSource = UserSettings.TRANSPORT_MAP;
             }
-            UserSettings.setCurrentMapSource(map);
-            GUI.getMap().setTileSource(map);
+            UserSettings.setCurrentMapSource(currentMapSource);
+            this.gui.getMap().setTileSource(currentMapSource);
             // data[2]
-            int livePeriodSec = Integer.parseInt(data[2]);
-            setLiveDataPeriodSec(livePeriodSec);
+            livePeriodSec = Integer.parseInt(data[2]);
+            setLiveDataPeriod(livePeriodSec);
         } finally {
-            GUI_ADAPTER.stopProgressBar();
+            this.gui.stopProgressBar();
         }
     }
 
     void onLiveClick(ICoordinate clickedCoord) {
-        if (!this.clicking && LiveData.isLive()) {
+
+        TreasureMap map;
+        List<MapMarker> markers;
+        MapManager mapManager;
+        TreePlantation tpl;
+        List<MapMarker> newMarkerList;
+        JPanel menu;
+        boolean markerHit;
+        int counter;
+
+        if (!this.clicking && LiveLoader.isLive()) {
             try {
                 this.clicking = true;
-                var map = GUI.getMap();
-                var markers = map.getMapMarkerList();
-                var mapManager = GUI.getMapManager();
-                var tpl = GUI.getTreePlantation();
-                var newMarkerList = new ArrayList<MapMarker>();
-                boolean markerHit = false;
-                int counter = 0;
+                map = this.gui.getMap();
+                markers = map.getMapMarkerList();
+                mapManager = this.gui.getMapManager();
+                tpl = this.gui.getTreePlantation();
+                newMarkerList = new ArrayList<>();
+                markerHit = false;
+                counter = 0;
                 DefaultMapMarker newMarker;
                 Coordinate markerCoord;
-                for (var marker : markers) {
+                for (MapMarker marker : markers) {
                     markerCoord = marker.getCoordinate();
                     newMarker = new DefaultMapMarker(markerCoord, 0);
                     if (!markerHit && mapManager.isMarkerHit(markerCoord, clickedCoord)) {
                         markerHit = true;
-                        var menu = (JPanel) GUI.getComponent("menuPanel");
+                        menu = (JPanel) this.gui.getComponent("menuPanel");
                         this.markerHit(MAP_LIVE, newMarker, counter, null, null, tpl, logger, menu);
                     } else {
                         newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
@@ -438,7 +475,7 @@ public abstract class Controller {
                     counter++;
                 }
                 if (markerHit) {
-                    GUI.getMap().setMapMarkerList(newMarkerList);
+                    this.gui.getMap().setMapMarkerList(newMarkerList);
                 }
             } finally {
                 this.clicking = false;
@@ -450,29 +487,40 @@ public abstract class Controller {
      * is executed when a map marker is clicked and the current is MAP_ALL
      */
     void onClick_all(ICoordinate clickedCoord) { // TODO aufteilen
+
+        List<MapMarker> mapMarkers;
+        List<MapMarker> newMarkerList;
+        Vector<DataPoint> data;
+        Coordinate markerCoord;
+        DefaultMapMarker newMarker;
+        MapManager mapManager;
+        DBOut dbOut;
+        TreePlantation tpl;
+        Logger log;
+        JPanel menu;
+        boolean markerHit;
+        int counter;
+
         if (!this.clicking) {
             try {
                 this.clicking = true;
-                var mapMarkers = GUI.getMap().getMapMarkerList();
-                var newMarkerList = new ArrayList<MapMarker>();
-                Coordinate markerCoord;
-                DefaultMapMarker newMarker;
-                boolean markerHit = false;
-                var bbn = GUI.getMapManager();
-                var ctrl = Controller.getInstance();
-                int counter = 0;
-                var data = ctrl.loadedData;
-                var dbOut = DBOut.getDBOut();
-                var tpl = GUI.getTreePlantation();
-                var logger = Controller.getLogger();
-                var menu = (JPanel) GUI.getComponent("menuPanel");
+                mapMarkers = this.gui.getMap().getMapMarkerList();
+                newMarkerList = new ArrayList<>();
+                markerHit = false;
+                mapManager = this.gui.getMapManager();
+                counter = 0;
+                data = this.loadedData;
+                dbOut = DBOut.getDBOut();
+                tpl = this.gui.getTreePlantation();
+                log = this.getLogger();
+                menu = (JPanel) this.gui.getComponent("menuPanel");
                 // going though markers
-                for (var m : mapMarkers) {
+                for (MapMarker m : mapMarkers) {
                     markerCoord = m.getCoordinate();
                     newMarker = new DefaultMapMarker(markerCoord, 90); // FIXME: 13.05.2022 // FIXME 19.05.2022
-                    if (bbn.isMarkerHit(markerCoord, clickedCoord) && !markerHit) {
+                    if (mapManager.isMarkerHit(markerCoord, clickedCoord) && !markerHit) {
                         markerHit = true;
-                        this.markerHit(MAP_FROMSEARCH, newMarker, counter, data, dbOut, tpl, logger, menu);
+                        this.markerHit(MAP_FROMSEARCH, newMarker, counter, data, dbOut, tpl, log, menu);
                     } else {
                         newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
                     }
@@ -481,7 +529,7 @@ public abstract class Controller {
                     counter++;
                 }
                 if (markerHit) {
-                    GUI.getMap().setMapMarkerList(newMarkerList);
+                    this.gui.getMap().setMapMarkerList(newMarkerList);
                 }
             } finally {
                 this.clicking = false;
@@ -493,27 +541,31 @@ public abstract class Controller {
                            int counter, Vector<DataPoint> dataPoints,
                            DBOut dbOut, TreePlantation treePlantation,
                            Logger logger, JPanel menuPanel) {
+
+        Map<Integer, DataPoint> dps;
+        Flight flight;
+        int flightID;
+
         switch (viewType) {
             case MAP_FROMSEARCH -> {
                 marker.setBackColor(Color.RED);
                 menuPanel.setVisible(false);
-                int flightID = dataPoints.get(counter).flightID();
+                flightID = dataPoints.get(counter).flightID();
                 try {
                     //this.show(MAP_TRACKING, "Flight '" + flightID + "'", String.valueOf(flightID));
-                    this.showTrackingMap("Flight '" + flightID + "'", GUI.getMapManager(),
-                                         dbOut, new String[] { String.valueOf(flightID) });
-                    var flight = dbOut.getFlightByID(flightID);
-                    treePlantation.createFlightInfo(flight, GUI_ADAPTER);
+                    this.showTrackingMap("Flight '" + flightID + "'", this.gui.getMapManager());
+                    flight = dbOut.getFlightByID(flightID);
+                    treePlantation.createFlightInfo(flight, this.gui);
                 } catch (DataNotFoundException e) {
                     logger.errorLog("flight with the ID " + flightID + " doesn't exist!", this);
                 }
             }
             case MAP_LIVE -> {
                 marker.setBackColor(Color.RED);
-                var flight = this.liveData.get(counter);
+                flight = this.liveData.get(counter);
                 menuPanel.setVisible(false);
-                var dps = flight.dataPoints();
-                treePlantation.createDataPointInfo(flight, dps.get(0), GUI_ADAPTER);
+                dps = flight.dataPoints();
+                treePlantation.createDataPointInfo(flight, dps.get(0), this.gui);
             }
         }
     }
@@ -523,30 +575,29 @@ public abstract class Controller {
      * @param clickedCoord is the clicked coordinate
      */
     public void onTrackingClick(ICoordinate clickedCoord) { // TODO aufteilen
-        var map = GUI.getMap();
-        var markers = map.getMapMarkerList();
+        TreasureMap map = this.gui.getMap();
+        List<MapMarker> markers = map.getMapMarkerList();
+        MapManager mapManager = this.gui.getMapManager();
+        TreePlantation tpl = this.gui.getTreePlantation();
         Coordinate markerCoord;
-        int counter = 0;
-        var bbn = GUI.getMapManager();
-        var ctrl = Controller.getInstance();
         DataPoint dp;
-        int flightID;
         Flight flight;
-        var tpl = GUI.getTreePlantation();
-        var dbOut =  DBOut.getDBOut();
-        for (var m : markers) {
+        DBOut dbOut =  DBOut.getDBOut();
+        int flightID, counter = 0;
+
+        for (MapMarker m : markers) {
             markerCoord = m.getCoordinate();
-            if (bbn.isMarkerHit(markerCoord, clickedCoord)) {
-                GUI.getComponent("infoPanel").removeAll();
-                dp = ctrl.loadedData.get(counter);
+            if (mapManager.isMarkerHit(markerCoord, clickedCoord)) {
+                this.gui.getComponent("infoPanel").removeAll();
+                dp = this.loadedData.get(counter);
                 flightID = dp.flightID();
-                map.setMapMarkerList(bbn.resetTrackingMarkers(m));
+                map.setMapMarkerList(mapManager.resetTrackingMarkers(m));
                 try {
                     flight = dbOut.getFlightByID(flightID);
-                    tpl.createDataPointInfo(flight, dp, GUI_ADAPTER);
+                    tpl.createDataPointInfo(flight, dp, this.gui);
                 } catch (DataNotFoundException e) {
                     this.handleException(e);
-                    Controller.getLogger().errorLog("flight with the ID " + flightID + " doesn't exist!", this);
+                    this.getLogger().errorLog("flight with the ID " + flightID + " doesn't exist!", this);
                 }
                 break;
             }
@@ -555,25 +606,47 @@ public abstract class Controller {
     }
 
     public void saveFile() {
-        GUI.setCurrentVisibleRect(GUI.getMap().getVisibleRect()); // TODO visible rect beim repainten speichern
-        var fileChooser = MenuModels.fileSaver((JFrame) GUI.getComponent("window"));
-        var rect = (GUI.getCurrentVisibleRect() != null) ? GUI.getCurrentVisibleRect() : null;
+
+        JFileChooser fileChooser;
+        Rectangle rect;
+        MapData mapData;
+        File selected;
+
+        this.setLoading(true);
+        this.gui.startProgressBar();
+
+        this.gui.setCurrentVisibleRect(this.gui.getMap().getVisibleRect()); // TODO visible rect beim repainten speichern
+
+        fileChooser = MenuModels.fileSaver((JFrame) this.gui.getComponent("window"));
+        rect = (this.gui.getCurrentVisibleRect() != null) ? this.gui.getCurrentVisibleRect() : null;
+        selected = fileChooser.getSelectedFile();
+        if (selected == null) {
+            this.done();
+            return;
+        }
         // new MapData object with loadedData, view type and visible rectangle
-        var mapData = new MapData(this.loadedData, MAP_TRACKING, rect);
+        mapData = new MapData(this.loadedData, MAP_TRACKING, rect);
         try {
-            FileWizard.getFileWizard().savePlsFile(mapData, fileChooser.getSelectedFile(), this);
+            FileWizard.getFileWizard().savePlsFile(mapData, selected);
         } catch (DataNotFoundException | FileAlreadyExistsException e) {
             this.handleException(e);
+        } finally {
+            this.done();
         }
     }
 
     public void loadFile() {
-        try {
-            var mapManager = GUI.getMapManager();
-            var fileChooser = MenuModels.fileLoader((JFrame) GUI.getComponent("window"));
 
-            this.loadedData = FileWizard.getFileWizard().loadPlsFile(fileChooser);
-            var trackingMap = mapManager.createTrackingMap(this.loadedData, null, true, Controller.GUI_ADAPTER);
+        TreasureMap trackingMap;
+        MapManager mapManager = this.gui.getMapManager();
+        JFileChooser fileChooser = MenuModels.fileLoader((JFrame) this.gui.getComponent("window"));
+        File file = fileChooser.getSelectedFile();
+        if (file == null) {
+            return;
+        }
+        try {
+            this.loadedData = FileWizard.getFileWizard().loadPlsFile(file).data();
+            trackingMap = mapManager.createTrackingMap(this.loadedData, null, true, this.gui);
             // receiving tracking map
             mapManager.receiveMap(trackingMap, "Loaded from File", MAP_TRACKING);
         } catch (DataNotFoundException e) {
@@ -585,86 +658,55 @@ public abstract class Controller {
      * handles exceptions, if an exception occurs,
      * execute this method to handle it
      *
-     * @param thr is the throwable (exceptions in the most cases)
+     * @param thr is the throwable (usually an exception)
      *            which is thrown and will be handled
      */
     public void handleException(final Throwable thr) {
+
         if (thr instanceof DataNotFoundException dnf) {
-            GUI_ADAPTER.showWarning(Warning.NO_DATA_FOUND, dnf.getMessage());
+            this.gui.showWarning(Warning.NO_DATA_FOUND, dnf.getMessage());
         } else if (thr instanceof SQLException sql) {
-            var message = sql.getMessage();
+            String message = sql.getMessage();
             thr.printStackTrace();
-            GUI_ADAPTER.showWarning(Warning.SQL_ERROR, message + "\n" + sql.getSQLState());
+            this.gui.showWarning(Warning.SQL_ERROR, message);
             if (message.contains("BUSY")) {
                 // emergency shutdown because of DB-Bug
                 this.emergencyShutdown(sql);
             }
         } else if (thr instanceof TimeoutException) {
-            GUI_ADAPTER.showWarning(Warning.TIMEOUT);
+            this.gui.showWarning(Warning.TIMEOUT);
         } else if (thr instanceof RejectedExecutionException) {
-            GUI_ADAPTER.showWarning(Warning.REJECTED_EXECUTION);
+            this.gui.showWarning(Warning.REJECTED_EXECUTION);
         } else if (thr instanceof IllegalInputException) {
-            GUI_ADAPTER.showWarning(Warning.ILLEGAL_INPUT);
+            this.gui.showWarning(Warning.ILLEGAL_INPUT);
         } else if (thr instanceof InvalidDataException ide) {
-            GUI_ADAPTER.showWarning(Warning.UNKNOWN_ERROR, ide.getMessage() + "\n" + ide.getCause().getMessage());
+            this.gui.showWarning(Warning.UNKNOWN_ERROR, ide.getMessage() + "\n" + ide.getCause().getMessage());
             ide.printStackTrace();
         } else if (thr instanceof ClassNotFoundException cnf) {
-            GUI_ADAPTER.showWarning(Warning.UNKNOWN_ERROR, cnf.getMessage());
+            this.gui.showWarning(Warning.UNKNOWN_ERROR, cnf.getMessage());
             cnf.printStackTrace();
         } else if (thr instanceof FileAlreadyExistsException fae) {
-            GUI_ADAPTER.showWarning(Warning.FILE_ALREADY_EXISTS, fae.getMessage());
+            this.gui.showWarning(Warning.FILE_ALREADY_EXISTS, fae.getMessage());
             fae.printStackTrace();
         } else {
-            GUI_ADAPTER.showWarning(Warning.UNKNOWN_ERROR, thr.getMessage());
+            this.gui.showWarning(Warning.UNKNOWN_ERROR, thr.getMessage());
             thr.printStackTrace();
         }
     }
 
     // private methods
 
-    private void showRasterHeatMap(String heatText, MapManager bbn, DBOut dbOut) {
-        try {
-            var positions = (Vector<Position>) CACHE.get("allTrackingPosVec");
-            if (positions == null) {
-                positions = dbOut.getAllTrackingPositions();
-                if (!CACHE.put("allTrackingPosVec", positions)) {
-                    System.out.println("Cache is full of Senior Data!");
-                }
-            }
-            var viewer = GUI.getMap();
-            var img = new RasterHeatMap(1f) // TODO replace durch addHeatMap
-                    .heat(positions)
-                    .createImage();
-            bbn.createRasterHeatMap(img, viewer)
-                    .receiveMap(viewer, heatText, MAP_HEATMAP);
-        } catch (DataNotFoundException e) {
-            this.handleException(e);
-        }
-    }
-
-    private void showCircleHeatMap(String headText, MapManager bbn, DBOut dbOut) {
-        //var liveTrackingBetween = dbOut.getLiveTrackingBetween(10000, 25000);
-        //var positions = Utilities.parsePositionVector(liveTrackingBetween);
-        //var positionHeatMap = new Statistics().positionHeatMap(positions);
-        //var map = bbn.createPrototypeHeatMap(positionHeatMap)
-        Vector<Position> positions;
-        try {
-            positions = dbOut.getAllTrackingPositions();
-            var viewer = GUI.getMap();
-            viewer.setHeatMap(new RasterHeatMap(1f) // TODO: 26.05.2022 addHeatMap
-                    .heat(positions)
-                    .createImage());
-            bbn.receiveMap(viewer, headText, MAP_HEATMAP);
-        } catch (DataNotFoundException e) {
-            this.handleException(e);
-        }
-    }
-
     private void showSignificanceMap(String headText, MapManager bbn, DBOut dbOut) {
+
+        Deque<Airport> aps;
+        Map<Airport, Integer> signifMap;
+        TreasureMap map;
+        Statistics stats = new Statistics();
+
         try {
-            var aps = dbOut.getAllAirports();
-            var signifMap = new Statistics().airportSignificance(aps);
-            var map = bbn.createSignificanceMap(signifMap, GUI.getMap());
+            aps = dbOut.getAllAirports();
+            signifMap = stats.airportSignificance(aps);
+            map = bbn.createSignificanceMap(signifMap, this.gui.getMap());
             bbn.receiveMap(map, headText, MAP_HEATMAP);
         } catch (DataNotFoundException e) {
             logger.errorLog(e.getMessage(), this);
@@ -672,106 +714,76 @@ public abstract class Controller {
         }
     }
 
-    private void showTrackingMapNoPoints(String headText, MapManager bbn, @Nullable String[] data) {
+    private void showTrackingMapNoPoints(String headText, MapManager mapManager) {
+
+        Flight flight = null;
+        TreasureMap flightRouteMap;
+        DBOut dbOut = DBOut.getDBOut();
+
+        int flightID = (!this.loadedData.isEmpty()) ? this.loadedData.get(0).flightID() : -1;
         try {
-            loadedData = new Vector<>();
-            var out = DBOut.getDBOut();
-            int flightID = -1;
-            if (data.length == 1) {
-                assert data[0] != null;
-                flightID = Integer.parseInt(data[0]);
-                loadedData.addAll(out.getTrackingByFlight(flightID));
-            }
-            else if (data.length > 1) {
-                for (var id : data) {
-                    assert id != null;
-                    flightID = Integer.parseInt(id);
-                    loadedData.addAll(out.getTrackingByFlight(flightID));
-                }
-            }
-            var flight = out.getFlightByID(flightID);
-            var flightRoute = bbn.createTrackingMap(this.loadedData, flight, false, GUI_ADAPTER);
-            bbn.receiveMap(flightRoute, headText, MAP_TRACKING_NP);
-        } catch (NumberFormatException e) {
-            logger.errorLog("NumberFormatException while trying to parse the ID-String! Must be an int!", this);
-        } catch (DataNotFoundException e) {
-            logger.errorLog(e.getMessage(), this);
+            flight = dbOut.getFlightByID(flightID);
+        } catch (DataNotFoundException dnf) {
+            logger.errorLog(dnf.getMessage(), this);
         }
+        flightRouteMap = mapManager.createTrackingMap(this.loadedData, flight, false, this.gui);
+        mapManager.receiveMap(flightRouteMap, headText, MAP_TRACKING_NP);
     }
 
-    private void showTrackingMap(String headText, MapManager bbn, DBOut dbOut, @Nullable String[] data) {
+    private void showTrackingMap(String headText, @NotNull MapManager mapManager) {
+
+        TreasureMap trackingMap;
+        DBOut dbOut = DBOut.getDBOut();
+        Flight flight = null;
+        Vector<DataPoint> data = this.loadedData;
+
+        int flightID = (!data.isEmpty()) ? data.get(0).flightID() : -1;
         try {
-            /*int flightID = -1;
-
-            Vector<DataPoint> flightTracking;
-            String key;
-            if (data.length == 1) {
-                assert data[0] != null;
-                flightID = Integer.parseInt(data[0]);
-                key = "tracking" + flightID;
-                flightTracking = (Vector<DataPoint>) CACHE.get(key);
-                if (flightTracking == null) {
-                    flightTracking = dbOut.getTrackingByFlight(flightID); // FIXME: 29.06.2022 lade ich das doppelt?
-                    CACHE.put(key, flightTracking);
-                }
-                this.loadedData.addAll(flightTracking);
-
-            } else if (data.length > 1) {
-                key = "tracking" + Arrays.toString(data);
-                this.loadedData = (Vector<DataPoint>) CACHE.get(key);
-                if (this.loadedData == null) {
-                    this.loadedData = new Vector<>();
-                    for (var id : data) {           // FIXME: 01.07.2022 QUERY IN FOR LOOP
-                        assert id != null;
-                        flightID = Integer.parseInt(id);
-                        flightTracking = dbOut.getTrackingByFlight(flightID);
-                        this.loadedData.addAll(flightTracking);
-                        CACHE.put(key, this.loadedData);
-                    }
-
-                }
-            }
-            // TODO should be deleted, because flight should be loaded before this method
-            if (flightID == -1) {
-                throw new InvalidDataException("Flight may not be null!");
-            }
-            var flight = dbOut.getFlightByID(flightID);*/
-            var trackingMap = bbn.createTrackingMap(this.loadedData, null, true, GUI_ADAPTER);
-            bbn.receiveMap(trackingMap, headText, MAP_TRACKING);
-        } catch (NumberFormatException e) {
-            logger.errorLog("NumberFormatException while trying to parse the ID-String! Must be an int!", this);
-        } catch (DataNotFoundException e) {
-            logger.errorLog(e.getMessage(), this);
+            flight = (flightID != -1) ? dbOut.getFlightByID(flightID) : null;
+        } catch (DataNotFoundException ignored) {
         }
+        trackingMap = mapManager.createTrackingMap(data, flight, true, this.gui);
+        mapManager.receiveMap(trackingMap, headText, MAP_TRACKING);
     }
 
     private void showSearchMap(String headText, MapManager bbn) {
-        var data = Utilities.parsePositionVector(this.loadedData);
-        var viewer = bbn.createLiveMap(data, GUI.getMap());
+
+        Vector<Position> data = Utilities.parsePositionVector(this.loadedData);
+        TreasureMap viewer = bbn.createLiveMap(data, this.gui.getMap());
         bbn.receiveMap(viewer, headText, MAP_FROMSEARCH);
     }
 
     private void showLiveMap(final String headText, @NotNull final MapManager mapManager) {
+
+        Vector<Position> data;
+        TreasureMap viewer;
+
         if (this.liveData == null || this.liveData.isEmpty()) {
-            GUI_ADAPTER.showWarning(Warning.LIVE_DATA_NOT_FOUND);
+            this.gui.showWarning(Warning.LIVE_DATA_NOT_FOUND);
             return;
         }
-        var data = Utilities.parsePositionVector(this.liveData);
-        var viewer = mapManager.createLiveMap(data, GUI.getMap());
+        data = Utilities.parsePositionVector(this.liveData);
+        viewer = mapManager.createLiveMap(data, this.gui.getMap());
 
-        LiveData.setLive(true);
+        LiveLoader.setLive(true);
         mapManager.receiveMap(viewer, headText, MAP_LIVE);
     }
 
     private void showFlightList(DBOut dbOut) {
+
+        List<Flight> flights;
+        Deque<Integer> fids;
+        TreePlantation treePlant;
+        int flightID;
+
         if (this.loadedData == null || this.loadedData.isEmpty()) {
-            GUI_ADAPTER.showWarning(Warning.NO_DATA_FOUND);
+            this.gui.showWarning(Warning.NO_DATA_FOUND);
             return;
         }
-        var flights = new ArrayList<Flight>();
-        int flightID = -1;
+        flights = new ArrayList<>();
+        flightID = -1;
         try {
-            var fids = dbOut.getLiveFlightIDs(10000, 25000);
+            fids = dbOut.getLiveFlightIDs(10000, 25000);
             while (!fids.isEmpty()) {
                 flightID = fids.poll();
                 flights.add(dbOut.getFlightByID(flightID));
@@ -780,90 +792,14 @@ public abstract class Controller {
             logger.errorLog("flight with  ID " + flightID + " doesn't exist!", this);
             this.handleException(e);
         }
-        var treePlant = GUI.getTreePlantation();
-        treePlant.createTree(treePlant.allFlightsTreeNode(flights), GUI_ADAPTER);
-    }
-
-    private void searchForPlane(String[] inputs, int button, Search search)
-            throws DataNotFoundException {
-
-        this.loadedData = search.verifyPlane(inputs);
-        var idsNoDupl = new ArrayList<Integer>();
-        int flightID;
-        for (var dp : this.loadedData) {
-            flightID = dp.flightID();
-            if (!idsNoDupl.contains(flightID)) {
-                idsNoDupl.add(flightID);
-            }
-        }
-        int size = idsNoDupl.size();
-        var ids = new String[size];
-        for (int i = 0; i < size; i++) {
-            ids[i] = idsNoDupl.get(i) + "";
-        }
-        if (button == 1) {
-            var headText = "Plane Search Results:";
-            if (!GUI.search_planeID.getText().isBlank()) {
-                this.show(ViewType.MAP_TRACKING, headText, ids); // ganze route -> nur bei einer id / wird evtl noch entfernt
-            } else {
-                this.show(ViewType.MAP_FROMSEARCH, headText, ids); // nur letzte data points
-            }
-        }
-    }
-
-    private void searchForFlight(String[] inputs, int button, Search search)
-            throws DataNotFoundException {
-
-        this.loadedData = search.verifyFlight(inputs);
-        if (this.loadedData.size() == 1) {
-            var dp = this.loadedData.get(0);
-            if (button == 1) {
-                this.show(ViewType.MAP_TRACKING, "Flight Search Results", dp.flightID() + "");
-            }
-        } else {
-            var idsNoDupl = new ArrayList<Integer>();
-            int flightID;
-            for (var dp : this.loadedData) {
-                flightID = dp.flightID();
-                if (!idsNoDupl.contains(flightID)) {
-                    idsNoDupl.add(flightID);
-                }
-            }
-            int size = idsNoDupl.size();
-            var ids = new String[size];
-            for (int i = 0; i < size; i++) {
-                ids[i] = idsNoDupl.get(i) + "";
-            }
-            if (button == 1) {
-                this.show(ViewType.MAP_TRACKING, "Flight Search Results", ids);
-            }
-        } // TODO !!! show soll Datapoints bekommen und nicht fids, das ist eine weitere anfrage;
-    }
-
-    private void searchForAirport(String[] inputs, int button, Search search) throws DataNotFoundException {
-        loadedData = search.verifyAirport(inputs);
-        var idsNoDupl = new ArrayList<Integer>();
-        int flightID;
-        for (var dp : loadedData) {
-            flightID = dp.flightID();
-            if (!idsNoDupl.contains(flightID)) {
-                idsNoDupl.add(flightID);
-            }
-        }
-        int size = idsNoDupl.size();
-        var ids = new String[size];
-        for (int i = 0; i < size; i++) {
-            ids[i] = idsNoDupl.get(i) + "";
-        }
-        if (button == 1) {
-            this.show(ViewType.MAP_TRACKING_NP, "Flight Search Results", ids);
-        }
+        treePlant = this.gui.getTreePlantation();
+        treePlant.createTree(treePlant.allFlightsTreeNode(flights), this.gui);
     }
 
     /**
      * @return loading flag, true if Controller is loading something
      */
-    public final boolean isLoading() {
+    public boolean isLoading() {
         return this.loading;
     }
 
