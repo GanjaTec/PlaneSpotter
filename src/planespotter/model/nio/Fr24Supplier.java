@@ -108,9 +108,10 @@ public class Fr24Supplier implements Supplier {
 	 *
 	 * @param areas are the Areas where data should be deserialized from
 	 * @param scheduler is the Scheduler to allow parallelism
-	 * @return Deque of deserialized Frames
+	 * @param deserializer is the Fr24Deserializer which is used to deserialize the requested data
+	 * @param ignoreMaxSize if it's true, allowed max size of insertLater-queue is ignored
+	 * @see planespotter.model.nio.LiveLoader
 	 */
-	private static final Object lock = new Object();
 	public static synchronized void collectFramesForArea(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, @NotNull final Scheduler scheduler, boolean ignoreMaxSize) {
 		System.out.println("Deserializing Fr24-Data...");
 
@@ -120,8 +121,7 @@ public class Fr24Supplier implements Supplier {
 		String[] part = new String[length];
 
 		int i = 0;
-		AtomicInteger tNumber = new AtomicInteger(0),
-					  counter = new AtomicInteger(areas.length-2);
+		AtomicInteger tNumber = new AtomicInteger(0);
 		for (String area : areas) {
 			if (i < length) {
 				part[i++] = area;
@@ -143,9 +143,6 @@ public class Fr24Supplier implements Supplier {
 					} catch (IOException | InterruptedException e) {
 						e.printStackTrace();
 					}
-					synchronized (lock) {
-						counter.decrementAndGet();
-					}
 				}), "Fr24-Deserializer-" + tNumber.getAndIncrement(), false, Scheduler.HIGH_PRIO, true);
 				i = 0;
 				part = new String[length];
@@ -154,7 +151,7 @@ public class Fr24Supplier implements Supplier {
 
 		while (scheduler.active() > 1) {
 			Scheduler.sleep(100);
-			System.out.print(":" + counter.get());
+			System.out.print(":");
 		}
 	}
 	

@@ -25,17 +25,10 @@ public class Inserter implements Runnable {
     public void run() {
         while (!this.terminated) {
             synchronized (this) {
-                //try {
                     Scheduler.sleep(500);
-                /*} catch (InterruptedException e) {
-                    e.printStackTrace();
-                } finally {
-                    //this.notify();
-                }*/
                 try (Stream<Fr24Frame> fr24Frames = LiveLoader.pollFrames(MIN_INSERT_COUNT)) {
                     DBIn.write(fr24Frames);
                 } catch (final Fr24Exception ignored) {
-                    System.out.println("No write");
                 }
             }
         }
