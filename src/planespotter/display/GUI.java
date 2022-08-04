@@ -2,6 +2,7 @@ package planespotter.display;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartPanel;
 import planespotter.constants.*;
 import planespotter.controller.ActionHandler;
@@ -203,6 +204,8 @@ public class GUI {
 
         this.getComponent("mapPanel").setVisible(false);
         this.getComponent("startPanel").setVisible(true);
+        // TODO: 04.08.2022 move
+        window.setJMenuBar(menuModels.topMenuBar(this.actionHandler));
 
         return window;
     }
@@ -212,7 +215,6 @@ public class GUI {
      * -> called by initialize()
      */
     private void addAllToWinow() { // TODO: 28.05.2022 (evtl.) Components als paremeter
-        // TODO: 28.05.2022 HashMap mit key verwenden, statt Klassenvariablen
         // Adding to Window
         // adding everything to menubar
         var menubar = this.getComponent("menuBar");

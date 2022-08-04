@@ -10,7 +10,7 @@ package planespotter.constants;
 public abstract class Configuration {
 
     // max thread pool size
-    public static final int MAX_THREADPOOL_SIZE = 40;
+    public static final int MAX_THREADPOOL_SIZE = 80;
     // thread keep-alive-time
     public static final long KEEP_ALIVE_TIME = 4L;
     // core pool size (threads that are running constantly)

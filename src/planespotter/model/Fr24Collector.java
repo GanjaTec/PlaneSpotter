@@ -2,19 +2,14 @@ package planespotter.model;
 
 import org.jetbrains.annotations.Nullable;
 
+import org.jetbrains.annotations.Range;
 import planespotter.constants.Areas;
 import planespotter.constants.UserSettings;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
-import planespotter.model.io.DBIn;
-import planespotter.model.io.Keeper;
+import planespotter.model.io.*;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
-import planespotter.model.io.KeeperOfTheArchives;
-import planespotter.model.nio.LiveLoader;
-
-import java.util.Deque;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * @name Fr24Collector
@@ -30,15 +25,13 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public class Fr24Collector extends Collector<Fr24Supplier> {
     // inserted frames per write
     public static final int FRAMES_PER_WRITE;
-    // raster of areas (whole world) in 1D-Array
-    private static final String[] WORLD_AREA_RASTER_1D;
     // static initializer
     static {
         FRAMES_PER_WRITE = 800;
-        WORLD_AREA_RASTER_1D = Areas.getWorldAreaRaster1D(UserSettings.getGridsizeLon(), UserSettings.getGridsizeLat());
     }
     // 'filters enabled' flag
     private final boolean withFilters;
+    private final Inserter inserter;
 
     /**
      * Fr24-Collector Main-method
@@ -46,17 +39,25 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
      * @param args can be ignored
      */
     public static void main(String[] args) {
-        new Fr24Collector(true, false).start();
+        new Fr24Collector(true, false, 20, 10).start();
     }
+
+    // raster of areas (whole world) in 1D-Array
+    private final String[] worldAreaRaster1D;
 
     /**
      * Fr24Collector constructor, creates a new Collector for Fr24-Data
      *
      * @param exitOnClose indicates if the program should exit when the 'X'-button is clicked
      */
-    public Fr24Collector(boolean exitOnClose, boolean withFilters) {
+    public Fr24Collector(boolean exitOnClose,
+                         boolean withFilters,
+                         @Range(from = 2, to = 180) int gridSizeLat,
+                         @Range(from = 2, to = 360) int gridSizeLon) {
         super(exitOnClose, new Fr24Supplier());
         this.withFilters = withFilters;
+        this.inserter = new Inserter();
+        this.worldAreaRaster1D = Areas.getWorldAreaRaster1D(gridSizeLon, gridSizeLat);
     }
 
     /**
@@ -80,26 +81,26 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
      */
     private synchronized void collect(final Fr24Deserializer deserializer, final Keeper keeper, @Nullable String... extAreas) {
 
-        super.scheduler.schedule(() -> {
-            // concurrent linked deque for collected frames
-            Deque<Fr24Frame> frames;
+        super.scheduler.schedule(() -> super.scheduler.exec(() -> {
+            System.out.println("Collecting data...");
             // synchronizing on collector-monitor
-            synchronized (Collector.SYNC) {
-                // executing suppliers to collect Fr24-Data
-                frames = (extAreas != null && extAreas.length > 0)
-                        // = all deserialized extra-areas if extAreas is not null or empty, else = new empty deque
-                        ? (ConcurrentLinkedDeque<Fr24Frame>) Fr24Supplier.framesForArea(extAreas, deserializer, super.scheduler)
-                        : new ConcurrentLinkedDeque<>();
-                // adding all deserialized world-raster-areas to frames deque
-                frames.addAll(Fr24Supplier.framesForArea(WORLD_AREA_RASTER_1D, deserializer, super.scheduler));
-                // adding all deserialized frames to insertLater-queue
-                LiveLoader.insertLater(frames);
-                // inserting all Fr24Frames from insertLater-queue into database
-                DBIn.insertRemaining(super.scheduler, FRAMES_PER_WRITE);
-            }
-        }, "Supplier", 0, INSERT_PERIOD_SEC);
+            //synchronized (Collector.SYNC) {
+            // executing suppliers to collect Fr24-Data
+            Fr24Supplier.collectFramesForArea(extAreas, deserializer, super.scheduler, true);
+            // adding all deserialized world-raster-areas to frames deque
+            Fr24Supplier.collectFramesForArea(this.worldAreaRaster1D, deserializer, super.scheduler, true)/*)*/;
+            // adding all deserialized frames to insertLater-queue
+            //LiveLoader.insertLater(frames);
+            // inserting all Fr24Frames from insertLater-queue into database
+            // replaced with Inserter Thread
+            //DBIn.insertRemaining(super.scheduler, FRAMES_PER_WRITE);
+            //}
+        }, "Data Collector Thread", false, Scheduler.HIGH_PRIO, true),
+                "Collect Data", 0, REQUEST_PERIOD);
+
+        super.scheduler.runThread(this.inserter, "Inserter Thread", true, Scheduler.MID_PRIO);
         // executing the keeper every 400 seconds
-        super.scheduler.schedule(() -> super.scheduler.exec(keeper, "Keeper", true, Scheduler.LOW_PRIO, false),
+        super.scheduler.schedule(() -> super.scheduler.exec(keeper, "Keeper Thread", true, Scheduler.LOW_PRIO, false),
                 100, 400);
         // updating display
         super.scheduler.schedule(() -> {
@@ -107,13 +108,13 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
             super.newPlanesNow.set(DBIn.getPlaneCount() - super.newPlanesAll.get());
             super.newFlightsNow.set(DBIn.getFlightCount() - super.newFlightsAll.get());
 
-            Fr24Frame lastFrame = DBIn.getLastFrame();
-            super.display.update(super.insertedNow.get(), super.newPlanesNow.get(), super.newFlightsNow.get(),
-                                 (lastFrame != null) ? lastFrame.toShortString() : "None");
-
             super.insertedFrames.set(DBIn.getFrameCount());
             super.newPlanesAll.set(DBIn.getPlaneCount());
             super.newFlightsAll.set(DBIn.getFlightCount());
+
+            Fr24Frame lastFrame = DBIn.getLastFrame();
+            super.display.update(super.insertedNow.get(), super.newPlanesNow.get(), super.newFlightsNow.get(),
+                    (lastFrame != null) ? lastFrame.toShortString() : "None");
         }, 0, 1);
     }
 

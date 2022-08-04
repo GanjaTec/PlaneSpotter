@@ -47,7 +47,18 @@ public class Test {
         System.out.println(result);
 */
 
-        System.out.println(Utilities.linesCode("", ".java", ".py", ".md"));
+        Test test = new Test();
+        String filename = Paths.RESOURCE_PATH + "bmpBitmap.bmp";
+        /*Bitmap bmp = Bitmap.fromImage(filename);
+        test.createTestJFrame(bmp.toImage());*/
+/*
+        Bitmap bmp = Bitmap.fromPosVector(test.TEST_POS_VECTOR, 0.5f);
+        Bitmap.write(bmp, filename);*/
+
+        BufferedImage img = Bitmap.readImage(new File(filename));
+        test.createTestJFrame(img);
+
+        //System.out.println(Utilities.linesCode("", ".java", ".py", ".md"));
         //unsafeTest();
 
     }
