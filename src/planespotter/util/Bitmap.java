@@ -1,9 +1,11 @@
 package planespotter.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 
 import planespotter.dataclasses.Position;
 import planespotter.throwables.InvalidArrayException;
+import planespotter.throwables.InvalidDataException;
 
 import javax.imageio.ImageIO;
 import javax.imageio.stream.FileImageInputStream;
@@ -11,6 +13,7 @@ import javax.imageio.stream.FileImageOutputStream;
 import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -94,14 +97,41 @@ public class Bitmap {
         return Bitmap.fromInt2d(ints2d);
     }
 
+    @NotNull
+    public static Bitmap fromImage(@NotNull String filename) {
+        BufferedImage img;
+        File imgFile = new File(filename);
+        if (!imgFile.exists()) {
+            throw new InvalidDataException("No Bitmap found for filename " + filename + ", file must end with '.bmp'");
+        }
+        try {
+            img = Bitmap.readImage(imgFile);
+        } catch (IOException e) {
+            throw new InvalidDataException("Couldn't read bitmap image! Be sure you have a valid file type!");
+        }
+        return Bitmap.fromImage(img);
+    }
+
     /**
      *
      *
      * @param img
      * @return
      */
-    public static Bitmap fromImage(BufferedImage img) {
-        return null;
+    @NotNull
+    public static Bitmap fromImage(@NotNull BufferedImage img) {
+        int width = img.getWidth();
+        int height = img.getHeight();
+        byte[][] bmpBytes = new byte[width][height];
+        byte rgb;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                rgb = (byte) img.getRGB(x, y);
+                System.out.println(rgb);
+                bmpBytes[x][y] = rgb;
+            }
+        }
+        return new Bitmap(bmpBytes);
     }
 
     /**
@@ -199,7 +229,8 @@ public class Bitmap {
         return new Bitmap(bitmap);
     }
 
-    public static BufferedImage readImage(File file)
+    @NotNull
+    public static BufferedImage readImage(@NotNull File file)
         throws IOException {
 
         return ImageIO.read(file);
@@ -215,7 +246,7 @@ public class Bitmap {
     public static Bitmap read(String filename)
             throws IOException {
 
-        return /*read(new File(filename));*/null;
+        return Bitmap.fromImage(Bitmap.readImage(new File(filename)));
     }
 
     // instance fields
@@ -248,7 +279,7 @@ public class Bitmap {
      * @return
      */
     public BufferedImage toImage() {
-        var img = new BufferedImage(this.width, this.heigth, BufferedImage.TYPE_INT_RGB);
+        var img = new BufferedImage(this.width, this.heigth, BufferedImage.TYPE_BYTE_GRAY);
         short lvl;
         Color color;
         for (int x = 0; x < this.width; x++) {

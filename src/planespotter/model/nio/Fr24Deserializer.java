@@ -160,12 +160,13 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
     }
 
     /**
+     * parses a Number-String to a Number, or a given default object
+     * to a Number (Integer or Double)
      *
-     *
-     * @param toParse
-     * @param orElse
-     * @param <N>
-     * @return
+     * @param toParse is the Number-String, must be a single number like: 3 ; 644 ; 5.26 ; 764.363
+     * @param orElse is the Number to return, if the toParse-number is blank or invalid
+     * @param <N> is the Number type of orElse like Double or Integer
+     * @return parsed Number or given defalut Number, if the input String is invalid
      */
     @NotNull
     private <N extends Number> Number parseOrElse(@NotNull String toParse, final N orElse) {
@@ -175,13 +176,15 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
         } else if (orElse instanceof Double) {
             return notBlank ? Double.parseDouble(toParse) : orElse;
         }
-        throw new InvalidDataException("input data is invalid!");
+        return orElse;
     }
 
     /**
+     * unwraps a String from expressions like '{' and the beginning JSON-expressions,
+     * these shouldn't be removed, but Gson::fromJson is not able to work with the direct
+     * JSON input Strings (maybe they are invalid, could be a method from Fr24 to make the data structure more complex)
      *
-     *
-     * @param line
+     * @param line is the line String to unwrap
      * @return
      */
     private String unwrap(@NotNull final String line) {

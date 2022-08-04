@@ -1,5 +1,6 @@
 package planespotter.controller;
 
+import org.jetbrains.annotations.NotNull;
 import planespotter.constants.Images;
 import planespotter.constants.SearchType;
 import planespotter.constants.UserSettings;
@@ -10,6 +11,8 @@ import planespotter.throwables.IllegalInputException;
 import planespotter.util.Utilities;
 
 import javax.swing.*;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -28,8 +31,8 @@ import static planespotter.constants.ViewType.MAP_LIVE;
  * @see Scheduler
  */
 public final class ActionHandler implements ActionListener, KeyListener,
-                                            ComponentListener, MouseListener,
-                                            ItemListener, WindowListener {
+        ComponentListener, MouseListener,
+        ItemListener, WindowListener, MenuListener {
 
     private static final ActionHandler INSTANCE;
     private static final KeyEventDispatcher globalEventDispatcher;
@@ -344,10 +347,24 @@ public final class ActionHandler implements ActionListener, KeyListener,
      * @param e is the MouseEvent which contains the button
      */
     @Override
-    public void mousePressed(MouseEvent e) {
+    public void mousePressed(@NotNull MouseEvent e) {
         var ctrl = Controller.getInstance();
         var gui = ctrl.getGUI();
-        this.mapClicked(e, ctrl, gui);
+        Component component = e.getComponent();
+        if (component == gui.getMap()) {
+            this.mapClicked(e, ctrl, gui);
+        } else if (component instanceof JMenuItem item) {
+            menuItemPressed(ctrl, item);
+        }
+    }
+
+    private void menuItemPressed(Controller ctrl, JMenuItem item) {
+        String text = item.getText();
+        switch (text) {
+            case "Open" -> ctrl.loadFile();
+            case "Save As" -> ctrl.saveFile();
+            case "Exit" -> ctrl.shutdown(false);
+        }
     }
 
     /**
@@ -444,4 +461,28 @@ public final class ActionHandler implements ActionListener, KeyListener,
         return "ActionHandler";
     }
 
+    @Override
+    public void menuSelected(@NotNull MenuEvent e) {
+        if (e.getSource() instanceof JMenuItem item) {
+            String text = item.getText();
+            Controller ctrl = Controller.getInstance();
+            GUI gui = ctrl.getGUI();
+            Container searchPanel;
+            switch (text) {
+                case "Live-Map" -> {
+                    gui.startProgressBar();
+                    ctrl.show(MAP_LIVE, "Live-Map");
+                }
+                case "Search" -> {
+                    searchPanel = gui.getComponent("searchPanel");
+                    searchPanel.setVisible(!searchPanel.isVisible());
+                    gui.loadSearch(SearchType.FLIGHT);
+                }
+            }
+        }
+    }
+
+    @Override public void menuDeselected(MenuEvent e) {}
+
+    @Override public void menuCanceled(MenuEvent e) {}
 }

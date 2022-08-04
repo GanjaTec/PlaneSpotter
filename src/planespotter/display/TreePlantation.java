@@ -1,8 +1,8 @@
 package planespotter.display;
 
 import org.jetbrains.annotations.NotNull;
-import planespotter.constants.Images;
-import planespotter.constants.Paths;
+import org.jetbrains.annotations.Nullable;
+import planespotter.constants.GUIConstants;
 import planespotter.dataclasses.*;
 import planespotter.util.Utilities;
 
@@ -13,9 +13,8 @@ import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
 
+import static planespotter.constants.DefaultColor.*;
 import static planespotter.constants.GUIConstants.*;
-import static planespotter.constants.DefaultColor.DEFAULT_BG_COLOR;
-import static planespotter.constants.DefaultColor.DEFAULT_SEARCH_ACCENT_COLOR;
 
 /**
  * @name TreePlantation
@@ -79,13 +78,14 @@ public final class TreePlantation {
      * @param treeNode is the root tree node
      * @return default JTree
      */
-    private  JTree defaultTree(DefaultMutableTreeNode treeNode) {
+    @NotNull
+    private  JTree defaultTree(@NotNull DefaultMutableTreeNode treeNode) {
         var tree = new JTree(treeNode);
         tree.setFont(FONT_MENU);
         tree.setBackground(DEFAULT_BG_COLOR.get());
         tree.setOpaque(false);
         // creating tree cell renderer
-        var renderer = new CustomCellRenderer();
+        var renderer = new TreeCellRendererImpl();
         renderer.setBorderSelectionColor(Color.ORANGE);
         renderer.setTextNonSelectionColor(new Color(255, 255, 102));
         renderer.setTextSelectionColor(Color.ORANGE);
@@ -203,7 +203,7 @@ public final class TreePlantation {
      * @param dp is the data point to be shown
      * @return data point info root tree node
      */
-    private  DefaultMutableTreeNode dataPointInfoTreeNode(DataPoint dp) {
+    private DefaultMutableTreeNode dataPointInfoTreeNode(DataPoint dp) {
         int id = dp.id(),
             flightID = dp.flightID(),
             speed = Utilities.knToKmh(dp.speed()),
@@ -246,23 +246,64 @@ public final class TreePlantation {
             var airline_tag = new DefaultMutableTreeNode("IATA-Tag: " + airline.iataTag());
             var airline_name = new DefaultMutableTreeNode("Name: " + airline.name());
 
-            // TODO: adding everything to title node
+            // adding everything to title node
             title.add(airline_id);
             title.add(airline_tag);
             title.add(airline_name);
 
-            // TODO: addding title to root node
+            // addding title to root node
             root.add(title);
         }
 
         return root;
     }
 
+    @NotNull
+    private JList<String> defaultJList(int width, int height, @Nullable String... listData) {
+        JList<String> jList = (listData == null) ? new JList<>() : new JList<>(listData);
+        jList.setCellRenderer(new ListCellRendererImpl());
+        jList.setSelectionBackground(DEFAULT_MAP_ICON_COLOR.get());
+        jList.setBounds(0, 0, width, height);
+
+        return jList;
+    }
+
+    public JList<String> flightInfoList(@NotNull Flight flight) {
+        Plane plane = flight.plane();
+        Airport src = flight.src();
+        Airport dest = flight.dest();
+        Airline airline = plane.airline();
+        String[] listData = new String[] {
+                "Flight-ID: " + flight.id(),
+                "Flight-Number: " + flight.flightNr(),
+                "Callsign: " + flight.callsign(),
+                "Start-Airport-ID: " + src.id(),
+                "Start-Airport-IATA-Tag: " + src.iataTag(),
+                "Start-Airport-Name: " + src.name(),
+                "Dest.-Airport-ID: " + dest.id(),
+                "Dest.-Airport-IATA-Tag: " + dest.iataTag(),
+                "Dest.-Airport-Name: " + dest.name(),
+                "Plane-ID: " + plane.id(),
+                "Plane-ICAO-Tag: " + plane.icao(),
+                "Plane-Registration: " + plane.registration(),
+                "Plane-Type: " + plane.planeType(),
+                "Plane-Tail-Number" + plane.tailNr(),
+                "Airline-ID: " + airline.id(),
+                "Airline-IATA-Tag: " + airline.iataTag(),
+                "Airline-Name: " + airline.name(),
+                "Airline-Country: " + airline.country(),
+
+        };
+        return defaultJList(270, 400, listData);
+    }
+
+
+
     /**
      * private class CustomCellRenderer is a custom tree cell renderer
      * it modifies the style of the tree cells
      */
-    private static class CustomCellRenderer extends DefaultTreeCellRenderer {
+    private static class TreeCellRendererImpl extends DefaultTreeCellRenderer {
             @Override
             public Component getTreeCellRendererComponent(JTree tree, Object value,
                                                           boolean sel, boolean exp, boolean leaf,
@@ -278,5 +319,26 @@ public final class TreePlantation {
                 return this;
             }
         }
+
+    /**
+     * private ListCellRenderer implementation for different background colors,
+     * modifies cells of a JList
+     */
+    public static class ListCellRendererImpl extends DefaultListCellRenderer {
+
+        public ListCellRendererImpl() {
+            super();
+            super.setBorder(LINE_BORDER);
+        }
+
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            boolean to2 = index % 2 == 0;
+            super.setBackground(to2 ? DEFAULT_BG_COLOR.get() : new Color(150, 150, 150));
+
+            return this;
+        }
+    }
 
 }

@@ -2,6 +2,8 @@ package planespotter.constants;
 
 import javax.swing.*;
 
+import static planespotter.constants.Paths.IMAGE_PATH;
+
 /**
  * @name Images
  * @author jml04
@@ -10,13 +12,14 @@ import javax.swing.*;
  * enum Images contains all images for the GUI
  */
 public enum Images {
-    TITLE(new ImageIcon(Paths.IMAGE_PATH + "newTitle.png")),
-    BGROUND_IMG(new ImageIcon(Paths.IMAGE_PATH + "background.png")),
-    MENU_BGROUND_IMG(new ImageIcon(Paths.IMAGE_PATH + "menu_background.png")),
-    TITLE_BGROUND_IMG(new ImageIcon(Paths.IMAGE_PATH + "title_background.jpg")),
-    PAPER_PLANE_ICON(new ImageIcon(Paths.IMAGE_PATH + "planespotter_icon.png")),
-    FLYING_PLANE_ICON(new ImageIcon(Paths.IMAGE_PATH + "flying_plane_icon.png")),
-    LOADING_GIF(new ImageIcon(Paths.IMAGE_PATH + "loading.gif"));
+    TITLE(new ImageIcon(IMAGE_PATH + "newTitle.png")),
+    BGROUND_IMG(new ImageIcon(IMAGE_PATH + "background.png")),
+    MENU_BGROUND_IMG(new ImageIcon(IMAGE_PATH + "menu_background.png")),
+    TITLE_BGROUND_IMG(new ImageIcon(IMAGE_PATH + "title_background.jpg")),
+    PAPER_PLANE_ICON(new ImageIcon(IMAGE_PATH + "planespotter_icon.png")),
+    FLYING_PLANE_ICON(new ImageIcon(IMAGE_PATH + "flying_plane_icon.png")),
+    LOADING_GIF(new ImageIcon(IMAGE_PATH + "loading.gif")),
+    FILE_ICON(new ImageIcon(IMAGE_PATH + "file_icon.png"));
     // image instance field
     private final ImageIcon img;
     // private enum constructor

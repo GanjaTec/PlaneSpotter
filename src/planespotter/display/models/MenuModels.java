@@ -1,6 +1,9 @@
 package planespotter.display.models;
 
 import libs.UWPButton;
+import org.jetbrains.annotations.NotNull;
+import planespotter.constants.Images;
+import planespotter.controller.ActionHandler;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -23,6 +26,37 @@ import static planespotter.constants.DefaultColor.*;
  * MenuModels class contains different menu component models
  */
 public final class MenuModels {
+
+    @NotNull
+    public JMenuBar topMenuBar(@NotNull final ActionHandler actionHandler) {
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File"),
+              liveMapMenu = new JMenu("Live-Map"),
+              searchMenu = new JMenu("Search"),
+              statsMenu = new JMenu("Statistics"),
+              supplierMenu = new JMenu("Supplier"),
+              settingsMenu = new JMenu("Settings"),
+              helpMenu = new JMenu("Help");
+        liveMapMenu.addMenuListener(actionHandler);
+        searchMenu.addMenuListener(actionHandler);
+        JMenuItem openFile = new JMenuItem("Open", Images.FILE_ICON.get()),
+                  saveFile = new JMenuItem("Save As", Images.FILE_ICON.get()),
+                  exit = new JMenuItem("Exit", Images.FILE_ICON.get());
+        JMenuItem[] fileItems = new JMenuItem[] {
+                openFile, saveFile, exit
+        };
+        Arrays.stream(fileItems)
+                .forEach(item -> item.addMouseListener(actionHandler));
+        Arrays.stream(fileItems).forEach(item -> {
+            fileMenu.add(item);
+            fileMenu.addSeparator();
+        });
+        JMenu[] menus = new JMenu[] {
+                fileMenu, liveMapMenu, searchMenu, statsMenu, supplierMenu, settingsMenu, helpMenu
+        };
+        Arrays.stream(menus).forEach(menuBar::add);
+        return menuBar;
+    }
 
     /**
      * menubar (contains the other menu components)

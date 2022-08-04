@@ -114,6 +114,7 @@ public abstract class Controller {
     /**
      * @return ONE and ONLY controller instance
      */
+    @NotNull
     public static Controller getInstance() {
         return INSTANCE;
     }
@@ -121,6 +122,7 @@ public abstract class Controller {
     /**
      * @return main logger
      */
+    @NotNull
     public Logger getLogger() {
         return this.logger;
     }
@@ -178,16 +180,13 @@ public abstract class Controller {
      */
     private void initTasks() {
         if (!this.initialized) {
-            logger.log("initializing Executors...", this);
+            this.logger.log("initializing Executors...", this);
             // executing on-start tasks
-            liveThread = scheduler.runThread(this::liveDataTask, "Live-Data Loader", true, Scheduler.HIGH_PRIO);
-            scheduler.schedule(() -> {
-                        if (!this.loading) FileWizard.getFileWizard().saveConfig();
-                    }, 60, 300);
+            this.liveThread = this.scheduler.runThread(this::liveDataTask, "Live-Data Loader", true, Scheduler.HIGH_PRIO);
             // TODO: 02.07.2022 insert-while-live-option (as permanent parallel like live Data task)
             //SCHEDULER.schedule(() -> DBIn.insert(SCHEDULER, 50), "Insert Live Data", 20, 10);
 
-            logger.successLog("Executors initialized sucsessfully!", this);
+            this.logger.successLog("Executors initialized successfully!", this);
         }
     }
 
@@ -407,14 +406,11 @@ public abstract class Controller {
      *
      * @param data [0] and [1] must be filled
      */
-    public void confirmSettings(String... data) {
+    public void confirmSettings(@NotNull String... data) {
 
         TileSource currentMapSource;
         int maxLoadedData, livePeriodSec;
 
-        if (data[0] == null || data[1] == null || data[2] == null) {
-            throw new IllegalArgumentException("Please fill all fields! (with the right params)");
-        }
         this.gui.startProgressBar();
         try {
             // data[0]
@@ -433,6 +429,8 @@ public abstract class Controller {
             livePeriodSec = Integer.parseInt(data[2]);
             setLiveDataPeriod(livePeriodSec);
         } finally {
+            // saving config after reset
+            FileWizard.getFileWizard().saveConfig();
             this.gui.stopProgressBar();
         }
     }

@@ -52,7 +52,7 @@ public class KeeperOfTheArchives implements Keeper {
     @Override
     public void keep() {
         long startMillis = nowMillis();
-        System.out.println("ProtoKeeper has started working...");
+        System.out.println("KeeperOfTheArchives has started working...");
         int rowsUpdated = 0;
         Map<Integer, Long> fIDsAndTimestamps;
         try {
@@ -75,7 +75,7 @@ public class KeeperOfTheArchives implements Keeper {
             }
         }
         long elapsed = elapsedSeconds(startMillis);
-        System.out.println("ProtoKeeper finished work on the DB in " + elapsed +
+        System.out.println("KeeperOfTheArchives finished work on the DB in " + elapsed +
                            " seconds!\n" + rowsUpdated + " rows updated");
     }
 }

@@ -1,11 +1,15 @@
 package planespotter.model.io;
 
+import jnr.ffi.annotations.In;
 import org.jetbrains.annotations.NotNull;
 import planespotter.constants.SQLQueries;
 
 import java.sql.*;
+import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import planespotter.controller.Controller;
 import planespotter.controller.Scheduler;
@@ -43,17 +47,9 @@ public class DBIn extends DBConnector {
 		enabled = true;
 	}
 
-	/**
-	 * @name DBWriter
-	 * @author jml04
-	 * @author Lukas
-	 * @version 1.0
-	 *
-	 * The DBWriter class is an important model part that is responsible for
-	 * filling the database with data, uses methods from LiveData and takes its data
-	 * from the insertLater-queue in LiveData
-	 * @see LiveLoader
-	 */
+	public static void write(@NotNull final Stream<Fr24Frame> fr24frames) {
+		write((Deque<Fr24Frame>) fr24frames.collect(Collectors.toCollection(ArrayDeque::new)));
+	}
 
 	/**
 	 * writes frames to the database,
@@ -61,13 +57,12 @@ public class DBIn extends DBConnector {
 	 * getting all dbOut-data before the loop instead of in it)
 	 *
 	 * @param fr24Frames are the Fr24Frames to write, could be extended to '<? extends Frame>'
-	 * @param dbo is a DBOut Object for DB-Output
-	 * @param dbi is a DBIn Object for DB-Inserts
-	 * @return last inserted frame or null, if nothing was inserted
 	 */
-	public static synchronized void write(final Deque<Fr24Frame> fr24Frames, final DBOut dbo, final DBIn dbi) {
+	public static synchronized void write(@NotNull final Deque<Fr24Frame> fr24Frames) {
 		if (enabled) {
 			long startTime = nowMillis();
+			DBOut dbo = DBOut.getDBOut();
+			DBIn dbi = DBIn.getDBIn();
 			HashMap<String, Integer> airlineTagsIDs = new HashMap<>(),
 									 planeIcaoIDs = new HashMap<>(),
 									 flightNRsIDs = new HashMap<>();
@@ -127,12 +122,9 @@ public class DBIn extends DBConnector {
 			log.log("Trying to insert frames...", INSTANCE);
 			if (ableCollect(count)) {
 				// insert live data with normal writeToDB
-				DBOut dbOut = getDBOut();
-				DBIn dbIn = getDBIn();
-				Deque<Fr24Frame> frames = pollFrames(count);
+				Stream<Fr24Frame> frames = pollFrames(count);
 
-				scheduler.exec(() -> write(frames, dbOut, dbIn),
-						"DB-LiveData Writer", true, Scheduler.LOW_PRIO, true);
+				scheduler.exec(() -> write(frames), "DB-LiveData Writer", true, Scheduler.LOW_PRIO, true);
 				insertCount += count;
 			}
 			if (insertCount > 0) {
@@ -152,17 +144,14 @@ public class DBIn extends DBConnector {
 	public static synchronized int insertRemaining(@NotNull final Scheduler scheduler, int framesPerWrite) {
 		int inserted = 0;
 		if (enabled) {
-			final DBOut dbOut = getDBOut();
-			final DBIn dbIn = getDBIn();
 
-			while (!isEmpty()) {
-				Deque<Fr24Frame> frames = pollFrames(framesPerWrite);
+			//while (!isEmpty()) {
+				Stream<Fr24Frame> frames = pollFrames(Integer.MAX_VALUE);
 
-				scheduler.exec(() -> write(frames, dbOut, dbIn),
-						"Inserter", false, Scheduler.HIGH_PRIO, false);
+				scheduler.exec(() -> write(frames), "Inserter", false, Scheduler.HIGH_PRIO, false);
 
 				inserted += framesPerWrite;
-			}
+			//}
 			System.out.println("Inserting " + inserted + " frames...");
 		}
 		return inserted;
