@@ -25,10 +25,16 @@ import java.util.stream.Stream;
 public class UserSettings {
     // max loaded data
     private static int maxLoadedData;
+
     // current tile source
     private static TileSource currentMapSource;
+
+    private static int GRIDSIZE_LAT;
+    private static int GRIDSIZE_LON;
+
     // default map base url
     private static final String BASE_URL;
+
     // map types
     public static final TileSource BING_MAP, TRANSPORT_MAP, DEFAULT_MAP;
 
@@ -41,6 +47,9 @@ public class UserSettings {
         TRANSPORT_MAP = new OsmTileSource.TransportMap();
         DEFAULT_MAP = new TMSTileSource(new TileSourceInfo("OSM", BASE_URL, "0"));
         // setting current max-load and map-source
+        GRIDSIZE_LAT = 3;
+        GRIDSIZE_LON = 3;
+
         try {
             // initialization with saved config file
             Object[] settingsValues = read(Paths.RESOURCE_PATH + "config.psc");
@@ -60,6 +69,7 @@ public class UserSettings {
                 currentMapSource = mapSrc;
             }
         }
+
     }
 
 
@@ -147,4 +157,19 @@ public class UserSettings {
 
     }
 
+    public static int getGridsizeLat() {
+        return GRIDSIZE_LAT;
+    }
+
+    public static void setGridsizeLat(int gridsizeLat) {
+        GRIDSIZE_LAT = gridsizeLat;
+    }
+
+    public static int getGridsizeLon() {
+        return GRIDSIZE_LON;
+    }
+
+    public static void setGridsizeLon(int gridsizeLon) {
+        GRIDSIZE_LON = gridsizeLon;
+    }
 }

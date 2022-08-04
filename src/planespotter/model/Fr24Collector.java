@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import org.jetbrains.annotations.Range;
 import planespotter.constants.Areas;
+import planespotter.constants.UserSettings;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.*;
