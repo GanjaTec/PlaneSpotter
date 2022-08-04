@@ -173,7 +173,7 @@ public abstract class Menus {
                 var suppliers = supList.getSelectedValuesList()
                         .stream()
                         .filter(s -> s.contains("Fr24"))  // TODO: 29.06.2022 filter for type and create fitting Collectors
-                        .map(s -> new Fr24Collector(false, false)) // TODO add filters option
+                        .map(s -> new Fr24Collector(false, false, 6, 12)) // TODO add filters option
                         .toList();
                 this.activateDQ = new ArrayDeque<>(suppliers);
             });

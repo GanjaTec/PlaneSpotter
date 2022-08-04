@@ -1287,22 +1287,20 @@ public class DBOut extends DBConnector {
 			throws DataNotFoundException {
 
 		var map = new HashMap<String, Integer>();
-		try {
 			var query = "SELECT icaonr, ID FROM planes";
 			synchronized (DB_SYNC) {
-				var result = super.queryDB(query);
-				var rs = result.resultSet();
-				while (rs.next()) {
-					map.put(rs.getString(1), rs.getInt(2));
+				try (DBResult result = super.queryDB(query)) {
+					ResultSet rs = result.resultSet();
+					while (rs.next()) {
+						map.put(rs.getString(1), rs.getInt(2));
+					}
+				} catch (NoAccessException | SQLException e) {
+					e.printStackTrace();
 				}
-				result.close();
 			}
 			if (map.isEmpty()) {
 				throw new DataNotFoundException("No Plane-ICAOs and IDs found!");
 			}
-		} catch (NoAccessException | SQLException e) {
-			e.printStackTrace();
-		}
 		return map;
 	}
 

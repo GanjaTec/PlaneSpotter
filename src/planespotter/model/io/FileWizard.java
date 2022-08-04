@@ -35,6 +35,11 @@ public class FileWizard {
     private FileWizard() {
     }
 
+    @NotNull
+    public synchronized File loadConfig() {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
     /**
      * saves the config as a .psc file
      * uses a FileWriter to write the config file,

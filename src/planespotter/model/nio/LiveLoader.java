@@ -1,5 +1,6 @@
 package planespotter.model.nio;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import planespotter.constants.Areas;
 import planespotter.controller.Controller;
@@ -11,20 +12,20 @@ import planespotter.model.io.DBIn;
 import planespotter.throwables.Fr24Exception;
 import planespotter.util.Logger;
 
-import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @name LiveData
  * @author jml04
  * @version 1.0
  *
+ * @description
  * abstract class LiveData represents a Live-Data-Manager,
  * it is able to load live data directly from Fr24 into Flight Objects,
  * it contains a queue 'insertLater' where all the frames are added to,
@@ -68,14 +69,10 @@ public abstract class LiveLoader {
         var currentArea = new String[] {
                 Areas.newArea(topLeft, bottomRight)
         };
-
-        var frames = Fr24Supplier.framesForArea(currentArea, deserializer, scheduler);
+        Fr24Supplier.collectFramesForArea(currentArea, deserializer, scheduler, false);
         // termorary if // daten gehen verloren
-        if (!maxSizeReached()) {
-            insertLater(frames);
-        }
         var id = new AtomicInteger(0);
-        return frames.stream()
+        return insertLater.stream()
                 .map(frame -> Flight.parseFlight(frame, id.getAndIncrement()))
                 .collect(Collectors.toCollection(Vector::new));
     }
@@ -87,19 +84,23 @@ public abstract class LiveLoader {
      * @param count is the pull count
      * @return Deque of Frames with @param count es length
      */
-    public static Deque<Fr24Frame> pollFrames(@Range(from = 1, to = Integer.MAX_VALUE) int count) {
+    @NotNull
+    public static Stream<Fr24Frame> pollFrames(@Range(from = 1, to = Integer.MAX_VALUE) int count) {
         // checking for empty queue
         if (isEmpty()) {
             throw new Fr24Exception("Insert-later-Queue is empty, make sure it is not empty!");
         } else if (!ableCollect(count)) {
-            Logger log = Controller.getInstance().getLogger();
-            log.infoLog("Insert-later-Queue has not that much content, limiting frames to size...", new LiveLoader() {});
-            count = insertLater.size();
+            try {
+                Logger log = Controller.getInstance().getLogger();
+                log.infoLog("Insert-later-Queue has not that much content, limiting frames to size...", new LiveLoader() {});
+            } catch (IllegalStateException ignored) {
+            } finally {
+                count = insertLater.size();
+            }
         }
         // streaming insertLater-queue and returning frames (parallel)
-        return insertLater.parallelStream()
-                .limit(count)
-                .collect(Collectors.toCollection(ArrayDeque::new));
+        return insertLater.stream()
+                .limit(count);
     }
 
     /**

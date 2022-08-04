@@ -1,11 +1,12 @@
 package planespotter.model.nio;
 
 import org.jetbrains.annotations.NotNull;
+
 import planespotter.model.Fr24Collector;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
-import planespotter.model.io.DBOut;
+import planespotter.throwables.Fr24Exception;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -17,10 +18,9 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -41,8 +41,6 @@ public class Fr24Supplier implements Supplier {
 	private final String ThreadName;
 	private final String area;
 	private final HttpClient httpClient;
-	private final DBIn dbIn;
-	private final DBOut dbOut;
 	//TODO Write getters
 
 	public Fr24Supplier() {
@@ -54,8 +52,6 @@ public class Fr24Supplier implements Supplier {
 		this.ThreadName = "SupplierThread-" + threadNumber;
 		this.area = area;
 		this.httpClient = HttpClient.newHttpClient();
-		this.dbIn = DBIn.getDBIn();
-		this.dbOut = DBOut.getDBOut();
 	}
 
 	@Override
@@ -65,9 +61,13 @@ public class Fr24Supplier implements Supplier {
 			// use Proto-deserializer for correct frame data
 			Fr24Deserializer deserializer = new Fr24Deserializer();
 			HttpResponse<String> response = this.sendRequest();
+			int statusCode = response.statusCode();
+			if (statusCode != 200) {
+				throw new Fr24Exception("Fr24Supplier: Status code is invalid! " + statusCode);
+			}
 			Deque<Fr24Frame> fr24Frames = deserializer.deserialize(response);
 			// writing frames to DB
-			DBIn.write(fr24Frames, this.dbOut, this.dbIn);
+			DBIn.write(fr24Frames);
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -110,69 +110,52 @@ public class Fr24Supplier implements Supplier {
 	 * @param scheduler is the Scheduler to allow parallelism
 	 * @return Deque of deserialized Frames
 	 */
-	public static synchronized Deque<Fr24Frame> framesForArea(String[] areas, final Fr24Deserializer deserializer, final Scheduler scheduler) {
-		var concurrentDeque = new ConcurrentLinkedDeque<Fr24Frame>();
+	private static final Object lock = new Object();
+	public static synchronized void collectFramesForArea(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, @NotNull final Scheduler scheduler, boolean ignoreMaxSize) {
 		System.out.println("Deserializing Fr24-Data...");
 
-		var ready = new AtomicBoolean(false);
-		var counter = new AtomicInteger(areas.length - 1);
+		// TODO ERSATZ METHOD, with simple Supplier.supply(), threaded
 
-		var areaDQ = new ConcurrentLinkedDeque<>(List.of(areas));
+		int length = 5;
+		String[] part = new String[length];
 
-		Runnable getAndDeserialize = () -> {
-			String area;
-			Fr24Supplier supplier;
-			Deque<Fr24Frame> data;
-
-			while (!areaDQ.isEmpty()) {
-				area = areaDQ.poll();
-				if (area != null) {
-					supplier = new Fr24Supplier(0, area);
+		int i = 0;
+		AtomicInteger tNumber = new AtomicInteger(0),
+					  counter = new AtomicInteger(areas.length-2);
+		for (String area : areas) {
+			if (i < length) {
+				part[i++] = area;
+			} else {
+				final String[] fPart = part;
+				scheduler.exec(() -> Arrays.stream(fPart).forEach(ar -> {
+					Fr24Supplier supplier = new Fr24Supplier(tNumber.get(), ar);
 					try {
-						data = deserializer.deserialize(supplier.sendRequest());
-						while (!data.isEmpty()) {
-							concurrentDeque.add(data.poll());
+						if (!ignoreMaxSize && LiveLoader.maxSizeReached()) {
+							return;
 						}
+						HttpResponse<String> response = supplier.sendRequest();
+						int statusCode = response.statusCode();
+						if (statusCode != 200) {
+							throw new Fr24Exception("Fr24Supplier: Status code is invalid! " + statusCode);
+						}
+						Deque<Fr24Frame> data = deserializer.deserialize(response);
+						LiveLoader.insertLater(data);
 					} catch (IOException | InterruptedException e) {
 						e.printStackTrace();
 					}
-					if (counter.get() == 0) {
-						ready.set(true);
+					synchronized (lock) {
+						counter.decrementAndGet();
 					}
-					counter.getAndDecrement();
-				}
+				}), "Fr24-Deserializer-" + tNumber.getAndIncrement(), false, Scheduler.HIGH_PRIO, true);
+				i = 0;
+				part = new String[length];
 			}
-		};
-
-		int threadCount = 10;
-		for (int i = 0; i < threadCount; i++) {
-			scheduler.exec(getAndDeserialize, "Fr24-Deserializer-" + i, false, Scheduler.HIGH_PRIO, true);
 		}
 
-		/*scheduler.exec(() -> {
-			for (var area : areas) {
-
-				var supplier = new Fr24Supplier(0, area);
-				try {
-					var data = deserializer.deserialize(supplier.sendRequest());
-					while (!data.isEmpty()) {
-						concurrentDeque.add(data.poll());
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				if (counter.get() == 0) {
-					ready.set(true);
-				}
-				counter.getAndDecrement();
-			}
-		}, "Fr24-Deserializer", false, Scheduler.MID_PRIO, true);*/
-		while (!ready.get()) {
-			System.out.print(":");
+		while (scheduler.active() > 1) {
 			Scheduler.sleep(100);
+			System.out.print(":" + counter.get());
 		}
-		System.out.println();
-		return concurrentDeque;
 	}
 	
 	/**
