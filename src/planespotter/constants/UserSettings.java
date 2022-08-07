@@ -47,8 +47,8 @@ public class UserSettings {
         TRANSPORT_MAP = new OsmTileSource.TransportMap();
         DEFAULT_MAP = new TMSTileSource(new TileSourceInfo("OSM", BASE_URL, "0"));
         // setting current max-load and map-source
-        GRIDSIZE_LAT = 3;
-        GRIDSIZE_LON = 3;
+        GRIDSIZE_LAT = 6;
+        GRIDSIZE_LON = 12;
 
         try {
             // initialization with saved config file

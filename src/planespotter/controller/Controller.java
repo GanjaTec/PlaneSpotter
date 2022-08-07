@@ -300,7 +300,7 @@ public abstract class Controller {
             this.setLoading(true);
             map = this.gui.getMap();
             // loading direct live-data
-            this.liveData = LiveLoader.loadDirectly(scheduler, map);
+            this.liveData = LiveLoader.loadDirectly(this.scheduler, map);
             // transforming liveData-flight-Vector into list of MapMarkers
             markerList = this.liveData.stream()
                     .map(flight -> {
