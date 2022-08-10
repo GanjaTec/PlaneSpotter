@@ -56,8 +56,8 @@ import static planespotter.constants.ViewType.*;
  * @author Bennet
  * @version 1.1
  *
+ * @description
  * main controller - responsible for connection between model and view
- * has static controller, scheduler, gui, action handler and logger instance
  */
 public abstract class Controller {
 
@@ -78,6 +78,14 @@ public abstract class Controller {
         RUNTIME = Runtime.getRuntime();
         INSTANCE = new Controller() {};
         ROOT_PATH = Utilities.getAbsoluteRootPath();
+    }
+
+    /**
+     * @return ONE and ONLY controller instance
+     */
+    @NotNull
+    public static Controller getInstance() {
+        return INSTANCE;
     }
 
     // instance fields
@@ -103,11 +111,12 @@ public abstract class Controller {
     // new graphical user interface
     private final UserInterface ui;
 
+    // TODO: 10.08.2022 move to Search -> searchCache
     // proto test-cache
     public final LRUCache<String, Object> cache;
 
     // live data loading period
-    private int liveDataPeriodSec = 2;
+    private int liveDataPeriodSec;
 
     // logger for whole program
     private Logger logger;
@@ -125,48 +134,12 @@ public abstract class Controller {
         this.scheduler = new Scheduler();
         this.cache = new LRUCache<>(100); // TODO best cache size
         this.ui = new UserInterface(ActionHandler.getActionHandler());
-    }
-
-    /**
-     * @return ONE and ONLY controller instance
-     */
-    @NotNull
-    public static Controller getInstance() {
-        return INSTANCE;
-    }
-
-    /**
-     * @return main logger
-     */
-    @NotNull
-    public Logger getLogger() {
-        return this.logger;
-    }
-
-    /**
-     * @return main scheduler
-     */
-    public Scheduler getScheduler() {
-        return scheduler;
-    }
-
-
-    public UserInterface getUI() {
-        return this.ui;
-    }
-
-    /**
-     * sets the period for the live-data loader in seconds
-     *
-     * @param sec is the period in seconds
-     */
-    public void setLiveDataPeriod(@Range(from = 1, to = 10) int sec) {
-        liveDataPeriodSec = sec;
+        this.liveDataPeriodSec = 2;
     }
 
     /**
      * starts the program by initializing the controller
-     * and opening a GUI-window
+     * and opening a UI-window
      */
     public synchronized void start() {
         this.initialize();
@@ -322,7 +295,9 @@ public abstract class Controller {
 
     /**
      * executed when a loading process is done, will turn
-     * loading-flag to false and stop the GUI-progressBar
+     * loading-flag to false and play a sound if wanted
+     *
+     * @param playSound indicates if the method should play a sound at the end
      */
     public void done(boolean playSound) {
         this.loading = false;
@@ -331,8 +306,14 @@ public abstract class Controller {
         }
     }
 
+    // TODO: 08.08.2022 add filters
+    void runFr24Collector() {
+        Collector<Fr24Supplier> collector = new Fr24Collector(false, false, 6, 12);
+        collector.start();
+    }
+
     /**
-     * creates a GUI-view for a specific view-type and specific data
+     * creates a UI-view for a specific view-type and specific data
      *
      * @param type is the ViewType, sets the content type for the
      *             created view (e.g. different List-View-Types)
@@ -344,7 +325,6 @@ public abstract class Controller {
 
         this.setLoading(true);
 
-        //this.gui.disposeView();
         UserInterface ui = this.getUI();
         ui.setViewType(type);
         ui.getMapManager().clearMap();
@@ -366,7 +346,7 @@ public abstract class Controller {
     }
 
     /**
-     * search method for the this.gui-search
+     * search method for different data from the DB
      *
      * @param inputs are the inputs in the search fields
      * @param button is the clicked search button, 0 = LIST, 1 = MAP
@@ -380,7 +360,7 @@ public abstract class Controller {
         Search search;
         if (button == 1) {
             this.setLoading(true);
-            //this.gui.startProgressBar();
+
             search = new Search();
             SearchType currentSearchType = this.ui.getSearchPanel().getCurrentSearchType();
             try {
@@ -507,7 +487,6 @@ public abstract class Controller {
                 this.clicking = true;
                 mapMarkers = this.ui.getMap().getMapMarkerList();
                 newMarkerList = new ArrayList<>();
-                markerHit = false;
                 mapManager = this.ui.getMapManager();
                 counter = 0;
                 data = this.loadedData;
@@ -689,12 +668,6 @@ public abstract class Controller {
         }
     }
 
-    // TODO: 08.08.2022 add filters
-    void runFr24Collector() {
-        Collector<Fr24Supplier> collector = new Fr24Collector(false, false, 6, 12);
-        collector.start();
-    }
-
     // private methods
 
     private void showSignificanceMap(@NotNull MapManager bbn, DBOut dbOut) {
@@ -773,6 +746,43 @@ public abstract class Controller {
         }
         /*treePlant = this.ui.getTreePlantation();
         treePlant.createTree(treePlant.allFlightsTreeNode(flights), this.gui);*/
+    }
+
+    /**
+     * getter for the logger
+     *
+     * @return main logger instance
+     */
+    @NotNull
+    public Logger getLogger() {
+        return this.logger;
+    }
+
+    /**
+     * getter for the scheduler
+     *
+     * @return main scheduler instance
+     */
+    public Scheduler getScheduler() {
+        return scheduler;
+    }
+
+    /**
+     * getter for the user interface
+     *
+     * @return main UserInterface instance
+     */
+    public UserInterface getUI() {
+        return this.ui;
+    }
+
+    /**
+     * sets the period for the live-data loader in seconds
+     *
+     * @param sec is the period in seconds
+     */
+    public void setLiveDataPeriod(@Range(from = 1, to = 10) int sec) {
+        liveDataPeriodSec = sec;
     }
 
     /**
