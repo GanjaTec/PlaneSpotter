@@ -2,21 +2,16 @@ package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import planespotter.constants.Paths;
+import planespotter.constants.Configuration;
 import planespotter.controller.Controller;
-import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.MapData;
 import planespotter.constants.UserSettings;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.util.Logger;
 import planespotter.util.Time;
 
-import javax.swing.*;
 import java.io.*;
 import java.nio.file.FileAlreadyExistsException;
-import java.util.Vector;
-
-import static planespotter.constants.Configuration.*;
 
 /**
  * @name FileMaster
@@ -35,22 +30,18 @@ public class FileWizard {
     private FileWizard() {
     }
 
-    @NotNull
-    public synchronized File loadConfig() {
-        throw new UnsupportedOperationException("Not implemented yet!");
-    }
-
     /**
-     * saves the config as a .psc file
-     * uses a FileWriter to write the config file,
-     * no special file format, just '.psc' ending
+     * saves the config as a .psc file using
+     * UserSettings.write() for writing the configuration values.
+     * Only non-final User-Settings are saved, static final fields
+     * are ignored, because they are never updated
      */
     public synchronized void saveConfig() {
         File config;
         Logger log = Controller.getInstance().getLogger();
-        log.log("saving config...", fileWizard);
-        config = new File(Paths.RESOURCE_PATH + "config.psc");
-        if (!config.exists()) {// creating new file if there is no existing one
+        log.log("saving configuration...", fileWizard);
+        config = new File(Configuration.CONFIG_FILENAME);
+        if (!config.exists()) { // creating new file if there is no existing one
             try {
                 config.createNewFile();
             } catch (IOException ex) {
@@ -58,14 +49,8 @@ public class FileWizard {
                 return;
             }
         }
-        try (Writer writer = new FileWriter(config)) {
-
-                writer.write("maxThreadPoolSize: " + MAX_THREADPOOL_SIZE + "\n");
-                writer.write("maxLoadedFlights: " + UserSettings.getMaxLoadedData() + "\n");
-                log.successLog("configuration saved successfully!", fileWizard);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        boolean success = UserSettings.write(Configuration.CONFIG_FILENAME);
+        log.successLog(success ? "configuration saved successfully!" : "error occurred while saving the configuration!", fileWizard);
     }
 
     /**

@@ -1,5 +1,6 @@
 package planespotter.model;
 
+import org.jetbrains.annotations.NotNull;
 import planespotter.controller.Scheduler;
 import planespotter.display.models.SupplierDisplay;
 import planespotter.model.nio.Supplier;
@@ -26,7 +27,7 @@ public abstract class Collector<S extends Supplier> {
     }
 
     // 'paused' and 'enabled' flags | is set by the display events
-    private boolean paused, enabled;
+    private boolean paused, enabled, isSubTask;
     // main thread instance, should be implemented in startCollecting()
     private Thread mainThread;
     // supplier instance, can be every Supplier-subclass
@@ -61,6 +62,7 @@ public abstract class Collector<S extends Supplier> {
         // setting collector flags to 'running'
         this.paused = false;
         this.enabled = true;
+        this.isSubTask = !exitOnClose;
     }
 
     /**
@@ -118,10 +120,11 @@ public abstract class Collector<S extends Supplier> {
      * @param newTask is the new Task, must be a 'collecting task' as runnable (can be written as lambda)
      * @param tName is the thread name
      */
-    protected void startNewMainThread(Runnable newTask, String tName) {
-        this.mainThread = new Thread(newTask);
+    protected void startNewMainThread(@NotNull Runnable newTask, @NotNull String tName) {
+        this.mainThread = this.scheduler.runThread(newTask, tName, false, Scheduler.MID_PRIO);
+        /*this.mainThread = new Thread(newTask);
         this.mainThread.setName(tName);
-        this.mainThread.start();
+        this.mainThread.start();*/
     }
 
     public boolean isPaused() {
@@ -138,5 +141,9 @@ public abstract class Collector<S extends Supplier> {
 
     public boolean setEnabled(boolean enabled) {
         return this.enabled = enabled;
+    }
+
+    public boolean isSubTask() {
+        return this.isSubTask;
     }
 }

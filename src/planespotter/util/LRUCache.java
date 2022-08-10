@@ -78,9 +78,6 @@ public class LRUCache<K, V> {
         var success = new AtomicBoolean(false);
         var key = new AtomicReference<K>();
 
-        //CacheElement<V> value;
-        //int useCount;
-
         // TODO: 22.06.2022 test if parallelStream is needed!!
         // replaced for with parallelStream.forEach
         entrySet.parallelStream()

@@ -1,4 +1,4 @@
-package planespotter.model;
+package planespotter.a_test;
 
 import planespotter.constants.Areas;
 import planespotter.model.nio.Fr24Supplier;

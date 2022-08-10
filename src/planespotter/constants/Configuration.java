@@ -9,11 +9,21 @@ package planespotter.constants;
  */
 public abstract class Configuration {
 
+    // title
+    public static final String TITLE = "PlaneSpotter v0.2";
+
     // max thread pool size
     public static final int MAX_THREADPOOL_SIZE = 80;
+
     // thread keep-alive-time
     public static final long KEEP_ALIVE_TIME = 4L;
+
     // core pool size (threads that are running constantly)
     public static final int CORE_POOLSIZE = 0;
 
+    // configuration file name
+    public static final String CONFIG_FILENAME = Paths.RESOURCE_PATH + "config.psc";
+
+    // filter file name
+    public static final String FILTERS_FILENAME = Paths.RESOURCE_PATH + "filters.psc";
 }

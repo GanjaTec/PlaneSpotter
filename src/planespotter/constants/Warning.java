@@ -16,7 +16,8 @@ public enum Warning {
     REJECTED_EXECUTION("Execution rejected! This shouldn't happen normally!"),
     ILLEGAL_INPUT("Illegal Input! \nAn expression/character you used, is not allowed!"),
     INT_EXPECTED("INT expected! please enter a valid number (e.g. 1, 525, -11,..."),
-    FILE_ALREADY_EXISTS("File already exists, please choose another name!");
+    FILE_ALREADY_EXISTS("File already exists, please choose another name!"),
+    NOT_SUPPORTED_YET("This feature is not supported yet!");
     // warning string instance field
     private final String message;
     // private enum constructor

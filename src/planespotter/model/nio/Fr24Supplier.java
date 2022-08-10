@@ -118,8 +118,9 @@ public class Fr24Supplier implements Supplier {
 	 * @param ignoreMaxSize if it's true, allowed max size of insertLater-queue is ignored
 	 * @see planespotter.model.nio.LiveLoader
 	 */
+	@SuppressWarnings(value = "duplicate")
 	public static synchronized boolean collectFramesForArea(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, @NotNull final Scheduler scheduler, boolean ignoreMaxSize) {
-		System.out.println("Deserializing Fr24-Data...");
+		System.out.println("[Supplier] Collecting Fr24-Data...");
 
 		Arrays.stream(areas)
 				.parallel()
@@ -146,7 +147,7 @@ public class Fr24Supplier implements Supplier {
 	}
 
 	public static synchronized void collectPStream(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize) {
-		System.out.println("Collecting Fr24-Data with parallel Stream...");
+		System.out.println("[Supplier] Collecting Fr24-Data with parallel Stream...");
 
 		AtomicInteger tNumber = new AtomicInteger(0);
 		long startTime = Time.nowMillis();
@@ -167,7 +168,7 @@ public class Fr24Supplier implements Supplier {
 				}
 			});
 		}
-		System.out.println("PStream-Collector is ready! \nElapsed time: " + Time.elapsedMillis(startTime) + " ms");
+		System.out.println("[Supplier] Elapsed time: " + Time.elapsedMillis(startTime) + " ms");
 	}
 	
 	/**

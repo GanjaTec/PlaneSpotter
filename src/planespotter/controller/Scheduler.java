@@ -146,7 +146,7 @@ public class Scheduler {
      * @param daemon is the value if the thread is a daemon thread
      * @param prio is the priority from 1-10
      * @param withTimeout if the task should have a timeout
-     * @return
+     * @return the running task as {@link CompletableFuture}
      */
     @NotNull
     public final CompletableFuture<Void> exec(@NotNull Runnable target, @NotNull String tName, boolean daemon, int prio, boolean withTimeout) {
@@ -155,7 +155,7 @@ public class Scheduler {
         }
         this.getThreadFactory().addThreadProperties(tName, daemon, prio);
         if (withTimeout) {
-            var currentThread = new AtomicReference<Thread>();
+            AtomicReference<Thread> currentThread = new AtomicReference<>();
             return CompletableFuture.runAsync(target, this.exe)
                     .orTimeout(15, TimeUnit.SECONDS)
                     .exceptionally(e -> {
@@ -177,17 +177,20 @@ public class Scheduler {
      * @param daemon is the daemon flag
      * @param prio is the priority from 1-10
      */
-    public Thread runThread(@NotNull Runnable target, String tName, boolean daemon, @Range(from = 1, to = 10) int prio) {
-        var thread = new Thread(target);
-        thread.setName(String.valueOf(tName));
+    @NotNull
+    public Thread runThread(@NotNull Runnable target, @NotNull String tName, boolean daemon, @Range(from = 1, to = 10) int prio) {
+        Thread thread = new Thread(target);
+        thread.setName(tName);
         thread.setPriority(prio);
         thread.setDaemon(daemon);
         thread.start();
         return thread;
     }
 
-    public void await(@NotNull Runnable r) {
+    public void await(@NotNull Thread t)
+            throws InterruptedException {
 
+        t.join();
     }
 
     /**

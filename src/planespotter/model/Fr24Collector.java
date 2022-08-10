@@ -1,5 +1,6 @@
 package planespotter.model;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.jetbrains.annotations.Range;
@@ -8,8 +9,11 @@ import planespotter.constants.UserSettings;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.*;
+import planespotter.model.nio.Filters;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
+
+import java.util.List;
 
 /**
  * @name Fr24Collector
@@ -32,9 +36,6 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         FRAMES_PER_WRITE = 800;
         REQUEST_PERIOD = 60;
     }
-    // 'filters enabled' flag
-    private final boolean withFilters;
-    private final Inserter inserter;
 
     /**
      * Fr24-Collector Main-method
@@ -45,7 +46,14 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         new Fr24Collector(true, false, UserSettings.getGridsizeLat(), UserSettings.getGridsizeLon()).start();
     }
 
+    @Nullable
+    private final Filters filters;
+
+    @NotNull
+    private final Inserter inserter;
+
     // raster of areas (whole world) in 1D-Array
+    @NotNull
     private final String[] worldAreaRaster1D;
 
     /**
@@ -58,9 +66,9 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
                          @Range(from = 2, to = 180) int gridSizeLat,
                          @Range(from = 2, to = 360) int gridSizeLon) {
         super(exitOnClose, new Fr24Supplier());
-        this.withFilters = withFilters;
+        this.filters = withFilters ? UserSettings.getCollectorFilters() : null;
         this.inserter = new Inserter();
-        this.worldAreaRaster1D = Areas.getWorldAreaRaster1D(gridSizeLon, gridSizeLat);
+        this.worldAreaRaster1D = Areas.getWorldAreaRaster1D(gridSizeLat, gridSizeLon);
     }
 
     /**
@@ -72,7 +80,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
     public void startCollecting() {
         Fr24Deserializer deserializer = new Fr24Deserializer();
         Keeper keeper = new KeeperOfTheArchives(1200L);
-        if (this.withFilters) {
+        if (this.filtersEnabled()) {
             deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF", "CASA", "VIVI");
         }
         String[] specialAreas = Areas.EASTERN_FRONT;
@@ -112,6 +120,10 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
             super.display.update(super.insertedNow.get(), super.newPlanesNow.get(), super.newFlightsNow.get(),
                     (lastFrame != null) ? lastFrame.toShortString() : "None");
         }, 0, 1);
+    }
+
+    public boolean filtersEnabled() {
+        return this.filters != null;
     }
 
 }

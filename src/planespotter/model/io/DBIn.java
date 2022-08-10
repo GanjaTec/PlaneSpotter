@@ -1,6 +1,5 @@
 package planespotter.model.io;
 
-import jnr.ffi.annotations.In;
 import org.jetbrains.annotations.NotNull;
 import planespotter.constants.SQLQueries;
 
@@ -8,18 +7,18 @@ import java.sql.*;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import planespotter.controller.Controller;
 import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
-import planespotter.model.nio.LiveLoader;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.NoAccessException;
 import planespotter.util.Logger;
 
 import static planespotter.model.nio.LiveLoader.*;
-import static planespotter.model.io.DBOut.getDBOut;
 import static planespotter.util.Time.elapsedSeconds;
 import static planespotter.util.Time.nowMillis;
 
@@ -120,7 +119,7 @@ public class DBIn extends DBConnector {
 		if (enabled) {
 			Logger log = Controller.getInstance().getLogger();
 			log.log("Trying to insert frames...", INSTANCE);
-			if (ableCollect(count)) {
+			if (canPoll(count)) {
 				// insert live data with normal writeToDB
 				Stream<Fr24Frame> frames = pollFrames(count);
 
@@ -138,23 +137,18 @@ public class DBIn extends DBConnector {
 	 * inserts all remaining data from the insertLater-queue into the DB
 	 *
 	 * @param scheduler is the Scheduler which executes tasks
-	 * @param framesPerWrite is the frame count that should be written per one write task
 	 * @return inserted frames count as an int
 	 */
-	public static synchronized int insertRemaining(@NotNull final Scheduler scheduler, int framesPerWrite) {
-		int inserted = 0;
+	@NotNull
+	public static synchronized CompletableFuture<Void> insertRemaining(@NotNull final Scheduler scheduler)
+			throws NoAccessException {
 		if (enabled) {
+			Stream<Fr24Frame> frames = pollFrames(Integer.MAX_VALUE);
 
-			//while (!isEmpty()) {
-				Stream<Fr24Frame> frames = pollFrames(Integer.MAX_VALUE);
+			return scheduler.exec(() -> write(frames), "Inserter", false, Scheduler.HIGH_PRIO, false);
 
-				scheduler.exec(() -> write(frames), "Inserter", false, Scheduler.HIGH_PRIO, false);
-
-				inserted += framesPerWrite;
-			//}
-			System.out.println("Inserting " + inserted + " frames...");
 		}
-		return inserted;
+		throw new NoAccessException("DB-Writer is disabled!");
 	}
 
 	/**

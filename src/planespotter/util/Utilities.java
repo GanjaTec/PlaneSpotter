@@ -206,6 +206,7 @@ public abstract class Utilities {
      * @param check is the (sql) string to check
      * @return string, without illegal characters/expressions
      */
+    @NotNull
     public static String checkString(@NotNull String check)
         throws IllegalInputException {
 
@@ -221,6 +222,16 @@ public abstract class Utilities {
         // replacing all '%', to prevent inputs like '%.....%', which take too much time to search for
         // '%' is a SQL-placeholder for everything with any length
         return check.replaceAll("%", "");
+    }
+
+    @NotNull
+    public static String[] checkInputs(@NotNull String... inputs)
+            throws IllegalInputException {
+
+        for (int i = 0; i < inputs.length; i++) {
+            inputs[i] = checkString(inputs[i]);
+        }
+        return inputs;
     }
 
     /**

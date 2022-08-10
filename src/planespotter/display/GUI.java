@@ -2,7 +2,6 @@ package planespotter.display;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartPanel;
 import planespotter.constants.*;
 import planespotter.controller.ActionHandler;
@@ -11,11 +10,12 @@ import planespotter.display.models.PaneModels;
 import planespotter.display.models.SearchModels;
 import planespotter.model.nio.LiveLoader;
 import planespotter.throwables.IllegalInputException;
-import planespotter.throwables.NoSuchContainerException;
+import planespotter.throwables.NoSuchComponentException;
 import planespotter.util.Utilities;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -31,6 +31,7 @@ import static planespotter.constants.Sound.SOUND_DEFAULT;
  * GUI class is the main gui class, it implements all the listeners
  * and has all components -> it contains window that the user sees
  */
+@Deprecated(since = "new UserInterface class"/* ,forRemoval = true*/)
 public class GUI {
     // 'warning shown' flag
     private static boolean warningShown = false;
@@ -50,7 +51,8 @@ public class GUI {
     // all components TODO Component name (String) enum that one doesn't have to search for the right comp name
     private final HashMap<String, Container> components;
 
-    public JFrame loadingScreen;
+    public final JFrame loadingScreen;
+
     protected List<JComponent> flightSearch, planeSearch, airlineSearch, airportSearch, areaSearch;
     // search components
     // TODO: 30.06.2022 move to components hash map
@@ -99,7 +101,7 @@ public class GUI {
      * creates new GUI window
      */
     protected JFrame initialize() {
-        MenuModels menuModels = new MenuModels();
+        /*MenuModels menuModels = new MenuModels();
         PaneModels panelModels = new PaneModels();
         SearchModels searchModels = new SearchModels();
         // setting up window
@@ -119,7 +121,7 @@ public class GUI {
         this.addContainer("mapPanel", mapPanel);
 
         // initializing map viewer
-        this.mapManager = new MapManager(this, mapPanel, this.actionHandler);
+        this.mapManager = *//*new MapManager(this, mapPanel, this.actionHandler)*//*null;
         this.treePlantation = new TreePlantation();
 
         JPanel menuPanel = panelModels.menuPanel((JDesktopPane) this.getComponent("leftDP"));
@@ -207,7 +209,7 @@ public class GUI {
         // TODO: 04.08.2022 move
         window.setJMenuBar(menuModels.topMenuBar(this.actionHandler));
 
-        return window;
+        return window;*/return null;
     }
 
     /**
@@ -294,7 +296,7 @@ public class GUI {
     public final Container getComponent(final String name) {
         final var comp = this.components.getOrDefault(name, null);
         if (comp == null) {
-            throw new NoSuchContainerException();
+            throw new NoSuchComponentException();
         }
         return comp;
     }
@@ -302,7 +304,7 @@ public class GUI {
     /**
      * @return all search models in a list
      */
-     Collection<List<JComponent>> allSearchModels() {
+    public Collection<List<JComponent>> allSearchModels() {
         var allSearchComps = new LinkedList<List<JComponent>>();
         allSearchComps.add(this.flightSearch);
         allSearchComps.add(this.planeSearch);
@@ -421,6 +423,13 @@ public class GUI {
         dpInfoTree.setFont(FONT_MENU.deriveFont(12f));
         this.getComponent("infoPanel").add(dpInfoTree);
         this.addContainer("dpInfoTree", dpInfoTree);
+    }
+
+    public void showSettings() {
+        this.getComponent("settingsDialog").setVisible(true);
+        JTextField settingsMaxLoadTxtField = (JTextField) this.getComponent("settingsMaxLoadTxtField");
+        settingsMaxLoadTxtField.setCaretColor(Color.YELLOW);
+        this.requestComponentFocus(settingsMaxLoadTxtField);
     }
 
     /**
@@ -594,7 +603,12 @@ public class GUI {
                         jtf.setText(blank);
                     }
                 }));
+    }
 
+    @Nullable
+    public File getSelectedFile() {
+        JFileChooser fileChooser = MenuModels.fileLoader((JFrame) this.getComponent("window"));
+        return fileChooser.getSelectedFile();
     }
 
     public TreasureMap getMap() {

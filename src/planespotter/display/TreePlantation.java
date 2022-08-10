@@ -23,6 +23,7 @@ import static planespotter.constants.GUIConstants.*;
  *
  * class TreePlantation implements methods to create tree structures
  */
+@Deprecated(since = "new UserInterface class")
 public final class TreePlantation {
 
     /**

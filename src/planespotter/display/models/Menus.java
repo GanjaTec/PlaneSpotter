@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 
 import static planespotter.constants.DefaultColor.*;
 
+@Deprecated(since = "new UserInterface class", forRemoval = true)
 public abstract class Menus {
 
     public static final byte TYPE_STATS = 0,
@@ -81,7 +82,7 @@ public abstract class Menus {
             supList.setSelectionBackground(DEFAULT_MAP_ICON_COLOR.get());
             supList.setVisibleRowCount(10); // max 10 suppliers
             supList.setListData(data);
-            supList.addListSelectionListener(e -> {
+            /*supList.addListSelectionListener(e -> {
                 var value = supList.getSelectedValue();
                 var gui = Controller.getInstance().getGUI();
                 var rightDP = (JDesktopPane) gui.getComponent("rightDP");
@@ -89,36 +90,12 @@ public abstract class Menus {
                 switch (value) {
                     // TODO: 30.06.2022 User-Input for parameters
                     case STATS_TOP_AIRPORTS -> gui.receiveChart(Diagrams.barChartPanel(rightDP, stats.topAirports(20)));
-                    case STATS_AIRPORT_SIGNIFICANCE -> {
-                        // TODO: 30.06.2022 move to controller
-                        var input = JOptionPane.showInputDialog("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
-                        if (input == null || input.isBlank()) {
-                            return;
-                        }
-                        try {
-                            int minCount = Integer.parseInt(input);
-                            gui.receiveChart(Diagrams.barChartPanel(rightDP, stats.airportSignificance(minCount)));
-                        } catch (NumberFormatException nfe) {
-                            gui.showWarning(Warning.INT_EXPECTED);
-                        }
-                    }
-                    case STATS_AIRLINE_SIGNIFICANCE -> {
-                        // TODO: 30.06.2022 move to controller
-                        var input = JOptionPane.showInputDialog("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
-                        if (input == null || input.isBlank()) {
-                            return;
-                        }
-                        try {
-                            int minCount = Integer.parseInt(input);
-                            gui.receiveChart(Diagrams.barChartPanel(rightDP, stats.airlineSignificance(minCount)));
-                        } catch (NumberFormatException nfe) {
-                            gui.showWarning(Warning.INT_EXPECTED);
-                        }
-                    }
-                    case STATS_HEATMAP -> {/* show heat map */}
+                    case STATS_AIRPORT_SIGNIFICANCE -> showTopAirports(gui, stats);
+                    case STATS_AIRLINE_SIGNIFICANCE -> showTopAirlines(gui, stats);
+                    case STATS_HEATMAP -> {*//* show heat map *//*}
                 }
                 super.setVisible(false);
-            });
+            });*/
 
             return supList;
         }
