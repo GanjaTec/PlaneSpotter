@@ -1,5 +1,6 @@
 package planespotter.display;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.*;
@@ -192,10 +193,12 @@ public final class MapManager {
     /**
      * @return a map prototype (TreasureMap)
      */
-    public TreasureMap defaultMapViewer(JPanel parent) {
-        var viewer = new TreasureMap();
-        var mapController = new DefaultMapController(viewer);
-        var mapType = UserSettings.getCurrentMapSource();
+    @NotNull
+    public TreasureMap defaultMapViewer(@NotNull JPanel parent) {
+        TreasureMap viewer = new TreasureMap();
+        DefaultMapController mapController = new DefaultMapController(viewer);
+        TileSource mapType = UserSettings.getCurrentMapSource();
+
         mapController.setMovementMouseButton(1);
         viewer.setBounds(parent.getBounds());
         viewer.setBorder(LINE_BORDER);

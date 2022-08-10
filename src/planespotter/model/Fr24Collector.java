@@ -25,9 +25,12 @@ import planespotter.model.nio.Fr24Supplier;
 public class Fr24Collector extends Collector<Fr24Supplier> {
     // inserted frames per write
     public static final int FRAMES_PER_WRITE;
+    // insert period in seconds
+    protected static final int REQUEST_PERIOD;
     // static initializer
     static {
         FRAMES_PER_WRITE = 800;
+        REQUEST_PERIOD = 60;
     }
     // 'filters enabled' flag
     private final boolean withFilters;
@@ -39,7 +42,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
      * @param args can be ignored
      */
     public static void main(String[] args) {
-        new Fr24Collector(true, false, 20, 10).start();
+        new Fr24Collector(true, false, UserSettings.getGridsizeLat(), UserSettings.getGridsizeLon()).start();
     }
 
     // raster of areas (whole world) in 1D-Array
@@ -82,19 +85,12 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
     private synchronized void collect(final Fr24Deserializer deserializer, final Keeper keeper, @Nullable String... extAreas) {
 
         super.scheduler.schedule(() -> super.scheduler.exec(() -> {
-            System.out.println("Collecting data...");
-            // synchronizing on collector-monitor
-            //synchronized (Collector.SYNC) {
             // executing suppliers to collect Fr24-Data
-            Fr24Supplier.collectFramesForArea(extAreas, deserializer, super.scheduler, true);
+            Fr24Supplier.collectPStream(extAreas, deserializer, true);
+            //Fr24Supplier.collectFramesForArea(extAreas, deserializer, super.scheduler, true);
             // adding all deserialized world-raster-areas to frames deque
-            Fr24Supplier.collectFramesForArea(this.worldAreaRaster1D, deserializer, super.scheduler, true)/*)*/;
-            // adding all deserialized frames to insertLater-queue
-            //LiveLoader.insertLater(frames);
-            // inserting all Fr24Frames from insertLater-queue into database
-            // replaced with Inserter Thread
-            //DBIn.insertRemaining(super.scheduler, FRAMES_PER_WRITE);
-            //}
+            Fr24Supplier.collectPStream(this.worldAreaRaster1D, deserializer, true);
+            //Fr24Supplier.collectFramesForArea(this.worldAreaRaster1D, deserializer, super.scheduler, true);
         }, "Data Collector Thread", false, Scheduler.HIGH_PRIO, true),
                 "Collect Data", 0, REQUEST_PERIOD);
 

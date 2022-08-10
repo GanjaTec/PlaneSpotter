@@ -10,6 +10,7 @@ import planespotter.dataclasses.Fr24Frame;
 import planespotter.display.TreasureMap;
 import planespotter.model.io.DBIn;
 import planespotter.throwables.Fr24Exception;
+import planespotter.throwables.InvalidDataException;
 import planespotter.util.Logger;
 
 import java.util.Collection;
@@ -60,7 +61,7 @@ public abstract class LiveLoader {
      * @param scheduler is the Scheduler which executes tasks
      * @return Vector of Flight objects, loaded directly by a supplier
      */
-    public static Vector<Flight> loadDirectly(final Scheduler scheduler, final TreasureMap map) {
+    public static Vector<Flight> loadDirectly(@NotNull final Scheduler scheduler, @NotNull final TreasureMap map) {
         var deserializer = new Fr24Deserializer();
         //deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF");
         // area with panel size
@@ -69,12 +70,14 @@ public abstract class LiveLoader {
         var currentArea = new String[] {
                 Areas.newArea(topLeft, bottomRight)
         };
-        Fr24Supplier.collectFramesForArea(currentArea, deserializer, scheduler, false);
-        // termorary if // daten gehen verloren
-        var id = new AtomicInteger(0);
-        return insertLater.stream()
-                .map(frame -> Flight.parseFlight(frame, id.getAndIncrement()))
-                .collect(Collectors.toCollection(Vector::new));
+        if (Fr24Supplier.collectFramesForArea(currentArea, deserializer, scheduler, false)) {
+            // termorary if // daten gehen verloren
+            AtomicInteger flightID = new AtomicInteger(0);
+            return LiveLoader.pollFrames(Integer.MAX_VALUE)
+                    .map(frame -> Flight.parseFlight(frame, flightID.getAndIncrement()))
+                    .collect(Collectors.toCollection(Vector::new));
+        }
+        throw new InvalidDataException("Couldn't load Live-Data!");
     }
 
     /**
@@ -98,8 +101,8 @@ public abstract class LiveLoader {
                 count = insertLater.size();
             }
         }
-        // streaming insertLater-queue and returning frames (parallel)
-        return insertLater.stream()
+        // iterating over polled frames from insertLater-queue and limiting to count
+        return Stream.iterate(insertLater.poll(), x -> insertLater.poll())
                 .limit(count);
     }
 

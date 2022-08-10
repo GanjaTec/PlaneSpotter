@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 public class Inserter implements Runnable {
 
-    private static final int MIN_INSERT_COUNT = 500;
+    private static final int MIN_INSERT_COUNT = 1000;
 
     private boolean terminated;
 

@@ -134,27 +134,29 @@ public class Scheduler {
      * @param target is the Runnable to execute
      * @param tName is the Thread-Name
      */
-    public final Scheduler exec(@NotNull Runnable target, @NotNull String tName) {
+    @NotNull
+    public final CompletableFuture<Void> exec(@NotNull Runnable target, @NotNull String tName) {
         return this.exec(target, tName, false, 5, true);
     }
 
     /**
      * executes a single task as a thread
-     *
-     * @param target is the Runnable to execute
+     *  @param target is the Runnable to execute
      * @param tName is the thread name
      * @param daemon is the value if the thread is a daemon thread
      * @param prio is the priority from 1-10
      * @param withTimeout if the task should have a timeout
+     * @return
      */
-    public final Scheduler exec(@NotNull Runnable target, @NotNull String tName, boolean daemon, int prio, boolean withTimeout) {
+    @NotNull
+    public final CompletableFuture<Void> exec(@NotNull Runnable target, @NotNull String tName, boolean daemon, int prio, boolean withTimeout) {
         if (prio < 1 || prio > 10) {
             throw new IllegalArgumentException("priority must be between 1 and 10!");
         }
         this.getThreadFactory().addThreadProperties(tName, daemon, prio);
         if (withTimeout) {
             var currentThread = new AtomicReference<Thread>();
-            CompletableFuture.runAsync(target, this.exe)
+            return CompletableFuture.runAsync(target, this.exe)
                     .orTimeout(15, TimeUnit.SECONDS)
                     .exceptionally(e -> {
                         Controller.getInstance().handleException(e);
@@ -163,9 +165,8 @@ public class Scheduler {
                         return null;
                     });
         } else {
-            CompletableFuture.runAsync(target, this.exe);
+            return CompletableFuture.runAsync(target, this.exe);
         }
-        return this;
     }
 
     /**
@@ -183,6 +184,10 @@ public class Scheduler {
         thread.setDaemon(daemon);
         thread.start();
         return thread;
+    }
+
+    public void await(@NotNull Runnable r) {
+
     }
 
     /**

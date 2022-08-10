@@ -18,13 +18,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @see Fr24Collector
  */
 public abstract class Collector<S extends Supplier> {
-    // insert period in seconds
-    protected static final int REQUEST_PERIOD;
     // monitor object for Collector and its subclasses
     protected static final Object SYNC;
     // static initializer
     static {
-        REQUEST_PERIOD = 30;
         SYNC = new Object();
     }
 
