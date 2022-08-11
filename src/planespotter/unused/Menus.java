@@ -1,16 +1,10 @@
-package planespotter.display.models;
+package planespotter.unused;
 
 import libs.UWPButton;
 
 import org.jetbrains.annotations.Range;
 
-import planespotter.constants.UnicodeChar;
-import planespotter.constants.Warning;
-import planespotter.controller.Controller;
-import planespotter.display.Diagrams;
-import planespotter.display.GUI;
 import planespotter.model.Fr24Collector;
-import planespotter.statistics.Statistics;
 
 import javax.swing.*;
 import java.awt.*;

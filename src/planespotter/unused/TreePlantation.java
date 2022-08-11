@@ -1,9 +1,9 @@
-package planespotter.display;
+package planespotter.unused;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import planespotter.constants.GUIConstants;
 import planespotter.dataclasses.*;
+import planespotter.unused.GUI;
 import planespotter.util.Utilities;
 
 import javax.swing.*;
@@ -23,7 +23,7 @@ import static planespotter.constants.GUIConstants.*;
  *
  * class TreePlantation implements methods to create tree structures
  */
-@Deprecated(since = "new UserInterface class")
+@Deprecated(since = "new UserInterface class", forRemoval = true)
 public final class TreePlantation {
 
     /**

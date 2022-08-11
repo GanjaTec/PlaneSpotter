@@ -28,7 +28,7 @@ import static planespotter.constants.DefaultColor.*;
 public final class MenuModels {
 
     @NotNull
-    public JMenuBar topMenuBar(@NotNull final ActionHandler actionHandler) {
+    public static JMenuBar topMenuBar(@NotNull final ActionHandler actionHandler) {
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File"),
               liveMapMenu = new JMenu("Live-Map"),

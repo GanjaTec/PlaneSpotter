@@ -16,6 +16,7 @@ import planespotter.model.io.FileWizard;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.nio.LiveLoader;
 import planespotter.throwables.NoAccessException;
+import planespotter.unused.TreePlantation;
 import planespotter.util.LRUCache;
 import planespotter.constants.UserSettings;
 import planespotter.constants.ViewType;

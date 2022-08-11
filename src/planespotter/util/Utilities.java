@@ -436,6 +436,9 @@ public abstract class Utilities {
         Deque<Deque<File>> allFiles = new ArrayDeque<>();
 
         for (String ext : extensions) {
+            if (!ext.startsWith(".")) {
+                ext = "." + ext;
+            }
             allFiles.add(allFilesWithExtension(rootPath, ext));
         }
 

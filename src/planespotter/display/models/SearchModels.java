@@ -4,7 +4,6 @@ import libs.UWPButton;
 import org.jetbrains.annotations.NotNull;
 import planespotter.constants.SearchType;
 import planespotter.controller.ActionHandler;
-import planespotter.display.GUI;
 
 import javax.swing.*;
 import java.awt.*;

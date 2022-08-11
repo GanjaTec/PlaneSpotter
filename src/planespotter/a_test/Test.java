@@ -49,6 +49,8 @@ public class Test {
         System.out.println(result);
 */
 
+        System.out.println(Utilities.linesCode("", ".java"));
+
 
     }
 

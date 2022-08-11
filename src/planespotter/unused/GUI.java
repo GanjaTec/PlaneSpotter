@@ -1,13 +1,14 @@
-package planespotter.display;
+package planespotter.unused;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jfree.chart.ChartPanel;
 import planespotter.constants.*;
 import planespotter.controller.ActionHandler;
+import planespotter.display.MapManager;
+import planespotter.display.TreasureMap;
 import planespotter.display.models.MenuModels;
 import planespotter.display.models.PaneModels;
-import planespotter.display.models.SearchModels;
 import planespotter.model.nio.LiveLoader;
 import planespotter.throwables.IllegalInputException;
 import planespotter.throwables.NoSuchComponentException;

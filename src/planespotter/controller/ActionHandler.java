@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import planespotter.constants.*;
 import planespotter.display.Diagrams;
-import planespotter.display.GUI;
+import planespotter.unused.GUI;
 import planespotter.display.TreasureMap;
 import planespotter.display.UserInterface;
 import planespotter.display.models.InfoPane;
@@ -14,7 +14,6 @@ import planespotter.display.models.SettingsPane;
 import planespotter.model.nio.LiveLoader;
 import planespotter.statistics.Statistics;
 import planespotter.throwables.IllegalInputException;
-import planespotter.util.Utilities;
 import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
@@ -102,7 +101,7 @@ public final class ActionHandler implements ActionListener, KeyListener,
             } else if (button.getText().equals("Confirm")) {
                 SettingsPane settings = ui.getSettings();
                 ctrl.confirmSettings(settings.getValues());
-                settings.setVisible(false);
+                ui.showSettings(false);
 
             } else if (button.getName().equals("loadList")) {
                 // future
@@ -304,7 +303,7 @@ public final class ActionHandler implements ActionListener, KeyListener,
         switch (text) {
             case "Live-Map" -> ctrl.show(MAP_LIVE);
             case "Search" -> ui.showSearch(SearchType.FLIGHT);
-            case "Settings" -> ui.showSettings();
+            case "Settings" -> ui.showSettings(true);
             case "Close View" -> {
                 ctrl.loadedData = null;
                 LiveLoader.setLive(false);

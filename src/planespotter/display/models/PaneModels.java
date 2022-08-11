@@ -26,7 +26,7 @@ import static planespotter.constants.Images.*;
 public final class PaneModels {
 
     @NotNull
-    public JFrame windowFrame(@NotNull ActionHandler listener) {
+    public static JFrame windowFrame(@NotNull ActionHandler listener) {
         // getting main window object
         var window = new JFrame(Configuration.TITLE);
         // setting window start size
@@ -44,7 +44,8 @@ public final class PaneModels {
         // first setting to not-visible
         window.setVisible(false);
         // returning window
-        window.setJMenuBar(new MenuModels().topMenuBar(listener));
+        window.setJMenuBar(MenuModels.topMenuBar(listener));
+
         return window;
     }
 
