@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import planespotter.controller.Controller;
-import planespotter.controller.Scheduler;
+import planespotter.model.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.NoAccessException;

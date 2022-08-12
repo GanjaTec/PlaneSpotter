@@ -1,8 +1,6 @@
 package planespotter.a_test;
 
 import org.jetbrains.annotations.TestOnly;
-import planespotter.controller.Scheduler;
-import planespotter.model.nio.ADSBSupplier;
 import planespotter.util.Utilities;
 
 @TestOnly

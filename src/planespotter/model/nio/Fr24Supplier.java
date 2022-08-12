@@ -3,7 +3,7 @@ package planespotter.model.nio;
 import org.jetbrains.annotations.NotNull;
 
 import planespotter.model.Fr24Collector;
-import planespotter.controller.Scheduler;
+import planespotter.model.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
 import planespotter.throwables.Fr24Exception;
@@ -20,12 +20,9 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 

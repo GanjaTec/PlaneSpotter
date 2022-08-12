@@ -38,10 +38,6 @@ public class UserInterface {
     @NotNull
     private final SearchPane searchPanel;
 
-    // info panel for flight and data point info
-    @NotNull
-    private final InfoPane infoPanel;
-
     // settings panel, contains all settings
     @NotNull
     private final SettingsPane settings;
@@ -69,7 +65,6 @@ public class UserInterface {
         this.layerPane = new LayerPane(window.getSize());
         this.mapManager = new MapManager(this, actionHandler);
         this.searchPanel = new SearchPane(this.layerPane, actionHandler);
-        this.infoPanel = new InfoPane(this.layerPane);
         this.settings = new SettingsPane(this.window, actionHandler);
         this.window.add(this.layerPane);
 

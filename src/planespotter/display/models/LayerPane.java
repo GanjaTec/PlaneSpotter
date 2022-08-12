@@ -2,7 +2,7 @@ package planespotter.display.models;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import planespotter.controller.Scheduler;
+import planespotter.model.Scheduler;
 import planespotter.util.math.Vector2D;
 
 import javax.swing.*;

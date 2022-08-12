@@ -6,14 +6,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import planespotter.constants.Areas;
 import planespotter.constants.UserSettings;
-import planespotter.controller.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.*;
 import planespotter.model.nio.Filters;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
-
-import java.util.List;
 
 /**
  * @name Fr24Collector

@@ -1,7 +1,6 @@
 package planespotter.model;
 
 import org.jetbrains.annotations.NotNull;
-import planespotter.controller.Scheduler;
 import planespotter.display.models.SupplierDisplay;
 import planespotter.model.nio.Supplier;
 

@@ -3,7 +3,9 @@ package planespotter.controller;
 import org.jetbrains.annotations.NotNull;
 
 import planespotter.constants.*;
+import planespotter.dataclasses.Hotkey;
 import planespotter.display.Diagrams;
+import planespotter.model.Scheduler;
 import planespotter.unused.GUI;
 import planespotter.display.TreasureMap;
 import planespotter.display.UserInterface;
@@ -19,6 +21,8 @@ import planespotter.util.math.MathUtils;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.awt.event.KeyEvent.*;
 import static planespotter.constants.ViewType.MAP_LIVE;
@@ -29,41 +33,67 @@ import static planespotter.constants.ViewType.MAP_LIVE;
  * @author Bennet
  * @version 1.0
  *
- * record ActionHandler handles GUI-User-Interactions and does further action
- * @see GUI
- * @see Controller
- * @see Scheduler
+ * record ActionHandler handles user interactions in the GUI and does further action
+ * @see planespotter.display.UserInterface
+ * @see planespotter.controller.Controller
+ * @see planespotter.model.Scheduler
  */
-public final class ActionHandler implements ActionListener, KeyListener,
-        ComponentListener, MouseListener,
-        ItemListener, WindowListener {
+public final class ActionHandler
+        implements  ActionListener, KeyListener,
+                    ComponentListener, MouseListener,
+                    ItemListener, WindowListener {
 
+    // ActionHandler instance, we need only one instance here,
+    // because we don't want parallel listeners who listen to the same actions
     private static final ActionHandler INSTANCE;
-    private static final KeyEventDispatcher globalEventDispatcher;
+
+    // global event dispatcher, events come here before going to the components listeners,
+    // used for global hotkeys
+    private static final KeyEventDispatcher GLOBAL_EVENT_DISPATCHER;
+
+    // map for all global hotkeys,
+    //  key is the Hotkey object with the key data
+    //  value is the (Runnable) action for the specific hotkey
+    private static final Map<Hotkey, Runnable> HOTKEYS;
 
     static {
         INSTANCE = new ActionHandler();
-        globalEventDispatcher = initGlobalEventDispatcher();
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(globalEventDispatcher);
+
+        GLOBAL_EVENT_DISPATCHER = initGlobalEventDispatcher();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(GLOBAL_EVENT_DISPATCHER);
+
+        HOTKEYS = new HashMap<>(1);
+        initHotkeys();
     }
 
     private static KeyEventDispatcher initGlobalEventDispatcher() {
         return keyEvent -> {
-            GUI gui;
-            JButton searchButton;
             int eventID = keyEvent.getID();
             if (eventID == KEY_PRESSED) {
-                // search hotkey
-                if (keyEvent.isShiftDown() && keyEvent.getKeyCode() == VK_S) {
-                    /*gui = Controller.getInstance().getGUI();
-                    searchButton = (JButton) gui.getComponent("searchButton");
-                    getActionHandler().buttonClicked(searchButton, Controller.getInstance(), gui);*/
-                    getActionHandler().menuClicked(new JMenu("Search"));
-                    return true;
+                // getting pressed key
+                int keyCode = keyEvent.getKeyCode();
+                boolean shiftDown = keyEvent.isShiftDown(),
+                        ctrlDown = keyEvent.isControlDown(),
+                        altDown = keyEvent.isAltDown();
+                Hotkey hotkey = new Hotkey(keyCode, shiftDown, ctrlDown, altDown);
+                Runnable action;
+                // checking hotkeys
+                for (Hotkey key : HOTKEYS.keySet()) {
+                    if (key.equals(hotkey)) {
+                        action = HOTKEYS.get(key);
+                        action.run();
+                        return true;
+                    }
                 }
             }
             return false;
         };
+    }
+
+    private static void initHotkeys() {
+        Runnable shiftSAction = () -> getActionHandler().menuClicked(new JMenu("Search"));
+
+        HOTKEYS.put(new Hotkey(VK_S, true, false, false), shiftSAction);
     }
 
     /**
