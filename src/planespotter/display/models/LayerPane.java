@@ -22,7 +22,7 @@ public class LayerPane extends JLayeredPane {
 
     // default bottom component
     @Nullable
-    private Component defaultBottomComp;
+    private Component defaultBottomComp, defaultOverTopComp;
 
     /**
      * creates a new LayerPane with a background map viewer
@@ -95,6 +95,22 @@ public class LayerPane extends JLayeredPane {
 
     public void setDefaultBottomComponent(@NotNull Component comp) {
         this.defaultBottomComp = comp;
+    }
+
+    public void setDefaultOverTopComponent(@NotNull Component comp) {
+        this.defaultOverTopComp = comp;
+    }
+
+    public void showOverTop(boolean show) {
+        if (this.defaultOverTopComp != null) {
+            this.defaultOverTopComp.setVisible(show);
+            if (show) {
+                this.defaultOverTopComp.setLocation((super.getWidth()/2) + (this.defaultOverTopComp.getWidth()/2), (super.getWidth()/2) + (this.defaultOverTopComp.getHeight()/2));
+                this.add(TOP_LAYER, this.defaultOverTopComp, 0, 0, super.getWidth(), super.getHeight());
+            } else {
+                this.removeComps(TOP_LAYER);
+            }
+        }
     }
 
     @Nullable

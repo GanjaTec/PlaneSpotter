@@ -49,7 +49,18 @@ public final class PaneModels {
         return window;
     }
 
-    public static  <D> JPanel statsPanel(D data, JDesktopPane parent) {
+    @NotNull
+    public static JLabel loadingScreen() {
+        ImageIcon img = LOADING_CYCLE_GIF.get();
+        JLabel label = new JLabel(img);
+        label.setSize(img.getIconWidth(), img.getIconHeight());
+        label.setOpaque(false);
+        label.setLayout(null);
+
+        return label;
+    }
+
+    public static <D> JPanel statsPanel(D data, JDesktopPane parent) {
         // setting up stats panel
         var stats = new JPanel();
         stats.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
@@ -85,24 +96,6 @@ public final class PaneModels {
         sp.setVerticalScrollBar(verticalScrollBar);
         sp.setOpaque(false);
         return sp;
-    }
-
-    /**
-     * loading screen method, creates a loading screen
-     *
-     * @return loading screen JFrame
-     */
-    public JFrame loadingScreen() {
-        var loadingScreen = new JFrame();
-        loadingScreen.setSize(333, 243);
-        loadingScreen.setLocationRelativeTo(null);
-        loadingScreen.setLayout(null);
-        loadingScreen.setOpacity(1f);
-        loadingScreen.setUndecorated(true);
-        var lblLoading = new JLabel(Images.LOADING_GIF.get());
-        lblLoading.setBounds(0, 0, 333, 243);
-        loadingScreen.add(lblLoading);
-        return loadingScreen;
     }
 
 }

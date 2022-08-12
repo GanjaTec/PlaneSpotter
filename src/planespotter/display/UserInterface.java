@@ -69,6 +69,7 @@ public class UserInterface {
         this.window.add(this.layerPane);
 
         this.layerPane.setDefaultBottomComponent(this.getMap());
+        this.layerPane.setDefaultOverTopComponent(PaneModels.loadingScreen());
         this.layerPane.setBottomDefault();
 
         this.currentViewType = ViewType.MAP_LIVE;
@@ -148,6 +149,10 @@ public class UserInterface {
                 this.warningShown = false;
             }
         }
+    }
+
+    public void showLoadingScreen(boolean show) {
+        this.getLayerPane().showOverTop(show);
     }
 
     /**

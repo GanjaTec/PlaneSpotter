@@ -94,7 +94,7 @@ public abstract class Controller {
     private final int hashCode;
 
     // already-clicking/-initialized flag
-    private boolean clicking, initialized;
+    private boolean clicking, initialized, terminated;
 
     // boolean loading is true when something is loading
     private volatile boolean loading;
@@ -135,6 +135,7 @@ public abstract class Controller {
         this.cache = new LRUCache<>(100); // TODO best cache size
         this.ui = new UserInterface(ActionHandler.getActionHandler());
         this.liveDataPeriodSec = 2;
+        this.terminated = false;
     }
 
     /**
@@ -190,10 +191,11 @@ public abstract class Controller {
         // yes-option
         if (option == JOptionPane.YES_OPTION) {
             this.logger.infoLog("Shutting down program, please wait...", this);
+            this.ui.showLoadingScreen(true);
             // disabling tasks
             LiveLoader.setLive(false);
-            if (liveThread != null && liveThread.isAlive()) {
-                liveThread.interrupt();
+            if (this.liveThread != null && this.liveThread.isAlive()) {
+                this.liveThread.interrupt();
             }
             this.setLoading(true);
             // saving the configuration in 'config.psc'
@@ -219,6 +221,7 @@ public abstract class Controller {
             DBIn.setEnabled(false);
             this.done(true);
             this.logger.close();
+            this.terminated = true;
             // shutting down scheduler
             boolean shutdown = this.scheduler.shutdown(1);
             byte exitStatus = MathUtils.toBinary(shutdown);
@@ -243,7 +246,7 @@ public abstract class Controller {
         // loading init-live-data
         this.loadLiveData();
         // endless live-data task
-        for (;;) {
+        while (!terminated) {
             // trying to await the live-data period
             try {
                 this.wait(TimeUnit.SECONDS.toMillis(this.liveDataPeriodSec));
@@ -304,6 +307,7 @@ public abstract class Controller {
         if (playSound) {
             Utilities.playSound(SOUND_DEFAULT.get());
         }
+        this.ui.showLoadingScreen(false);
     }
 
     // TODO: 08.08.2022 add filters
@@ -323,6 +327,7 @@ public abstract class Controller {
         MapManager mapManager = this.ui.getMapManager();
         DBOut dbOut = DBOut.getDBOut();
 
+        this.ui.showLoadingScreen(true);
         this.setLoading(true);
 
         UserInterface ui = this.getUI();
@@ -332,14 +337,14 @@ public abstract class Controller {
             LiveLoader.setLive(false);
         }
         switch (type) {
-            case LIST_FLIGHT -> this.showFlightList(dbOut);
+            case LIST_FLIGHT -> {}
             case MAP_LIVE -> LiveLoader.setLive(true);
             case MAP_FROMSEARCH -> this.showSearchMap(mapManager);
             case MAP_TRACKING -> this.showTrackingMap(mapManager);
             case MAP_TRACKING_NP -> this.showTrackingMapNoPoints(mapManager);
             // significance map should be improved
             case MAP_SIGNIFICANCE -> this.showSignificanceMap(mapManager, dbOut);
-            case MAP_HEATMAP -> {}
+            case MAP_HEATMAP -> { }
         }
         this.done(false);
         logger.successLog("view loaded!", this);
@@ -359,6 +364,7 @@ public abstract class Controller {
 
         Search search;
         if (button == 1) {
+            this.ui.showLoadingScreen(true);
             this.setLoading(true);
 
             search = new Search();
@@ -402,6 +408,7 @@ public abstract class Controller {
         int maxLoadedData, livePeriodSec;
 
         try {
+            this.ui.showLoadingScreen(true);
             // data[0]
             maxLoadedData = Integer.parseInt(data[0]);
             UserSettings.setMaxLoadedData(maxLoadedData);
@@ -420,6 +427,7 @@ public abstract class Controller {
         } finally {
             // saving config after reset
             FileWizard.getFileWizard().saveConfig();
+            this.done(false);
         }
     }
 
@@ -439,7 +447,6 @@ public abstract class Controller {
                 markers = map.getMapMarkerList();
                 mapManager = this.ui.getMapManager();
                 newMarkerList = new ArrayList<>();
-                markerHit = false;
                 counter = 0;
                 DefaultMapMarker newMarker;
                 Coordinate markerCoord;
@@ -588,6 +595,7 @@ public abstract class Controller {
         MapData mapData;
         File selected;
 
+        this.ui.showLoadingScreen(true);
         this.setLoading(true);
 
         //this.gui.setCurrentVisibleRect(this.ui.getMap().getVisibleRect()); // TODO visible rect beim repainten speichern
@@ -613,6 +621,7 @@ public abstract class Controller {
 
     public void loadFile() {
 
+        this.ui.showLoadingScreen(true);
         File file = this.ui.getSelectedFile();
         if (file == null) {
             return;
@@ -624,6 +633,8 @@ public abstract class Controller {
             this.show(loaded.viewType());
         } catch (DataNotFoundException e) {
             e.printStackTrace();
+        } finally {
+            this.done(false);
         }
     }
 
@@ -718,32 +729,6 @@ public abstract class Controller {
             return;
         }
         mapManager.createTrackingMap(this.loadedData, null, true);
-    }
-
-    private void showFlightList(DBOut dbOut) {
-
-        List<Flight> flights;
-        Deque<Integer> fids;
-        int flightID;
-
-        if (this.loadedData == null || this.loadedData.isEmpty()) {
-            this.ui.showWarning(Warning.NO_DATA_FOUND);
-            return;
-        }
-        flights = new ArrayList<>();
-        flightID = -1;
-        try {
-            fids = dbOut.getLiveFlightIDs(10000, 25000);
-            while (!fids.isEmpty()) {
-                flightID = fids.poll();
-                flights.add(dbOut.getFlightByID(flightID));
-            }
-        } catch (DataNotFoundException e) {
-            logger.errorLog("flight with  ID " + flightID + " doesn't exist!", this);
-            this.handleException(e);
-        }
-        /*treePlant = this.ui.getTreePlantation();
-        treePlant.createTree(treePlant.allFlightsTreeNode(flights), this.gui);*/
     }
 
     /**

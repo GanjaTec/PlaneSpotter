@@ -18,7 +18,7 @@ public enum Images {
     TITLE_BGROUND_IMG(new ImageIcon(IMAGE_PATH + "title_background.jpg")),
     PAPER_PLANE_ICON(new ImageIcon(IMAGE_PATH + "planespotter_icon.png")),
     FLYING_PLANE_ICON(new ImageIcon(IMAGE_PATH + "flying_plane_icon.png")),
-    LOADING_GIF(new ImageIcon(IMAGE_PATH + "loading.gif")),
+    LOADING_CYCLE_GIF(new ImageIcon(IMAGE_PATH + "loadingCycle.gif")),
     OPEN_FILE_ICON_16x(new ImageIcon(IMAGE_PATH + "open_file_icon_16x.png")),
     SAVE_FILE_ICON_16x(new ImageIcon(IMAGE_PATH + "save_file_icon_16x.png")),
     PLANE_ICON_16x(new ImageIcon(IMAGE_PATH + "plane_icon_16x.png")),

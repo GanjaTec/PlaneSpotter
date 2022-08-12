@@ -49,7 +49,10 @@ public class Test {
         System.out.println(result);
 */
 
-        System.out.println(Utilities.linesCode("", ".java"));
+        ImageIcon img = new ImageIcon(Paths.IMAGE_PATH + "loadingCycle.gif");
+        var label = new JLabel(img);
+        label.setSize(img.getIconWidth(), img.getIconHeight());
+        new Test().createTestJFrame(label);
 
 
     }
