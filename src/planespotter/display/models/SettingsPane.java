@@ -166,4 +166,9 @@ public class SettingsPane extends JDialog {
         };
     }
 
+    @NotNull
+    public JComboBox<String> getMapTypeCmbBox() {
+        return this.mapTypeCmbBox;
+    }
+
 }

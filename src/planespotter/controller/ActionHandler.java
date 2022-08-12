@@ -6,7 +6,6 @@ import planespotter.constants.*;
 import planespotter.dataclasses.Hotkey;
 import planespotter.display.Diagrams;
 import planespotter.model.Scheduler;
-import planespotter.unused.GUI;
 import planespotter.display.TreasureMap;
 import planespotter.display.UserInterface;
 import planespotter.display.models.InfoPane;
@@ -23,6 +22,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static java.awt.event.KeyEvent.*;
 import static planespotter.constants.ViewType.MAP_LIVE;
@@ -33,12 +33,12 @@ import static planespotter.constants.ViewType.MAP_LIVE;
  * @author Bennet
  * @version 1.0
  *
- * record ActionHandler handles user interactions in the GUI and does further action
+ * record ActionHandler handles user interactions in the UI and does further action
  * @see planespotter.display.UserInterface
  * @see planespotter.controller.Controller
  * @see planespotter.model.Scheduler
  */
-public final class ActionHandler
+public abstract class ActionHandler
         implements  ActionListener, KeyListener,
                     ComponentListener, MouseListener,
                     ItemListener, WindowListener {
@@ -52,12 +52,13 @@ public final class ActionHandler
     private static final KeyEventDispatcher GLOBAL_EVENT_DISPATCHER;
 
     // map for all global hotkeys,
-    //  key is the Hotkey object with the key data
-    //  value is the (Runnable) action for the specific hotkey
+    // key is the Hotkey object with the key data
+    // value is the (Runnable) action for the specific hotkey
     private static final Map<Hotkey, Runnable> HOTKEYS;
 
+    // initializing all static members
     static {
-        INSTANCE = new ActionHandler();
+        INSTANCE = new ActionHandler() {};
 
         GLOBAL_EVENT_DISPATCHER = initGlobalEventDispatcher();
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(GLOBAL_EVENT_DISPATCHER);
@@ -66,6 +67,13 @@ public final class ActionHandler
         initHotkeys();
     }
 
+    /**
+     * hot key event dispatcher,
+     * listens to global key events
+     *
+     * @return {@link KeyEventDispatcher}, which listens to global hotkeys
+     */
+    @NotNull
     private static KeyEventDispatcher initGlobalEventDispatcher() {
         return keyEvent -> {
             int eventID = keyEvent.getID();
@@ -78,7 +86,8 @@ public final class ActionHandler
                 Hotkey hotkey = new Hotkey(keyCode, shiftDown, ctrlDown, altDown);
                 Runnable action;
                 // checking hotkeys
-                for (Hotkey key : HOTKEYS.keySet()) {
+                Set<Hotkey> hotkeys = HOTKEYS.keySet();
+                for (Hotkey key : hotkeys) {
                     if (key.equals(hotkey)) {
                         action = HOTKEYS.get(key);
                         action.run();
@@ -90,15 +99,48 @@ public final class ActionHandler
         };
     }
 
+    /**
+     * initializes all hotkeys with a Hotkey object (key)
+     * and a Runnable action (value)
+     */
     private static void initHotkeys() {
         Runnable shiftSAction = () -> getActionHandler().menuClicked(new JMenu("Search"));
 
+        // shift S
         HOTKEYS.put(new Hotkey(VK_S, true, false, false), shiftSAction);
     }
 
     /**
+     * adds a hotkey to the hotkey hash map
+     *
+     * @param hotkey is the {@link Hotkey} object (key)
+     * @param action is the action ({@link Runnable}) that is executed when the hotkey is pressed
+     * @return true if the hotkey was added, else false
+     */
+    public static boolean addHotkey(@NotNull Hotkey hotkey, @NotNull Runnable action) {
+        if (HOTKEYS.containsKey(hotkey)) {
+            return false;
+        }
+        HOTKEYS.put(hotkey, action);
+        return true;
+    }
+
+    /**
+     * removes a hotkey from the hotkey map, if present
+     *
+     * @param hotkey is the {@link Hotkey} object (key) to remove
+     * @return true if the hotkey was removed, else false (e.g. when no hotkey was found)
+     */
+    public static boolean removeHotkey(@NotNull Hotkey hotkey) {
+        return HOTKEYS.remove(hotkey) != null;
+    }
+
+    /**
+     * getter for main instance of {@link ActionHandler}
+     *
      * @return main ActionHandler
      */
+    @NotNull
     public static ActionHandler getActionHandler() {
         return INSTANCE;
     }
@@ -112,6 +154,9 @@ public final class ActionHandler
     private ActionHandler() {
         // nothing to do
     }
+
+
+    // on-action methods
 
     /**
      * executed when a button is clicked,
@@ -147,17 +192,7 @@ public final class ActionHandler
                 } catch (IllegalInputException e) {
                     ctrl.handleException(e);
                 }
-            }/* else if (button.getName().equals("open")) {
-                Controller.getInstance().loadFile();
-
-            } else if (button.getName().equals("save")) {
-                Controller.getInstance().saveFile();
-
-            } else if (button.getName().equals("back")) {
-                ui.setFileMenuVisible(false);
-                ui.setViewHeadBtVisible(true);
-
-            }*/
+            }
         }, "Action Handler", false, Scheduler.MID_PRIO, true);
     }
 
@@ -170,7 +205,6 @@ public final class ActionHandler
      * @param ui is the {@link UserInterface} instance (given by Controller.getUI())
      */
     public synchronized void mapClicked(MouseEvent clickEvent, Controller ctrl, UserInterface ui) {
-        // TODO evtl threaded
         int button = clickEvent.getButton();
         if (button == MouseEvent.BUTTON1) {
             var clicked = ui.getMap().getPosition(clickEvent.getPoint());
@@ -187,7 +221,8 @@ public final class ActionHandler
     }
 
     /**
-     * executed when a key is entered on a certain component
+     * executed when a key is entered on a certain component,
+     * not executed when global hotkeys are pressed
      *
      * @param event is the KeyEvent
      * @param ui is the GUI instance
@@ -196,32 +231,10 @@ public final class ActionHandler
         var source = event.getSource();
         int key = event.getKeyCode();
         try {
-            /*if (source == gui.getComponent("settingsMaxLoadTxtField")) {
-                if (key == VK_ENTER) {
-                    var settingsMaxLoadTxtField = (JTextField) gui.getComponent("settingsMaxLoadTxtField");
-                    // TODO fixen: settings fenster schließt erst nach loading
-                    int newMax = Integer.parseInt(settingsMaxLoadTxtField.getText());
-                    if (newMax > 0) {
-                        gui.startProgressBar();
-                        UserSettings.setMaxLoadedData(newMax);
-                        settingsMaxLoadTxtField.setText("");
-                        gui.getComponent("settingsDialog").setVisible(false);
-                    } else {
-                        settingsMaxLoadTxtField.setText("[x > 0]");
-                    }
-                }
-            } else*/ if (source instanceof JTextField && key == VK_ENTER) {
+            if (source instanceof JTextField && key == VK_ENTER) {
                 var jButton = new JButton();
                 jButton.setName("loadMap");
                 this.buttonClicked(jButton, Controller.getInstance(), ui);
-            } else /*if (source == gui.getComponent("window"))*/ {
-                final var viewer = ui.getMap();
-                switch (key) { // FIXME läuft noch nicht
-                    case VK_PAGE_UP -> viewer.moveMap(0, 10);
-                    case VK_HOME -> viewer.moveMap(-10, 0);
-                    case VK_END -> viewer.moveMap(10, 0);
-                    case VK_PAGE_DOWN -> viewer.moveMap(0, -10);
-                }
             }
         } catch (NumberFormatException ex) {
             System.err.println("NumberFormatException in ActionHandler.keyEntered");
@@ -264,14 +277,51 @@ public final class ActionHandler
         if (source == searchPanel.getSearchCmbBox()) {
             searchPanel.clearSearch();
             ui.showSearch(SearchType.byItemString(item));
-        }/* else if (source == ui.getComponent("settingsMapTypeCmbBox")) {
+        } else if (source == ui.getSettings().getMapTypeCmbBox()) {
             switch (item) {
                 case "Bing Map" -> UserSettings.setCurrentMapSource(UserSettings.BING_MAP);
                 case "Default Map" -> UserSettings.setCurrentMapSource(UserSettings.DEFAULT_MAP);
                 case "Transport Map" -> UserSettings.setCurrentMapSource(UserSettings.TRANSPORT_MAP);
             }
-        }*/
+        }
     }
+
+    private void menuItemClicked(@NotNull Controller ctrl, @NotNull JMenuItem item) {
+        final String text = item.getText();
+        final UserInterface ui = ctrl.getUI();
+        switch (text) {
+            case "Open" -> ctrl.loadFile();
+            case "Save As" -> ctrl.saveFile();
+            case "Exit" -> ctrl.shutdown(false);
+            case "Fr24-Supplier" -> ctrl.runFr24Collector();
+            case "Top-Airports" -> Diagrams.showTopAirports(ui, new Statistics());
+            case "Top-Airlines" -> Diagrams.showTopAirlines(ui, new Statistics());
+
+            case "ADSB-Supplier", "Antenna", "Position-HeatMap" -> ui.showWarning(Warning.NOT_SUPPORTED_YET);
+        }
+    }
+
+    public void menuClicked(@NotNull JMenu menu) {
+        String text = menu.getText();
+        Controller ctrl = Controller.getInstance();
+        UserInterface ui = ctrl.getUI();
+        switch (text) {
+            case "Live-Map" -> ctrl.show(MAP_LIVE);
+            case "Search" -> ui.showSearch(SearchType.FLIGHT);
+            case "Settings" -> ui.showSettings(true);
+            case "Close View" -> {
+                ctrl.loadedData = null;
+                LiveLoader.setLive(false);
+                ui.getMapManager().clearMap();
+                LayerPane layerPane = ui.getLayerPane();
+                layerPane.removeTop();
+                layerPane.setBottomDefault();
+            }
+        }
+    }
+
+
+    // overwritten listener methods
 
     /**
      * overwritten actionPerformed() method is executed when an action is performed by
@@ -308,40 +358,6 @@ public final class ActionHandler
             this.menuClicked(menu);
         } else if (component instanceof JMenuItem item) {
             this.menuItemClicked(ctrl, item);
-        }
-    }
-
-    private void menuItemClicked(@NotNull Controller ctrl, @NotNull JMenuItem item) {
-        final String text = item.getText();
-        final UserInterface ui = ctrl.getUI();
-        switch (text) {
-            case "Open" -> ctrl.loadFile();
-            case "Save As" -> ctrl.saveFile();
-            case "Exit" -> ctrl.shutdown(false);
-            case "Fr24-Supplier" -> ctrl.runFr24Collector();
-            case "Top-Airports" -> Diagrams.showTopAirports(ui, new Statistics());
-            case "Top-Airlines" -> Diagrams.showTopAirlines(ui, new Statistics());
-
-            case "ADSB-Supplier", "Antenna", "Position-HeatMap" -> ui.showWarning(Warning.NOT_SUPPORTED_YET);
-        }
-    }
-
-    public void menuClicked(@NotNull JMenu menu) {
-        String text = menu.getText();
-        Controller ctrl = Controller.getInstance();
-        UserInterface ui = ctrl.getUI();
-        switch (text) {
-            case "Live-Map" -> ctrl.show(MAP_LIVE);
-            case "Search" -> ui.showSearch(SearchType.FLIGHT);
-            case "Settings" -> ui.showSettings(true);
-            case "Close View" -> {
-                ctrl.loadedData = null;
-                LiveLoader.setLive(false);
-                ui.getMapManager().clearMap();
-                LayerPane layerPane = ui.getLayerPane();
-                layerPane.removeTop();
-                layerPane.setBottomDefault();
-            }
         }
     }
 
@@ -405,6 +421,21 @@ public final class ActionHandler
         Controller.getInstance().shutdown(false);
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this || obj != null && obj.getClass() == this.getClass();
+    }
+
+    @Override
+    public int hashCode() {
+        return this.hashCode;
+    }
+
+    @Override
+    public String toString() {
+        return "ActionHandler";
+    }
+
     /*
      * the following listener-methods are unused
      */
@@ -424,18 +455,4 @@ public final class ActionHandler
     @Override public void windowActivated(WindowEvent e) {}
     @Override public void windowDeactivated(WindowEvent e) {}
 
-    @Override
-    public boolean equals(Object obj) {
-        return obj == this || obj != null && obj.getClass() == this.getClass();
-    }
-
-    @Override
-    public int hashCode() {
-        return this.hashCode;
-    }
-
-    @Override
-    public String toString() {
-        return "ActionHandler";
-    }
 }

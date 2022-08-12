@@ -532,7 +532,6 @@ public abstract class Controller {
                 flightID = dataPoint.flightID();
                 try {
                     flight = dbOut.getFlightByID(flightID);
-                    //this.ui.showMap(MAP_TRACKING);
                     this.ui.showInfo(flight, dataPoint);
                 } catch (DataNotFoundException e) {
                     logger.errorLog("flight with the ID " + flightID + " doesn't exist!", this);
