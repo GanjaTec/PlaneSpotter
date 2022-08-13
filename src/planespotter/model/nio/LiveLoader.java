@@ -65,6 +65,7 @@ public abstract class LiveLoader {
      * @param scheduler is the Scheduler which executes tasks
      * @return Vector of Flight objects, loaded directly by a supplier
      */
+    @NotNull
     public static Vector<Flight> loadDirectly(@NotNull final Scheduler scheduler, @NotNull final TreasureMap map) {
         var deserializer = new Fr24Deserializer();
         //deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF");

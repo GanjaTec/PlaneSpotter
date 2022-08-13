@@ -10,7 +10,7 @@ package planespotter.constants;
 public abstract class Configuration {
 
     // title
-    public static final String TITLE = "PlaneSpotter v0.2";
+    public static final String TITLE = "PlaneSpotter v0.3";
 
     // max thread pool size
     public static final int MAX_THREADPOOL_SIZE = 80;
@@ -19,6 +19,7 @@ public abstract class Configuration {
     public static final long KEEP_ALIVE_TIME = 4L;
 
     // core pool size (threads that are running constantly)
+    // maybe we could do improvements here (like always using the same threads)
     public static final int CORE_POOLSIZE = 0;
 
     // configuration file name
@@ -26,4 +27,7 @@ public abstract class Configuration {
 
     // filter file name
     public static final String FILTERS_FILENAME = Paths.RESOURCE_PATH + "filters.psc";
+
+    // 'save logs' flag, logs are saved on shutdown, if enabled
+    public static final boolean SAVE_LOGS = false;
 }

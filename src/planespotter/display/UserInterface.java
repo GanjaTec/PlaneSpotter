@@ -151,6 +151,13 @@ public class UserInterface {
         }
     }
 
+    /**
+     * sets the visibility of the loading screen,
+     * a loading-cycle gif, which is the
+     * over-top component of the {@link LayerPane}
+     *
+     * @param show is the screen visibility
+     */
     public void showLoadingScreen(boolean show) {
         this.getLayerPane().showOverTop(show);
     }

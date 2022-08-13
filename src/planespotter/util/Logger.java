@@ -179,7 +179,7 @@ public class Logger extends JFrame implements ComponentListener {
         }
     }
 
-    public void close() {
+    public void close(boolean saveLog) {
         var loggedText = out.getText();
         FileWizard.getFileWizard().saveLogFile("logged", loggedText);
         super.dispose();

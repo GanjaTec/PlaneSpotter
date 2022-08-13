@@ -10,16 +10,13 @@ import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
 
-import planespotter.constants.SearchType;
+import planespotter.constants.*;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.FileWizard;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.nio.LiveLoader;
 import planespotter.throwables.NoAccessException;
 import planespotter.util.LRUCache;
-import planespotter.constants.UserSettings;
-import planespotter.constants.ViewType;
-import planespotter.constants.Warning;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
 import planespotter.display.models.MenuModels;
@@ -54,10 +51,12 @@ import static planespotter.constants.ViewType.*;
  * @author jml04
  * @author Lukas
  * @author Bennet
- * @version 1.1
+ * @version 1.2
  *
  * @description
- * main controller - responsible for connection between model and view
+ * The {@link Controller} is the programs main-class, it connects
+ * the view with the model and holds some important instances,
+ * also a static instance of itself and of the VM ({@link Runtime})
  */
 public abstract class Controller {
 
@@ -81,7 +80,9 @@ public abstract class Controller {
     }
 
     /**
-     * @return ONE and ONLY controller instance
+     * getter for the static {@link Controller} instance
+     *
+     * @return the controller instance
      */
     @NotNull
     public static Controller getInstance() {
@@ -106,22 +107,27 @@ public abstract class Controller {
     public volatile Vector<Flight> liveData;
 
     // scheduler, contains executor services / thread pools
+    @NotNull
     private final Scheduler scheduler;
 
     // new graphical user interface
+    @NotNull
     private final UserInterface ui;
 
     // TODO: 10.08.2022 move to Search -> searchCache
     // proto test-cache
+    @NotNull
     public final LRUCache<String, Object> cache;
 
     // live data loading period
     private int liveDataPeriodSec;
 
     // logger for whole program
-    private Logger logger;
+    @NotNull
+    private final Logger logger;
 
     // live data thread
+    @Nullable
     private Thread liveThread;
 
     /**
@@ -136,6 +142,7 @@ public abstract class Controller {
         this.ui = new UserInterface(ActionHandler.getActionHandler());
         this.liveDataPeriodSec = 2;
         this.terminated = false;
+        this.logger = new Logger(this);
     }
 
     /**
@@ -154,7 +161,6 @@ public abstract class Controller {
      */
     private void initialize() {
         if (!this.initialized) {
-            logger = new Logger(this);
             logger.log("Initializing Controller...", this);
             this.initTasks();
             logger.successLog("Controller initialized successfully!", this);
@@ -170,8 +176,6 @@ public abstract class Controller {
             this.logger.log("Running init tasks...", this);
             // executing on-start tasks
             this.liveThread = this.scheduler.runThread(this::liveDataTask, "Live-Data Loader", true, Scheduler.HIGH_PRIO);
-            // TODO: 02.07.2022 insert-while-live-option (as permanent parallel like live Data task)
-            //SCHEDULER.schedule(() -> DBIn.insert(SCHEDULER, 50), "Insert Live Data", 20, 10);
         }
     }
 
@@ -199,7 +203,8 @@ public abstract class Controller {
             }
             this.setLoading(true);
             // saving the configuration in 'config.psc'
-            FileWizard.getFileWizard().saveConfig();
+            FileWizard fileWizard = FileWizard.getFileWizard();
+            fileWizard.saveConfig();
             // inserting remaining frames, if option is enabled
             if (insertRemainingFrames && DBIn.isEnabled()) {
                 try {
@@ -220,7 +225,7 @@ public abstract class Controller {
             // disabling last tasks
             DBIn.setEnabled(false);
             this.done(true);
-            this.logger.close();
+            this.logger.close(Configuration.SAVE_LOGS);
             this.terminated = true;
             // shutting down scheduler
             boolean shutdown = this.scheduler.shutdown(1);
