@@ -73,8 +73,12 @@ public class Logger extends JFrame implements ComponentListener {
         this.scrollPane.setAutoscrolls(true);
 
         super.add(this.scrollPane);
-        super.setVisible(true);
+        super.setVisible(false);
         this.sign(2);
+    }
+
+    public void open() {
+        super.setVisible(true);
     }
 
     /**

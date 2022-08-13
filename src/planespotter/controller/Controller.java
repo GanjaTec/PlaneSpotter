@@ -161,9 +161,10 @@ public abstract class Controller {
      */
     private void initialize() {
         if (!this.initialized) {
-            logger.log("Initializing Controller...", this);
+            this.logger.open();
+            this.logger.log("Initializing Controller...", this);
             this.initTasks();
-            logger.successLog("Controller initialized successfully!", this);
+            this.logger.successLog("Controller initialized successfully!", this);
             this.initialized = true;
         }
     }
