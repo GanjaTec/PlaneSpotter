@@ -327,27 +327,30 @@ public abstract class Controller {
         MapManager mapManager = this.ui.getMapManager();
         DBOut dbOut = DBOut.getDBOut();
 
-        this.ui.showLoadingScreen(true);
-        this.setLoading(true);
+        try {
+            this.ui.showLoadingScreen(true);
+            this.setLoading(true);
 
-        UserInterface ui = this.getUI();
-        ui.setViewType(type);
-        ui.getMapManager().clearMap();
-        if (type != MAP_LIVE) {
-            LiveLoader.setLive(false);
+            UserInterface ui = this.getUI();
+            ui.setViewType(type);
+            ui.getMapManager().clearMap();
+            if (type != MAP_LIVE) {
+                LiveLoader.setLive(false);
+            }
+            switch (type) {
+                case LIST_FLIGHT -> { }
+                case MAP_LIVE -> LiveLoader.setLive(true);
+                case MAP_FROMSEARCH -> this.showSearchMap(mapManager);
+                case MAP_TRACKING -> this.showTrackingMap(mapManager);
+                case MAP_TRACKING_NP -> this.showTrackingMapNoPoints(mapManager);
+                // significance map should be improved
+                case MAP_SIGNIFICANCE -> this.showSignificanceMap(mapManager, dbOut);
+                case MAP_HEATMAP -> {  }
+            }
+            logger.successLog("view loaded!", this);
+        } finally {
+            this.done(false);
         }
-        switch (type) {
-            case LIST_FLIGHT -> {}
-            case MAP_LIVE -> LiveLoader.setLive(true);
-            case MAP_FROMSEARCH -> this.showSearchMap(mapManager);
-            case MAP_TRACKING -> this.showTrackingMap(mapManager);
-            case MAP_TRACKING_NP -> this.showTrackingMapNoPoints(mapManager);
-            // significance map should be improved
-            case MAP_SIGNIFICANCE -> this.showSignificanceMap(mapManager, dbOut);
-            case MAP_HEATMAP -> { }
-        }
-        this.done(false);
-        logger.successLog("view loaded!", this);
     }
 
     /**
@@ -357,7 +360,7 @@ public abstract class Controller {
      * @param button is the clicked search button, 0 = LIST, 1 = MAP
      */
     // TODO: 24.05.2022 DEBUG PLANE SEARCH, AIRLINE SEARCH
-    public void search(String[] inputs, int button)
+    public void search(@NotNull String[] inputs, int button)
             throws IllegalInputException {
 
         Utilities.checkInputs(inputs);
@@ -392,8 +395,10 @@ public abstract class Controller {
                         //this.show(ViewType.MAP_FROMSEARCH, "Plane Search Results");
                     }
                 }
-            } catch (DataNotFoundException e) {
-                this.handleException(e);
+            } catch (DataNotFoundException dnf) {
+                this.handleException(dnf);
+            } finally {
+                this.done(false);
             }
         }
     }
@@ -407,8 +412,8 @@ public abstract class Controller {
         TileSource currentMapSource;
         int maxLoadedData, livePeriodSec;
 
+        this.ui.showLoadingScreen(true);
         try {
-            this.ui.showLoadingScreen(true);
             // data[0]
             maxLoadedData = Integer.parseInt(data[0]);
             UserSettings.setMaxLoadedData(maxLoadedData);
@@ -523,9 +528,9 @@ public abstract class Controller {
         return markerHit;
     }
 
-    private void markerHit(ViewType viewType, DefaultMapMarker marker,
+    private void markerHit(ViewType viewType, @NotNull DefaultMapMarker marker,
                            int counter, Vector<DataPoint> dataPoints,
-                           DBOut dbOut, Logger logger) {
+                           DBOut dbOut, @NotNull Logger logger) {
 
         Flight flight;
         int flightID;
@@ -556,7 +561,7 @@ public abstract class Controller {
      *
      * @param clickedCoord is the clicked coordinate
      */
-    boolean onTrackingClick(ICoordinate clickedCoord) { // TODO aufteilen
+    boolean onTrackingClick(@NotNull ICoordinate clickedCoord) { // TODO aufteilen
         TreasureMap map = this.ui.getMap();
         List<MapMarker> markers = map.getMapMarkerList();
         MapManager mapManager = this.ui.getMapManager();
@@ -600,17 +605,17 @@ public abstract class Controller {
 
         //this.gui.setCurrentVisibleRect(this.ui.getMap().getVisibleRect()); // TODO visible rect beim repainten speichern
 
-        fileChooser = MenuModels.fileSaver(this.ui.getWindow());
-        rect = /*(this.gui.getCurrentVisibleRect() != null) ? this.gui.getCurrentVisibleRect() :*/ null;
-        selected = fileChooser.getSelectedFile();
-        if (selected == null) {
-            this.done(false);
-            return;
-        }
-        // new MapData object with loadedData, view type and visible rectangle
-        ViewType currentViewType = this.ui.getCurrentViewType();
-        mapData = new MapData(this.loadedData, currentViewType, rect);
         try {
+            fileChooser = MenuModels.fileSaver(this.ui.getWindow());
+            rect = /*(this.gui.getCurrentVisibleRect() != null) ? this.gui.getCurrentVisibleRect() :*/ null;
+            selected = fileChooser.getSelectedFile();
+            if (selected == null) {
+                this.done(false);
+                return;
+            }
+            // new MapData object with loadedData, view type and visible rectangle
+            ViewType currentViewType = this.ui.getCurrentViewType();
+            mapData = new MapData(this.loadedData, currentViewType, rect);
             FileWizard.getFileWizard().savePlsFile(mapData, selected);
         } catch (DataNotFoundException | FileAlreadyExistsException e) {
             this.handleException(e);
@@ -622,17 +627,17 @@ public abstract class Controller {
     public void loadFile() {
 
         this.ui.showLoadingScreen(true);
-        File file = this.ui.getSelectedFile();
-        if (file == null) {
-            return;
-        }
         try {
+            File file = this.ui.getSelectedFile();
+            if (file == null) {
+                return;
+            }
             FileWizard fileWizard = FileWizard.getFileWizard();
             MapData loaded = fileWizard.loadPlsFile(file);
             this.loadedData = loaded.data();
             this.show(loaded.viewType());
-        } catch (DataNotFoundException e) {
-            e.printStackTrace();
+        } catch (DataNotFoundException | InvalidDataException e) {
+            this.handleException(e);
         } finally {
             this.done(false);
         }
@@ -645,7 +650,7 @@ public abstract class Controller {
      * @param thr is the throwable (usually an exception)
      *            which is thrown and going to be handled
      */
-    public void handleException(final Throwable thr) {
+    public void handleException(@NotNull final Throwable thr) {
 
         if (thr instanceof DataNotFoundException dnf) {
             this.ui.showWarning(Warning.NO_DATA_FOUND, dnf.getMessage());
@@ -664,7 +669,7 @@ public abstract class Controller {
         } else if (thr instanceof IllegalInputException) {
             this.ui.showWarning(Warning.ILLEGAL_INPUT);
         } else if (thr instanceof InvalidDataException ide) {
-            this.ui.showWarning(Warning.UNKNOWN_ERROR, ide.getMessage() + "\n" + ide.getCause().getMessage());
+            this.ui.showWarning(Warning.INVALID_DATA, ide.getMessage() + ((ide.getCause() != null) ? ("\n" + ide.getCause().getMessage()) : ""));
             ide.printStackTrace();
         } else if (thr instanceof ClassNotFoundException cnf) {
             this.ui.showWarning(Warning.UNKNOWN_ERROR, cnf.getMessage());
@@ -680,7 +685,7 @@ public abstract class Controller {
 
     // private methods
 
-    private void showSignificanceMap(@NotNull MapManager bbn, DBOut dbOut) {
+    private void showSignificanceMap(@NotNull MapManager bbn, @NotNull DBOut dbOut) {
 
         Deque<Airport> aps;
         Map<Airport, Integer> signifMap;
@@ -746,6 +751,7 @@ public abstract class Controller {
      *
      * @return main scheduler instance
      */
+    @NotNull
     public Scheduler getScheduler() {
         return scheduler;
     }
@@ -755,6 +761,7 @@ public abstract class Controller {
      *
      * @return main UserInterface instance
      */
+    @NotNull
     public UserInterface getUI() {
         return this.ui;
     }

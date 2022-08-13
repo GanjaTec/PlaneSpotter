@@ -7,6 +7,7 @@ import planespotter.controller.Controller;
 import planespotter.dataclasses.MapData;
 import planespotter.constants.UserSettings;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.InvalidDataException;
 import planespotter.util.Logger;
 import planespotter.util.Time;
 
@@ -62,12 +63,14 @@ public class FileWizard {
      * @return the loaded route as a data point vector
      */
     @NotNull
-    public synchronized MapData loadPlsFile(@NotNull File selected) throws DataNotFoundException {
+    public synchronized MapData loadPlsFile(@NotNull File selected)
+            throws DataNotFoundException, InvalidDataException {
+
         if (selected.exists()) {
             try {
                 return this.readMapData(selected);
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
+            } catch (IOException | ClassNotFoundException | ClassCastException e) {
+                throw new InvalidDataException("Map data is invalid, try another file!");
             }
         }
         throw new DataNotFoundException("Error! File not found or invalid MapData!");
