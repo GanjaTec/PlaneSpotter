@@ -7,13 +7,12 @@ import org.openstreetmap.gui.jmapviewer.MapMarkerCircle;
 import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import planespotter.constants.Images;
-import planespotter.constants.Paths;
 import planespotter.display.MarkerPainter;
 import planespotter.throwables.OutOfRangeException;
 import planespotter.util.Utilities;
 
-import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 /**
  * @name CustomMapMarker
@@ -25,32 +24,48 @@ import java.awt.*;
 @TestOnly
 public class DefaultMapMarker extends MapMarkerDot implements MapMarker {
 
-    public static final Image img = Images.FLYING_PLANE_ICON.get().getImage();
+    public static final Image PLANE_ICON;
+
+    static {
+        PLANE_ICON = Images.AIRPLANE_ICON_8x.get().getImage();
+    }
+
+    public static DefaultMapMarker fromDataPoint(@NotNull DataPoint dataPoint) {
+        return fromPosition(dataPoint.pos(), dataPoint.heading());
+    }
+
+    public static DefaultMapMarker fromDataPoint(@NotNull DataPoint dataPoint, @NotNull Color color) {
+        return fromPosition(dataPoint.pos(), color, dataPoint.heading());
+    }
+
+    public static DefaultMapMarker fromPosition(@NotNull Position pos, int heading) {
+        return new DefaultMapMarker(Position.toCoordinate(pos), heading);
+    }
+
+    public static DefaultMapMarker fromPosition(@NotNull Position pos, @NotNull Color color, int heading) {
+        DefaultMapMarker marker = fromPosition(pos, heading);
+        marker.setBackColor(color);
+        return marker;
+    }
+
+
+    private final MarkerPainter painter;
+
     private final int heading;
 
     /**
      * constructor for CustomMapMarker
      * @param coord is the Map Marker coord,
      */
-    public DefaultMapMarker(Coordinate coord, int heading) {
+    public DefaultMapMarker(@NotNull Coordinate coord, int heading) {
         super(coord);
         this.heading = heading;
+        this.painter = (g, pos, radius) -> g.drawImage(Utilities.rotate(PLANE_ICON, heading), pos.x, pos.y, null);
     }
 
-    // TODO move to MarkerPainter (DefaultPainter)
     @Override
-    public void paint(Graphics g, Point position, int radius) {
-        // custom painting
-        var g2d = (Graphics2D) g;
-        /*
-        g2d.clearRect(0, 0, 100, 100);
-        g2d.drawImage(img, position.x+5, position.y+5, null);
-        var transform = g2d.getTransform();
-        double theta = Math.toRadians(this.heading);
-        g2d.rotate(theta);
-        g2d.setTransform(transform);*/
-        // default painting
-        super.paint(g2d, position, radius);
+    public void paint(@NotNull Graphics g, @NotNull Point position, int radius) {
+        this.painter.paint(g, position, radius);
     }
 
     public static class HeatMapMarker extends MapMarkerCircle {

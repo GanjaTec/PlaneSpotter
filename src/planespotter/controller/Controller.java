@@ -161,7 +161,7 @@ public abstract class Controller {
      */
     private void initialize() {
         if (!this.initialized) {
-            this.logger.open();
+            // this.logger.setVisible(true);
             this.logger.log("Initializing Controller...", this);
             this.initTasks();
             this.logger.successLog("Controller initialized successfully!", this);
@@ -273,6 +273,7 @@ public abstract class Controller {
      * but not into the DB
      * @see LiveLoader
      */
+    // TODO: 13.08.2022 move to LiveLoader
     private synchronized void loadLiveData() {
 
         List<MapMarker> markerList;
@@ -288,12 +289,8 @@ public abstract class Controller {
             markerList = this.liveData.stream()
                     .map(flight -> {
                         // transforming to MapMarker
-                        final Position pos = flight.dataPoints().get(0).pos();
-                        final double lat = pos.lat(),
-                                     lon = pos.lon();
-                        final MapMarkerDot marker = new MapMarkerDot(new Coordinate(lat, lon));
-                        marker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
-                        return marker;
+                        final DataPoint dataPoint = flight.dataPoints().get(0);
+                        return DefaultMapMarker.fromDataPoint(dataPoint, DEFAULT_MAP_ICON_COLOR.get());
                     })
                     .collect(Collectors.toList());
             // setting new map marker list on the map

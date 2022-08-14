@@ -10,6 +10,7 @@ import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
@@ -79,6 +80,31 @@ public abstract class Utilities {
             return true;
         }
         return false;
+    }
+
+    /**
+     * @indev
+     *
+     *
+     * @param img
+     * @param degrees
+     * @return
+     */
+    @NotNull
+    public static BufferedImage rotate(@NotNull Image img, @Range(from = 0, to = 360) int degrees) {
+        int width = img.getWidth(null);
+        int height = img.getHeight(null);
+
+        BufferedImage buf = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = buf.createGraphics();
+        Color bgColor = new Color(0, 0, 0, 0);
+        graphics.setColor(bgColor);
+        graphics.fillRect(0, 0, width, height);
+
+        graphics.rotate(Math.toRadians(degrees), MathUtils.divide(width, 2), MathUtils.divide(height, 2));
+        graphics.drawImage(img, 0, 0, null);
+
+        return buf;
     }
 
     public static int maxValue(int[][] of) {

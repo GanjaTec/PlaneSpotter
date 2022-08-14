@@ -77,10 +77,6 @@ public class Logger extends JFrame implements ComponentListener {
         this.sign(2);
     }
 
-    public void open() {
-        super.setVisible(true);
-    }
-
     /**
      *
      * @param txt
@@ -117,11 +113,18 @@ public class Logger extends JFrame implements ComponentListener {
         this.logInColor(txt, DEFAULT_FONT_COLOR.get(), ref);
     }
 
+    /**
+     *
+     *
+     * @param txt
+     * @param ref
+     */
     public void debug(@NotNull String txt, @Nullable Object ref) {
         this.logInColor("[DEBUG] " + txt, DEFAULT_BORDER_COLOR.get(), ref);
     }
 
     /**
+     *
      *
      * @param txt
      * @param col
