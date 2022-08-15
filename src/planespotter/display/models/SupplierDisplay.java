@@ -32,7 +32,8 @@ import static planespotter.util.math.MathUtils.divide;
 public class SupplierDisplay implements WindowListener {
 
     private static final String STATUS_TXT = "Status: ",
-                                LAST_FRAME_TEXT = "Last Frame: ";
+                                LAST_FRAME_TXT = "Last Frame: ",
+                                QUEUE_SIZE_TXT = "Queued Frames: ";
     // inserted values indexes:   0 = allFrames,   1 = newPlanes,   2 = newFlights
     private final int[] inserted = {0, 0, 0};
     private final Collector<? extends Supplier> collector;
@@ -46,8 +47,9 @@ public class SupplierDisplay implements WindowListener {
                          newPlanesLabel = new JLabel(),
                          newFlightsLabel = new JLabel(),
                          statusLabel = new JLabel(),
-                         nextFrameLabel = new JLabel();
-    private final JLabel[] labels = {insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel, statusLabel, nextFrameLabel};
+                         lastFrameLabel = new JLabel(),
+                         queueSizeLabel = new JLabel();
+    private final JLabel[] labels = {insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel, statusLabel, lastFrameLabel, queueSizeLabel};
     private final JFrame frame;
 
     public SupplierDisplay(int defaultCloseOperation, Collector<? extends Supplier> collector) {
@@ -77,7 +79,7 @@ public class SupplierDisplay implements WindowListener {
         var seps = new JSeparator[] {
                 new JSeparator(), new JSeparator(), new JSeparator(),
                 new JSeparator(), new JSeparator(), new JSeparator(),
-                new JSeparator()
+                new JSeparator(), new JSeparator()
         };
         y = 30;
         for (var sep : seps) {
@@ -118,6 +120,7 @@ public class SupplierDisplay implements WindowListener {
 
         this.statusLabel.setForeground(DEFAULT_ACCENT_COLOR.get());
         this.setStatus("enabled, running");
+        this.setQueueSize(0);
 
         var panel = new JPanel();
         panel.setLayout(null);
@@ -141,15 +144,19 @@ public class SupplierDisplay implements WindowListener {
         return frame;
     }
 
+    private void setQueueSize(int size) {
+        this.queueSizeLabel.setText(QUEUE_SIZE_TXT + size);
+    }
+
     private void setNextFrame(String frame) {
-        this.nextFrameLabel.setText(LAST_FRAME_TEXT + frame);
+        this.lastFrameLabel.setText(LAST_FRAME_TXT + frame);
     }
 
     private void setStatus(String text) {
         this.statusLabel.setText(STATUS_TXT + text);
     }
 
-    public synchronized void update(final int insertedNow, final int newPlanesNow, final int newFlightsNow, String lastFrame) {
+    public synchronized void update(final int insertedNow, final int newPlanesNow, final int newFlightsNow, String lastFrame, int queueSize) {
         this.inserted[0] += insertedNow;
         this.inserted[1] += newPlanesNow;
         this.inserted[2] += newFlightsNow;
@@ -163,6 +170,7 @@ public class SupplierDisplay implements WindowListener {
         this.newFlightsLabel.setText("New Flights: " + this.inserted[2] + ", " + newFlightsNow + " per Sec.");
         this.progressBar.setValue(memoryUsage);
         this.setNextFrame(lastFrame);
+        this.setQueueSize(queueSize);
         try {
             TimeUnit.MILLISECONDS.sleep(500);
         } catch (InterruptedException ignored) {

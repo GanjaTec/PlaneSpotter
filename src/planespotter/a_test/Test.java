@@ -11,6 +11,8 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import planespotter.constants.*;
 import planespotter.controller.ActionHandler;
 import planespotter.controller.Controller;
+import planespotter.dataclasses.Fr24Frame;
+import planespotter.dataclasses.Frame;
 import planespotter.display.UserInterface;
 import planespotter.util.Bitmap;
 import planespotter.dataclasses.DataPoint;
@@ -49,10 +51,9 @@ public class Test {
         System.out.println(result);
 */
 
-        ImageIcon img = new ImageIcon(Paths.IMAGE_PATH + "loadingCycle.gif");
-        var label = new JLabel(img);
-        label.setSize(img.getIconWidth(), img.getIconHeight());
-        new Test().createTestJFrame(label);
+        Fr24Frame frame = new Fr24Frame("test", 4.64, 56.52, 56, 20000, 637, 4400, "T-ABC", "B738", "B-333", 2928383, "CDG", "BER", "flight1", "unknwn1", "abc22", "DUKE222", "hallo", "NCR");
+
+        Utilities.printClassValues(frame);
 
 
     }

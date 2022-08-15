@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Range;
 import planespotter.constants.Configuration;
 import planespotter.controller.Controller;
 import planespotter.throwables.OutOfRangeException;
-import planespotter.util.Logger;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -32,18 +31,25 @@ public class Scheduler {
      *  MID_PRIO is 5,
      *  HIGH_PRIO is 9
      */
-    public static final int LOW_PRIO = 2, MID_PRIO = 5, HIGH_PRIO = 9;
+    public static final int LOW_PRIO, MID_PRIO, HIGH_PRIO;
 
     // thread maker (thread factory)
-    private static final ThreadMaker threadMaker;
-    // static initializer
+    @NotNull private static final ThreadMaker threadMaker;
+
+    // initializing static fields
     static {
+        LOW_PRIO = 2;
+        MID_PRIO = 5;
+        HIGH_PRIO = 9;
         threadMaker = new ThreadMaker();
     }
+
     // ThreadPoolExecutor for (parallel) execution of different threads
-    private final ThreadPoolExecutor exe;
+    @NotNull private final ThreadPoolExecutor exe;
+
     // ScheduledExecutorService for scheduled execution at a fixed rate
-    private final ScheduledExecutorService scheduled_exe;
+    @NotNull private final ScheduledExecutorService scheduled_exe;
+
     // hash code
     private final int hashCode = System.identityHashCode(this);
 
@@ -52,10 +58,7 @@ public class Scheduler {
      * constant as max. ThreadPool-size
      */
     public Scheduler() {
-        this.exe = new ThreadPoolExecutor(Configuration.CORE_POOLSIZE, Configuration.MAX_THREADPOOL_SIZE,
-                                          Configuration.KEEP_ALIVE_TIME, TimeUnit.SECONDS,
-                                          new SynchronousQueue<>(), threadMaker);
-        this.scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker);
+        this(Configuration.MAX_THREADPOOL_SIZE);
     }
 
     /**
@@ -65,8 +68,8 @@ public class Scheduler {
      */
     public Scheduler(int maxPoolsize) {
         this.exe = new ThreadPoolExecutor(Configuration.CORE_POOLSIZE, maxPoolsize,
-                Configuration.KEEP_ALIVE_TIME, TimeUnit.SECONDS,
-                new SynchronousQueue<>(), threadMaker);
+                                          Configuration.KEEP_ALIVE_TIME, TimeUnit.SECONDS,
+                                          new SynchronousQueue<>(), threadMaker);
         this.scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker);
     }
 
@@ -89,6 +92,7 @@ public class Scheduler {
     public static boolean sleep(long millis) {
         try {
             TimeUnit.MILLISECONDS.sleep(millis);
+            return true;
         } catch (InterruptedException e) {
             System.err.println("Scheduler: sleep interrupted!");
         }
@@ -103,12 +107,12 @@ public class Scheduler {
      * @param initDelay is the src delay in seconds, must be 1 or higher
      * @param period is the period in seconds, must be 0 or higher
      */
-    public final Scheduler schedule(@NotNull Runnable task, @NotNull String tName, int initDelay, int period) {
-        this.schedule(() -> {
+    @NotNull
+    public final ScheduledFuture<?> schedule(@NotNull Runnable task, @NotNull String tName, int initDelay, int period) {
+        return this.schedule(() -> {
             Thread.currentThread().setName(tName);
             task.run();
         }, initDelay, period);
-        return this;
     }
 
     /**
@@ -118,14 +122,14 @@ public class Scheduler {
      * @param initDelay is the src delay in seconds, must be 1 or higher
      * @param period is the period in seconds, must be 0 or higher
      */
-    public final Scheduler schedule(@NotNull Runnable task, int initDelay, int period) {
+    @NotNull
+    public final ScheduledFuture<?> schedule(@NotNull Runnable task, int initDelay, int period) {
         if (initDelay < 0) {
             throw new IllegalArgumentException("init delay out of range! must be 0 or higher!");
         } if (period < 1) {
             throw new IllegalArgumentException("period out of range! must be 1 or higher!");
         }
-        this.scheduled_exe.scheduleAtFixedRate(task, initDelay, period, TimeUnit.SECONDS);
-        return this;
+        return this.scheduled_exe.scheduleAtFixedRate(task, initDelay, period, TimeUnit.SECONDS);
     }
 
     /**
@@ -199,18 +203,11 @@ public class Scheduler {
      *
      * @param target is the thread to interrupt
      */
-    public synchronized void interruptThread(@NotNull Thread target) {
-        Logger log = Controller.getInstance().getLogger();
+    public synchronized boolean interruptThread(@NotNull Thread target) {
         if (target.isAlive()) {
             target.interrupt();
-            if (!target.isInterrupted()) {
-                log.errorLog("Couldn't interrupt thread " + target.getName(), this);
-            } else {
-                log.infoLog("Thread " + target.getName() + " interrupted!", this);
-            }
-        } else {
-            log.infoLog("Thread " + target.getName() + " is already dead!", this);
         }
+        return target.isInterrupted();
     }
 
     /**
@@ -220,7 +217,7 @@ public class Scheduler {
      */
     public synchronized boolean shutdown(final int timeout) {
         try {
-            final var sec = TimeUnit.SECONDS;
+            final TimeUnit sec = TimeUnit.SECONDS;
             return this.exe.awaitTermination(timeout, sec) && this.scheduled_exe.awaitTermination(timeout, sec);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -306,11 +303,7 @@ public class Scheduler {
             Thread thread = new Thread(r);
             this.setThreadProperties(thread);
             thread.setUncaughtExceptionHandler((t, e) -> { // t is the thread, e is the exception
-                Logger log = Controller.getInstance().getLogger();
                 e.printStackTrace();
-                log.errorLog("Exception " + e.getMessage() +
-                                " occured in thread " + t.getName(),
-                                Controller.getInstance());
                 Controller.getInstance().handleException(e);
             });
             return thread;

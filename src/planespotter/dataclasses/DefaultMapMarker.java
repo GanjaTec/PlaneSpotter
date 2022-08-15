@@ -13,6 +13,8 @@ import planespotter.util.Utilities;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.rmi.registry.Registry;
+import java.rmi.registry.RegistryHandler;
 
 /**
  * @name CustomMapMarker
@@ -42,6 +44,7 @@ public class DefaultMapMarker extends MapMarkerDot implements MapMarker {
         return new DefaultMapMarker(Position.toCoordinate(pos), heading);
     }
 
+    @NotNull
     public static DefaultMapMarker fromPosition(@NotNull Position pos, @NotNull Color color, int heading) {
         DefaultMapMarker marker = fromPosition(pos, heading);
         marker.setBackColor(color);
@@ -58,6 +61,7 @@ public class DefaultMapMarker extends MapMarkerDot implements MapMarker {
      * @param coord is the Map Marker coord,
      */
     public DefaultMapMarker(@NotNull Coordinate coord, int heading) {
+
         super(coord);
         this.heading = heading;
         this.painter = (g, pos, radius) -> g.drawImage(Utilities.rotate(PLANE_ICON, heading), pos.x, pos.y, null);

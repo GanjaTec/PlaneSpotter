@@ -1,9 +1,7 @@
 package planespotter.statistics;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.throwables.InvalidArrayException;
-import planespotter.util.TaskWatch;
 
 import java.awt.image.BufferedImage;
 import java.util.Arrays;

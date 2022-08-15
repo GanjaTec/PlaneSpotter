@@ -1,5 +1,7 @@
 package planespotter.dataclasses;
 
+import java.io.Serializable;
+
 /**
  * @author Janne Matti
  * @author Lukas
@@ -9,7 +11,8 @@ package planespotter.dataclasses;
 public record Airport(int id,
                       String iataTag,
                       String name,
-                      Position pos) {
+                      Position pos)
+        implements Serializable {
 }
 
 /*

@@ -1,4 +1,5 @@
 package planespotter.dataclasses;
+import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -14,7 +15,7 @@ public record Flight(int id,
                      Plane plane,
                      String flightNr,
                      HashMap<Integer, DataPoint> dataPoints)
-        implements Data {
+        implements Serializable {
 
     public static Flight parseFlight(final Fr24Frame fr24Frame, final int id) {
         var dataPoints = new HashMap<Integer, DataPoint>();

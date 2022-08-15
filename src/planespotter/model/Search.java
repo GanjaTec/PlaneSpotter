@@ -7,6 +7,7 @@ import planespotter.dataclasses.DataPoint;
 import planespotter.model.io.DBOut;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.InvalidArrayException;
+import planespotter.util.LRUCache;
 import planespotter.util.Utilities;
 
 import java.util.*;
@@ -21,10 +22,23 @@ import java.util.*;
  */
 public class Search {
 
+    // search cache for data recycling, but still in development
+    private final LRUCache<String, Vector<DataPoint>> searchCache;
+
+    /**
+     * constructor, equivalent to 'new Search(100)'
+     */
+    public Search() {
+        this(100);
+    }
+
     /**
      * constructor
+     *
+     * @param cacheSize is the cache size
      */
-    public Search () {
+    public Search(int cacheSize) {
+        this.searchCache = new LRUCache<>(cacheSize);
     }
 
     /**
@@ -35,27 +49,27 @@ public class Search {
     public Vector<DataPoint> forFlight(String[] inputs)
             throws DataNotFoundException {
 
-        var id = inputs[0];
-        var callsign = inputs[1];
+        String id = inputs[0];
+        String callsign = inputs[1];
         try {
-            var out = DBOut.getDBOut();
-            var ctrl = Controller.getInstance();
+            DBOut out = DBOut.getDBOut();
+            Controller ctrl = Controller.getInstance();
             if (!id.isBlank()) {
                 int fid = Integer.parseInt(id);
                 ctrl.loadedData = out.getTrackingByFlight(fid);
                 return ctrl.loadedData;
             } else if (!callsign.isBlank()) {
-                var signs = this.findCallsigns(callsign);
-                var fids = new ArrayDeque<Integer>();
+                Deque<String> signs = this.findCallsigns(callsign);
+                Deque<Integer> fids = new ArrayDeque<>();
                 while (!signs.isEmpty()) {
                     fids.addAll(out.getFlightIDsByCallsign(signs.poll()));
                 }
                 int[] ids = Utilities.parseIntArray(fids);
-                var key = "tracking" + Arrays.toString(ids);
-                ctrl.loadedData = (Vector<DataPoint>) ctrl.cache.get(key);
+                String key = "tracking" + Arrays.toString(ids);
+                ctrl.loadedData = this.searchCache.get(key);
                 if (ctrl.loadedData == null) {
                     ctrl.loadedData = out.getTrackingsByFlightIDs(ids);
-                    ctrl.cache.put(key, ctrl.loadedData);
+                    this.searchCache.put(key, ctrl.loadedData);
                 }
                 if (!ctrl.loadedData.isEmpty()) {
                     return ctrl.loadedData;
@@ -78,12 +92,12 @@ public class Search {
             throws DataNotFoundException {
 
         var id = inputs[0]; // FIXME: 11.05.2022 ID ist 5 statt 56
-        var planetypes = this.findPlanetypes(inputs[1]); // FIXME: 06.05.2022 ES WERDEN RANDOM planetypes zurückgegeben
+        Deque<String> planetypes = this.findPlanetypes(inputs[1]); // FIXME: 06.05.2022 ES WERDEN RANDOM planetypes zurückgegeben
         var icao = inputs[2]; // find ICAOs
         var tailNr = inputs[3]; // find TailNr
         // TODO registration
         var out = DBOut.getDBOut();
-        var fids = new ArrayDeque<Integer>();
+        Deque<Integer> fids = new ArrayDeque<>();
         if (!id.isBlank()) {
             fids.add(Integer.parseInt(id));
         } else if (!planetypes.isEmpty()) {
@@ -120,20 +134,20 @@ public class Search {
             // trackings with airport id (-> airport join)
         } else if (!tag.isBlank()) {
             var key = "airport" + tag.toUpperCase();
-            ctrl.loadedData = (Vector<DataPoint>) ctrl.cache.get(key);
+            ctrl.loadedData = this.searchCache.get(key);
             if (ctrl.loadedData == null) {
                 int[] fids = out.getFlightIDsIDsByAirportTag(tag);
                 ctrl.loadedData = new Vector<>(out.getTrackingsByFlightIDs(fids));
-                ctrl.cache.put(key, ctrl.loadedData);
+                this.searchCache.put(key, ctrl.loadedData);
             }
         } else if (!name.isBlank()) {
             var key = "airport" + name.toUpperCase();
-            ctrl.loadedData = (Vector<DataPoint>) ctrl.cache.get(key);
+            ctrl.loadedData = this.searchCache.get(key);
             if (ctrl.loadedData == null) {
                 // FIXME too slow
                 int[] fids = out.getFlightIDsByAirportName(name);
                 ctrl.loadedData = new Vector<>(out.getTrackingsByFlightIDs(fids));
-                ctrl.cache.put(key, ctrl.loadedData);
+                this.searchCache.put(key, ctrl.loadedData);
             }
         }
         if (ctrl.loadedData.isEmpty()) {
@@ -177,10 +191,11 @@ public class Search {
      * @param input is the input planetype, must not be complete
      * @return complete planetype, if one found, else the input one
      */
-    private ArrayDeque<String> findPlanetypes(String input)
+    @NotNull
+    private Deque<String> findPlanetypes(@NotNull String input)
             throws DataNotFoundException {
 
-        var allPlanetypes = DBOut.getDBOut().getAllPlanetypesLike(input);
+        Deque<String> allPlanetypes = DBOut.getDBOut().getAllPlanetypesLike(input);
         if (allPlanetypes.isEmpty()) {
             throw new DataNotFoundException("no existing planetype found for " + input + "!");
         }
@@ -194,10 +209,11 @@ public class Search {
      * @return Deque of all callsigns found for the input string
      * @throws DataNotFoundException if no callsign was found
      */
-    private ArrayDeque<String> findCallsigns(String input)
+    @NotNull
+    private Deque<String> findCallsigns(@NotNull String input)
             throws DataNotFoundException { // TODO evtl. hier catchen!! in DBout Werfen
 
-        var allCallsigns = DBOut.getDBOut().getAllCallsignsLike(input);
+        Deque<String> allCallsigns = DBOut.getDBOut().getAllCallsignsLike(input);
         if (allCallsigns.isEmpty()) {
             throw new DataNotFoundException("no existing callsign found for " + input + "!");
         }
