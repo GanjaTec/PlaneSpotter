@@ -1,5 +1,6 @@
 package planespotter.constants;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.TestOnly;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
@@ -91,10 +92,13 @@ public final class Areas {
 	 * @return Array of Areas (whole world)
 	 */
 	// TODO: 02.08.2022 2. method getWorldAreaRaster1D(float gridSize) which uses this one
-	public static synchronized String[] getWorldAreaRaster1D(double lonVel, double latVel) {
+	@NotNull
+	public static synchronized String[] getWorldAreaRaster1D(@Range(from = 1, to = 180) double latSize,
+															 @Range(from = 1, to = 360) double lonSize) {
+
 		double lat, lon = -180.;
-		byte xLength = (byte) (360 / lonVel),
-			 yLength = (byte) (180 / latVel);
+		byte xLength = (byte) (360 / lonSize),
+			 yLength = (byte) (180 / latSize);
 
 		final String[][] areaRaster2D = new String[xLength][yLength]; // xLength * yLength Raster of Areas
 		final String[] areaRaster1D = new String[xLength * yLength]; // 6 * 6 Raster as 1D-Array
@@ -103,10 +107,10 @@ public final class Areas {
 		for (byte x = 0; x < xLength; x++) {
 			lat = 90.;
 			for (byte y = 0; y < yLength; y++) {
-				areaRaster2D[x][y] = Areas.newArea(new Position(lat, lon), new Position(lat - latVel, lon + lonVel));
-				lat -= latVel;
+				areaRaster2D[x][y] = Areas.newArea(new Position(lat, lon), new Position(lat - latSize, lon + lonSize));
+				lat -= latSize;
 			}
-			lon += lonVel;
+			lon += lonSize;
 		}
 		Arrays.stream(areaRaster2D)
 				.forEach(arr -> Arrays.stream(arr)

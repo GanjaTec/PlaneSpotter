@@ -28,7 +28,7 @@ import static planespotter.constants.DefaultColor.*;
 public final class MenuModels {
 
     @NotNull
-    public JMenuBar topMenuBar(@NotNull final ActionHandler actionHandler) {
+    public static JMenuBar topMenuBar(@NotNull final ActionHandler actionHandler) {
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File"),
               liveMapMenu = new JMenu("Live-Map"),
@@ -36,132 +36,72 @@ public final class MenuModels {
               statsMenu = new JMenu("Statistics"),
               supplierMenu = new JMenu("Supplier"),
               settingsMenu = new JMenu("Settings"),
+              closeMenu = new JMenu("Close View"),
               helpMenu = new JMenu("Help");
-        liveMapMenu.addMenuListener(actionHandler);
-        searchMenu.addMenuListener(actionHandler);
-        JMenuItem openFile = new JMenuItem("Open", Images.FILE_ICON.get()),
-                  saveFile = new JMenuItem("Save As", Images.FILE_ICON.get()),
-                  exit = new JMenuItem("Exit", Images.FILE_ICON.get());
+        liveMapMenu.addMouseListener(actionHandler);
+        searchMenu.addMouseListener(actionHandler);
+        settingsMenu.addMouseListener(actionHandler);
+        closeMenu.addMouseListener(actionHandler);
+
         JMenuItem[] fileItems = new JMenuItem[] {
-                openFile, saveFile, exit
+                new JMenuItem("Open", Images.OPEN_FILE_ICON_16x.get()),
+                new JMenuItem("Save As", Images.SAVE_FILE_ICON_16x.get()),
+                new JMenuItem("Exit", Images.EXIT_ICON_16x.get())
         };
-        Arrays.stream(fileItems)
-                .forEach(item -> item.addMouseListener(actionHandler));
+        JMenu heatMapMenu = new JMenu("Heat-Map");
+        heatMapMenu.setIcon(Images.HEATMAP_ICON_16x.get());
+        JMenuItem[] statsItems = new JMenuItem[] {
+                new JMenuItem("Top-Airports", Images.STATS_ICON_16x.get()),
+                new JMenuItem("Top-Airlines", Images.STATS_ICON_16x.get()),
+                heatMapMenu
+        };
+        JMenuItem[] heatMapItems = new JMenuItem[] {
+                new JMenuItem("Position-HeatMap"),
+                new JMenuItem("coming soon...")
+        };
+        JMenuItem[] supplierItems = new JMenuItem[] {
+                new JMenuItem("Fr24-Supplier", Images.PLANE_ICON_16x.get()),
+                new JMenuItem("ADSB-Supplier", Images.PLANE_ICON_16x.get()),
+                new JMenuItem("Antenna", Images.ANTENNA_ICON_16x.get())
+        };
+        Font font = FONT_MENU.deriveFont(13f);
+
         Arrays.stream(fileItems).forEach(item -> {
+            item.addMouseListener(actionHandler);
+            item.setFont(font);
             fileMenu.add(item);
             fileMenu.addSeparator();
         });
+        Arrays.stream(statsItems).forEach(item -> {
+            if (item instanceof JMenu menu) {
+                Arrays.stream(heatMapItems).forEach(i -> {
+                    i.addMouseListener(actionHandler);
+                    i.setFont(font);
+                    menu.add(i);
+                    menu.addSeparator();
+                });
+            } else {
+                item.addMouseListener(actionHandler);
+            }
+            item.setFont(font);
+            statsMenu.add(item);
+            statsMenu.addSeparator();
+
+        });
+        Arrays.stream(supplierItems).forEach(item -> {
+            item.addMouseListener(actionHandler);
+            item.setFont(font);
+            supplierMenu.add(item);
+            supplierMenu.addSeparator();
+        });
         JMenu[] menus = new JMenu[] {
-                fileMenu, liveMapMenu, searchMenu, statsMenu, supplierMenu, settingsMenu, helpMenu
+                fileMenu, liveMapMenu, searchMenu, statsMenu, supplierMenu, settingsMenu, closeMenu, helpMenu
         };
-        Arrays.stream(menus).forEach(menuBar::add);
+        Arrays.stream(menus).forEach(m -> {
+            m.setFont(font);
+            menuBar.add(m);
+        });
         return menuBar;
-    }
-
-    /**
-     * menubar (contains the other menu components)
-     */
-    public JMenuBar menuBar(JPanel parent) {
-        // setting up menubar
-        var menubar = new JMenuBar();
-        menubar.setBackground(DEFAULT_BG_COLOR.get());
-        menubar.setForeground(DEFAULT_FG_COLOR.get());
-        menubar.setBounds(0, 0, parent.getWidth(), parent.getHeight());
-        menubar.setBorder(LINE_BORDER);
-        menubar.setLayout(null);
-        menubar.setOpaque(false);
-
-        return menubar;
-    }
-
-    /**
-     * list button
-     */
-    public JButton listButton(JMenuBar parent, ActionListener listener) {
-        // setting up list button
-        var list = new UWPButton("List-View");
-        list.setBackground(DEFAULT_ACCENT_COLOR.get());
-        list.setForeground(DEFAULT_FONT_COLOR.get());
-        list.setBounds(10, 15, ((parent.getWidth()-20)/2)-5, 25);
-        list.setFont(FONT_MENU);
-        list.addActionListener(listener);
-
-        return list;
-    }
-
-    /**
-     * map button
-     */
-    public JButton mapButton(JMenuBar parent, ActionListener listener) {
-        // setting up list button
-        var map = new UWPButton("Live-Map");
-        map.setBackground(DEFAULT_ACCENT_COLOR.get());
-        map.setForeground(DEFAULT_FONT_COLOR.get());
-        map.setBounds(145, 15, ((parent.getWidth()-20)/2)-5, 25);
-        map.setFont(FONT_MENU);
-        map.addActionListener(listener);
-
-        return map;
-    }
-
-    /**
-     * settings button
-     */
-    public JButton statisticsButton(JMenuBar parent, ActionListener listener) {
-        // setting up settings menu
-        var settings = new UWPButton("Statistics");
-        settings.setBackground(DEFAULT_ACCENT_COLOR.get());
-        settings.setForeground(DEFAULT_FONT_COLOR.get());
-        settings.setFont(FONT_MENU);
-        settings.setBounds(10, 55, parent.getWidth()-20, 25);
-        settings.addActionListener(listener);
-
-        return settings;
-    }
-
-    /**
-     * settings button
-     */
-    public JButton supplierButton(JMenuBar parent, ActionListener listener) {
-        // setting up settings menu
-        var settings = new UWPButton("Supplier");
-        settings.setBackground(DEFAULT_ACCENT_COLOR.get());
-        settings.setForeground(DEFAULT_FONT_COLOR.get());
-        settings.setFont(FONT_MENU);
-        settings.setBounds(10, 95, parent.getWidth()-20, 25);
-        settings.addActionListener(listener);
-
-        return settings;
-    }
-
-    /**
-     * settings button
-     */
-    public JButton settingsButton(JMenuBar parent, ActionListener listener) {
-        // setting up settings menu
-        var settings = new UWPButton("Settings");
-        settings.setBackground(DEFAULT_ACCENT_COLOR.get());
-        settings.setForeground(DEFAULT_FONT_COLOR.get());
-        settings.setFont(FONT_MENU);
-        settings.setBounds(10, 135, parent.getWidth()-20, 25);
-        settings.addActionListener(listener);
-
-        return settings;
-    }
-
-    /**
-     * search-filter button
-     */
-    public JButton searchButton(JMenuBar parent, ActionListener listener) {
-        // setting up search-settings menu
-        var search_settings = new UWPButton("Search");
-        search_settings.setBackground(DEFAULT_ACCENT_COLOR.get());
-        search_settings.setForeground(DEFAULT_FONT_COLOR.get());
-        search_settings.setFont(FONT_MENU);
-        search_settings.setBounds(10, parent.getHeight()-15, parent.getWidth()-20, 25);
-        search_settings.addActionListener(listener);
-
-        return search_settings;
     }
 
     /**
@@ -181,38 +121,6 @@ public final class MenuModels {
         return progressbar;
     }
 
-    /**
-     * close view button
-     */
-    public JButton fileButton(JDesktopPane parent, ActionListener listener) {
-        // setting up view close button
-        var file = new UWPButton();
-        file.setText("File");
-        file.setBackground(Color.DARK_GRAY);
-        file.setForeground(DEFAULT_FONT_COLOR.get());
-        file.setBounds(parent.getWidth()-184, 4, 80, 16);
-        file.setFont(new Font("DialogInput", Font.PLAIN, 14));
-        file.addActionListener(listener);
-
-        return file;
-    }
-
-    /**
-     * close view button
-     */
-    public JButton closeViewButton(JDesktopPane parent, ActionListener listener) {
-        // setting up view close button
-        var closeView = new UWPButton();
-        closeView.setText("Close");
-        closeView.setBackground(Color.DARK_GRAY);
-        closeView.setForeground(DEFAULT_FONT_COLOR.get());
-        closeView.setBounds(parent.getWidth()-85, 4, 80, 16);
-        closeView.setFont(new Font("DialogInput", Font.PLAIN, 14));
-        closeView.addActionListener(listener);
-
-        return closeView;
-    }
-
     // TODO: 01.07.2022 man könnte die kompletten Settings mit einer
     //  JTable machen, linke spalte keys, rechte spalte values
 
@@ -221,7 +129,7 @@ public final class MenuModels {
     /**
      * @return settings option pane (which pops up)
      */
-    public JDialog settingsDialog(JFrame parent) {
+    public JDialog settingsDialog(@NotNull JFrame parent, @NotNull ActionHandler actionHandler) {
             var maxLoadLbl = new JLabel("Max. loaded Data:");
                 maxLoadLbl.setBounds(20, 10, 300, 25);
                 maxLoadLbl.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
@@ -252,8 +160,19 @@ public final class MenuModels {
         settings.setResizable(false);
         settings.setFocusable(false);
         // adding labels
-        var seps = this.separators(4, 40, 40);
-        Arrays.stream(seps).forEach(settings::add);
+        JSeparator[] separators = this.separators(4, 40, 40);
+        JComboBox<String> mapTypeCmbBox = this.settings_mapTypeCmbBox(actionHandler);
+        JTextField maxLoadTxtField = this.settings_maxLoadTxtField(actionHandler);
+        JButton[] settingsButtons = this.settingsButtons(settings, actionHandler);
+        UWPButton filterButton = this.settingsFilterButton(actionHandler);
+        JSlider livePeriodSlider = this.settingsLivePeriodSlider();
+
+        Arrays.stream(separators).forEach(settings::add);
+        Arrays.stream(settingsButtons).forEach(settings::add);
+        settings.add(filterButton);
+        settings.add(livePeriodSlider);
+        settings.add(maxLoadTxtField);
+        settings.add(mapTypeCmbBox);
         settings.add(maxLoadLbl);
         settings.add(mapType);
         settings.add(livePeriod);
@@ -370,37 +289,15 @@ public final class MenuModels {
         var home = FileSystemView.getFileSystemView().getHomeDirectory();
         var fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);
-        var pls = new FileNameExtensionFilter("only .pls-Files", "pls");
+        var pls = new FileNameExtensionFilter("only .pls-Files", "pls", ".pls"); // which is the right one?
         fileChooser.setFileFilter(pls);
         fileChooser.showOpenDialog(parent);
 
         return fileChooser;
     }
 
-    public JButton[] fileMenu(JPanel parent, ActionListener listener) {
-        var components = new JButton[] {
-                new UWPButton("Back"),
-                new UWPButton("Save"),
-                new UWPButton("Open")
-        };
-        int minus = 84;
-        for (var comp : components) {
-            comp.setBounds(parent.getWidth() - minus, 4, 80, 16);
-            comp.setBackground(Color.DARK_GRAY);
-            comp.setForeground(DEFAULT_FONT_COLOR.get());
-            comp.setFont(new Font("DialogInput", Font.PLAIN, 14));
-            comp.setVisible(false);
-            comp.addActionListener(listener);
-            minus += 84;
-        }
-        return components;
-    }
-
     // TODO SETTINGS
     // reload data button
-    // confirm button
     // other settings
     // evtl. Theme oder so -> Farbe
-
-    //TODO evtl. methode getAllAsList()
 }

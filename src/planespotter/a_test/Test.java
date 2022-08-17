@@ -8,9 +8,10 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 
-import planespotter.constants.ANSIColor;
-import planespotter.constants.Images;
-import planespotter.constants.Paths;
+import planespotter.constants.*;
+import planespotter.controller.ActionHandler;
+import planespotter.controller.Controller;
+import planespotter.display.UserInterface;
 import planespotter.util.Bitmap;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
@@ -34,6 +35,7 @@ import java.util.stream.Stream;
 public class Test {
 
     private static final String bitmapPath = Paths.RESOURCE_PATH + "newTestBitMap.bmp";
+
     // TEST-MAIN
     public static void main(String[] args) throws Exception {
 
@@ -47,19 +49,11 @@ public class Test {
         System.out.println(result);
 */
 
-        Test test = new Test();
-        String filename = Paths.RESOURCE_PATH + "bmpBitmap.bmp";
-        /*Bitmap bmp = Bitmap.fromImage(filename);
-        test.createTestJFrame(bmp.toImage());*/
-/*
-        Bitmap bmp = Bitmap.fromPosVector(test.TEST_POS_VECTOR, 0.5f);
-        Bitmap.write(bmp, filename);*/
+        ImageIcon img = new ImageIcon(Paths.IMAGE_PATH + "loadingCycle.gif");
+        var label = new JLabel(img);
+        label.setSize(img.getIconWidth(), img.getIconHeight());
+        new Test().createTestJFrame(label);
 
-        BufferedImage img = Bitmap.readImage(new File(filename));
-        test.createTestJFrame(img);
-
-        //System.out.println(Utilities.linesCode("", ".java", ".py", ".md"));
-        //unsafeTest();
 
     }
 
