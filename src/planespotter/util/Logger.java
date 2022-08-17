@@ -1,6 +1,8 @@
 package planespotter.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import planespotter.constants.DefaultColor;
 import planespotter.model.io.FileWizard;
 
 import javax.swing.*;
@@ -71,8 +73,12 @@ public class Logger extends JFrame implements ComponentListener {
         this.scrollPane.setAutoscrolls(true);
 
         super.add(this.scrollPane);
-        super.setVisible(true);
+        super.setVisible(false);
         this.sign(2);
+    }
+
+    public void open() {
+        super.setVisible(true);
     }
 
     /**
@@ -80,7 +86,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param txt
      * @param ref
      */
-    public void errorLog(String txt, @Nullable Object ref) {
+    public void errorLog(@NotNull String txt, @Nullable Object ref) {
         this.logInColor(txt, new Color(240, 40, 20), ref);
     }
 
@@ -89,7 +95,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param txt
      * @param ref
      */
-    public void successLog(String txt, @Nullable Object ref) {
+    public void successLog(@NotNull String txt, @Nullable Object ref) {
         this.logInColor(txt, new Color(40, 220, 70), ref);
     }
 
@@ -98,7 +104,7 @@ public class Logger extends JFrame implements ComponentListener {
      * @param txt
      * @param ref
      */
-    public void infoLog(String txt, @Nullable Object ref) {
+    public void infoLog(@NotNull String txt, @Nullable Object ref) {
         this.logInColor(txt, new Color(230, 230, 70), ref);
     }
 
@@ -107,8 +113,12 @@ public class Logger extends JFrame implements ComponentListener {
      * @param txt
      * @param ref
      */
-    public void log(String txt, @Nullable Object ref) {
+    public void log(@NotNull String txt, @Nullable Object ref) {
         this.logInColor(txt, DEFAULT_FONT_COLOR.get(), ref);
+    }
+
+    public void debug(@NotNull String txt, @Nullable Object ref) {
+        this.logInColor("[DEBUG] " + txt, DEFAULT_BORDER_COLOR.get(), ref);
     }
 
     /**
@@ -173,7 +183,7 @@ public class Logger extends JFrame implements ComponentListener {
         }
     }
 
-    public void close() {
+    public void close(boolean saveLog) {
         var loggedText = out.getText();
         FileWizard.getFileWizard().saveLogFile("logged", loggedText);
         super.dispose();

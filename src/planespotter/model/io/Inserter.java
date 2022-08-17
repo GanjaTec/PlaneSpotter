@@ -1,7 +1,7 @@
 package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
-import planespotter.controller.Scheduler;
+import planespotter.model.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.nio.LiveLoader;
 import planespotter.throwables.Fr24Exception;
@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 public class Inserter implements Runnable {
 
-    private static final int MIN_INSERT_COUNT = 500;
+    private static final int MIN_INSERT_COUNT = 1000;
 
     private boolean terminated;
 

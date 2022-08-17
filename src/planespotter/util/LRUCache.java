@@ -6,8 +6,10 @@ import planespotter.util.math.MathUtils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -69,29 +71,51 @@ public class LRUCache<K, V> {
         return (get != null) ? get : orElse;
     }
 
-    private synchronized boolean removeLeastRecentlyUsed() {
-        var entrySet = this.cache.entrySet();
+    private synchronized boolean removeLeastRecentlyUsed2() {
+        Set<Map.Entry<K, CacheElement<V>>> entrySet = this.cache.entrySet();
         if (entrySet.isEmpty()) {
             return false;
         }
-        var minUseCount = new AtomicInteger(Integer.MAX_VALUE);
-        var success = new AtomicBoolean(false);
-        var key = new AtomicReference<K>();
+        long lruTimestamp = Integer.MIN_VALUE, currentTimestamp;
+        boolean success = false;
+        K key = null;
+        CacheElement<V> value;
 
-        //CacheElement<V> value;
-        //int useCount;
+        for (Map.Entry<K, CacheElement<V>> entry : entrySet) {
+            value = entry.getValue();
+            currentTimestamp = value.timestamp;
+            if (currentTimestamp < lruTimestamp && value.useCount < 5) {
+                lruTimestamp = currentTimestamp;
+                key = entry.getKey();
+                success = true;
+            }
+        }
+        if (key != null) {
+            this.remove(key);
+        }
+        return success;
+    }
+
+    private synchronized boolean removeLeastRecentlyUsed() {
+        Set<Map.Entry<K, CacheElement<V>>> entrySet = this.cache.entrySet();
+        if (entrySet.isEmpty()) {
+            return false;
+        }
+        AtomicInteger minUseCount = new AtomicInteger(Integer.MAX_VALUE);
+        AtomicBoolean success = new AtomicBoolean(false);
+        AtomicReference<K> key = new AtomicReference<>();
 
         // TODO: 22.06.2022 test if parallelStream is needed!!
         // replaced for with parallelStream.forEach
         entrySet.parallelStream()
                 .forEach(entry -> {
-            var value = entry.getValue();
-            int useCount = value.getUseCount();
-            if (useCount < minUseCount.get() /*&& value.getGeneration() < 4*/) {
-                minUseCount.set(useCount);
-                key.set(entry.getKey());
-                success.set(true);
-            }
+                    CacheElement<V> value = entry.getValue();
+                    int useCount = value.getUseCount();
+                    if (useCount < minUseCount.get() /*&& value.getGeneration() < 4*/) {
+                        minUseCount.set(useCount);
+                        key.set(entry.getKey());
+                        success.set(true);
+                    }
         });
         if (key.get() != null) {
             this.remove(key.get());
@@ -127,11 +151,13 @@ public class LRUCache<K, V> {
         private final V source;
         private byte generation;
         private int useCount;
+        private long timestamp;
 
         private CacheElement(V source) {
             this.source = source;
             this.generation = 0;
             this.useCount = 0;
+            this.timestamp = Time.nowMillis();
         }
 
         private V getSource() {
@@ -148,6 +174,10 @@ public class LRUCache<K, V> {
 
         public int getUseCount() {
             return this.useCount;
+        }
+
+        public long getTimestamp() {
+            return this.timestamp;
         }
 
         private void incrementGeneration() {

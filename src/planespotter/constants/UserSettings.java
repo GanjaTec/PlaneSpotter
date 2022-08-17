@@ -1,19 +1,19 @@
 package planespotter.constants;
 
-import jnr.ffi.annotations.In;
 import org.jetbrains.annotations.NotNull;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.TMSTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
+import planespotter.model.nio.Filters;
 import planespotter.throwables.ExtensionException;
 import planespotter.throwables.InvalidDataException;
 
 import java.io.*;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.util.stream.Stream;
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @name UserSettings
@@ -23,6 +23,7 @@ import java.util.stream.Stream;
  * class UserSettings contains the user settings which can be edited in the settings menu
  */
 public class UserSettings {
+    // TODO: 07.08.2022 maybe save all non-final values in one HashMap
     // max loaded data
     private static int maxLoadedData;
 
@@ -38,6 +39,9 @@ public class UserSettings {
     // map types
     public static final TileSource BING_MAP, TRANSPORT_MAP, DEFAULT_MAP;
 
+    // collector filter strings
+    private static final Filters collectorFilters;
+
     // static initializer
     static {
         // setting default map ('osm') base url
@@ -46,32 +50,42 @@ public class UserSettings {
         BING_MAP = new BingAerialTileSource();
         TRANSPORT_MAP = new OsmTileSource.TransportMap();
         DEFAULT_MAP = new TMSTileSource(new TileSourceInfo("OSM", BASE_URL, "0"));
-        // setting current max-load and map-source
-        GRIDSIZE_LAT = 3;
-        GRIDSIZE_LON = 3;
-
+        // initializing non-final fields
         try {
             // initialization with saved config file
-            Object[] settingsValues = read(Paths.RESOURCE_PATH + "config.psc");
+            Object[] settingsValues = read(Configuration.CONFIG_FILENAME);
             initialize(settingsValues);
         } catch (Exception e) {
+            e.printStackTrace();
             // initialization with default values
-            Object[] defaultValues = {50000, DEFAULT_MAP};
+            Object[] defaultValues = {50000, DEFAULT_MAP, 6, 12};
             initialize(defaultValues);
         }
+        collectorFilters = Filters.read(Configuration.FILTERS_FILENAME);
     }
 
+    /**
+     *
+     *
+     * @param values
+     */
     private static void initialize(@NotNull Object[] values) {
-        for (Object val : values) {
-            if (val instanceof Integer i) {
-                maxLoadedData = i;
-            } else if (val instanceof TileSource mapSrc) {
-                currentMapSource = mapSrc;
-            }
+        if (values.length != 4) {
+            return;
         }
-
+        maxLoadedData = (int) values[0];
+        currentMapSource = (TileSource) values[1];
+        GRIDSIZE_LAT = (int) values[2];
+        GRIDSIZE_LON = (int) values[3];
     }
 
+    // TODO: 07.08.2022 maybe change to HashMap
+    @NotNull
+    private static Object[] values() {
+        return new Object[] {
+                maxLoadedData, currentMapSource, GRIDSIZE_LAT, GRIDSIZE_LON
+        };
+    }
 
     /**
      * @return maxLoadedFlights, the limit of loaded flights
@@ -92,6 +106,7 @@ public class UserSettings {
     /**
      * @return the current map tile source
      */
+    @NotNull
     public static TileSource getCurrentMapSource() {
         return currentMapSource;
     }
@@ -105,8 +120,19 @@ public class UserSettings {
         currentMapSource = mapSource;
     }
 
+    /**
+     *
+     *
+     * @param filename
+     * @return
+     * @throws ExtensionException
+     * @throws FileNotFoundException
+     */
     @NotNull
-    private static Object[] read(@NotNull String filename) throws ExtensionException, FileNotFoundException {
+    private static Object[] read(@NotNull String filename)
+            throws ExtensionException, FileNotFoundException, InvalidDataException {
+
+        System.out.println("Reading configuration file...");
         if (!filename.endsWith(".psc")) {
             throw new ExtensionException("File must end with '.psc'");
         }
@@ -124,7 +150,7 @@ public class UserSettings {
                         String key = vals[0],
                                value = vals[1];
                         switch (key) {
-                            case "maxLoadedData" -> {
+                            case "maxLoadedData", "gridSizeLat", "gridSizeLon" -> {
                                 try {
                                     return Integer.parseInt(value);
                                 } catch (NumberFormatException nfe) {
@@ -132,7 +158,7 @@ public class UserSettings {
                                 }
                             }
                             case "currentMapSource" -> {
-                                return readMapSource(value);
+                                return translateSource(value);
                             }
                             default -> throw new InvalidDataException("Couldn't read settings data!");
                         }
@@ -144,32 +170,88 @@ public class UserSettings {
         throw new InvalidDataException("Couldn't read settings data!");
     }
 
-    private static Object readMapSource(@NotNull String name) {
+    /**
+     *
+     *
+     * @param name
+     * @return
+     */
+    private static Object translateSource(@NotNull String name) {
         return switch (name) {
-            case "DEFAULT_MAP" -> DEFAULT_MAP;
-            case "TRANSPORT_MAP" -> TRANSPORT_MAP;
-            case "BING_MAP" -> BING_MAP;
+            case "OSM" -> DEFAULT_MAP;
+            case "Public Transport" -> TRANSPORT_MAP;
+            case "Bing" -> BING_MAP;
             default -> throw new InvalidDataException("Couldn't read map source data!");
         };
     }
 
-    public static void write() {
+    /**
+     *
+     *
+     * @param filename
+     * @return
+     */
+    public static boolean write(@NotNull String filename) {
 
+        System.out.println("Writing configuration file...");
+        File file = new File(filename);
+        try (FileWriter fWriter = new FileWriter(file);
+             BufferedWriter buf = new BufferedWriter(fWriter)) {
+
+            String[] strings = new String[] {
+                    "maxLoadedData: " + maxLoadedData,
+                    "\ncurrentMapSource: " + currentMapSource,
+                    "\ngridSizeLat: " + GRIDSIZE_LAT,
+                    "\ngridSizeLon: " + GRIDSIZE_LON
+            };
+            for (String s : strings) {
+                buf.write(s);
+            }
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
+    /**
+     *
+     *
+     * @return
+     */
     public static int getGridsizeLat() {
         return GRIDSIZE_LAT;
     }
 
+    /**
+     *
+     *
+     * @param gridsizeLat
+     */
     public static void setGridsizeLat(int gridsizeLat) {
         GRIDSIZE_LAT = gridsizeLat;
     }
 
+    /**
+     *
+     *
+     * @return
+     */
     public static int getGridsizeLon() {
         return GRIDSIZE_LON;
     }
 
+    /**
+     *
+     *
+     * @param gridsizeLon
+     */
     public static void setGridsizeLon(int gridsizeLon) {
         GRIDSIZE_LON = gridsizeLon;
+    }
+
+    @NotNull
+    public static Filters getCollectorFilters() {
+        return collectorFilters;
     }
 }

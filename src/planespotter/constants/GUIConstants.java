@@ -4,8 +4,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-import static planespotter.constants.DefaultColor.DEFAULT_BG_COLOR;
-import static planespotter.constants.DefaultColor.DEFAULT_BORDER_COLOR;
+import static planespotter.constants.DefaultColor.*;
 
 /**
  * @name GUIConstants
@@ -31,7 +30,7 @@ public final class GUIConstants {
      * component borders
      */
     public static final Border LINE_BORDER = BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR.get(), 1),
-                               MENU_BORDER = BorderFactory.createLineBorder(DEFAULT_BG_COLOR.get());
+                               MENU_BORDER = BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get(), 1);
 
 
 }

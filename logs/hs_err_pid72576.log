@@ -67,8 +67,8 @@ j  org.sqlite.core.DB.execute(Lorg/sqlite/core/CoreStatement;[Ljava/lang/Object;
 J 5687 c2 planespotter.model.io.DBIn.insertTracking(Lplanespotter/dataclasses/Frame;I)V (126 bytes) @ 0x000001f507e64b1c [0x000001f507e640a0+0x0000000000000a7c]
 j  planespotter.model.nio.Fr24Supplier.writeToDB(Ljava/util/List;Lplanespotter/model/io/DBOut;Lplanespotter/model/io/DBIn;)V+127
 j  planespotter.model.nio.Fr24Supplier.run()V+59
-j  planespotter.controller.Scheduler.lambda$schedule$0(Ljava/lang/String;Ljava/lang/Runnable;)V+8
-j  planespotter.controller.Scheduler$$Lambda$81+0x0000000800c07708.run()V+8
+j  planespotter.model.Scheduler.lambda$schedule$0(Ljava/lang/String;Ljava/lang/Runnable;)V+8
+j  planespotter.model.Scheduler$$Lambda$81+0x0000000800c07708.run()V+8
 j  java.util.concurrent.Executors$RunnableAdapter.call()Ljava/lang/Object;+4 java.base@17.0.1
 j  java.util.concurrent.FutureTask.runAndReset()Z+44 java.base@17.0.1
 j  java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run()V+35 java.base@17.0.1

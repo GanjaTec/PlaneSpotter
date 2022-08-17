@@ -4,12 +4,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import planespotter.constants.Areas;
 import planespotter.controller.Controller;
-import planespotter.controller.Scheduler;
+import planespotter.model.Scheduler;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.display.TreasureMap;
 import planespotter.model.io.DBIn;
 import planespotter.throwables.Fr24Exception;
+import planespotter.throwables.InvalidDataException;
 import planespotter.util.Logger;
 
 import java.util.Collection;
@@ -36,8 +37,11 @@ import java.util.stream.Stream;
  * @see Areas
  * @see ConcurrentLinkedDeque
  */
+// TODO: 10.08.2022 not static anymore
 public abstract class LiveLoader {
-    /**
+
+    private static final int MAX_QUEUE_SIZE;
+    /*
      * boolean live represents a live-flag and
      * indicates if the live map is shown at the moment
      */
@@ -48,6 +52,7 @@ public abstract class LiveLoader {
     private static final ConcurrentLinkedQueue<Fr24Frame> insertLater;
     // static initializer
     static {
+        MAX_QUEUE_SIZE = 20000;
         insertLater = new ConcurrentLinkedQueue<>();
     }
 
@@ -60,7 +65,8 @@ public abstract class LiveLoader {
      * @param scheduler is the Scheduler which executes tasks
      * @return Vector of Flight objects, loaded directly by a supplier
      */
-    public static Vector<Flight> loadDirectly(final Scheduler scheduler, final TreasureMap map) {
+    @NotNull
+    public static Vector<Flight> loadDirectly(@NotNull final Scheduler scheduler, @NotNull final TreasureMap map) {
         var deserializer = new Fr24Deserializer();
         //deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF");
         // area with panel size
@@ -69,12 +75,14 @@ public abstract class LiveLoader {
         var currentArea = new String[] {
                 Areas.newArea(topLeft, bottomRight)
         };
-        Fr24Supplier.collectFramesForArea(currentArea, deserializer, scheduler, false);
-        // termorary if // daten gehen verloren
-        var id = new AtomicInteger(0);
-        return insertLater.stream()
-                .map(frame -> Flight.parseFlight(frame, id.getAndIncrement()))
-                .collect(Collectors.toCollection(Vector::new));
+        if (Fr24Supplier.collectFramesForArea(currentArea, deserializer, scheduler, false)) {
+            // termorary if // daten gehen verloren
+            AtomicInteger flightID = new AtomicInteger(0);
+            return LiveLoader.pollFrames(Integer.MAX_VALUE)
+                    .map(frame -> Flight.parseFlight(frame, flightID.getAndIncrement()))
+                    .collect(Collectors.toCollection(Vector::new));
+        }
+        throw new InvalidDataException("Couldn't load Live-Data!");
     }
 
     /**
@@ -82,14 +90,13 @@ public abstract class LiveLoader {
      * insert-later-deque if it is not empty
      *
      * @param count is the pull count
-     * @return Deque of Frames with @param count es length
+     * @return Stream of Frames with @param count as length
      */
     @NotNull
     public static Stream<Fr24Frame> pollFrames(@Range(from = 1, to = Integer.MAX_VALUE) int count) {
-        // checking for empty queue
-        if (isEmpty()) {
+        if (isEmpty()) { // checking for empty queue
             throw new Fr24Exception("Insert-later-Queue is empty, make sure it is not empty!");
-        } else if (!ableCollect(count)) {
+        } else if (!canPoll(count)) { // checking queue size
             try {
                 Logger log = Controller.getInstance().getLogger();
                 log.infoLog("Insert-later-Queue has not that much content, limiting frames to size...", new LiveLoader() {});
@@ -98,8 +105,8 @@ public abstract class LiveLoader {
                 count = insertLater.size();
             }
         }
-        // streaming insertLater-queue and returning frames (parallel)
-        return insertLater.stream()
+        // iterating over polled frames from insertLater-queue and limiting to count
+        return Stream.iterate(insertLater.poll(), x -> insertLater.poll())
                 .limit(count);
     }
 
@@ -109,28 +116,28 @@ public abstract class LiveLoader {
      *
      * @param data is the data to add to insert later
      */
-    public static void insertLater(final Collection<Fr24Frame> data) {
+    public static void insertLater(@NotNull final Collection<Fr24Frame> data) {
         insertLater.addAll(data);
     }
 
     /**
      * indicates if a method may load frames into the insertLater-deque
-     * by checking if the max. Size (10000) is reached.
+     * by checking if the max. Size (MAX_QUEUE_SIZE) is reached.
      *
      * @return true if the insertLater-size is greater than 10000, else false
      */
     protected static boolean maxSizeReached() {
-        return insertLater.size() > 20000;
+        return insertLater.size() > MAX_QUEUE_SIZE;
     }
 
     /**
      * indicates if a method may collect data from the insertLater-deque
      *
      * @param count is the exclusive minimum size, the deque must have to return true
-     * @return true, if insertLater.size() is greater or equals 1000, else false
+     * @return true, if insertLater.size() is greater or equals count, else false
      *         if true, another Method gets ac
      */
-    public static boolean ableCollect(final int count) {
+    public static boolean canPoll(final int count) {
         return insertLater.size() > count;
     }
 

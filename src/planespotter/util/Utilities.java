@@ -5,10 +5,7 @@ import org.jetbrains.annotations.Range;
 
 import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
-import planespotter.throwables.IllegalInputException;
-import planespotter.throwables.InvalidArrayException;
-import planespotter.throwables.InvalidDataException;
-import planespotter.throwables.OutOfRangeException;
+import planespotter.throwables.*;
 import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
@@ -209,6 +206,7 @@ public abstract class Utilities {
      * @param check is the (sql) string to check
      * @return string, without illegal characters/expressions
      */
+    @NotNull
     public static String checkString(@NotNull String check)
         throws IllegalInputException {
 
@@ -224,6 +222,16 @@ public abstract class Utilities {
         // replacing all '%', to prevent inputs like '%.....%', which take too much time to search for
         // '%' is a SQL-placeholder for everything with any length
         return check.replaceAll("%", "");
+    }
+
+    @NotNull
+    public static String[] checkInputs(@NotNull String... inputs)
+            throws IllegalInputException {
+
+        for (int i = 0; i < inputs.length; i++) {
+            inputs[i] = checkString(inputs[i]);
+        }
+        return inputs;
     }
 
     /**
@@ -407,6 +415,12 @@ public abstract class Utilities {
         return new ImageIcon(scaled);
     }
 
+    public static void checkStatusCode(int status) {
+        if (status != 200) {
+            throw new Fr24Exception("CheckStatus: Status code" + status + " is invalid!");
+        }
+    }
+
     /**
      * counts the lines of code with given file extensions
      *
@@ -422,6 +436,9 @@ public abstract class Utilities {
         Deque<Deque<File>> allFiles = new ArrayDeque<>();
 
         for (String ext : extensions) {
+            if (!ext.startsWith(".")) {
+                ext = "." + ext;
+            }
             allFiles.add(allFilesWithExtension(rootPath, ext));
         }
 

@@ -21,8 +21,8 @@ public abstract class MathUtils {
 
     public static final double LAT_TO_KM_MULTIPLIER = 111.3;
 
-    public static double abs(Vector2D v2d) {
-        return (v2d instanceof Vector3D v3d)
+    public static double abs(Vector2D<Double> v2d) {
+        return (v2d instanceof Vector3D<Double> v3d)
                 ? sqrt(x2(v3d.x) + x2(v3d.y) + x2(v3d.z))
                 : sqrt(x2(v2d.x) + x2(v2d.y));
     }
@@ -58,7 +58,7 @@ public abstract class MathUtils {
     }
 
     public static int divide(int a, int divisor) {
-        if (divisor == 0.) {
+        if (divisor == 0) {
             throw new ArithmeticException("Divisor may not be null!");
         }
         return StrictMath.floorDiv(a, divisor);

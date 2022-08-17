@@ -3,10 +3,12 @@ package planespotter.model.nio;
 import org.jetbrains.annotations.NotNull;
 
 import planespotter.model.Fr24Collector;
-import planespotter.controller.Scheduler;
+import planespotter.model.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
 import planespotter.throwables.Fr24Exception;
+import planespotter.util.Time;
+import planespotter.util.Utilities;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -22,6 +24,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 /**
  * @name Supplier
@@ -112,47 +115,57 @@ public class Fr24Supplier implements Supplier {
 	 * @param ignoreMaxSize if it's true, allowed max size of insertLater-queue is ignored
 	 * @see planespotter.model.nio.LiveLoader
 	 */
-	public static synchronized void collectFramesForArea(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, @NotNull final Scheduler scheduler, boolean ignoreMaxSize) {
-		System.out.println("Deserializing Fr24-Data...");
+	@SuppressWarnings(value = "duplicate")
+	public static synchronized boolean collectFramesForArea(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, @NotNull final Scheduler scheduler, boolean ignoreMaxSize) {
+		System.out.println("[Supplier] Collecting Fr24-Data...");
 
-		// TODO ERSATZ METHOD, with simple Supplier.supply(), threaded
-
-		int length = 5;
-		String[] part = new String[length];
-
-		int i = 0;
-		AtomicInteger tNumber = new AtomicInteger(0);
-		for (String area : areas) {
-			if (i < length) {
-				part[i++] = area;
-			} else {
-				final String[] fPart = part;
-				scheduler.exec(() -> Arrays.stream(fPart).forEach(ar -> {
-					Fr24Supplier supplier = new Fr24Supplier(tNumber.get(), ar);
+		Arrays.stream(areas)
+				.parallel()
+				.forEach(area -> {
+					Fr24Supplier supplier = new Fr24Supplier(0, area);
+					if (!ignoreMaxSize && LiveLoader.maxSizeReached()) {
+						System.out.println("Queue is full!");
+						return;
+					}
+					HttpResponse<String> response;
 					try {
-						if (!ignoreMaxSize && LiveLoader.maxSizeReached()) {
-							return;
-						}
-						HttpResponse<String> response = supplier.sendRequest();
-						int statusCode = response.statusCode();
-						if (statusCode != 200) {
-							throw new Fr24Exception("Fr24Supplier: Status code is invalid! " + statusCode);
-						}
-						Deque<Fr24Frame> data = deserializer.deserialize(response);
-						LiveLoader.insertLater(data);
+						response = supplier.sendRequest();
 					} catch (IOException | InterruptedException e) {
 						e.printStackTrace();
+						return;
 					}
-				}), "Fr24-Deserializer-" + tNumber.getAndIncrement(), false, Scheduler.HIGH_PRIO, true);
-				i = 0;
-				part = new String[length];
-			}
-		}
+					int statusCode = response.statusCode();
+					Utilities.checkStatusCode(statusCode);
+					Deque<Fr24Frame> data = deserializer.deserialize(response);
+					LiveLoader.insertLater(data);
+				});
 
-		while (scheduler.active() > 1) {
-			Scheduler.sleep(100);
-			System.out.print(":");
+		return true;
+	}
+
+	public static synchronized void collectPStream(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize) {
+		System.out.println("[Supplier] Collecting Fr24-Data with parallel Stream...");
+
+		AtomicInteger tNumber = new AtomicInteger(0);
+		long startTime = Time.nowMillis();
+		try (Stream<@NotNull String> parallel = Arrays.stream(areas).parallel()) {
+			parallel.forEach(area -> {
+				if (!ignoreMaxSize && LiveLoader.maxSizeReached()) {
+					System.out.println("Max queue-size reached!");
+					return;
+				}
+				Fr24Supplier supplier = new Fr24Supplier(tNumber.get(), area);
+
+				Deque<Fr24Frame> data;
+				try {
+					data = deserializer.deserialize(supplier.sendRequest());
+					LiveLoader.insertLater(data);
+				} catch (IOException | InterruptedException e) {
+					e.printStackTrace();
+				}
+			});
 		}
+		System.out.println("[Supplier] Elapsed time: " + Time.elapsedMillis(startTime) + " ms");
 	}
 	
 	/**
