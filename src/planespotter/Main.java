@@ -16,9 +16,8 @@ public abstract class Main {
      * @param args -> can be ignored
      */
     public static void main(String[] args) {
-        // getting controller
-        final var control = Controller.getInstance();
         // starting program with controller
+        final Controller control = Controller.getInstance();
         control.start();
     }
 

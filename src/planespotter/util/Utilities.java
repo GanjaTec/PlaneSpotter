@@ -108,11 +108,8 @@ public abstract class Utilities {
         int width = img.getWidth(null);
         int height = img.getHeight(null);
 
-        BufferedImage buf = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        BufferedImage buf = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = buf.createGraphics();
-        Color bgColor = new Color(0, 0, 0, 0);
-        graphics.setColor(bgColor);
-        graphics.fillRect(0, 0, width, height);
 
         graphics.rotate(Math.toRadians(degrees), MathUtils.divide(width, 2), MathUtils.divide(height, 2));
         graphics.drawImage(img, 0, 0, null);
@@ -591,16 +588,24 @@ public abstract class Utilities {
     @SuppressWarnings(value = "not working yet")
     @TestOnly
     public static <E> void printClassValues(E o) {
-        Class<?> classOfO = o.getClass();
+        Class<E> classOfO = (Class<E>) o.getClass();
         try {
             Field[] fields = classOfO.getDeclaredFields();
             Arrays.stream(fields).forEach(field -> {
                 try {
                     field.setAccessible(true);
                     String name = field.getName();
-                    Field value = classOfO.getField(name);
+                    System.out.println(name);
+                    Object value = null;
+                    if (field.getType() == String.class) {
+                        value = field.get(name);
+                    } else if (field.getType() == int.class) {
+                        value = field.getInt(name);
+                    } else if (field.getType() == double.class) {
+                        value = field.getDouble(name);
+                    }
                     System.out.println(name + ": " + value);
-                } catch (InaccessibleObjectException | IllegalArgumentException | NoSuchFieldException e) {
+                } catch (InaccessibleObjectException | IllegalArgumentException | IllegalAccessException e) {
                     e.printStackTrace();
                 }
             });
