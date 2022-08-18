@@ -1,7 +1,6 @@
 package planespotter.dataclasses;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
+import java.io.Serializable;
 
 /**
  * @name Frame
@@ -12,17 +11,7 @@ import java.util.Arrays;
  * abstract class Frame is a frame-superclass which should
  * have all default frame fields e.g. latitude, longitude ,etc...
  */
-public abstract class Frame {
-
-    public <E> void printValues(E o) {
-        Field[] fields = o.getClass().getFields();
-        Arrays.stream(fields).forEach(field -> {
-            try {
-                System.out.println(field.getName() + ": " + field.get(field));
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        });
-    }
+// TODO: 15.08.2022 move default fields here
+public abstract class Frame implements Serializable {
 
 }

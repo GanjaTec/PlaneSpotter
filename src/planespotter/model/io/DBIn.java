@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import planespotter.controller.Controller;
 import planespotter.model.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
+import planespotter.model.nio.LiveLoader;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.NoAccessException;
 import planespotter.util.Logger;
@@ -26,16 +27,21 @@ import static planespotter.util.Time.nowMillis;
 /**
  *
  */
-public class DBIn extends DBConnector {
+public final class DBIn extends DBConnector {
+
 	// (ONE and ONLY) main instance
 	private static final DBIn INSTANCE;
+
 	// 'data loader enabled' flag
 	private static boolean enabled;
+
 	// last inserted frame
 	private static Fr24Frame lastFrame;
+
 	// inserted frames counter for all writeToDB inserts
 	private static int frameCount, planeCount, flightCount;
-	// static initializer
+
+	// initializing instance, counters and flags
 	static {
 		INSTANCE = new DBIn();
 
@@ -114,20 +120,15 @@ public class DBIn extends DBConnector {
 	 * @param count is the frame count that should be written to DB
 	 * @return inserted frames count as an int
 	 */
-	public static synchronized int insert(@NotNull final Scheduler scheduler, final int count) {
+	public static synchronized int insert(@NotNull final Scheduler scheduler, @NotNull LiveLoader liveLoader, final int count) {
 		int insertCount = 0;
 		if (enabled) {
-			Logger log = Controller.getInstance().getLogger();
-			log.log("Trying to insert frames...", INSTANCE);
-			if (canPoll(count)) {
+			if (liveLoader.canPoll(count)) {
 				// insert live data with normal writeToDB
-				Stream<Fr24Frame> frames = pollFrames(count);
+				Stream<Fr24Frame> frames = liveLoader.pollFrames(count);
 
 				scheduler.exec(() -> write(frames), "DB-LiveData Writer", true, Scheduler.LOW_PRIO, true);
 				insertCount += count;
-			}
-			if (insertCount > 0) {
-				log.log("Inserting " + insertCount + " frames...", INSTANCE);
 			}
 		}
 		return insertCount;
@@ -140,10 +141,10 @@ public class DBIn extends DBConnector {
 	 * @return inserted frames count as an int
 	 */
 	@NotNull
-	public static synchronized CompletableFuture<Void> insertRemaining(@NotNull final Scheduler scheduler)
+	public static synchronized CompletableFuture<Void> insertRemaining(@NotNull final Scheduler scheduler, @NotNull LiveLoader liveLoader)
 			throws NoAccessException {
 		if (enabled) {
-			Stream<Fr24Frame> frames = pollFrames(Integer.MAX_VALUE);
+			Stream<Fr24Frame> frames = liveLoader.pollFrames(Integer.MAX_VALUE);
 
 			return scheduler.exec(() -> write(frames), "Inserter", false, Scheduler.HIGH_PRIO, false);
 

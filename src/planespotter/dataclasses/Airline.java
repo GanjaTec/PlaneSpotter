@@ -1,5 +1,7 @@
 package planespotter.dataclasses;
 
+import java.io.Serializable;
+
 /**
  * @author Janne Matti
  * @author Lukas
@@ -9,7 +11,8 @@ package planespotter.dataclasses;
 public record Airline (int id,
 					   String iataTag,
 					   String name,
-					   String country) {
+					   String country)
+		implements Serializable {
 }
 /*public class Airline implements Data {
 	private int id;

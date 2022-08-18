@@ -2,8 +2,7 @@ package planespotter.constants;
 
 public enum UnicodeChar {
 
-    INFINITY('\u221E'),
-    NEW_LINE('\n');
+    INFINITY('\u221E');
 
     private final char character;
 

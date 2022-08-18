@@ -1,4 +1,4 @@
-package planespotter.util;
+package planespotter.unused;
 
 @SuppressWarnings(value = "unused")
 public class TaskWatch {

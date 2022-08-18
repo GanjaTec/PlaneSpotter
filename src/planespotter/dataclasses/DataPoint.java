@@ -16,5 +16,5 @@ public record DataPoint(int id, // data point id
 						int speed, // current speed in knots
 						int heading, // current heading in degrees
 						int altitude) // current altitude in feet
-	implements Data {
+	implements Serializable {
 }

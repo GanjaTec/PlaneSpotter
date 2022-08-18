@@ -2,10 +2,12 @@ package planespotter.display;
 
 import org.openstreetmap.gui.jmapviewer.JMapViewer;
 import org.openstreetmap.gui.jmapviewer.MemoryTileCache;
-import planespotter.controller.Controller;
+import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
+import planespotter.dataclasses.DefaultMapMarker;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 /**
  * @name TreasureMap
@@ -51,4 +53,5 @@ public class TreasureMap extends JMapViewer {
     public void setHeatMap(BufferedImage heatMap) {
         this.heatMap = heatMap;
     }
+
 }

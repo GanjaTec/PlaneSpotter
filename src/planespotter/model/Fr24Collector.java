@@ -11,6 +11,7 @@ import planespotter.model.io.*;
 import planespotter.model.nio.Filters;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
+import planespotter.model.nio.LiveLoader;
 
 /**
  * @name Fr24Collector
@@ -43,15 +44,14 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         new Fr24Collector(true, false, UserSettings.getGridsizeLat(), UserSettings.getGridsizeLon()).start();
     }
 
-    @Nullable
-    private final Filters filters;
+    @Nullable private final Filters filters;
 
-    @NotNull
-    private final Inserter inserter;
+    @NotNull private final LiveLoader liveLoader;
+
+    @NotNull private final Inserter inserter;
 
     // raster of areas (whole world) in 1D-Array
-    @NotNull
-    private final String[] worldAreaRaster1D;
+    @NotNull private final String[] worldAreaRaster1D;
 
     /**
      * Fr24Collector constructor, creates a new Collector for Fr24-Data
@@ -64,7 +64,8 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
                          @Range(from = 2, to = 360) int gridSizeLon) {
         super(exitOnClose, new Fr24Supplier());
         this.filters = withFilters ? UserSettings.getCollectorFilters() : null;
-        this.inserter = new Inserter();
+        this.liveLoader = new LiveLoader();
+        this.inserter = new Inserter(this.liveLoader);
         this.worldAreaRaster1D = Areas.getWorldAreaRaster1D(gridSizeLat, gridSizeLon);
     }
 
@@ -91,11 +92,10 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
 
         super.scheduler.schedule(() -> super.scheduler.exec(() -> {
             // executing suppliers to collect Fr24-Data
-            Fr24Supplier.collectPStream(extAreas, deserializer, true);
-            //Fr24Supplier.collectFramesForArea(extAreas, deserializer, super.scheduler, true);
+            Fr24Supplier.collectPStream(this.liveLoader, extAreas, deserializer, true);
             // adding all deserialized world-raster-areas to frames deque
-            Fr24Supplier.collectPStream(this.worldAreaRaster1D, deserializer, true);
-            //Fr24Supplier.collectFramesForArea(this.worldAreaRaster1D, deserializer, super.scheduler, true);
+            Fr24Supplier.collectPStream(this.liveLoader, this.worldAreaRaster1D, deserializer, true);
+            
         }, "Data Collector Thread", false, Scheduler.HIGH_PRIO, true),
                 "Collect Data", 0, REQUEST_PERIOD);
 
@@ -115,7 +115,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
 
             Fr24Frame lastFrame = DBIn.getLastFrame();
             super.display.update(super.insertedNow.get(), super.newPlanesNow.get(), super.newFlightsNow.get(),
-                    (lastFrame != null) ? lastFrame.toShortString() : "None");
+                    (lastFrame != null) ? lastFrame.toShortString() : "None", this.liveLoader.getQueueSize());
         }, 0, 1);
     }
 

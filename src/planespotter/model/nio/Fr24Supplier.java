@@ -110,20 +110,19 @@ public class Fr24Supplier implements Supplier {
 	 * gets HttpResponse's for specific areas and deserializes its data to Frames
 	 *
 	 * @param areas are the Areas where data should be deserialized from
-	 * @param scheduler is the Scheduler to allow parallelism
 	 * @param deserializer is the Fr24Deserializer which is used to deserialize the requested data
 	 * @param ignoreMaxSize if it's true, allowed max size of insertLater-queue is ignored
 	 * @see planespotter.model.nio.LiveLoader
 	 */
 	@SuppressWarnings(value = "duplicate")
-	public static synchronized boolean collectFramesForArea(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, @NotNull final Scheduler scheduler, boolean ignoreMaxSize) {
+	public static synchronized boolean collectFramesForArea(@NotNull LiveLoader liveLoader, @NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize) {
 		System.out.println("[Supplier] Collecting Fr24-Data...");
 
 		Arrays.stream(areas)
 				.parallel()
 				.forEach(area -> {
 					Fr24Supplier supplier = new Fr24Supplier(0, area);
-					if (!ignoreMaxSize && LiveLoader.maxSizeReached()) {
+					if (!ignoreMaxSize && liveLoader.maxSizeReached()) {
 						System.out.println("Queue is full!");
 						return;
 					}
@@ -137,20 +136,20 @@ public class Fr24Supplier implements Supplier {
 					int statusCode = response.statusCode();
 					Utilities.checkStatusCode(statusCode);
 					Deque<Fr24Frame> data = deserializer.deserialize(response);
-					LiveLoader.insertLater(data);
+					liveLoader.insertLater(data);
 				});
 
 		return true;
 	}
 
-	public static synchronized void collectPStream(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize) {
+	public static synchronized void collectPStream(@NotNull LiveLoader liveLoader, @NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize) {
 		System.out.println("[Supplier] Collecting Fr24-Data with parallel Stream...");
 
 		AtomicInteger tNumber = new AtomicInteger(0);
 		long startTime = Time.nowMillis();
 		try (Stream<@NotNull String> parallel = Arrays.stream(areas).parallel()) {
 			parallel.forEach(area -> {
-				if (!ignoreMaxSize && LiveLoader.maxSizeReached()) {
+				if (!ignoreMaxSize && liveLoader.maxSizeReached()) {
 					System.out.println("Max queue-size reached!");
 					return;
 				}
@@ -159,7 +158,7 @@ public class Fr24Supplier implements Supplier {
 				Deque<Fr24Frame> data;
 				try {
 					data = deserializer.deserialize(supplier.sendRequest());
-					LiveLoader.insertLater(data);
+					liveLoader.insertLater(data);
 				} catch (IOException | InterruptedException e) {
 					e.printStackTrace();
 				}

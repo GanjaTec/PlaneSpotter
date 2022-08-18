@@ -311,7 +311,7 @@ public abstract class ActionHandler
             case "Settings" -> ui.showSettings(true);
             case "Close View" -> {
                 ctrl.loadedData = null;
-                LiveLoader.setLive(false);
+                ctrl.getLiveLoader().setLive(false);
                 ui.getMapManager().clearMap();
                 LayerPane layerPane = ui.getLayerPane();
                 layerPane.removeTop();
