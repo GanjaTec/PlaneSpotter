@@ -29,7 +29,7 @@ public class DefaultMapMarker extends MapMarkerDot implements MapMarker {
     public static final Image PLANE_ICON;
 
     static {
-        PLANE_ICON = Images.AIRPLANE_ICON_8x.get().getImage();
+        PLANE_ICON = Images.AIRPLANE_ICON_16x.get().getImage();
     }
 
     public static DefaultMapMarker fromDataPoint(@NotNull DataPoint dataPoint) {

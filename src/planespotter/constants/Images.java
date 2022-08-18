@@ -27,7 +27,8 @@ public enum Images {
     HEATMAP_ICON_16x(new ImageIcon(IMAGE_PATH + "heatmap_icon_16x.png")),
     MAP_ICON_16x(new ImageIcon(IMAGE_PATH + "map_icon_16x.png")),
     EXIT_ICON_16x(new ImageIcon(IMAGE_PATH + "exit_icon_16x.png")),
-    AIRPLANE_ICON_8x(new ImageIcon(IMAGE_PATH + "airplane_icon_8x.png"));
+    AIRPLANE_ICON_8x(new ImageIcon(IMAGE_PATH + "airplane_icon_8x.png")),
+    AIRPLANE_ICON_16x(new ImageIcon(IMAGE_PATH  + "airplane_icon_16x.png"));
     // image instance field
     private final ImageIcon img;
     // private enum constructor
