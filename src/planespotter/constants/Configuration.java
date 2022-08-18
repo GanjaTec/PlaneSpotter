@@ -4,6 +4,7 @@ package planespotter.constants;
  * @name Configuration
  * @author jml04
  * @version 1.0
+ * 
  * @description
  * abstract class Configuration contains the internal planespotter-configuration
  */

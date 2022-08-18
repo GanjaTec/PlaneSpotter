@@ -585,10 +585,18 @@ public abstract class Utilities {
         return files;
     }
 
+    /**
+     * this method should print all current field values
+     * of the given object, but it does not work
+     *
+     * @param o an object, containing the printed values
+     * @param <E> is the object type
+     */
     @SuppressWarnings(value = "not working yet")
     @TestOnly
     public static <E> void printClassValues(E o) {
         Class<E> classOfO = (Class<E>) o.getClass();
+        System.out.println(o.getClass() + ", " + classOfO);
         try {
             Field[] fields = classOfO.getDeclaredFields();
             Arrays.stream(fields).forEach(field -> {
@@ -597,11 +605,13 @@ public abstract class Utilities {
                     String name = field.getName();
                     System.out.println(name);
                     Object value = null;
-                    if (field.getType() == String.class) {
+                    Class<?> type = field.getType();
+                    System.out.println(type);
+                    if (type == String.class) {
                         value = field.get(name);
-                    } else if (field.getType() == int.class) {
+                    } else if (type == int.class) {
                         value = field.getInt(name);
-                    } else if (field.getType() == double.class) {
+                    } else if (type == double.class) {
                         value = field.getDouble(name);
                     }
                     System.out.println(name + ": " + value);

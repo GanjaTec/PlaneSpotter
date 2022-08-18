@@ -52,7 +52,7 @@ public class DefaultMapMarker extends MapMarkerDot implements MapMarker {
     }
 
 
-    private final MarkerPainter painter;
+    @NotNull private final MarkerPainter painter;
 
     private final int heading;
 

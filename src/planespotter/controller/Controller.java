@@ -9,6 +9,7 @@ import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
 
 import planespotter.constants.*;
+import planespotter.display.models.PaneModels;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.FileWizard;
 import planespotter.model.nio.Fr24Supplier;
@@ -130,6 +131,7 @@ public abstract class Controller {
      * and opening a UI-window
      */
     public synchronized void start() {
+        PaneModels.startScreenAnimation(2);
         this.initialize();
         this.ui.getWindow().setVisible(true);
         this.done(true);
