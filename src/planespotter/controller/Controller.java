@@ -226,6 +226,10 @@ public abstract class Controller {
         this.ui.showLoadingScreen(false);
     }
 
+    /**
+     * starts a {@link Fr24Collector} to collect Fr24-Data
+     * @see planespotter.model.Fr24Collector
+     */
     // TODO: 08.08.2022 add filters
     void runFr24Collector() {
         Collector<Fr24Supplier> collector = new Fr24Collector(false, false, 6, 12);

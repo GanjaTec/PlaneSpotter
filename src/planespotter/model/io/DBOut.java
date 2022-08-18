@@ -1405,6 +1405,10 @@ public final class DBOut extends DBConnector {
 	public Vector<DataPoint> getTrackingsByFlightIDs(int[] ids)
 			throws DataNotFoundException {
 
+		if (ids.length == 0) {
+			throw new DataNotFoundException("No given flight IDs!");
+		}
+
 		final var dps = new Vector<DataPoint>();
 		try {
 			var query = "SELECT * FROM tracking " +
@@ -1423,7 +1427,7 @@ public final class DBOut extends DBConnector {
 				result.close();
 			}
 			if (dps.isEmpty()) {
-				throw new DataNotFoundException("No tracking found for these IDs!");
+				throw new DataNotFoundException("No tracking found for these flight IDs!");
 			}
 		} catch (SQLException | NoAccessException e) {
 			e.printStackTrace();
@@ -1434,16 +1438,17 @@ public final class DBOut extends DBConnector {
 	public int[] getFlightIDsByAirlineTag(@NotNull String iataTag)
 			throws DataNotFoundException {
 
-		final String query = "SELECT p.flightid FROM planes p " +
+		final String query = "SELECT f.ID FROM flights f " +
+							 "JOIN planes p ON p.ID = f.plane " +
 							 "JOIN airlines a ON a.ID = p.airline " +
-							 "AND a.iatatag IS " + Utilities.packString(iataTag);
+							 "AND a.icaotag IS " + Utilities.packString(iataTag);
 		try (DBResult result = super.queryDB(query);
 			 ResultSet rs = result.resultSet()) {
 			int[] fids = new int[0];
 			while (rs.next()) {
 				int last = fids.length;
 				fids = Arrays.copyOf(fids, last + 1);
-				fids[last] = rs.getInt("p.flightid");
+				fids[last] = rs.getInt(1);
 			}
 			if (fids.length > 0) {
 				return fids;
@@ -1485,7 +1490,7 @@ public final class DBOut extends DBConnector {
 
 	// TODO: 15.08.2022 turn into getFlightIDsWithAirline & getTrackingsPositionsByFIDs & this method
 	@NotNull
-	public Vector<DataPoint> getTrackingPositionsByAirline(@NotNull Airline airline)
+	public Vector<DataPoint> getTrackingByAirline(@NotNull Airline airline)
 			throws DataNotFoundException {
 
 		String query = "SELECT t.flightid, t.latitude, t.longitude FROM tracking t " +

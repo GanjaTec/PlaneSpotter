@@ -103,9 +103,9 @@ public class Search {
         } else if (!planetypes.isEmpty()) {
             fids = out.getFlightIDsByPlaneTypes(planetypes);
         } else if (!icao.isBlank()) {
-            fids.addAll(out.getPlaneIDsByICAO(icao)); // dont add plane ids but flight ids
+            fids.addAll(out.getPlaneIDsByICAO(icao)); // TODO dont add plane ids but flight ids
         } else if (!tailNr.isBlank()) {
-            fids.addAll(out.getPlaneIDsByTailNr(tailNr)); // dont add plane ids but flight ids
+            fids.addAll(out.getPlaneIDsByTailNr(tailNr)); // TODO dont add plane ids but flight ids
         }
         if (fids.isEmpty()) {
             throw new DataNotFoundException("no data found / no input at Search::verifyPlane!");
@@ -162,24 +162,31 @@ public class Search {
         if (inputs.length != 4) {
             throw new InvalidArrayException("Array length must be 4!");
         }
-        var id = inputs[0];
-        var tag = inputs[1];
-        var name = inputs[2];
-        var country = inputs[3];
-        var out = DBOut.getDBOut();
-        Vector<DataPoint> data = null;
+        String id = inputs[0],
+               tag = inputs[1],
+               name = inputs[2],
+               country = inputs[3];
+        DBOut dbOut = DBOut.getDBOut();
+        Vector<DataPoint> data;
         int idInt = -1;
+        int[] fids = new int[0];
         try {
             idInt = Integer.parseInt(id);
         } catch (NumberFormatException ignored) {
         }
-        Airline airline = new Airline(idInt, tag, name, country);
-        try {
-            data = out.getTrackingPositionsByAirline(airline);
-        } catch (DataNotFoundException dnf) {
-            Controller.getInstance().handleException(dnf);
+
+        if (idInt != -1) {
+            //fids = dbOut.getFlightIDsByAirlineID(idInt);
+        } else if (!tag.isBlank()) {
+            fids = dbOut.getFlightIDsByAirlineTag(tag);
+        } else if (!name.isBlank()) {
+
+        } else if (!country.isBlank()) {
+
         }
-        if (data == null || data.isEmpty()) {
+        data = dbOut.getTrackingsByFlightIDs(fids);
+
+        if (data.isEmpty()) {
             throw new DataNotFoundException("No airports found for these inputs!");
         }
         return data;
