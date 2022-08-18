@@ -14,8 +14,11 @@ public class Inserter implements Runnable {
 
     private boolean terminated;
 
-    public Inserter() {
+    private final LiveLoader liveLoader;
+
+    public Inserter(@NotNull LiveLoader liveLoader) {
         this.terminated = false;
+        this.liveLoader = liveLoader;
     }
 
     /**
@@ -26,7 +29,7 @@ public class Inserter implements Runnable {
         while (!this.terminated) {
             synchronized (this) {
                     Scheduler.sleep(500);
-                try (Stream<Fr24Frame> fr24Frames = LiveLoader.pollFrames(MIN_INSERT_COUNT)) {
+                try (Stream<Fr24Frame> fr24Frames = this.liveLoader.pollFrames(MIN_INSERT_COUNT)) {
                     DBIn.write(fr24Frames);
                 } catch (final Fr24Exception ignored) {
                 }

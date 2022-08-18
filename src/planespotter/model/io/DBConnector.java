@@ -1,7 +1,9 @@
 package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
+
 import org.sqlite.SQLiteDataSource;
+
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DBResult;
 import planespotter.throwables.InvalidDataException;
@@ -17,22 +19,28 @@ import java.util.Arrays;
  * @version 1.1
  *
  * @description
- * Class DatabaseConnector represents a Database-Connector,
+ * Class DBConnector represents a Database-Connector,
  * which is able to do general actions on the database.
  * It is used to reduce redundant code in the DB-subclasses.
  * It also prepares you a nice, warm supper.
  *
  */
-public abstract class DBConnector {
+public abstract sealed class DBConnector
+		permits DBIn, DBOut {
+
 	// writing boolean, true when writing
-	public static final Object DB_SYNC;
+	@NotNull public static final Object DB_SYNC;
+
 	// database name
-	public static final String DB_NAME;
+	@NotNull public static final String DB_NAME;
+
 	// database URL
-	private static final String DB_URL;
+	@NotNull private static final String DB_URL;
+
 	// database Source-Object
-	private static final SQLiteDataSource database;
-	// static initializer
+	@NotNull private static final SQLiteDataSource database;
+
+	// initializing Database
 	static {
 		// setting database monitor object
 		DB_SYNC = new Object();
@@ -89,11 +97,14 @@ public abstract class DBConnector {
 			throws NoAccessException {
 
 			try {
+				// we won't close these AutoCloseables
 				Connection conn = getConnection();
 				Statement stmt = conn.createStatement();
 				ResultSet rs = stmt.executeQuery(query);
 				// returning new DBResult Object
 				return new DBResult(rs, conn);
+				// no auto-close for the used AutoCloseables, because
+				// the DBResult is needed after this method invocation
 			} catch (SQLException e) {
 				Controller.getInstance().handleException(e);
 				e.printStackTrace();
@@ -109,7 +120,7 @@ public abstract class DBConnector {
 	 * @throws SQLException if there is an error with SQL
 	 */
 	@Deprecated(since = "SupplierTry, too specific", forRemoval = true)
-	public static int[] executeSQL(@NotNull PreparedStatement pstmt)
+	protected static int[] executeSQL(@NotNull PreparedStatement pstmt)
 			throws SQLException {
 
 		int[] ids = new int[0];
@@ -136,7 +147,7 @@ public abstract class DBConnector {
 	 * @throws SQLException if there is an error with SQL
 	 */
 	@Deprecated(since = "SupplierTry, too specific", forRemoval = true)
-	public static void executeSQL(@NotNull Connection conn, @NotNull PreparedStatement... stmts)
+	protected static void executeSQL(@NotNull Connection conn, @NotNull PreparedStatement... stmts)
 			throws SQLException {
 
 		for (PreparedStatement stmt : stmts) {

@@ -37,21 +37,18 @@ public class FileWizard {
      * Only non-final User-Settings are saved, static final fields
      * are ignored, because they are never updated
      */
-    public synchronized void saveConfig() {
+    public synchronized boolean saveConfig() {
         File config;
-        Logger log = Controller.getInstance().getLogger();
-        log.log("saving configuration...", fileWizard);
         config = new File(Configuration.CONFIG_FILENAME);
         if (!config.exists()) { // creating new file if there is no existing one
             try {
                 config.createNewFile();
             } catch (IOException ex) {
                 ex.printStackTrace();
-                return;
+                return false;
             }
         }
-        boolean success = UserSettings.write(Configuration.CONFIG_FILENAME);
-        log.successLog(success ? "configuration saved successfully!" : "error occurred while saving the configuration!", fileWizard);
+        return UserSettings.write(Configuration.CONFIG_FILENAME);
     }
 
     /**

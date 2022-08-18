@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.TestOnly;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import planespotter.dataclasses.Position;
+import planespotter.display.TreasureMap;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -182,6 +183,16 @@ public final class Areas {
 		 */
 		public static String newArea(final ICoordinate topLeft, final ICoordinate bottomRight) {
 			return newArea(topLeft.getLat(), bottomRight.getLat(), topLeft.getLon(), bottomRight.getLon());
+		}
+
+		@NotNull
+		public static String[] getCurrentArea(@NotNull final TreasureMap map) {
+			// area with panel size
+			ICoordinate topLeft = map.getPosition(0, 0);
+			ICoordinate bottomRight = map.getPosition(map.getWidth(), map.getHeight());
+			return new String[] {
+					Areas.newArea(topLeft, bottomRight)
+			};
 		}
 
 }

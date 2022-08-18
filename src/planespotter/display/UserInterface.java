@@ -73,7 +73,6 @@ public class UserInterface {
         this.layerPane.setBottomDefault();
 
         this.currentViewType = ViewType.MAP_LIVE;
-        LiveLoader.setLive(true);
     }
 
     /**

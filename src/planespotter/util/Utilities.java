@@ -3,6 +3,8 @@ package planespotter.util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 
+import org.jetbrains.annotations.TestOnly;
+import planespotter.constants.UnicodeChar;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
 import planespotter.throwables.*;
@@ -10,12 +12,18 @@ import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.InaccessibleObjectException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @name Utilities
@@ -27,9 +35,11 @@ import java.util.stream.Collectors;
  * class Utilities contains different utility-methods for different usages
  */
 public abstract class Utilities {
+
     // char-values connected to hex-int-values
     public static final Map<Character, Integer> charIntValues = new HashMap<>(16);
-    // initializer
+
+    // initialing the char-int map
     static {
         initCharInts();
     }
@@ -62,6 +72,7 @@ public abstract class Utilities {
      *
      * @return absolute root directory name as String
      */
+    @NotNull
     public static String getAbsoluteRootPath() {
         return (Controller.ROOT_PATH == null) ? System.getProperty("user.dir") : Controller.ROOT_PATH;
     }
@@ -73,7 +84,7 @@ public abstract class Utilities {
      * @see planespotter.constants.Sound
      */
     public static boolean playSound(@NotNull final String sound) {
-        var sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(sound);
+        Runnable sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(sound);
         if (sound2 != null) {
             sound2.run();
             return true;
@@ -81,6 +92,40 @@ public abstract class Utilities {
         return false;
     }
 
+    /**
+     * @indev
+     * rotates an image by certain degrees
+     * the rotating technique is a bit tricky, because we cannot
+     * just do something like img.rotate(...), we have to create
+     * a new, rotated Graphics first and then draw the image on it.
+     *
+     * @param img is the {@link Image} that should be rotated
+     * @param degrees is the degree of the rotation, from 0 to 360
+     * @return {@link BufferedImage} with specific rotation
+     */
+    @NotNull
+    public static BufferedImage rotate(@NotNull Image img, @Range(from = 0, to = 360) int degrees) {
+        int width = img.getWidth(null);
+        int height = img.getHeight(null);
+
+        BufferedImage buf = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = buf.createGraphics();
+        Color bgColor = new Color(0, 0, 0, 0);
+        graphics.setColor(bgColor);
+        graphics.fillRect(0, 0, width, height);
+
+        graphics.rotate(Math.toRadians(degrees), MathUtils.divide(width, 2), MathUtils.divide(height, 2));
+        graphics.drawImage(img, 0, 0, null);
+
+        return buf;
+    }
+
+    /**
+     * finds the highest value of an 2D int array
+     *
+     * @param of is the 2D int array to search in
+     * @return the highest value found in the input array
+     */
     public static int maxValue(int[][] of) {
         if (of == null || of.length == 0) {
             throw new InvalidArrayException("Invalid input, no empty arrays allowed!");
@@ -132,7 +177,7 @@ public abstract class Utilities {
      * @param hexStr is the hexadecimal input value as String
      * @return hex string as int
      */
-    public static int hexStrToInt(String hexStr) {
+    public static int hexStrToInt(@NotNull String hexStr) {
         char[] chars = hexStr.toCharArray();
         int pow = 0x000000,
             hex = 0x000000,
@@ -155,7 +200,7 @@ public abstract class Utilities {
      */
     public static byte toByteLevel(int lvl, int max) {
         if (lvl < 0 || max <= 0) {
-            throw new OutOfRangeException("level or max-level is out of range (0-inf)");
+            throw new OutOfRangeException("level or max-level is out of range (0-" + UnicodeChar.INFINITY + ")");
         } else if (lvl == 0) {
             return -128;
         }
@@ -164,6 +209,8 @@ public abstract class Utilities {
     }
 
     /**
+     * converts a feet-value to a meters-value
+     *
      * @param feet is the input, in feet (ft)
      * @return a feet value in meters
      */
@@ -172,6 +219,8 @@ public abstract class Utilities {
     }
 
     /**
+     * converts a knots-value to a km/h-value
+     *
      * @param kn is the input, in knots (kn)
      * @return the knots in km per hour
      */
@@ -185,6 +234,7 @@ public abstract class Utilities {
      * @param str is the string to pack
      * @return packed input string with 's
      */
+    @NotNull
     public static String packString(@NotNull String str) {
         return "'" + str + "'";
     }
@@ -196,6 +246,7 @@ public abstract class Utilities {
      * @param in is the string to strip
      * @return input-string, but without the "s
      */
+    @NotNull
     public static String stripString(@NotNull String in) {
         return in.replaceAll("\"", "");
     }
@@ -217,6 +268,7 @@ public abstract class Utilities {
                 || check.contains("INSERT") || check.contains("insert")
                 || check.contains("FROM")   || check.contains("from")
                 || check.contains("TABLE")  || check.contains("--")) {
+            // throwing new exception because of illegal data in the input string
             throw new IllegalInputException("Input expressions or characters not allowed!");
         }
         // replacing all '%', to prevent inputs like '%.....%', which take too much time to search for
@@ -224,6 +276,14 @@ public abstract class Utilities {
         return check.replaceAll("%", "");
     }
 
+    /**
+     * checks an array of input strings for illegal
+     * characters or expressions
+     *
+     * @param inputs is the input string-array which is going to be checked
+     * @return the checked array, without illegal expressions
+     * @throws IllegalInputException if an illegal expression was found
+     */
     @NotNull
     public static String[] checkInputs(@NotNull String... inputs)
             throws IllegalInputException {
@@ -235,11 +295,14 @@ public abstract class Utilities {
     }
 
     /**
+     * converts a {@link Number} to an {@link Integer}, not directly by casting,
+     * but by just calling the intValue() method from the Number class
+     *
      * @param number is the number to be cast to an int
      * @param <N> is an instance of Number
      * @return number cast as int
      */
-    public static <N extends Number> int asInt(N number) {
+    public static <N extends Number> int asInt(@NotNull final N number) {
         return number.intValue();
     }
 
@@ -249,15 +312,19 @@ public abstract class Utilities {
      * @param toParse is the Data Vector to parse
      * @return Vector of Positions
      */
-    public static <T extends Data> Vector<Position> parsePositionVector(@NotNull final Vector<T> toParse) {
+    @NotNull
+    public static <T extends Serializable> Vector<Position> parsePositionVector(@NotNull final Vector<T> toParse) {
         if (toParse.isEmpty()) {
             throw new IllegalArgumentException("input may not be empty!");
         }
-        var firstElement = toParse.get(0);
+
+        T firstElement = toParse.get(0);
+
         if (firstElement instanceof DataPoint) {
             return toParse.stream()
                     .map(data -> ((DataPoint) data).pos())
                     .collect(Collectors.toCollection(Vector::new));
+
         } else if (firstElement instanceof Flight) {
             return toParse.stream()
                     .map(flight -> {
@@ -275,6 +342,7 @@ public abstract class Utilities {
      * @param flights are the flights to parse
      * @return vector of data points
      */
+    @NotNull
     public static Vector<DataPoint> parseDataPointVector(@NotNull final Vector<Flight> flights) {
         if (flights.isEmpty()) {
             throw new IllegalArgumentException("input may not be empty!");
@@ -292,21 +360,35 @@ public abstract class Utilities {
      * @param <T> is the input type, stands for array or collection
      * @return Deque consisting of the input values
      */
-    public static <T> Deque<?> parseDeque(T arrayOrCollection) {
+    @NotNull
+    public static <T> Deque<?> parseDeque(@NotNull T arrayOrCollection) {
         if (arrayOrCollection instanceof Collection<?> collection) {
             return new ArrayDeque<>(collection);
         } else try {
             return new ArrayDeque<>(List.of(arrayOrCollection));
-        } catch (Throwable thr) {
+        } catch (final Throwable thr) {
             throw new InvalidDataException("incorrect input, array or collection expected");
         }
     }
 
-    public static DataPoint[] parseDataPointArray(Deque<DataPoint> deque) {
+    /**
+     * parses a {@link Deque} of {@link DataPoint}s to an array of {@link DataPoint}s
+     *
+     * @param deque is the DataPoint deque to convert
+     * @return array of DataPoints
+     */
+    @NotNull
+    public static DataPoint[] parseDataPointArray(@NotNull Deque<DataPoint> deque) {
         return deque.toArray(DataPoint[]::new);
     }
 
-    public static int[] parseIntArray(Deque<Integer> deque) {
+    /**
+     * converts a {@link Deque} of {@link Integer}s to an int-array
+     *
+     * @param deque is the Integer-Deque to parse
+     * @return converted int-array
+     */
+    public static int[] parseIntArray(@NotNull Deque<Integer> deque) {
         return Arrays.stream(deque.toArray(Integer[]::new))
                 .mapToInt(Integer::intValue)
                 .toArray();
@@ -321,7 +403,7 @@ public abstract class Utilities {
      * @return true if toCheck fits in the given area, else false
      */
     @SuppressWarnings(value = "is this needed?")
-    public static boolean fitArea(final Position toCheck, final Position topLeft, final Position bottomRight) {
+    public static boolean fitArea(@NotNull final Position toCheck, @NotNull final Position topLeft, @NotNull final Position bottomRight) {
         double checkLat = toCheck.lat(),
                checkLon = toCheck.lon();
         return     checkLat < topLeft.lat()
@@ -331,9 +413,13 @@ public abstract class Utilities {
     }
 
     /**
+     * creates a {@link Color} depending on the given altitude,
+     * starts with red, goes over yellow to green and light-blue (highest)
+     *
      * @param altitude is the altitude from the given DataPoint
      * @return a specific color, depending on the altitude
      */
+    @NotNull
     public static Color colorByAltitude(int altitude) {
         if (altitude < 0) {
             throw new IllegalArgumentException("altitude out of range! (0-765)");
@@ -374,7 +460,9 @@ public abstract class Utilities {
      * @return color by level
      */
     // TODO: 24.06.2022 change to byte input
-    public static Color colorByLevel(final int level) { // max level: 255 TODO change to 127
+    @SuppressWarnings(value = "does not work yet")
+    @NotNull
+    public static Color colorByLevel(final int level) {
         if (level < 0 || level > 255) {
             throw new OutOfRangeException("level out of range! (0-255)");
         }
@@ -403,18 +491,27 @@ public abstract class Utilities {
     }
 
     /**
-     * brings an image on a certain scale
+     * brings an image in a certain scale
      *
      * @param img is the input image that should be scaled
      * @param width is the image output width
      * @param height is the image output height
      * @return a scaled instance of the input image
      */
-    public static ImageIcon scaledImage(ImageIcon img, int width, int height) {
+    @NotNull
+    public static ImageIcon scaledImage(@NotNull ImageIcon img, int width, int height) {
         Image scaled = img.getImage().getScaledInstance(width, height, 4);
         return new ImageIcon(scaled);
     }
 
+    /**
+     * checks a {@link java.net.http.HttpResponse} status code,
+     * does nothing if it is 200 (default),
+     * if it is not 200, an exception is thrown
+     *
+     * @param status is the status code, given by the {@link java.net.http.HttpResponse}
+     * @throws Fr24Exception when the status code is invalid
+     */
     public static void checkStatusCode(int status) {
         if (status != 200) {
             throw new Fr24Exception("CheckStatus: Status code" + status + " is invalid!");
@@ -442,19 +539,18 @@ public abstract class Utilities {
             allFiles.add(allFilesWithExtension(rootPath, ext));
         }
 
+        Deque<File> currentFiles;
         while (!allFiles.isEmpty()) {
-            var files = allFiles.poll();
-            while (!files.isEmpty()) {
-                try {
-                    Reader fr = new FileReader(files.poll());
-                    BufferedReader br = new BufferedReader(fr);
+            currentFiles = allFiles.poll();
+            while (!currentFiles.isEmpty()) {
+                try (   Reader fr = new FileReader(currentFiles.poll());
+                        BufferedReader br = new BufferedReader(fr)) {
+
                     br.lines().forEach(l -> {
                         if (!l.isBlank()) {
                             linesCode.getAndIncrement();
                         }
                     });
-                    br.close();
-                    fr.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -470,13 +566,16 @@ public abstract class Utilities {
      * @param extension is the file extension to search for (e.g. '.java')
      * @return Deque of all files with the given extension
      */
-    private static Deque<File> allFilesWithExtension(final String path, String extension) {
+    @NotNull
+    private static Deque<File> allFilesWithExtension(@NotNull final String path, @NotNull String extension) {
         if (!extension.startsWith(".")) {
             throw new InvalidDataException("extension must begin with '.'");
         }
         Deque<File> files = new ArrayDeque<>();
-        // try with resource // Paths is not equal to our Paths-class
-        try (var paths = Files.walk(java.nio.file.Paths.get(path))) {
+        Path start = Paths.get(path); // java.nio.file.Paths is not equal to our Paths-class
+        // try with resource
+        try (Stream<Path> paths = Files.walk(start)) {
+
             paths.forEach(p -> {
                 File file = p.toFile();
                 if (!file.isDirectory() && file.getName().endsWith(extension)) {
@@ -487,6 +586,27 @@ public abstract class Utilities {
             e.printStackTrace();
         }
         return files;
+    }
+
+    @SuppressWarnings(value = "not working yet")
+    @TestOnly
+    public static <E> void printClassValues(E o) {
+        Class<?> classOfO = o.getClass();
+        try {
+            Field[] fields = classOfO.getDeclaredFields();
+            Arrays.stream(fields).forEach(field -> {
+                try {
+                    field.setAccessible(true);
+                    String name = field.getName();
+                    Field value = classOfO.getField(name);
+                    System.out.println(name + ": " + value);
+                } catch (InaccessibleObjectException | IllegalArgumentException | NoSuchFieldException e) {
+                    e.printStackTrace();
+                }
+            });
+        } catch (SecurityException se) {
+            se.printStackTrace();
+        }
     }
 
 }

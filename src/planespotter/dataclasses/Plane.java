@@ -1,5 +1,7 @@
 package planespotter.dataclasses;
 
+import java.io.Serializable;
+
 /**
  * @author Janne Matti
  * @author Lukas
@@ -12,7 +14,7 @@ public record Plane(int id,
 					String planeType,
 					String registration,
 					Airline airline)
-		implements Data {
+		implements Serializable {
 }
 
 /*

@@ -15,9 +15,10 @@ import java.util.BitSet;
  * abstract class MarkerPainter represents an abstract painter for a MapMarker,
  * contains abstract paint() method, which has to be overwritten
  */
-public abstract class MarkerPainter {
+@FunctionalInterface
+public interface MarkerPainter {
 
-    public abstract void paint(Graphics g, Point position, int radius);
+    void paint(Graphics g, Point position, int radius);
 
     /**
      * @name HeatMapPainter
@@ -26,7 +27,7 @@ public abstract class MarkerPainter {
      * inner class HeatMapPainter represents a painter for a heat map,
      * contains the overwritten method void paint()
      */
-    public static class HeatMarkerPainter extends MarkerPainter {
+    class HeatMarkerPainter implements MarkerPainter {
 
         private final Color color;
 
@@ -42,7 +43,7 @@ public abstract class MarkerPainter {
         }
     }
 
-    public static class HeatRectPainter extends MarkerPainter {
+    class HeatRectPainter implements MarkerPainter {
 
         private final Color color;
 

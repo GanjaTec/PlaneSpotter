@@ -2,10 +2,8 @@ package planespotter.controller;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Range;
 
 import org.openstreetmap.gui.jmapviewer.Coordinate;
-import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
@@ -16,7 +14,6 @@ import planespotter.model.io.FileWizard;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.nio.LiveLoader;
 import planespotter.throwables.NoAccessException;
-import planespotter.util.LRUCache;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
 import planespotter.display.models.MenuModels;
@@ -26,7 +23,6 @@ import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.IllegalInputException;
 import planespotter.throwables.InvalidDataException;
-import planespotter.util.Logger;
 import planespotter.util.math.MathUtils;
 import planespotter.util.Utilities;
 
@@ -38,9 +34,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 import static planespotter.constants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
 import static planespotter.constants.Sound.SOUND_DEFAULT;
@@ -107,28 +101,16 @@ public abstract class Controller {
     public volatile Vector<Flight> liveData;
 
     // scheduler, contains executor services / thread pools
-    @NotNull
-    private final Scheduler scheduler;
+    @NotNull private final Scheduler scheduler;
 
     // new graphical user interface
-    @NotNull
-    private final UserInterface ui;
-
-    // TODO: 10.08.2022 move to Search -> searchCache
-    // proto test-cache
-    @NotNull
-    public final LRUCache<String, Object> cache;
-
-    // live data loading period
-    private int liveDataPeriodSec;
-
-    // logger for whole program
-    @NotNull
-    private final Logger logger;
+    @NotNull private final UserInterface ui;
 
     // live data thread
-    @Nullable
-    private Thread liveThread;
+    @Nullable private Thread liveThread;
+
+    // live loader instance (for live data tasks)
+    @NotNull private final LiveLoader liveLoader;
 
     /**
      * private constructor for Controller main instance,
@@ -138,11 +120,9 @@ public abstract class Controller {
         this.hashCode = System.identityHashCode(INSTANCE);
         this.clicking = false;
         this.scheduler = new Scheduler();
-        this.cache = new LRUCache<>(100); // TODO best cache size
         this.ui = new UserInterface(ActionHandler.getActionHandler());
-        this.liveDataPeriodSec = 2;
         this.terminated = false;
-        this.logger = new Logger(this);
+        this.liveLoader = new LiveLoader();
     }
 
     /**
@@ -161,22 +141,9 @@ public abstract class Controller {
      */
     private void initialize() {
         if (!this.initialized) {
-            this.logger.open();
-            this.logger.log("Initializing Controller...", this);
-            this.initTasks();
-            this.logger.successLog("Controller initialized successfully!", this);
+            this.liveLoader.setLive(true);
+            this.liveThread = this.scheduler.runThread(() -> this.liveLoader.liveDataTask(this), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
             this.initialized = true;
-        }
-    }
-
-    /**
-     * starts all Controller tasks with the Scheduler
-     */
-    private void initTasks() {
-        if (!this.initialized) {
-            this.logger.log("Running init tasks...", this);
-            // executing on-start tasks
-            this.liveThread = this.scheduler.runThread(this::liveDataTask, "Live-Data Loader", true, Scheduler.HIGH_PRIO);
         }
     }
 
@@ -195,10 +162,9 @@ public abstract class Controller {
                     "Exit", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         // yes-option
         if (option == JOptionPane.YES_OPTION) {
-            this.logger.infoLog("Shutting down program, please wait...", this);
             this.ui.showLoadingScreen(true);
             // disabling tasks
-            LiveLoader.setLive(false);
+            this.liveLoader.setLive(false);
             if (this.liveThread != null && this.liveThread.isAlive()) {
                 this.liveThread.interrupt();
             }
@@ -209,9 +175,8 @@ public abstract class Controller {
             // inserting remaining frames, if option is enabled
             if (insertRemainingFrames && DBIn.isEnabled()) {
                 try {
-                    DBIn.insertRemaining(this.scheduler);
-                } catch (NoAccessException nae) {
-                    this.logger.infoLog("DBIn is disabled, skipping insert...", this);
+                    DBIn.insertRemaining(this.scheduler, this.liveLoader);
+                } catch (NoAccessException ignored) {
                 }
             }
             // waiting for remaining tasks
@@ -226,7 +191,6 @@ public abstract class Controller {
             // disabling last tasks
             DBIn.setEnabled(false);
             this.done(true);
-            this.logger.close(Configuration.SAVE_LOGS);
             this.terminated = true;
             // shutting down scheduler
             boolean shutdown = this.scheduler.shutdown(1);
@@ -248,60 +212,6 @@ public abstract class Controller {
         RUNTIME.halt(-1);
     }
 
-    private synchronized void liveDataTask() {
-        // loading init-live-data
-        this.loadLiveData();
-        // endless live-data task
-        while (!terminated) {
-            // trying to await the live-data period
-            try {
-                this.wait(TimeUnit.SECONDS.toMillis(this.liveDataPeriodSec));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                this.notify();
-            }
-            // loading live-data, if live-map is enabled
-            if (LiveLoader.isLive()) {
-                this.loadLiveData();
-            }
-        }
-    }
-
-    /**
-     * loads Fr24-data directly into the liveData-Collection,
-     * but not into the DB
-     * @see LiveLoader
-     */
-    private synchronized void loadLiveData() {
-
-        List<MapMarker> markerList;
-        TreasureMap map;
-        // checking for 'already loading' and setting controller loading
-        if (!this.isLoading()) {
-            this.setLoading(true);
-
-            map = this.ui.getMap();
-            // loading direct live-data
-            this.liveData = LiveLoader.loadDirectly(this.scheduler, map);
-            // transforming liveData-flight-Vector into list of MapMarkers
-            markerList = this.liveData.stream()
-                    .map(flight -> {
-                        // transforming to MapMarker
-                        final Position pos = flight.dataPoints().get(0).pos();
-                        final double lat = pos.lat(),
-                                     lon = pos.lon();
-                        final MapMarkerDot marker = new MapMarkerDot(new Coordinate(lat, lon));
-                        marker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
-                        return marker;
-                    })
-                    .collect(Collectors.toList());
-            // setting new map marker list on the map
-            map.setMapMarkerList(markerList);
-            this.done(false);
-        }
-    }
-
     /**
      * executed when a loading process is done, will turn
      * loading-flag to false and play a sound if wanted
@@ -316,6 +226,10 @@ public abstract class Controller {
         this.ui.showLoadingScreen(false);
     }
 
+    /**
+     * starts a {@link Fr24Collector} to collect Fr24-Data
+     * @see planespotter.model.Fr24Collector
+     */
     // TODO: 08.08.2022 add filters
     void runFr24Collector() {
         Collector<Fr24Supplier> collector = new Fr24Collector(false, false, 6, 12);
@@ -341,11 +255,11 @@ public abstract class Controller {
             ui.setViewType(type);
             ui.getMapManager().clearMap();
             if (type != MAP_LIVE) {
-                LiveLoader.setLive(false);
+                this.liveLoader.setLive(false);
             }
             switch (type) {
                 case LIST_FLIGHT -> { }
-                case MAP_LIVE -> LiveLoader.setLive(true);
+                case MAP_LIVE -> this.liveLoader.setLive(true);
                 case MAP_FROMSEARCH -> this.showSearchMap(mapManager);
                 case MAP_TRACKING -> this.showTrackingMap(mapManager);
                 case MAP_TRACKING_NP -> this.showTrackingMapNoPoints(mapManager);
@@ -353,7 +267,6 @@ public abstract class Controller {
                 case MAP_SIGNIFICANCE -> this.showSignificanceMap(mapManager, dbOut);
                 case MAP_HEATMAP -> {  }
             }
-            logger.successLog("view loaded!", this);
         } finally {
             this.done(false);
         }
@@ -383,22 +296,18 @@ public abstract class Controller {
                     case AIRLINE -> {
                         this.loadedData = search.forAirline(inputs);
                         this.show(MAP_TRACKING_NP);
-                        //this.show(ViewType.MAP_TRACKING_NP, "Flight Search Results");
                     }
                     case AIRPORT -> {
                         this.loadedData = search.forAirport(inputs);
                         this.show(MAP_TRACKING_NP);
-                        //this.show(ViewType.MAP_TRACKING_NP, "Flight Search Results");
                     }
                     case FLIGHT -> {
                         this.loadedData = search.forFlight(inputs);
                         this.show(MAP_TRACKING);
-                        //this.show(ViewType.MAP_TRACKING, "Flight Search Results");
                     }
                     case PLANE -> {
                         this.loadedData = search.forPlane(inputs);
                         this.show(MAP_FROMSEARCH);
-                        //this.show(ViewType.MAP_FROMSEARCH, "Plane Search Results");
                     }
                 }
             } catch (DataNotFoundException dnf) {
@@ -434,7 +343,7 @@ public abstract class Controller {
             this.ui.getMap().setTileSource(currentMapSource);
             // data[2]
             livePeriodSec = Integer.parseInt(data[2]);
-            setLiveDataPeriod(livePeriodSec);
+            this.liveLoader.setLiveDataPeriod(livePeriodSec);
         } finally {
             // saving config after reset
             FileWizard.getFileWizard().saveConfig();
@@ -442,6 +351,7 @@ public abstract class Controller {
         }
     }
 
+    // TODO: 14.08.2022 move to MapManager
     boolean onLiveClick(@NotNull ICoordinate clickedCoord) {
 
         TreasureMap map;
@@ -451,7 +361,7 @@ public abstract class Controller {
         boolean markerHit = false;
         int counter;
 
-        if (!this.clicking && LiveLoader.isLive()) {
+        if (!this.clicking && this.liveLoader.isLive()) {
             try {
                 this.clicking = true;
                 map = this.ui.getMap();
@@ -466,7 +376,7 @@ public abstract class Controller {
                     newMarker = new DefaultMapMarker(markerCoord, 0);
                     if (!markerHit && mapManager.isMarkerHit(markerCoord, clickedCoord)) {
                         markerHit = true;
-                        this.markerHit(MAP_LIVE, newMarker, counter, null, null, logger);
+                        this.onMarkerHit(MAP_LIVE, newMarker, counter, null, null);
                     } else {
                         newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
                     }
@@ -487,6 +397,7 @@ public abstract class Controller {
     /**
      * is executed when a map marker is clicked and the current is MAP_ALL
      */
+    // TODO: 14.08.2022 move to mapManager
     boolean onClick_all(@NotNull ICoordinate clickedCoord) { // TODO aufteilen
 
         List<MapMarker> mapMarkers;
@@ -496,7 +407,6 @@ public abstract class Controller {
         DefaultMapMarker newMarker;
         MapManager mapManager;
         DBOut dbOut;
-        Logger log;
         boolean markerHit = false;
         int counter;
 
@@ -509,14 +419,13 @@ public abstract class Controller {
                 counter = 0;
                 data = this.loadedData;
                 dbOut = DBOut.getDBOut();
-                log = this.getLogger();
                 // going though markers
                 for (MapMarker m : mapMarkers) {
                     markerCoord = m.getCoordinate();
                     newMarker = new DefaultMapMarker(markerCoord, 90); // FIXME: 13.05.2022 // FIXME 19.05.2022
                     if (mapManager.isMarkerHit(markerCoord, clickedCoord) && !markerHit) {
                         markerHit = true;
-                        this.markerHit(MAP_FROMSEARCH, newMarker, counter, data, dbOut, log);
+                        this.onMarkerHit(MAP_FROMSEARCH, newMarker, counter, data, dbOut);
                     } else {
                         newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
                     }
@@ -534,9 +443,9 @@ public abstract class Controller {
         return markerHit;
     }
 
-    private void markerHit(ViewType viewType, @NotNull DefaultMapMarker marker,
-                           int counter, Vector<DataPoint> dataPoints,
-                           DBOut dbOut, @NotNull Logger logger) {
+    public void onMarkerHit(ViewType viewType, @NotNull DefaultMapMarker marker,
+                             int counter, Vector<DataPoint> dataPoints,
+                             DBOut dbOut) {
 
         Flight flight;
         int flightID;
@@ -550,8 +459,7 @@ public abstract class Controller {
                 try {
                     flight = dbOut.getFlightByID(flightID);
                     this.ui.showInfo(flight, dataPoint);
-                } catch (DataNotFoundException e) {
-                    logger.errorLog("flight with the ID " + flightID + " doesn't exist!", this);
+                } catch (DataNotFoundException ignored) {
                 }
             }
             case MAP_LIVE -> {
@@ -567,6 +475,7 @@ public abstract class Controller {
      *
      * @param clickedCoord is the clicked coordinate
      */
+    // TODO: 14.08.2022 move to MapManager
     boolean onTrackingClick(@NotNull ICoordinate clickedCoord) { // TODO aufteilen
         TreasureMap map = this.ui.getMap();
         List<MapMarker> markers = map.getMapMarkerList();
@@ -590,7 +499,6 @@ public abstract class Controller {
                     this.ui.showInfo(flight, dp);
                 } catch (DataNotFoundException e) {
                     this.handleException(e);
-                    this.getLogger().errorLog("flight with the ID " + flightID + " doesn't exist!", this);
                 }
                 break;
             }
@@ -702,7 +610,6 @@ public abstract class Controller {
             signifMap = stats.airportSignificance(aps);
             bbn.createSignificanceMap(signifMap, this.ui.getMap());
         } catch (DataNotFoundException e) {
-            logger.errorLog(e.getMessage(), this);
             e.printStackTrace();
         }
     }
@@ -715,8 +622,7 @@ public abstract class Controller {
         int flightID = (!this.loadedData.isEmpty()) ? this.loadedData.get(0).flightID() : -1;
         try {
             flight = dbOut.getFlightByID(flightID);
-        } catch (DataNotFoundException dnf) {
-            logger.errorLog(dnf.getMessage(), this);
+        } catch (DataNotFoundException ignored) {
         }
         mapManager.createTrackingMap(this.loadedData, flight, false);
     }
@@ -743,16 +649,6 @@ public abstract class Controller {
     }
 
     /**
-     * getter for the logger
-     *
-     * @return main logger instance
-     */
-    @NotNull
-    public Logger getLogger() {
-        return this.logger;
-    }
-
-    /**
      * getter for the scheduler
      *
      * @return main scheduler instance
@@ -773,12 +669,13 @@ public abstract class Controller {
     }
 
     /**
-     * sets the period for the live-data loader in seconds
+     * getter for {@link LiveLoader} instance
      *
-     * @param sec is the period in seconds
+     * @return the {@link LiveLoader} instance
      */
-    public void setLiveDataPeriod(@Range(from = 1, to = 10) int sec) {
-        liveDataPeriodSec = sec;
+    @NotNull
+    public LiveLoader getLiveLoader() {
+        return this.liveLoader;
     }
 
     /**
@@ -788,8 +685,22 @@ public abstract class Controller {
         return this.loading;
     }
 
+    /**
+     * sets the loading flag to a certain value
+     *
+     * @param b is the loading value ( true or false )
+     */
     public void setLoading(boolean b) {
         this.loading = b;
+    }
+
+    /**
+     * getter for 'terminated' flag
+     *
+     * @return true if the {@link Controller} is terminated, else false
+     */
+    public boolean isTerminated() {
+        return this.terminated;
     }
 
     /**
