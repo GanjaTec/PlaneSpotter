@@ -110,9 +110,6 @@ public abstract class Utilities {
 
         BufferedImage buf = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = buf.createGraphics();
-        Color bgColor = new Color(0, 0, 0, 0);
-        graphics.setColor(bgColor);
-        graphics.fillRect(0, 0, width, height);
 
         graphics.rotate(Math.toRadians(degrees), MathUtils.divide(width, 2), MathUtils.divide(height, 2));
         graphics.drawImage(img, 0, 0, null);
