@@ -120,6 +120,11 @@ public final class Areas {
 		return areaRaster1D;
 	}
 
+	/**
+	 * collects all area constants and returns them
+	 *
+	 * @return all area constants in a {@link String} array
+	 */
 	public static synchronized String[] getAllAreas() {
 		int eastLength = EASTERN_FRONT.length;
 		int gerLength = GERMANY.length;
@@ -185,6 +190,13 @@ public final class Areas {
 			return newArea(topLeft.getLat(), bottomRight.getLat(), topLeft.getLon(), bottomRight.getLon());
 		}
 
+	/**
+	 * locates the current lat-lon-rectangle (area) of the map by
+	 * getting map-positions with getPos. method
+	 *
+	 * @param map is the {@link TreasureMap} where the current area is located on
+	 * @return the current map area, packed in a {@link String} array
+	 */
 		@NotNull
 		public static String[] getCurrentArea(@NotNull final TreasureMap map) {
 			// area with panel size

@@ -45,16 +45,16 @@ public abstract class ActionHandler
 
     // ActionHandler instance, we need only one instance here,
     // because we don't want parallel listeners who listen to the same actions
-    private static final ActionHandler INSTANCE;
+    @NotNull private static final ActionHandler INSTANCE;
 
     // global event dispatcher, events come here before going to the components listeners,
     // used for global hotkeys
-    private static final KeyEventDispatcher GLOBAL_EVENT_DISPATCHER;
+    @NotNull private static final KeyEventDispatcher GLOBAL_EVENT_DISPATCHER;
 
     // map for all global hotkeys,
     // key is the Hotkey object with the key data
     // value is the (Runnable) action for the specific hotkey
-    private static final Map<Hotkey, Runnable> HOTKEYS;
+    @NotNull private static final Map<Hotkey, Runnable> HOTKEYS;
 
     // initializing all static members
     static {
@@ -148,15 +148,15 @@ public abstract class ActionHandler
     // ActionHandler hash code
     private final int hashCode = System.identityHashCode(this);
 
+
+    // instance //
+
     /**
      * private ActionHandler constructor for main instance
      */
     private ActionHandler() {
         // nothing to do
     }
-
-
-    // on-action methods
 
     /**
      * executed when a button is clicked,
@@ -246,7 +246,7 @@ public abstract class ActionHandler
     /**
      * executed when the window is resized
      *
-     * @param ui is the GUI instance that owns all components
+     * @param ui is the UI instance that owns all components
      */
     public void windowResized(UserInterface ui) {
         JFrame window = ui.getWindow();
@@ -257,10 +257,11 @@ public abstract class ActionHandler
         map.setBounds(layerPane.getBounds());
         Component top = layerPane.getTop();
         if (top instanceof SearchPane) {
-            top.setBounds(10, 10, 250, layerPane.getHeight());
+            top.setBounds(10, 10, top.getWidth(), top.getHeight());
         } else if (top instanceof InfoPane ip) {
-            top.setBounds(0, 0, 270, layerPane.getHeight());
-            ip.getInfoList().setBounds(10, 10, 250, MathUtils.divide(layerPane.getHeight(), 2));
+            ip.setBounds(0, 0, 270, layerPane.getHeight());
+            JList<String> infoList = ip.getInfoList();
+            infoList.setBounds(10, 10, infoList.getWidth(), infoList.getHeight());
         }
 
     }
