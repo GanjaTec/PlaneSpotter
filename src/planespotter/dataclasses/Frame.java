@@ -8,6 +8,7 @@ import java.io.Serializable;
  * @author Lukas
  * @version 1.0
  *
+ * @description
  * abstract class Frame is a frame-superclass which should
  * have all default frame fields e.g. latitude, longitude ,etc...
  */

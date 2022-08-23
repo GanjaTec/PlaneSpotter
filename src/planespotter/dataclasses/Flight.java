@@ -5,7 +5,8 @@ import java.util.HashMap;
 /**
  * @author Janne Matti
  * @author Lukas
- *	
+ *
+ *@description
  * This Class is used to Represent a single Flight with all off its Datapoints
  */
 public record Flight(int id,

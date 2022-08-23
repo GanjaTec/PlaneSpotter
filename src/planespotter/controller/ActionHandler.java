@@ -2,6 +2,7 @@ package planespotter.controller;
 
 import org.jetbrains.annotations.NotNull;
 
+import planespotter.a_test.Test;
 import planespotter.constants.*;
 import planespotter.dataclasses.Hotkey;
 import planespotter.display.Diagrams;
@@ -15,11 +16,14 @@ import planespotter.display.models.SettingsPane;
 import planespotter.model.nio.LiveLoader;
 import planespotter.statistics.Statistics;
 import planespotter.throwables.IllegalInputException;
+import planespotter.util.Bitmap;
 import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +69,19 @@ public abstract class ActionHandler
 
         HOTKEYS = new HashMap<>(1);
         initHotkeys();
+    }
+
+    // ActionHandler hash code
+    private final int hashCode = System.identityHashCode(this);
+
+
+    // instance //
+
+    /**
+     * private ActionHandler constructor for main instance
+     */
+    private ActionHandler() {
+        // nothing to do
     }
 
     /**
@@ -143,19 +160,6 @@ public abstract class ActionHandler
     @NotNull
     public static ActionHandler getActionHandler() {
         return INSTANCE;
-    }
-
-    // ActionHandler hash code
-    private final int hashCode = System.identityHashCode(this);
-
-
-    // instance //
-
-    /**
-     * private ActionHandler constructor for main instance
-     */
-    private ActionHandler() {
-        // nothing to do
     }
 
     /**
@@ -297,8 +301,17 @@ public abstract class ActionHandler
             case "Fr24-Supplier" -> ctrl.runFr24Collector();
             case "Top-Airports" -> Diagrams.showTopAirports(ui, new Statistics());
             case "Top-Airlines" -> Diagrams.showTopAirlines(ui, new Statistics());
+            case "Position-HeatMap" -> {
+                try {
+                    /*Bitmap bitmap = Bitmap.fromPosVector(new Test().TEST_POS_VECTOR, 1f);
+                    Diagrams.showPosHeatMap(ui, bitmap);*/
+                    Diagrams.showPosHeatMap(ui, Bitmap.readImage(new File(Paths.RESOURCE_PATH + "bmpBitmap.bmp")));
+                } catch (IOException e) {
+                    ui.showWarning(Warning.NO_DATA_FOUND, e.getMessage());
+                }
+            }
 
-            case "ADSB-Supplier", "Antenna", "Position-HeatMap" -> ui.showWarning(Warning.NOT_SUPPORTED_YET);
+            case "ADSB-Supplier", "Antenna" -> ui.showWarning(Warning.NOT_SUPPORTED_YET);
         }
     }
 

@@ -3,10 +3,8 @@ package planespotter.model.nio;
 import org.jetbrains.annotations.NotNull;
 
 import planespotter.model.Fr24Collector;
-import planespotter.model.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
-import planespotter.throwables.Fr24Exception;
 import planespotter.util.Time;
 import planespotter.util.Utilities;
 
@@ -44,7 +42,6 @@ public class Fr24Supplier implements Supplier {
 	private final String ThreadName;
 	private final String area;
 	private final HttpClient httpClient;
-	//TODO Write getters
 
 	public Fr24Supplier() {
 		this(0, "");
@@ -64,10 +61,8 @@ public class Fr24Supplier implements Supplier {
 			// use Proto-deserializer for correct frame data
 			Fr24Deserializer deserializer = new Fr24Deserializer();
 			HttpResponse<String> response = this.sendRequest();
-			int statusCode = response.statusCode();
-			if (statusCode != 200) {
-				throw new Fr24Exception("Fr24Supplier: Status code is invalid! " + statusCode);
-			}
+
+			Utilities.checkStatusCode(response.statusCode());
 			Deque<Fr24Frame> fr24Frames = deserializer.deserialize(response);
 			// writing frames to DB
 			DBIn.write(fr24Frames);
@@ -157,7 +152,9 @@ public class Fr24Supplier implements Supplier {
 
 				Deque<Fr24Frame> data;
 				try {
-					data = deserializer.deserialize(supplier.sendRequest());
+					HttpResponse<String> response = supplier.sendRequest();
+					Utilities.checkStatusCode(response.statusCode());
+					data = deserializer.deserialize(response);
 					liveLoader.insertLater(data);
 				} catch (IOException | InterruptedException e) {
 					e.printStackTrace();
@@ -171,24 +168,24 @@ public class Fr24Supplier implements Supplier {
 	 * @deprecated
 	 * 
 	 * @param data
-	 * @throws Exception
+	 * @throws IOException
 	 */
 	@Deprecated
 	public void writeToCSV(List<String> data) throws IOException {
 		// Create File and write to it
-		Timestamp ts = new Timestamp(System.currentTimeMillis());
+		Timestamp ts = new Timestamp(Time.nowMillis());
 		Instant inst = ts.toInstant();
 		File file = new File("planedata_" + inst.toEpochMilli() + ".csv");
-		if (file.createNewFile()) {
-			System.out.println("File created: " + file.getName());
-			FileWriter myWriter = new FileWriter(file.getName());
-			myWriter.write("ICAOaddr,Lat,Lon,Heading,Alt,Speed,Squawk,Tailnr,Type,Reg,unk0,Src,Dest,Flightnr,unk1,unk2,"
-					+ "Callsign,unk3,Airline\n");
-			for (String a : data)
-				myWriter.write(a);
-			myWriter.close();
-		} else {
-			System.out.println("File already exists! This should not happen since epoch is unique");
+		if (!file.createNewFile()) {
+			System.err.println("File already exists! This should not happen since epoch is unique");
+			return;
+		}
+		System.out.println("File created: " + file.getName());
+		try (FileWriter writer = new FileWriter(file.getName())) {
+			writer.write("ICAOaddr,Lat,Lon,Heading,Alt,Speed,Squawk,Tailnr,Type,Reg," +
+							"unk0,Src,Dest,Flightnr,unk1,unk2,Callsign,unk3,Airline\n");
+			for (String val : data)
+				writer.write(val);
 		}
 	}
 

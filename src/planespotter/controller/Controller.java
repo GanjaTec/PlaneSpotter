@@ -74,17 +74,7 @@ public abstract class Controller {
         ROOT_PATH = Utilities.getAbsoluteRootPath();
     }
 
-    /**
-     * getter for the static {@link Controller} instance
-     *
-     * @return the controller instance
-     */
-    @NotNull
-    public static Controller getInstance() {
-        return INSTANCE;
-    }
-
-    // instance fields
+    // -- instance fields --
 
     // hash code
     private final int hashCode;
@@ -124,6 +114,16 @@ public abstract class Controller {
         this.ui = new UserInterface(ActionHandler.getActionHandler());
         this.terminated = false;
         this.liveLoader = new LiveLoader();
+    }
+
+    /**
+     * getter for the static {@link Controller} instance
+     *
+     * @return the controller instance
+     */
+    @NotNull
+    public static Controller getInstance() {
+        return INSTANCE;
     }
 
     /**
@@ -221,11 +221,14 @@ public abstract class Controller {
      * @param playSound indicates if the method should play a sound at the end
      */
     public void done(boolean playSound) {
-        this.loading = false;
-        if (playSound) {
-            Utilities.playSound(SOUND_DEFAULT.get());
+        try {
+            this.loading = false;
+            if (playSound) {
+                Utilities.playSound(SOUND_DEFAULT.get());
+            }
+        } finally {
+            this.ui.showLoadingScreen(false);
         }
-        this.ui.showLoadingScreen(false);
     }
 
     /**
@@ -371,15 +374,20 @@ public abstract class Controller {
                 mapManager = this.ui.getMapManager();
                 newMarkerList = new ArrayList<>();
                 counter = 0;
-                DefaultMapMarker newMarker;
+                PlaneMarker newMarker;
                 Coordinate markerCoord;
+                int heading = 0;
                 for (MapMarker marker : markers) {
+                    if (marker instanceof PlaneMarker dmm) {
+                        heading = dmm.getHeading();
+                    }
                     markerCoord = marker.getCoordinate();
-                    newMarker = new DefaultMapMarker(markerCoord, 0);
                     if (!markerHit && mapManager.isMarkerHit(markerCoord, clickedCoord)) {
                         markerHit = true;
+                        newMarker = new PlaneMarker(markerCoord, heading, true, true);
                         this.onMarkerHit(MAP_LIVE, newMarker, counter, null, null);
                     } else {
+                        newMarker = new PlaneMarker(markerCoord, heading, true, false);
                         newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
                     }
                     newMarker.setName(marker.getName());
@@ -406,7 +414,7 @@ public abstract class Controller {
         List<MapMarker> newMarkerList;
         Vector<DataPoint> data;
         Coordinate markerCoord;
-        DefaultMapMarker newMarker;
+        PlaneMarker newMarker;
         MapManager mapManager;
         DBOut dbOut;
         boolean markerHit = false;
@@ -424,11 +432,12 @@ public abstract class Controller {
                 // going though markers
                 for (MapMarker m : mapMarkers) {
                     markerCoord = m.getCoordinate();
-                    newMarker = new DefaultMapMarker(markerCoord, 90); // FIXME: 13.05.2022 // FIXME 19.05.2022
                     if (mapManager.isMarkerHit(markerCoord, clickedCoord) && !markerHit) {
                         markerHit = true;
+                        newMarker = new PlaneMarker(markerCoord, 90, true, true);
                         this.onMarkerHit(MAP_FROMSEARCH, newMarker, counter, data, dbOut);
                     } else {
+                        newMarker = new PlaneMarker(markerCoord, 90, true, false);
                         newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
                     }
                     newMarker.setName(m.getName());
@@ -445,11 +454,11 @@ public abstract class Controller {
         return markerHit;
     }
 
-    public void onMarkerHit(ViewType viewType, @NotNull DefaultMapMarker marker,
+    public void onMarkerHit(ViewType viewType, @NotNull PlaneMarker marker,
                              int counter, Vector<DataPoint> dataPoints,
                              DBOut dbOut) {
 
-        Flight flight;
+        Flight flight = null;
         int flightID;
         DataPoint dataPoint;
 
@@ -470,6 +479,9 @@ public abstract class Controller {
                 dataPoint = flight.dataPoints().get(0);
                 this.ui.showInfo(flight, dataPoint);
             }
+        }
+        if (flight != null) {
+            this.ui.getMapManager().setSelectedICAO(flight.plane().icao());
         }
     }
 
@@ -581,7 +593,8 @@ public abstract class Controller {
         } else if (thr instanceof TimeoutException) {
             this.ui.showWarning(Warning.TIMEOUT);
         } else if (thr instanceof RejectedExecutionException) {
-            this.ui.showWarning(Warning.REJECTED_EXECUTION);
+            boolean terminated = thr.getMessage().contains("TERMINATED");
+            this.ui.showWarning(Warning.REJECTED_EXECUTION, terminated ? "Executor is terminated!" : "");
         } else if (thr instanceof IllegalInputException) {
             this.ui.showWarning(Warning.ILLEGAL_INPUT);
         } else if (thr instanceof InvalidDataException ide) {

@@ -6,6 +6,7 @@ package planespotter.dataclasses;
  * @author jml04
  * @version 1.0
  *
+ * @description
  * class Fr24Frame is a Frame-class-child which represents
  * a Frame with additional FlightRadar24-Data
  */
@@ -141,7 +142,7 @@ public class Fr24Frame extends Frame {
 
 	@Override
 	public String toString() {
-		return "ICAO: " + this.getIcaoAdr() + ',' +
+		return  "ICAO: " + this.getIcaoAdr() + ',' +
 				" Lat: " + this.getLat() + ',' +
 				" Lon: " + this.getLon() + ',' +
 				" Heading: " + this.getHeading() + ',' +

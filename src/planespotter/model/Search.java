@@ -38,7 +38,7 @@ public class Search {
      * @param cacheSize is the cache size
      */
     public Search(int cacheSize) {
-        this.searchCache = new LRUCache<>(cacheSize);
+        this.searchCache = new LRUCache<>(cacheSize, false);
     }
 
     /**
@@ -49,11 +49,12 @@ public class Search {
     public Vector<DataPoint> forFlight(String[] inputs)
             throws DataNotFoundException {
 
+        DataNotFoundException ex = new DataNotFoundException("No flights found!");
         String id = inputs[0];
         String callsign = inputs[1];
         try {
-            DBOut out = DBOut.getDBOut();
             Controller ctrl = Controller.getInstance();
+            DBOut out = DBOut.getDBOut();
             if (!id.isBlank()) {
                 int fid = Integer.parseInt(id);
                 ctrl.loadedData = out.getTrackingByFlight(fid);
@@ -71,16 +72,15 @@ public class Search {
                     ctrl.loadedData = out.getTrackingsByFlightIDs(ids);
                     this.searchCache.put(key, ctrl.loadedData);
                 }
-                if (!ctrl.loadedData.isEmpty()) {
-                    return ctrl.loadedData;
+                if (ctrl.loadedData.isEmpty()) {
+                    ex = new DataNotFoundException("No flight found for callsign " + callsign + "!");
                 } else {
-                    throw new DataNotFoundException("No flight found for callsign " + callsign + "!");
+                    return ctrl.loadedData;
                 }
             }
-        } catch (DataNotFoundException e) {
-            e.printStackTrace();
+        } catch (DataNotFoundException ignored) {
         }
-        throw new DataNotFoundException("no data found! - loadedData is empty");
+        throw ex;
     }
 
     /**

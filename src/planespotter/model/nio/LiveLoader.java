@@ -3,29 +3,19 @@ package planespotter.model.nio;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 
-import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
-
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import planespotter.constants.Areas;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
 import planespotter.display.TreasureMap;
-import planespotter.model.io.DBIn;
-import planespotter.throwables.Fr24Exception;
 import planespotter.throwables.InvalidDataException;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Vector;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static planespotter.constants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
 
 /**
  * @name LiveData
@@ -37,14 +27,15 @@ import static planespotter.constants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
  * it is able to load live data directly from Fr24 into Flight Objects,
  * it contains a queue 'insertLater' where all the frames are added to,
  * these frames get collected from there by another class.
- * @see DBIn
- * @see Fr24Supplier
- * @see Fr24Deserializer
- * @see Areas
- * @see ConcurrentLinkedDeque
+ * @see planespotter.model.io.DBIn
+ * @see planespotter.model.nio.Fr24Supplier
+ * @see planespotter.model.nio.Fr24Deserializer
+ * @see planespotter.constants.Areas
+ * @see java.util.concurrent.ConcurrentLinkedQueue
  */
-// TODO: 10.08.2022 not static anymore
 public class LiveLoader {
+
+    private static final Object liveLock = new Object();
 
     // max. size for insertLater queue
     private final int maxQueueSize;
@@ -61,7 +52,7 @@ public class LiveLoader {
     /**
      * frames, which will be inserted later (first loaded into the view)
      */
-    private final ConcurrentLinkedQueue<Fr24Frame> insertLater;
+    @NotNull private final ConcurrentLinkedQueue<Fr24Frame> insertLater;
 
     /**
      *
@@ -81,22 +72,24 @@ public class LiveLoader {
         this.liveDataPeriodSec = liveDataPeriodSec;
     }
 
-    public synchronized void liveDataTask(@NotNull Controller ctrl) {
+    public void liveDataTask(@NotNull Controller ctrl) {
         // loading init-live-data
         this.loadLiveData(ctrl);
         // endless live-data task
-        while (!ctrl.isTerminated()) {
-            // trying to await the live-data period
-            try {
-                this.wait(TimeUnit.SECONDS.toMillis(this.liveDataPeriodSec));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                this.notify();
-            }
-            // loading live-data, if live-map is enabled
-            if (this.isLive()) {
-                this.loadLiveData(ctrl);
+        synchronized (liveLock) {
+            while (!ctrl.isTerminated()) {
+                // trying to await the live-data period
+                try {
+                    liveLock.wait(TimeUnit.SECONDS.toMillis(this.liveDataPeriodSec));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    liveLock.notify();
+                }
+                // loading live-data, if live-map is enabled
+                if (this.isLive()) {
+                    this.loadLiveData(ctrl);
+                }
             }
         }
     }
@@ -106,7 +99,7 @@ public class LiveLoader {
      * but not into the DB
      * @see LiveLoader
      */
-    private synchronized void loadLiveData(@NotNull Controller ctrl) {
+    private void loadLiveData(@NotNull Controller ctrl) {
 
         List<MapMarker> markerList;
         TreasureMap map;
@@ -117,14 +110,10 @@ public class LiveLoader {
             map = ctrl.getUI().getMap();
             // transforming liveData-flight-Vector into list of MapMarkers
             // after loading it directly from fr24
-            ctrl.liveData = this.loadDirectly(map);
+            ctrl.liveData = this.getLiveFlights(map);
             markerList = ctrl.liveData
                     .stream()
-                    .map(flight -> {
-                        // transforming to MapMarker
-                        final DataPoint dataPoint = flight.dataPoints().get(0);
-                        return DefaultMapMarker.fromDataPoint(dataPoint, DEFAULT_MAP_ICON_COLOR.get());
-                    })
+                    .map(flight -> PlaneMarker.fromFlight(flight, ctrl.getUI().getMapManager().getSelectedICAO(), true))
                     .collect(Collectors.toList());
             // setting new map marker list on the map
             map.setMapMarkerList(markerList);
@@ -141,16 +130,16 @@ public class LiveLoader {
      * @return Vector of Flight objects, loaded directly by a supplier
      */
     @NotNull
-    public Vector<Flight> loadDirectly(@NotNull final TreasureMap map) {
+    public Vector<Flight> getLiveFlights(@NotNull final TreasureMap map) {
         Fr24Deserializer deserializer = new Fr24Deserializer();
         //deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF");
 
         String[] currentArea = Areas.getCurrentArea(map);
         if (Fr24Supplier.collectFramesForArea(this, currentArea, deserializer, false)) {
 
-            AtomicInteger flightID = new AtomicInteger(0);
+            AtomicInteger pseudoID = new AtomicInteger(0);
             return this.pollFrames(Integer.MAX_VALUE)
-                    .map(frame -> Flight.parseFlight(frame, flightID.getAndIncrement()))
+                    .map(frame -> Flight.parseFlight(frame, pseudoID.getAndIncrement()))
                     .collect(Collectors.toCollection(Vector::new));
         }
         throw new InvalidDataException("Couldn't load Live-Data!");
@@ -160,19 +149,20 @@ public class LiveLoader {
      * polls a certain amount of frames from the
      * insert-later-deque if it is not empty
      *
-     * @param count is the pull count
+     * @param maxElements is the max. pull count
      * @return Stream of Frames with @param count as length
      */
     @NotNull
-    public Stream<Fr24Frame> pollFrames(@Range(from = 1, to = Integer.MAX_VALUE) int count) {
-        if (isEmpty()) { // checking for empty queue
-            throw new Fr24Exception("Insert-later-Queue is empty, make sure it is not empty!");
-        } else if (!canPoll(count)) { // checking queue size
-            count = this.insertLater.size();
+    public Stream<Fr24Frame> pollFrames(@Range(from = 1, to = Integer.MAX_VALUE) int maxElements) {
+        if (this.isEmpty()) { // checking for empty queue
+            throw new InvalidDataException("Insert-later-Queue is empty, make sure it is not empty!");
+
+        } else if (!this.canPoll(maxElements)) { // checking queue size
+            maxElements = this.getQueueSize();
         }
         // iterating over polled frames from insertLater-queue and limiting to count
         return Stream.iterate(this.insertLater.poll(), x -> this.insertLater.poll())
-                .limit(count);
+                .limit(maxElements);
     }
 
     /**
@@ -243,10 +233,20 @@ public class LiveLoader {
         this.liveDataPeriodSec = sec;
     }
 
+    /**
+     * getter for the maximum size of the insertLater-queue
+     *
+     * @return maximum queue size of insertLater-queue
+     */
     public int getMaxQueueSize() {
         return this.maxQueueSize;
     }
 
+    /**
+     * getter for the current insertLater-queue size
+     *
+     * @return current size of the insertLater-queue
+     */
     public int getQueueSize() {
         return this.insertLater.size();
     }
