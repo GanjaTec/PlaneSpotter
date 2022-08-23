@@ -2,31 +2,33 @@ package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import planespotter.constants.Configuration;
-import planespotter.controller.Controller;
 import planespotter.dataclasses.MapData;
 import planespotter.constants.UserSettings;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.InvalidDataException;
-import planespotter.util.Logger;
 import planespotter.util.Time;
 
 import java.io.*;
 import java.nio.file.FileAlreadyExistsException;
 
 /**
- * @name FileMaster
+ * @name FileWizard
  * @author jml04
  * @version 1.0
  *
- * class FileMaster is a file manager that loads and saves files
+ * @description
+ * class FileMaster is a file manager that contains functions
+ * to write and read (save and load) files
  */
 public class FileWizard {
 
     private static final FileWizard fileWizard = new FileWizard();
 
     /**
-     * constructor
+     * private constructor,
+     * used for static instance
      */
     private FileWizard() {
     }
@@ -38,8 +40,7 @@ public class FileWizard {
      * are ignored, because they are never updated
      */
     public synchronized boolean saveConfig() {
-        File config;
-        config = new File(Configuration.CONFIG_FILENAME);
+        File config = new File(Configuration.CONFIG_FILENAME);
         if (!config.exists()) { // creating new file if there is no existing one
             try {
                 config.createNewFile();

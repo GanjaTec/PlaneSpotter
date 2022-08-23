@@ -6,6 +6,7 @@ import java.io.Serializable;
  * @author Janne Matti
  * @author Lukas
  *
+ * @description
  * This Class is used to represent a single DB Entry from the 'Tracking'-Table
  */
 public record DataPoint(int id, // data point id

@@ -2,6 +2,7 @@ package planespotter.display.models;
 
 import libs.UWPButton;
 import org.jetbrains.annotations.NotNull;
+import planespotter.constants.UserSettings;
 import planespotter.controller.ActionHandler;
 
 import javax.swing.*;
@@ -68,6 +69,8 @@ public class SettingsPane extends JDialog {
         super.add(mapType);
         super.add(livePeriod);
         super.add(liveMapFilters);
+
+        this.maxLoadTxtField.setText(String.valueOf(UserSettings.getMaxLoadedData()));
 
         super.setVisible(false);
     }

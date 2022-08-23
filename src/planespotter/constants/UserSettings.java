@@ -60,7 +60,7 @@ public class UserSettings {
             Object[] defaultValues = {50000, DEFAULT_MAP, 6, 12};
             initialize(defaultValues);
         }
-        collectorFilters = Filters.read(Configuration.FILTERS_FILENAME);
+        collectorFilters = null/*Filters.read(Configuration.FILTERS_FILENAME)*/;
     }
 
     /**

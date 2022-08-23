@@ -70,8 +70,9 @@ public final class PaneModels {
         // easy animation
         long millis = TimeUnit.SECONDS.toMillis(sec);
         long vel = millis / 100;
+        float opc;
         for (int s = 0; s < millis; s += vel) {
-            float opc = dialog.getOpacity();
+            opc = dialog.getOpacity();
             dialog.setOpacity(opc + 0.01f);
             Scheduler.sleep(vel);
         }

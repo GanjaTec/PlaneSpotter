@@ -1,6 +1,7 @@
 package planespotter.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
 import org.jetbrains.annotations.TestOnly;
@@ -93,7 +94,6 @@ public abstract class Utilities {
     }
 
     /**
-     * @indev
      * rotates an image by certain degrees
      * the rotating technique is a bit tricky, because we cannot
      * just do something like img.rotate(...), we have to create
@@ -104,9 +104,9 @@ public abstract class Utilities {
      * @return {@link BufferedImage} with specific rotation
      */
     @NotNull
-    public static BufferedImage rotate(@NotNull Image img, @Range(from = 0, to = 360) int degrees) {
-        int width = img.getWidth(null);
-        int height = img.getHeight(null);
+    public static BufferedImage rotate(@NotNull Image img, @Range(from = 0, to = 360) final int degrees) {
+        final int width = img.getWidth(null);
+        final int height = img.getHeight(null);
 
         BufferedImage buf = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = buf.createGraphics();
@@ -118,40 +118,36 @@ public abstract class Utilities {
     }
 
     /**
-     * finds the highest value of an 2D int array
+     * finds the highest value of an 2D int array,
+     * 0 is the minimum value
      *
      * @param of is the 2D int array to search in
      * @return the highest value found in the input array
      */
-    public static int maxValue(int[][] of) {
-        if (of == null || of.length == 0) {
-            throw new InvalidArrayException("Invalid input, no empty arrays allowed!");
+    public static int maxValue(final int[][] of) {
+        if (of == null) {
+            throw new InvalidArrayException("Invalid input, array must not be null!");
         }
-        return findMax2D(of);
+        int max = 0;
+        for (int[] line : of) {
+            max = findMax(line, max);
+        }
+        return max;
     }
 
     /**
-     * finds the highest value in a 2D-array in O(n)
+     * finds the highest value in an array in O(n)
      *
      * @param in is the input-2D-array to search in
+     * @param startValue is the start max-value
      * @return max value of the input int-array
      */
-    private static int findMax2D(int[][] in) {
-        int width = in.length;
-        if (width == 0) {
-            return 0;
-        }
-        int height = in[0].length;
-        if (height == 0) {
-            return 0;
-        }
-        int max = 0;
-        // TODO maybe this could be done parallel for huge 2d arrays
-        for (int[] line : in) {
-            for (int curr : line) {
-                if (curr > max) {
-                    max = curr;
-                }
+    private static int findMax(final int[] in, final int startValue) {
+        int max = startValue;
+
+        for (int curr : in) {
+            if (curr > max) {
+                max = curr;
             }
         }
         return max;
@@ -510,8 +506,15 @@ public abstract class Utilities {
      * @throws Fr24Exception when the status code is invalid
      */
     public static void checkStatusCode(int status) {
-        if (status != 200) {
-            throw new Fr24Exception("CheckStatus: Status code" + status + " is invalid!");
+        String invalidMsg = "CheckStatus: Status code" + status + " is invalid!";
+        Fr24Exception frex;
+        frex = switch (status) {
+            case 200 -> null; // status code is OK
+            case 451 -> new Fr24Exception(invalidMsg + "\nSeems like there is a problem with the Http-header (User-Agent)!");
+            default -> new Fr24Exception(invalidMsg + "\nUnknown error!");
+        };
+        if (frex != null) {
+            throw frex;
         }
     }
 
@@ -586,34 +589,46 @@ public abstract class Utilities {
     }
 
     /**
-     * this method should print all current field values
-     * of the given object, but it does not work
+     * checks a {@link File} for the right extension
+     *
+     * @param file is the checked file
+     * @param expectedExtension is the expected file extension with the form '.abc'
+     * @throws FileNotFoundException is thrown if the file is null, does not
+     *                               exist or if the file name is blank
+     * @throws ExtensionException if the given extension is invalid or if the given
+     *                            file does not have the expected extension
+     */
+    public static void checkFile(@Nullable File file, @NotNull String expectedExtension)
+            throws FileNotFoundException, ExtensionException {
+
+        if (!expectedExtension.startsWith(".")) {
+            throw new ExtensionException("File extension must begin with '.'");
+        }
+        if (file == null || !file.exists() || file.getName().isBlank()) {
+            throw new FileNotFoundException("File check failed, check input file!");
+        }
+        if (!file.getName().endsWith(expectedExtension)) {
+            throw new ExtensionException("File does not have the expected extension " + expectedExtension);
+        }
+    }
+
+    /**
+     * this method prints all current field values
+     * of the given object of any class
      *
      * @param o an object, containing the printed values
-     * @param <E> is the object type
+     * @param <E> is the object type (class)
      */
-    @SuppressWarnings(value = "not working yet")
     @TestOnly
-    public static <E> void printClassValues(E o) {
-        Class<E> classOfO = (Class<E>) o.getClass();
-        System.out.println(o.getClass() + ", " + classOfO);
+    public static <E> void printCurrentFields(@NotNull E o) {
+        Class<?> classOfO = o.getClass();
         try {
             Field[] fields = classOfO.getDeclaredFields();
             Arrays.stream(fields).forEach(field -> {
                 try {
                     field.setAccessible(true);
                     String name = field.getName();
-                    System.out.println(name);
-                    Object value = null;
-                    Class<?> type = field.getType();
-                    System.out.println(type);
-                    if (type == String.class) {
-                        value = field.get(name);
-                    } else if (type == int.class) {
-                        value = field.getInt(name);
-                    } else if (type == double.class) {
-                        value = field.getDouble(name);
-                    }
+                    Object value = field.get(o);
                     System.out.println(name + ": " + value);
                 } catch (InaccessibleObjectException | IllegalArgumentException | IllegalAccessException e) {
                     e.printStackTrace();

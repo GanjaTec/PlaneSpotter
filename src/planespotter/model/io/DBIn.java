@@ -64,74 +64,54 @@ public final class DBIn extends DBConnector {
 	 * @param fr24Frames are the Fr24Frames to write, could be extended to '<? extends Frame>'
 	 */
 	public static synchronized void write(@NotNull final Deque<Fr24Frame> fr24Frames) {
-		if (enabled) {
-			long startTime = nowMillis();
-			DBOut dbo = DBOut.getDBOut();
-			DBIn dbi = DBIn.getDBIn();
-			HashMap<String, Integer> airlineTagsIDs = new HashMap<>(),
-									 planeIcaoIDs = new HashMap<>(),
-									 flightNRsIDs = new HashMap<>();
-			try {
-				airlineTagsIDs = dbo.getAirlineTagsIDs();
-				planeIcaoIDs = dbo.getPlaneIcaosIDs();
-				flightNRsIDs = dbo.getFlightNRsWithFlightIDs();
-			} catch (DataNotFoundException ignored) {
-				// something doesn't exist in the DB, this is no error!
-				// this usually happens when the DB has empty tables.
-				// ( For example when the DB gets cleared )
-			}
-			Fr24Frame frame;
-			int airlineID, planeID, flightID;
-			boolean checkPlane, checkFlight;
-			while (!fr24Frames.isEmpty()) {
-				frame = fr24Frames.poll();
-				// insert into planes
-				airlineID = airlineTagsIDs.getOrDefault(frame.getAirline(), 1);
-				planeID = planeIcaoIDs.getOrDefault(frame.getIcaoAdr(), -1);
-				checkPlane = planeID > -1;
-				if (!checkPlane) {
-					planeID = dbi.insertPlane(frame, airlineID);
-					// increasing inserted planes value
-					increasePlaneCount();
-				}
-				// insert into flights
-				flightID = flightNRsIDs.getOrDefault(frame.getFlightnumber(), -1);
-				checkFlight = flightID > -1;
-				if (!checkFlight) {
-					flightID = dbi.insertFlight(frame, planeID);
-					// increasing inserted flights value
-					increaseFlightCount();
-				}
-				// insert into tracking
-				dbi.insertTracking(frame, flightID);
-				// increasing the inserted frames value
-				increaseFrameCount();
-				// setting current frame as last frame
-				lastFrame = frame;
-			}
-			System.out.println("[DBWriter] filled DB in " + elapsedSeconds(startTime) + " seconds!");
+		if (!enabled) {
+			return;
 		}
-	}
-
-	/**
-	 * inserts a certain amount of frames from the insertLater-queue into the DB
-	 *
-	 * @param scheduler is the Scheduler which executes tasks
-	 * @param count is the frame count that should be written to DB
-	 * @return inserted frames count as an int
-	 */
-	public static synchronized int insert(@NotNull final Scheduler scheduler, @NotNull LiveLoader liveLoader, final int count) {
-		int insertCount = 0;
-		if (enabled) {
-			if (liveLoader.canPoll(count)) {
-				// insert live data with normal writeToDB
-				Stream<Fr24Frame> frames = liveLoader.pollFrames(count);
-
-				scheduler.exec(() -> write(frames), "DB-LiveData Writer", true, Scheduler.LOW_PRIO, true);
-				insertCount += count;
-			}
+		long startTime = nowMillis();
+		DBOut dbo = DBOut.getDBOut();
+		DBIn dbi = DBIn.getDBIn();
+		HashMap<String, Integer> airlineTagsIDs = new HashMap<>(),
+				planeIcaoIDs = new HashMap<>(),
+				flightNRsIDs = new HashMap<>();
+		try {
+			airlineTagsIDs = dbo.getAirlineTagsIDs();
+			planeIcaoIDs = dbo.getPlaneIcaosIDs();
+			flightNRsIDs = dbo.getFlightNRsWithFlightIDs();
+		} catch (DataNotFoundException ignored) {
+			// something doesn't exist in the DB, this is no error!
+			// this usually happens when the DB has empty tables.
+			// ( For example when the DB gets cleared )
 		}
-		return insertCount;
+		Fr24Frame frame;
+		int airlineID, planeID, flightID;
+		boolean checkPlane, checkFlight;
+		while (!fr24Frames.isEmpty() && enabled) {
+			frame = fr24Frames.poll();
+			// insert into planes
+			airlineID = airlineTagsIDs.getOrDefault(frame.getAirline(), 1);
+			planeID = planeIcaoIDs.getOrDefault(frame.getIcaoAdr(), -1);
+			checkPlane = planeID > -1;
+			if (!checkPlane) {
+				planeID = dbi.insertPlane(frame, airlineID);
+				// increasing inserted planes value
+				increasePlaneCount();
+			}
+			// insert into flights
+			flightID = flightNRsIDs.getOrDefault(frame.getFlightnumber(), -1);
+			checkFlight = flightID > -1;
+			if (!checkFlight) {
+				flightID = dbi.insertFlight(frame, planeID);
+				// increasing inserted flights value
+				increaseFlightCount();
+			}
+			// insert into tracking
+			dbi.insertTracking(frame, flightID);
+			// increasing the inserted frames value
+			increaseFrameCount();
+			// setting current frame as last frame
+			lastFrame = frame;
+		}
+		System.out.println("[DBWriter] filled DB in " + elapsedSeconds(startTime) + " seconds!");
 	}
 
 	/**
@@ -143,13 +123,13 @@ public final class DBIn extends DBConnector {
 	@NotNull
 	public static synchronized CompletableFuture<Void> insertRemaining(@NotNull final Scheduler scheduler, @NotNull LiveLoader liveLoader)
 			throws NoAccessException {
-		if (enabled) {
-			Stream<Fr24Frame> frames = liveLoader.pollFrames(Integer.MAX_VALUE);
-
-			return scheduler.exec(() -> write(frames), "Inserter", false, Scheduler.HIGH_PRIO, false);
-
+		if (!enabled) {
+			throw new NoAccessException("DB-Writer is disabled!");
 		}
-		throw new NoAccessException("DB-Writer is disabled!");
+		Stream<Fr24Frame> frames = liveLoader.pollFrames(Integer.MAX_VALUE);
+
+		return scheduler.exec(() -> write(frames), "Inserter", false, Scheduler.HIGH_PRIO, false);
+
 	}
 
 	/**

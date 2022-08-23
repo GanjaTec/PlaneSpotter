@@ -5,11 +5,14 @@ package planespotter.util;
  * @author jml04
  * @version 1.0
  *
- * class Time contains time utility functions
+ * @description
+ * class Time contains easy and helpful time utility functions
  */
 public abstract class Time {
 
     /**
+     * getter for the current system time millis
+     *
      * @return current system time in milliseconds
      */
     public static long nowMillis() {
@@ -17,6 +20,8 @@ public abstract class Time {
     }
 
     /**
+     * returns the elapsed milliseconds since a certain start time
+     *
      * @param startMillis is the start time in milliseconds
      * @return elapsed milliseconds since startTime
      */
@@ -25,6 +30,8 @@ public abstract class Time {
     }
 
     /**
+     * returns the elapsed seconds since a certain start time
+     *
      * @param startMillis is the start time in milliseconds
      * @return elapsed seconds since startTime
      */

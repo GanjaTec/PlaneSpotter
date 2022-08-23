@@ -17,4 +17,13 @@ public class Fr24Exception extends InvalidDataException {
     public Fr24Exception() {
         this("");
     }
+
+    public Fr24Exception(String msg, Throwable cause) {
+        super(msg, cause);
+    }
+
+    public Fr24Exception(Throwable cause) {
+        this("", cause);
+    }
+
 }
