@@ -22,13 +22,70 @@ import static planespotter.util.math.MathUtils.divide;
  * @name Bitmap
  * @author jml04
  * @version 1.0
+ *
  * @description
  * the Bitmap class represents a 2D-bitmap,
- * each value stands e.g. for a certain
+ * each value stands for a certain level (e.g. the flight count on this position).
+ * The 2D-array represents a 2D-map with lat and lon values
  */
 public class Bitmap {
 
-    // static components
+    // bitmap as 2D-byte array (memory-efficient),
+    // it is not possible to use short- or int-arrays here
+    // because they use too much memory
+    private final byte[][] bitmap;
+
+    // bitmap width and height
+    public final int width, height;
+
+    /**
+     * constructor for Bitmap,
+     * needs a filled 2D-bitmap-array which must be created before.
+     * not easy to use, maybe look at static methods
+     * Bitmap.fromInt2d(...) or Bitmap.fromPosVector(...)
+     *
+     * @param bitmap is the bitmap 2D-array (pre-filled)
+     */
+    public Bitmap(byte[][] bitmap) {
+        this.bitmap = bitmap;
+        this.width = bitmap.length;
+        if (this.width == 0) {
+            throw new InvalidArrayException("Array width and length must be higher or equals one!");
+        }
+        this.height = bitmap[0].length;
+        if (this.height == 0) {
+            throw new InvalidArrayException("Array width and length must be higher or equals one!");
+        }
+    }
+
+    /**
+     * creates a Bitmap from position-vector,
+     * the higher a field value, the more positions in this field
+     *
+     * @param positions is the position vector, where each bitmap field
+     *                  represents specific coordinates and each value stands
+     *                  for the number of positions in a certain field
+     * @param gridSize is the bitmap grid size, 1 is normal (360x180), 0.5 is the double (720x360)
+     * @return Bitmap instance, created by pos-vector under a certain grid size
+     */
+    public static Bitmap fromPosVector(@NotNull Vector<Position> positions, @Range(from = 0, to = 2) float gridSize) {
+
+        int width = (int) divide(360., gridSize) + 1;
+        int height = (int) divide(180., gridSize) + 1;
+        int[][] ints2d = new int[width][height];
+
+        Arrays.stream(ints2d)
+                .forEach(arr -> Arrays.fill(arr, 0));
+
+        int posX, posY;
+        for (Position pos : positions) {
+            posX = (int) divide(pos.lon() + 180, gridSize); // FIXME: 26.06.2022
+            posY = (int) divide(pos.lat() + 90, gridSize); // FIXME: 26.06.2022
+            ints2d[posX][posY]++;
+        }
+        return Bitmap.fromInt2d(ints2d);
+    }
+
 
     /**
      * creates a Bitmap from pre-filled 2D-int-array
@@ -58,34 +115,6 @@ public class Bitmap {
             }
         }
         return new Bitmap(bytes);
-    }
-
-    /**
-     * creates a Bitmap from position-vector,
-     * the higher a field value, the more positions in this field
-     *
-     * @param positions is the position vector, where each bitmap field
-     *                  represents specific coordinates and each value stands
-     *                  for the number of positions in a certain field
-     * @param gridSize is the bitmap grid size, 1 is normal (360x180), 0.5 is the double (720x360)
-     * @return Bitmap instance, created by pos-vector under a certain grid size
-     */
-    public static Bitmap fromPosVector(@NotNull Vector<Position> positions, @Range(from = 0, to = 2) float gridSize) {
-
-        int width = (int) divide(360., gridSize) + 1;
-        int height = (int) divide(180., gridSize) + 1;
-        int[][] ints2d = new int[width][height];
-
-        Arrays.stream(ints2d)
-                .forEach(arr -> Arrays.fill(arr, 0));
-
-        int posX, posY;
-        for (Position pos : positions) {
-            posX = (int) divide(pos.lon() + 180, gridSize); // FIXME: 26.06.2022
-            posY = (int) divide(pos.lat() + 90, gridSize); // FIXME: 26.06.2022
-            ints2d[posX][posY]++;
-        }
-        return Bitmap.fromInt2d(ints2d);
     }
 
     /**
@@ -136,11 +165,12 @@ public class Bitmap {
     }
 
     /**
+     * writes a {@link Bitmap} to '.bmp' file with {@link ImageIO}
      *
-     *
-     * @param bitmap
-     * @param filename
-     * @return
+     * @param bitmap is the {@link Bitmap} to write
+     * @param filename is the filename of the {@link Bitmap} file
+     * @return the written {@link File}
+     * @throws IOException if an error occurs during the write operation
      */
     public static File write(Bitmap bitmap, String filename)
             throws IOException {
@@ -150,71 +180,41 @@ public class Bitmap {
     }
 
     /**
+     * writes a {@link Bitmap} to a specific {@link File}
      *
-     *
-     * @param bitmap
-     * @param file
-     * @return
-     * @throws IOException
+     * @param bitmap is the {@link Bitmap} to write
+     * @param file is the {@link File} to write the {@link Bitmap} into
+     * @return the written {@link File}
+     * @throws IOException if an error occurs during the write operation
      */
     public static File write(Bitmap bitmap, File file)
             throws IOException {
 
+        String filename = file.getName();
+        if (filename.endsWith(".bmp")) {
+            file = new File(filename + ".bmp");
+        }
         ImageIO.write(bitmap.toImage(), "BMP", file);
         return file;
     }
 
     /**
+     * reads a {@link Bitmap} from a specific {@link File}
      *
-     *
-     * @param filename
-     * @return
-     * @throws FileNotFoundException
+     * @param filename is the name of the {@link File} to read
+     * @return the read {@link Bitmap}
+     * @throws FileNotFoundException if the file does not exist
      */
     public static Bitmap read(String filename)
             throws IOException {
 
-        return Bitmap.fromImage(ImageIO.read(new File(filename)));
-    }
-
-    // instance fields
-
-    // bitmap as 2D-byte array (memory-efficient),
-    // it is not possible to use short- or int-arrays here
-    // because they use too much memory
-    private final byte[][] bitmap;
-
-    // bitmap width and height
-    public final int width, height;
-
-    /**
-     * constructor for Bitmap,
-     * needs a filled 2D-bitmap-array which must be created before.
-     * not easy to use, maybe look at static methods
-     * Bitmap.fromInt2d(...) or Bitmap.fromPosVector(...)
-     *
-     * @param bitmap is the bitmap 2D-array (pre-filled)
-     */
-    public Bitmap(byte[][] bitmap) {
-        this.bitmap = bitmap;
-        this.width = bitmap.length;
-        boolean error = false;
-        if (this.width == 0) {
-            error = true;
-        }
-        this.height = bitmap[0].length;
-        if (this.height == 0) {
-            error = true;
-        }
-        if (error) {
-            throw new InvalidArrayException("Array width and length must be higher or equals one!");
-        }
+        return Bitmap.fromImage(filename);
     }
 
     /**
+     * converts this {@link Bitmap} to a {@link BufferedImage}
      *
-     *
-     * @return
+     * @return {@link BufferedImage} displaying the {@link Bitmap}
      */
     public BufferedImage toImage() {
         var img = new BufferedImage(this.width, this.height, BufferedImage.TYPE_BYTE_GRAY);
@@ -234,9 +234,9 @@ public class Bitmap {
     }
 
     /**
+     * creates a 1D-byte-array from the 2D-{@link Bitmap}-array
      *
-     *
-     * @return
+     * @return 1D-array of this {@link Bitmap}
      */
     public byte[] getByteArray() {
         byte[] bytes = new byte[this.width * this.height];
@@ -250,32 +250,34 @@ public class Bitmap {
     }
 
     /**
+     * getter for the bitmap 2D-array
      *
-     *
-     * @return
+     * @return the 2D-bitmap-array
      */
     public byte[][] getBitmap() {
         return this.bitmap;
     }
 
     /**
+     * overwritten equals() method, compares two object first,
+     * then comparing the bitmap values
      *
-     *
-     * @param obj
-     * @return
+     * @param obj is another {@link Bitmap} to compare
+     * @return true if the given {@link Bitmap} is equals this {@link Bitmap}, else false
      */
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
-        if (obj == null || obj.getClass() != this.getClass()) return false;
-        Bitmap that = (Bitmap) obj;
-        return Arrays.deepEquals(this.bitmap, that.bitmap);
+        if (obj instanceof Bitmap bmp) {
+            return Arrays.deepEquals(this.bitmap, bmp.bitmap);
+        }
+        return false;
     }
 
     /**
+     * overwritten getter for the {@link Bitmap} hash code
      *
-     *
-     * @return
+     * @return hash code of the {@link Bitmap} class
      */
     @Override
     public int hashCode() {
@@ -283,9 +285,9 @@ public class Bitmap {
     }
 
     /**
+     * overwritten toString() method returns this {@link Bitmap }as a {@link String}
      *
-     *
-     * @return
+     * @return {@link String} of this {@link Bitmap} object
      */
     @Override
     public String toString() {
