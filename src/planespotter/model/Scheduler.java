@@ -18,11 +18,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * It is able to execute tasks once and in period,
  * hold it static if you need only one instance, else use multiple instances
  * which can be started and stopped parallel.
- * @see Controller
- * @see ThreadMaker
- * @see ThreadPoolExecutor
- * @see ScheduledExecutorService
- * @see java.util.concurrent
+ * @see planespotter.controller.Controller
+ * @see planespotter.model.Scheduler.ThreadMaker
+ * @see java.util.concurrent.ThreadPoolExecutor
+ * @see java.util.concurrent.ScheduledExecutorService
  */
 public class Scheduler {
     /**
@@ -31,10 +30,13 @@ public class Scheduler {
      *  MID_PRIO is 5,
      *  HIGH_PRIO is 9
      */
-    public static final int LOW_PRIO, MID_PRIO, HIGH_PRIO;
+    public static final byte LOW_PRIO, MID_PRIO, HIGH_PRIO;
 
     // thread maker (thread factory)
     @NotNull private static final ThreadMaker threadMaker;
+
+    // handler for rejected executions
+    @NotNull private static final RejectedExecutionHandler rejectedExecutionHandler;
 
     // initializing static fields
     static {
@@ -42,6 +44,7 @@ public class Scheduler {
         MID_PRIO = 5;
         HIGH_PRIO = 9;
         threadMaker = new ThreadMaker();
+        rejectedExecutionHandler = (r, exe) -> System.out.println("Task " + r.toString() + " rejected from Scheduler!");
     }
 
     // ThreadPoolExecutor for (parallel) execution of different threads
@@ -67,10 +70,9 @@ public class Scheduler {
      * @param maxPoolsize is the max. ThreadPool-size
      */
     public Scheduler(int maxPoolsize) {
-        this.exe = new ThreadPoolExecutor(Configuration.CORE_POOLSIZE, maxPoolsize,
-                                          Configuration.KEEP_ALIVE_TIME, TimeUnit.SECONDS,
-                                          new SynchronousQueue<>(), threadMaker);
-        this.scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker);
+        this.exe = new ThreadPoolExecutor(Configuration.CORE_POOLSIZE, maxPoolsize, Configuration.KEEP_ALIVE_TIME,
+                                          TimeUnit.SECONDS, new SynchronousQueue<>(), threadMaker, rejectedExecutionHandler);
+        this.scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker, rejectedExecutionHandler);
     }
 
     /**

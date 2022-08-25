@@ -43,7 +43,7 @@ public class Diagrams {
             int minCount = Integer.parseInt(input);
             layerPane.replaceBottom(Diagrams.barChartPanel(layerPane, stats.airlineSignificance(minCount)));
         } catch (NumberFormatException nfe) {
-            ui.showWarning(Warning.INT_EXPECTED);
+            ui.showWarning(Warning.NUMBER_EXPECTED);
         }
     }
 
@@ -57,7 +57,7 @@ public class Diagrams {
             int minCount = Integer.parseInt(input);
             layerPane.replaceBottom(Diagrams.barChartPanel(layerPane, stats.airportSignificance(minCount)));
         } catch (NumberFormatException nfe) {
-            ui.showWarning(Warning.INT_EXPECTED);
+            ui.showWarning(Warning.NUMBER_EXPECTED);
         }
     }
 
@@ -84,10 +84,10 @@ public class Diagrams {
         int width = parent.getWidth(),
             height = parent.getHeight();
         ImageIcon imgIcon = new ImageIcon(heatMapImg);
-        JLabel imgLabel = new JLabel(Utilities.scaledImage(imgIcon, width, height));
+        JLabel imgLabel = new JLabel(Utilities.scale(imgIcon, width, height));
         JPanel panel = new JPanel(null);
         panel.setBounds(0, 0, width, height);
-        imgLabel.setBounds(imgLabel.getBounds());
+        imgLabel.setBounds(panel.getBounds());
         panel.add(imgLabel);
         return panel;
     }

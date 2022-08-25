@@ -13,26 +13,27 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @name Areas
  * @author Lukas
+ * @author jml04
  * @version 1.0
  *
- * class areas contains all map areas as complicated coordinate-strings
+ * @description
+ * class areas contains all map areas as complicated coordinate-strings.
+ * Area Structure:
+ *
+ * " {lat-topLeft} %2C {latBottomRight} %2C {lonTopLeft} %2C {lonBottomRight} "
+ *
+ * lat's go from 90 to -90
+ * lon's go from -180 to 180
+ *
+ * Example.: "86.0%2C-45.8%2C-120.1%2C150.5"
+ *
  */
 public abstract class Areas {
 
 	/**
-	 * Area-Separator-String, is used to separate the doubles in an Area-String
+	 * Area-Separator-String, used to separate the doubles in an Area-String
 	 */
 	private static final String SEPARATOR = "%2C";
-	/**
-	 * Area Structure:
-	 *
-	 * " {lat-topLeft} %2C {latBottomRight} %2C {lonTopLeft} %2C {lonBottomRight} "
-	 *
-	 * lat's go from 90 to -90
-	 * lon's go from -180 to 180
-	 *
-	 * Bsp.: "86.0%2C-45.8%2C-120.1%2C150.5"
-	 */
 
 	//Ukraine War
 	public static final String UKRAINE = "52.567%2C45.909%2C17.843%2C45.967";
@@ -87,13 +88,29 @@ public abstract class Areas {
 	public static final String[] NAFC = {};
 
 	/**
+	 * locates the current lat-lon-rectangle (area) of the map by
+	 * getting map-positions with getPos. method
+	 *
+	 * @param map is the {@link TreasureMap} where the current area is located on
+	 * @return the current map area, packed in a {@link String} array
+	 */
+	@NotNull
+	public static String[] getCurrentArea(@NotNull final TreasureMap map) {
+		// area with panel size
+		final ICoordinate topLeft = map.getPosition(0, 0);
+		final ICoordinate bottomRight = map.getPosition(map.getWidth(), map.getHeight());
+		return new String[] {
+				Areas.newArea(topLeft, bottomRight)
+		};
+	}
+
+	/**
 	 * creates a 1D-Array of Area Strings, which are created by coordinates
 	 * in a 6 * 6 2D array with newArea()
 	 * O(n) / O(xLength * yLength)
 	 *
 	 * @return Array of Areas (whole world)
 	 */
-	// TODO: 02.08.2022 2. method getWorldAreaRaster1D(float gridSize) which uses this one
 	@NotNull
 	public static synchronized String[] getWorldAreaRaster1D(@Range(from = 1, to = 180) double latSize,
 															 @Range(from = 1, to = 360) double lonSize) {
@@ -190,23 +207,6 @@ public abstract class Areas {
 		 */
 		public static String newArea(final ICoordinate topLeft, final ICoordinate bottomRight) {
 			return newArea(topLeft.getLat(), bottomRight.getLat(), topLeft.getLon(), bottomRight.getLon());
-		}
-
-	/**
-	 * locates the current lat-lon-rectangle (area) of the map by
-	 * getting map-positions with getPos. method
-	 *
-	 * @param map is the {@link TreasureMap} where the current area is located on
-	 * @return the current map area, packed in a {@link String} array
-	 */
-		@NotNull
-		public static String[] getCurrentArea(@NotNull final TreasureMap map) {
-			// area with panel size
-			final ICoordinate topLeft = map.getPosition(0, 0);
-			final ICoordinate bottomRight = map.getPosition(map.getWidth(), map.getHeight());
-			return new String[] {
-					Areas.newArea(topLeft, bottomRight)
-			};
 		}
 
 }

@@ -13,6 +13,7 @@ import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.Field;
@@ -101,18 +102,24 @@ public abstract class Utilities {
      *
      * @param img is the {@link Image} that should be rotated
      * @param degrees is the degree of the rotation, from 0 to 360
+     * @param imageType is the image type constant from {@link BufferedImage}
+     * @param flipHorizontally indicates if the image should be flipped horizontally
      * @return {@link BufferedImage} with specific rotation
      */
     @NotNull
-    public static BufferedImage rotate(@NotNull Image img, @Range(from = 0, to = 360) final int degrees) {
+    public static BufferedImage rotate(@NotNull Image img, @Range(from = 0, to = 360) final int degrees, int imageType, boolean flipHorizontally) {
         final int width = img.getWidth(null);
         final int height = img.getHeight(null);
 
-        BufferedImage buf = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage buf = new BufferedImage(width, height, imageType);
         Graphics2D graphics = buf.createGraphics();
 
         graphics.rotate(Math.toRadians(degrees), MathUtils.divide(width, 2), MathUtils.divide(height, 2));
-        graphics.drawImage(img, 0, 0, null);
+        if (flipHorizontally) {
+            graphics.drawImage(img, width, 0, -width, height, null);
+        } else {
+            graphics.drawImage(img, 0, 0, null);
+        }
 
         return buf;
     }
@@ -197,8 +204,14 @@ public abstract class Utilities {
         } else if (lvl == 0) {
             return -128;
         }
-        float lvlPercentage = (float) MathUtils.divide((float) lvl, max);
-        return (byte) ((255 * lvlPercentage) - 128);
+        // got this calculation from internet
+        int rest = lvl % 256;
+        return (byte) (rest - 256);
+        /*double lvlPercentage = MathUtils.divide(lvl, (double) max);
+        System.out.println("Pct: " + lvlPercentage + ", Lvl: " + lvl);
+        double unsigned = 255 * lvlPercentage;
+        System.out.println(unsigned);
+        return (byte) (unsigned - 128);*/
     }
 
     /**
@@ -296,7 +309,8 @@ public abstract class Utilities {
      * @return number cast as int
      */
     public static <N extends Number> int asInt(@NotNull final N number) {
-        return number.intValue();
+        boolean primitive = number.getClass().isPrimitive();
+        return primitive ? (int) number : number.intValue();
     }
 
     /**
@@ -492,7 +506,7 @@ public abstract class Utilities {
      * @return a scaled instance of the input image
      */
     @NotNull
-    public static ImageIcon scaledImage(@NotNull ImageIcon img, int width, int height) {
+    public static ImageIcon scale(@NotNull ImageIcon img, int width, int height) {
         Image scaled = img.getImage().getScaledInstance(width, height, 4);
         return new ImageIcon(scaled);
     }
@@ -625,10 +639,11 @@ public abstract class Utilities {
         try {
             Field[] fields = classOfO.getDeclaredFields();
             Arrays.stream(fields).forEach(field -> {
+                String name; Object value;
                 try {
                     field.setAccessible(true);
-                    String name = field.getName();
-                    Object value = field.get(o);
+                    name = field.getName();
+                    value = field.get(o);
                     System.out.println(name + ": " + value);
                 } catch (InaccessibleObjectException | IllegalArgumentException | IllegalAccessException e) {
                     e.printStackTrace();

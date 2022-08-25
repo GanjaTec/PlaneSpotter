@@ -8,6 +8,7 @@ package planespotter.constants;
  * @description
  * abstract class Configuration contains the internal planespotter-configuration
  */
+// TODO: 24.08.2022 MERGE WITH UserSettings class
 public abstract class Configuration {
 
     // title

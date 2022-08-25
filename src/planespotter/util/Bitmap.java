@@ -74,7 +74,7 @@ public class Bitmap {
      * @param gridSize is the bitmap grid size, 1 is normal (360x180), 0.5 is the double (720x360)
      * @return Bitmap instance, created by pos-vector under a certain grid size
      */
-    public static Bitmap fromPosVector(Vector<Position> positions, @Range(from = 0, to = 2) float gridSize) {
+    public static Bitmap fromPosVector(@NotNull Vector<Position> positions, @Range(from = 0, to = 2) float gridSize) {
 
         int width = (int) divide(360., gridSize) + 1;
         int height = (int) divide(180., gridSize) + 1;
@@ -87,12 +87,7 @@ public class Bitmap {
         for (Position pos : positions) {
             posX = (int) divide(pos.lon() + 180, gridSize); // FIXME: 26.06.2022
             posY = (int) divide(pos.lat() + 90, gridSize); // FIXME: 26.06.2022
-            // if ? TODO if necessary
-            //if (posX < width && posY < height) {
-                ints2d[posX][posY]++;
-            /*} else {
-                ints2d[posX - 1][posY - 1]++;
-            }*/
+            ints2d[posX][posY]++;
         }
         return Bitmap.fromInt2d(ints2d);
     }
@@ -105,7 +100,7 @@ public class Bitmap {
             throw new InvalidDataException("No Bitmap found for filename " + filename + ", file must end with '.bmp'");
         }
         try {
-            img = Bitmap.readImage(imgFile);
+            img = ImageIO.read(imgFile);
         } catch (IOException e) {
             throw new InvalidDataException("Couldn't read bitmap image! Be sure you have a valid file type!");
         }
@@ -170,7 +165,6 @@ public class Bitmap {
      * @param filename
      * @return
      */
-    @Deprecated(since = ".bmp with ImageIO")
     public static File write(Bitmap bitmap, String filename)
             throws IOException {
 
@@ -229,13 +223,6 @@ public class Bitmap {
         return new Bitmap(bitmap);
     }
 
-    @NotNull
-    public static BufferedImage readImage(@NotNull File file)
-        throws IOException {
-
-        return ImageIO.read(file);
-    }
-
     /**
      *
      *
@@ -246,7 +233,7 @@ public class Bitmap {
     public static Bitmap read(String filename)
             throws IOException {
 
-        return Bitmap.fromImage(Bitmap.readImage(new File(filename)));
+        return Bitmap.fromImage(ImageIO.read(new File(filename)));
     }
 
     // instance fields
@@ -290,13 +277,9 @@ public class Bitmap {
                 lvl = (short) (255 - (this.bitmap[x][y] + 128));
                 color = new Color(lvl, lvl, lvl);
                 img.setRGB(x, y, color.getRGB());
-                // TODO: 27.06.2022
- /*               var graphics = img.createGraphics();
-                graphics.rotate(StrictMath.toRadians(180));
-*/
             }
         }
-        return img;
+        return Utilities.rotate(img, 180, BufferedImage.TYPE_BYTE_GRAY, true);
     }
 
     /**

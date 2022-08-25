@@ -13,12 +13,12 @@ import planespotter.display.models.InfoPane;
 import planespotter.display.models.LayerPane;
 import planespotter.display.models.SearchPane;
 import planespotter.display.models.SettingsPane;
-import planespotter.model.nio.LiveLoader;
+import planespotter.model.io.DBOut;
 import planespotter.statistics.Statistics;
-import planespotter.throwables.IllegalInputException;
+import planespotter.throwables.DataNotFoundException;
 import planespotter.util.Bitmap;
-import planespotter.util.math.MathUtils;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -187,14 +187,10 @@ public abstract class ActionHandler
                 ctrl.show(ViewType.MAP_HEATMAP);
 
             } else if (button.getName().equals("loadMap")) {
-                try {
-                    //var inputs = gui.searchInput();
-                    String[] inputs;
-                    if ((inputs = ctrl.getUI().getSearchPanel().searchInput()) != null) {
-                        ctrl.search(inputs, 1);
-                    }
-                } catch (IllegalInputException e) {
-                    ctrl.handleException(e);
+                //var inputs = gui.searchInput();
+                String[] inputs;
+                if ((inputs = ctrl.getUI().getSearchPanel().searchInput()) != null) {
+                    ctrl.search(inputs, 1);
                 }
             }
         }, "Action Handler", false, Scheduler.MID_PRIO, true);
@@ -301,15 +297,7 @@ public abstract class ActionHandler
             case "Fr24-Supplier" -> ctrl.runFr24Collector();
             case "Top-Airports" -> Diagrams.showTopAirports(ui, new Statistics());
             case "Top-Airlines" -> Diagrams.showTopAirlines(ui, new Statistics());
-            case "Position-HeatMap" -> {
-                try {
-                    /*Bitmap bitmap = Bitmap.fromPosVector(new Test().TEST_POS_VECTOR, 1f);
-                    Diagrams.showPosHeatMap(ui, bitmap);*/
-                    Diagrams.showPosHeatMap(ui, Bitmap.readImage(new File(Paths.RESOURCE_PATH + "bmpBitmap.bmp")));
-                } catch (IOException e) {
-                    ui.showWarning(Warning.NO_DATA_FOUND, e.getMessage());
-                }
-            }
+            case "Position-HeatMap" -> ctrl.showBitmap();
 
             case "ADSB-Supplier", "Antenna" -> ui.showWarning(Warning.NOT_SUPPORTED_YET);
         }

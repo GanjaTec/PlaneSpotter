@@ -12,6 +12,7 @@ import planespotter.throwables.OutOfRangeException;
 import planespotter.util.Utilities;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 import static planespotter.constants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
 
@@ -113,9 +114,10 @@ public class PlaneMarker extends MapMarkerDot implements MapMarker {
         if (!showIcon) {
             return null;
         }
+        int imgType = BufferedImage.TYPE_INT_ARGB;
         return selected
-                ? (g, pos, radius) -> g.drawImage(Utilities.rotate(SELECTED_PLANE_ICON, heading), pos.x-SELECTED_PLANE_ICON.getWidth(null)/2, pos.y-SELECTED_PLANE_ICON.getHeight(null)/2, null)
-                : (g, pos, radius) -> g.drawImage(Utilities.rotate(DEFAULT_PLANE_ICON, heading), pos.x- DEFAULT_PLANE_ICON.getWidth(null)/2, pos.y- DEFAULT_PLANE_ICON.getHeight(null)/2, null);
+                ? (g, pos, radius) -> g.drawImage(Utilities.rotate(SELECTED_PLANE_ICON, heading, imgType, false), pos.x-SELECTED_PLANE_ICON.getWidth(null)/2, pos.y-SELECTED_PLANE_ICON.getHeight(null)/2, null)
+                : (g, pos, radius) -> g.drawImage(Utilities.rotate(DEFAULT_PLANE_ICON, heading, imgType, false), pos.x- DEFAULT_PLANE_ICON.getWidth(null)/2, pos.y- DEFAULT_PLANE_ICON.getHeight(null)/2, null);
     }
 
     public int getHeading() {

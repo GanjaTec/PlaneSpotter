@@ -15,9 +15,10 @@ public enum Warning {
     TIMEOUT("Timeout! Task takes more time than expected! \nIf the Program is lagging, try to restart it!"),
     REJECTED_EXECUTION("Execution rejected! This shouldn't happen normally!"),
     ILLEGAL_INPUT("Illegal Input! \nAn expression/character you used, is not allowed!"),
-    INT_EXPECTED("INT expected! please enter a valid number (e.g. 1, 525, -11,..."),
+    NUMBER_EXPECTED("INT expected! please enter a valid number (e.g. 1, 525, -11,..."),
     FILE_ALREADY_EXISTS("File already exists, please choose another name!"),
     INVALID_DATA("Some data is invalid, try again."),
+    FILE_NOT_FOUND("File couldn't be found, check Path and try again!"),
     NOT_SUPPORTED_YET("This feature is not supported yet!");
 
     // warning string instance field
