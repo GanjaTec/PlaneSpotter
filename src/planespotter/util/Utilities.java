@@ -204,14 +204,9 @@ public abstract class Utilities {
         } else if (lvl == 0) {
             return -128;
         }
-        // got this calculation from internet
+        // got this calculation from internet, easier than the one before and more pretty numbers
         int rest = lvl % 256;
         return (byte) (rest - 256);
-        /*double lvlPercentage = MathUtils.divide(lvl, (double) max);
-        System.out.println("Pct: " + lvlPercentage + ", Lvl: " + lvl);
-        double unsigned = 255 * lvlPercentage;
-        System.out.println(unsigned);
-        return (byte) (unsigned - 128);*/
     }
 
     /**

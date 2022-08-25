@@ -8,12 +8,8 @@ import planespotter.throwables.InvalidArrayException;
 import planespotter.throwables.InvalidDataException;
 
 import javax.imageio.ImageIO;
-import javax.imageio.stream.FileImageInputStream;
-import javax.imageio.stream.FileImageOutputStream;
-import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -92,12 +88,22 @@ public class Bitmap {
         return Bitmap.fromInt2d(ints2d);
     }
 
+    /**
+     * creates a {@link Bitmap} from {@link Image} with filename
+     *
+     * @param filename is the image file name
+     * @return {@link Bitmap} from image
+     * @throws FileNotFoundException if the file was not found
+     * @throws InvalidDataException if the image data is invalid
+     */
     @NotNull
-    public static Bitmap fromImage(@NotNull String filename) {
+    public static Bitmap fromImage(@NotNull String filename)
+            throws FileNotFoundException {
+
         BufferedImage img;
         File imgFile = new File(filename);
         if (!imgFile.exists()) {
-            throw new InvalidDataException("No Bitmap found for filename " + filename + ", file must end with '.bmp'");
+            throw new FileNotFoundException("No Bitmap found for filename " + filename + ", file must end with '.bmp'");
         }
         try {
             img = ImageIO.read(imgFile);
@@ -108,10 +114,10 @@ public class Bitmap {
     }
 
     /**
+     * creates a {@link Bitmap} from {@link BufferedImage}
      *
-     *
-     * @param img
-     * @return
+     * @param img is the {@link BufferedImage} to convert into {@link Bitmap}
+     * @return {@link Bitmap}, converted from {@link BufferedImage}
      */
     @NotNull
     public static Bitmap fromImage(@NotNull BufferedImage img) {
@@ -127,35 +133,6 @@ public class Bitmap {
             }
         }
         return new Bitmap(bmpBytes);
-    }
-
-    /**
-     *
-     *
-     * @param bitmap
-     * @param file
-     * @return
-     */
-    @Deprecated(since = ".bmp with ImageIO")
-    public static File write0000(Bitmap bitmap, File file) {
-
-        byte[] bytes;
-        ImageOutputStream outputStream;
-        long startTime = Time.nowMillis();
-        try {
-            bytes = bitmap.getByteArray();
-            outputStream = new FileImageOutputStream(file);
-            outputStream.writeInt(bitmap.width);
-            outputStream.writeInt(bitmap.heigth);
-            outputStream.write(bytes);
-            outputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            long elapsed = Time.elapsedMillis(startTime);
-            System.out.println("Wrote Bitmap file '" + file.getName() + "' in " + elapsed + " milliseconds!");
-        }
-        return file;
     }
 
     /**
@@ -190,42 +167,6 @@ public class Bitmap {
     /**
      *
      *
-     * @param file
-     * @return
-     * @throws FileNotFoundException
-     */
-    @Deprecated(since = ".bmp with ImageIO")
-    public static Bitmap read0000(File file)
-            throws IOException {
-
-        if (!file.exists()) {
-            throw new FileNotFoundException("File not found!");
-        }
-        FileImageInputStream inputStream;
-        int width, heigth, length;
-        byte[] bytes;
-        byte[][] bitmap;
-        inputStream = new FileImageInputStream(file);
-        width = inputStream.readInt();
-        heigth = inputStream.readInt();
-        length = width * heigth;
-        bytes = new byte[length];
-        inputStream.read(bytes);
-        inputStream.close();
-
-        bitmap = new byte[width][heigth];
-        int i = 0;
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < heigth; y++, i++) {
-                bitmap[x][y] = bytes[i];
-            }
-        }
-        return new Bitmap(bitmap);
-    }
-
-    /**
-     *
-     *
      * @param filename
      * @return
      * @throws FileNotFoundException
@@ -238,10 +179,13 @@ public class Bitmap {
 
     // instance fields
 
-    // bitmap as 2D-byte array (memory-efficient)
+    // bitmap as 2D-byte array (memory-efficient),
+    // it is not possible to use short- or int-arrays here
+    // because they use too much memory
     private final byte[][] bitmap;
+
     // bitmap width and height
-    public final int width, heigth;
+    public final int width, height;
 
     /**
      * constructor for Bitmap,
@@ -254,10 +198,17 @@ public class Bitmap {
     public Bitmap(byte[][] bitmap) {
         this.bitmap = bitmap;
         this.width = bitmap.length;
+        boolean error = false;
         if (this.width == 0) {
+            error = true;
+        }
+        this.height = bitmap[0].length;
+        if (this.height == 0) {
+            error = true;
+        }
+        if (error) {
             throw new InvalidArrayException("Array width and length must be higher or equals one!");
         }
-        this.heigth = bitmap[0].length;
     }
 
     /**
@@ -266,11 +217,11 @@ public class Bitmap {
      * @return
      */
     public BufferedImage toImage() {
-        var img = new BufferedImage(this.width, this.heigth, BufferedImage.TYPE_BYTE_GRAY);
+        var img = new BufferedImage(this.width, this.height, BufferedImage.TYPE_BYTE_GRAY);
         short lvl;
         Color color;
         for (int x = 0; x < this.width; x++) {
-            for (int y = 0; y < this.heigth; y++) {
+            for (int y = 0; y < this.height; y++) {
                 // this should be an unsigned byte,
                 //  but there is no unsigned byte in Java,
                 //  so we use short here
@@ -288,10 +239,10 @@ public class Bitmap {
      * @return
      */
     public byte[] getByteArray() {
-        byte[] bytes = new byte[this.width * this.heigth];
+        byte[] bytes = new byte[this.width * this.height];
         int i = 0;
         for (int x = 0; x < this.width; x++) {
-            for (int y = 0; y < this.heigth; y++, i++) {
+            for (int y = 0; y < this.height; y++, i++) {
                 bytes[i] = this.bitmap[x][y];
             }
         }
