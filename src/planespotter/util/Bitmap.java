@@ -21,7 +21,7 @@ import static planespotter.util.math.MathUtils.divide;
 /**
  * @name Bitmap
  * @author jml04
- * @version 1.0
+ * @version 1.1
  *
  * @description
  * the Bitmap class represents a 2D-bitmap,

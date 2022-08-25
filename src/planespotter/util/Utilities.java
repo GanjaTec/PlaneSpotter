@@ -33,12 +33,15 @@ import java.util.stream.Stream;
  * @author Lukas
  * @author Bennet
  * @version 1.0
+ *
  * @description
  * class Utilities contains different utility-methods for different usages
  */
 public abstract class Utilities {
 
-    // char-values connected to hex-int-values
+    /**
+     * char-values connected to hex-int-values
+     */
     public static final Map<Character, Integer> charIntValues = new HashMap<>(16);
 
     // initialing the char-int map
