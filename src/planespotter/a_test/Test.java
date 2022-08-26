@@ -1,5 +1,8 @@
 package planespotter.a_test;
 
+import jdk.internal.misc.VM;
+import jdk.jfr.internal.JVM;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartFactory;
@@ -10,12 +13,14 @@ import org.jfree.data.category.DefaultCategoryDataset;
 
 import planespotter.constants.*;
 import planespotter.dataclasses.Fr24Frame;
+import planespotter.model.Scheduler;
 import planespotter.util.Bitmap;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
 import planespotter.statistics.Statistics;
 import planespotter.model.io.DBOut;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.util.Time;
 import planespotter.util.Utilities;
 import sun.misc.Unsafe;
 
@@ -24,9 +29,12 @@ import javax.swing.Timer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Stream;
 
 @TestOnly
@@ -47,14 +55,20 @@ public class Test {
         System.out.println(result);
 */
 
-        Fr24Frame frame = new Fr24Frame("test", 4.64, 56.52, 56, 20000, 637, 4400, "T-ABC", "B738", "B-333", 2928383, "CDG", "BER", "flight1", "unknwn1", "abc22", "DUKE222", "hallo", "NCR");
+        DBOut dbOut = DBOut.getDBOut();
+        Vector<Position> allPos = dbOut.getAllTrackingPositions();
+        Bitmap bitmap = Bitmap.fromPosVector(allPos, 0.5f);
+        Bitmap.write(bitmap, Paths.RESOURCE_PATH + "bitmap.bmp");
 
+        /*Fr24Frame frame = new Fr24Frame("test", 4.64, 56.52, 56, 20000, 637, 4400, "T-ABC", "B738", "B-333", 2928383, "CDG", "BER", "flight1", "unknwn1", "abc22", "DUKE222", "hallo", "NCR");
         Utilities.printCurrentFields(frame);
-
-
+*/
     }
 
-    private static Unsafe getUnsafe() {
+    private static Unsafe getUnsafe(@NotNull Class<?> caller) {
+        if (caller != Test.class) {
+            throw new IllegalCallerException("This method may only be used in the Test class!");
+        }
         try {
             Field field = Unsafe.class.getDeclaredField("theUnsafe");
             field.setAccessible(true);
@@ -69,13 +83,14 @@ public class Test {
      * unsafe class is able to do 'JVM-actions' like allocating memory or sth. like that
      */
     private static void unsafeTest() {
-        Unsafe unsafe = getUnsafe();
+        Unsafe unsafe = getUnsafe(Test.class);
         System.out.println(unsafe.addressSize());
         unsafe.allocateMemory(4);
+
         // this throws a JVM error because of illegal access // or maybe wrong address
-        /*long a_pointer = unsafe.getAddress(a);
-        long a = 555;
-        System.out.println(a_pointer);*/
+        long address = 0x00000001L;
+        unsafe.setMemory(address, 1L, (byte) 5);
+        System.out.println(unsafe.getByte(address));
     }
 
     private void testBitmapWrite() throws IOException {
@@ -91,7 +106,7 @@ public class Test {
         Bitmap.write(bmp, new File(Paths.RESOURCE_PATH + "bmpBitmap.bmp"));
     }
 
-    private void speedChartTest() throws DataNotFoundException {
+    /*private void speedChartTest() throws DataNotFoundException {
         var ptps = DBOut.getDBOut().getAllPlanetypesLike("c20");
         var fids = DBOut.getDBOut().getFlightIDsByPlaneTypes(ptps);
         var arr = fids.toArray(new Integer[0]);
@@ -119,11 +134,11 @@ public class Test {
         var frame = new ChartFrame("Speed", chart);
         frame.pack();
         frame.setVisible(true);
-    }
+    }*/
 
     private void testChart1() throws DataNotFoundException {
         var stats = new Statistics();
-        var airportTags = DBOut.getDBOut().getAllAirportTags();
+        var airportTags = DBOut.getDBOut().getAllAirportTagsNotDistinct();
         var apStats = stats.onlySignificant(stats.tagCount(airportTags), 900);
         var dataset = Statistics.createBarDataset(apStats);
         DefaultCategoryDataset defaultCategoryDataset = new DefaultCategoryDataset();
@@ -158,7 +173,7 @@ public class Test {
 
     private void topAirports(int limit) throws DataNotFoundException {
         var stats = new Statistics();
-        var airportTags = DBOut.getDBOut().getAllAirportTags();
+        var airportTags = DBOut.getDBOut().getAllAirportTagsNotDistinct();
         var apStats = stats.onlySignificant(stats.tagCount(airportTags), 500);
         // filtering top airports
         var sortedMap = new HashMap<String, Integer>();
@@ -174,7 +189,7 @@ public class Test {
 
     private void testAirportChart(int minCount) throws DataNotFoundException {
         var stats = new Statistics();
-        var airportTags = DBOut.getDBOut().getAllAirportTags();
+        var airportTags = DBOut.getDBOut().getAllAirportTagsNotDistinct();
         var apStats = stats.onlySignificant(stats.tagCount(airportTags), minCount);
         var dataset = Statistics.createBarDataset(apStats);
         var barChart = ChartFactory.createBarChart("Airport-Significance", "Airports", "Flight-Count", dataset, PlotOrientation.HORIZONTAL, true, true, false);

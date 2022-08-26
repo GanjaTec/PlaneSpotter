@@ -1,19 +1,15 @@
 package planespotter.display.models;
 
-import org.jdesktop.animation.timing.Animator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import planespotter.constants.Configuration;
-import planespotter.constants.Images;
-import planespotter.constants.Paths;
 import planespotter.controller.ActionHandler;
 import planespotter.model.Scheduler;
 import planespotter.util.Utilities;
+import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.util.concurrent.TimeUnit;
 
 import static planespotter.constants.GUIConstants.*;
@@ -54,7 +50,7 @@ public final class PaneModels {
     }
 
     public static synchronized void startScreenAnimation(int sec) {
-        ImageIcon img = Utilities.scaledImage(START_SCREEN.get(), 800, 100);
+        ImageIcon img = Utilities.scale(START_SCREEN.get(), 800, 100);
         JLabel label = new JLabel(img);
         label.setSize(img.getIconWidth(), img.getIconHeight());
         label.setOpaque(false);
@@ -69,7 +65,7 @@ public final class PaneModels {
         dialog.setVisible(true);
         // easy animation
         long millis = TimeUnit.SECONDS.toMillis(sec);
-        long vel = millis / 100;
+        long vel = MathUtils.divide(millis, 100L);
         float opc;
         for (int s = 0; s < millis; s += vel) {
             opc = dialog.getOpacity();

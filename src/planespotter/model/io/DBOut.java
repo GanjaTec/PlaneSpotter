@@ -1312,7 +1312,7 @@ public final class DBOut extends DBConnector {
 		return map;
 	}
 
-	public Deque<String> getAllAirportTags()
+	public Deque<String> getAllAirportTagsNotDistinct()
 			throws DataNotFoundException {
 
 		var tags = new ArrayDeque<String>();

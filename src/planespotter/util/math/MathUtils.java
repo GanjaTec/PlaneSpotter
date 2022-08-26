@@ -1,6 +1,8 @@
 package planespotter.util.math;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
+import planespotter.util.Utilities;
 import planespotter.util.math.Vector2D;
 import planespotter.util.math.Vector3D;
 
@@ -44,33 +46,33 @@ public abstract class MathUtils {
         return lon * oneDegree;
     }
 
-    public static long timeDiff(long now, long last, TimeUnit inputTimeUnit, TimeUnit outputTimeUnit) {
-        long tDiff = now - last;
-        return switch (outputTimeUnit) {
-            case NANOSECONDS -> inputTimeUnit.toNanos(tDiff);
-            case MICROSECONDS -> inputTimeUnit.toMicros(tDiff);
-            case MILLISECONDS -> inputTimeUnit.toMillis(tDiff);
-            case SECONDS -> inputTimeUnit.toSeconds(tDiff);
-            case MINUTES -> inputTimeUnit.toMinutes(tDiff);
-            case HOURS -> inputTimeUnit.toHours(tDiff);
-            case DAYS -> inputTimeUnit.toDays(tDiff);
-        };
+    public static int divide(int a, int divisor) {
+        zeroCheck(divisor);
+        return StrictMath.floorDiv(a, divisor);
     }
 
-    public static int divide(int a, int divisor) {
-        if (divisor == 0) {
-            throw new ArithmeticException("Divisor may not be null!");
-        }
+    public static long divide(long a, long divisor) {
+        zeroCheck(divisor);
         return StrictMath.floorDiv(a, divisor);
     }
 
     public static double divide(double a, double divisor) {
-        if (divisor == 0.) {
-            throw new ArithmeticException("Divisor may not be null!");
-        }
+        zeroCheck(divisor);
         return new BigDecimal(a)
                 .divide(new BigDecimal(divisor), RoundingMode.DOWN)
                 .doubleValue();
+    }
+
+    private static void zeroCheck(@NotNull Number num) {
+        ArithmeticException ex = null;
+        if ((num instanceof Integer || num instanceof Long) && Utilities.asInt(num) == 0) {
+            ex = new ArithmeticException("0 not allowed as divisor!");
+        } else if (num.doubleValue() == 0.0) {
+            ex = new ArithmeticException("0 not allowed as divisor!");
+        }
+        if (ex != null) {
+            throw ex;
+        }
     }
 
     /**

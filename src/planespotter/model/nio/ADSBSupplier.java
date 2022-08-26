@@ -81,7 +81,6 @@ public class ADSBSupplier implements Supplier{
         ExampleDecoder decoder = new ExampleDecoder();
         long time = System.currentTimeMillis();
 
-
         decoder.decodeMsg(time, raw, null);
     }
 

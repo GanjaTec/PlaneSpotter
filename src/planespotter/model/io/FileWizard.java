@@ -62,16 +62,16 @@ public class FileWizard {
      */
     @NotNull
     public synchronized MapData loadPlsFile(@NotNull File selected)
-            throws DataNotFoundException, InvalidDataException {
+            throws InvalidDataException, FileNotFoundException {
 
         if (selected.exists()) {
             try {
                 return this.readMapData(selected);
-            } catch (IOException | ClassNotFoundException | ClassCastException e) {
+            } catch (IOException ioe) {
                 throw new InvalidDataException("Map data is invalid, try another file!");
             }
         }
-        throw new DataNotFoundException("Error! File not found or invalid MapData!");
+        throw new FileNotFoundException("Error! File not found!");
     }
 
     /**
@@ -120,14 +120,18 @@ public class FileWizard {
      */
     @NotNull
     private synchronized MapData readMapData(@NotNull File file)
-            throws ClassCastException, IOException, ClassNotFoundException {
+            throws IOException {
 
         // replaced default try-finally block with try-with-resource block,
         //  which has automatic resource-management
         try (FileInputStream fis = new FileInputStream(file);
              ObjectInputStream ois = new ObjectInputStream(fis)) {
 
-            return (MapData) ois.readObject();
+            try {
+                return (MapData) ois.readObject();
+            } catch (ClassNotFoundException | ClassCastException e) {
+                throw new IOException("MapData object is invalid!", e);
+            }
         }
     }
 
@@ -141,6 +145,15 @@ public class FileWizard {
 
             oos.writeObject(mapData);
         }
+    }
+
+    private synchronized void writeLog(@NotNull File file, OutputStream os) {
+
+    }
+
+    private synchronized void writeLog(@NotNull File file, PrintWriter writer) {
+        // try to write System.out (PrintStream) into file
+
     }
 
     private synchronized void writeLog(@NotNull File file, @NotNull String text)
