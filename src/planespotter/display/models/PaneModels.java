@@ -1,16 +1,16 @@
 package planespotter.display.models;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import planespotter.constants.Configuration;
-import planespotter.constants.Images;
-import planespotter.constants.Paths;
 import planespotter.controller.ActionHandler;
+import planespotter.model.Scheduler;
+import planespotter.util.Utilities;
+import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
+import java.util.concurrent.TimeUnit;
 
 import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.DefaultColor.*;
@@ -47,6 +47,32 @@ public final class PaneModels {
         window.setJMenuBar(MenuModels.topMenuBar(listener));
 
         return window;
+    }
+
+    public static synchronized void startScreenAnimation(int sec) {
+        ImageIcon img = Utilities.scale(START_SCREEN.get(), 800, 100);
+        JLabel label = new JLabel(img);
+        label.setSize(img.getIconWidth(), img.getIconHeight());
+        label.setOpaque(false);
+        label.setLayout(null);
+
+        JDialog dialog = new JDialog();
+        dialog.add(label);
+        dialog.setSize(label.getSize());
+        dialog.setLocationRelativeTo(null);
+        dialog.setUndecorated(true);
+        dialog.setOpacity(0.0f);
+        dialog.setVisible(true);
+        // easy animation
+        long millis = TimeUnit.SECONDS.toMillis(sec);
+        long vel = MathUtils.divide(millis, 100L);
+        float opc;
+        for (int s = 0; s < millis; s += vel) {
+            opc = dialog.getOpacity();
+            dialog.setOpacity(opc + 0.01f);
+            Scheduler.sleep(vel);
+        }
+        dialog.setVisible(false);
     }
 
     @NotNull

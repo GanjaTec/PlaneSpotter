@@ -4,9 +4,11 @@ package planespotter.constants;
  * @name Configuration
  * @author jml04
  * @version 1.0
+ * 
  * @description
  * abstract class Configuration contains the internal planespotter-configuration
  */
+// TODO: 24.08.2022 MERGE WITH UserSettings class
 public abstract class Configuration {
 
     // title

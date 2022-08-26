@@ -26,14 +26,15 @@ import java.util.*;
  * which can be used to create further dataclasses like flights, planes, etc...
  */
 public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<String>> {
+
     // filter expressions, may be null or empty
-    private String[] filter;
+    @NotNull private Filters filters;
 
     /**
      * Fr24-Deserializer-constructor
      */
     public Fr24Deserializer() {
-        this.filter = null;
+        this.filters = new Filters();
     }
 
     /**
@@ -41,23 +42,31 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
      *
      * @param filter are the expressions to set as filters
      */
-    public void setFilter(@Nullable String... filter) {
-        this.filter = filter;
+    public void setFilter(@NotNull String... filter) {
+        this.filters.set(filter);
     }
 
     /**
-     * deserializes incoming http response
-     * from json to Fr24Frame ArrayDeque
+     * getter for {@link Filters} object which contains filters and filter-functions
+     *
+     * @return the deserializer's {@link Filters} object
+     */
+    @NotNull
+    public Filters getFilters() {
+        return this.filters;
+    }
+
+    /**
+     * deserializes incoming {@link HttpResponse} that contains Fr24-Data
+     * from json to {@link Fr24Frame}-{@link ArrayDeque}
      *
      * @param response is the HttpResponse to deserialize
      * @return ArrayDeque of deserialized Frames
-     *
-     * @indev
      */
     @Override
     @NotNull
     public Deque<Fr24Frame> deserialize(@NotNull HttpResponse<String> response) {
-        JsonArray jsa = this.parseJsonArray(response, this.filter);
+        JsonArray jsa = this.parseJsonArray(response, this.filters.getFilters());
         ArrayDeque<Fr24Frame> frames = new ArrayDeque<>();
         Iterator<JsonElement> it = jsa.iterator();
         Gson gson = new Gson();
@@ -81,10 +90,10 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
      * @return JsonArray by HttpResponse
      */
     @NotNull
-    private JsonArray parseJsonArray(@NotNull HttpResponse<String> resp, @Nullable String... filter) {
+    private JsonArray parseJsonArray(@NotNull HttpResponse<String> resp, @Nullable List<String> filter) {
         JsonArray jsa = new JsonArray(); // creating new JsonArray
         resp.body().lines() // getting stream of body-lines
-                .filter(s -> s.length() != 1 && filterBy(s, filter)) // filtering out valid and filter-allowed lines
+                .filter(s -> s.length() > 1 && filterBy(s, filter)) // filtering out valid and filter-allowed lines
                 .map(this::unwrap) // unwrapping line strings from certain expressions
                 .map(this::parseJsonObject) // parsing lines to JsonObjects
                 .forEach(jsa::add); // adding JsonObject to JsonArray
@@ -100,9 +109,9 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
      *              if the filter array is null or empty.
      *         false if no filter-match was found in the input string
      */
-    private boolean filterBy(@NotNull String input, @Nullable String... filter) {
+    private boolean filterBy(@NotNull String input, @Nullable List<String> filter) {
         // checking for null filter
-        if (filter == null) {
+        if (filter == null || filter.size() == 0) {
             return true;
         }
         // going through filters
@@ -171,10 +180,13 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
     @NotNull
     private <N extends Number> Number parseOrElse(@NotNull String toParse, final N orElse) {
         boolean notBlank = !toParse.isBlank();
-        if (orElse instanceof Integer) {
-            return notBlank ? Integer.parseInt(toParse) : orElse;
-        } else if (orElse instanceof Double) {
-            return notBlank ? Double.parseDouble(toParse) : orElse;
+        try {
+            if (orElse instanceof Integer) {
+                return notBlank ? Integer.parseInt(toParse) : orElse;
+            } else if (orElse instanceof Double) {
+                return notBlank ? Double.parseDouble(toParse) : orElse;
+            }
+        } catch (NumberFormatException ignored) {
         }
         return orElse;
     }
@@ -185,22 +197,21 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
      * JSON input Strings (maybe they are invalid, could be a method from Fr24 to make the data structure more complex)
      *
      * @param line is the line String to unwrap
-     * @return
+     * @return unwrapped input sting
      */
-    private String unwrap(@NotNull final String line) {
-        String out;
+    private String unwrap(@NotNull String line) {
         try {
-            if (line.startsWith("{") && line.length() > 43) { // GEHT DAS SO ? length?
-                out = line.substring(43);
+            if (line.startsWith("{") && line.length() > 43) {
+                line = line.substring(43);
             } else {
-                out = line.substring(12);
+                line = line.substring(12);
             }
         } catch (StringIndexOutOfBoundsException e) {
-            throw new Fr24Exception("Invalid Fr24-Data! caused by:\n" + e.getMessage());
+            throw new Fr24Exception("Invalid Fr24-Data!", e);
         }
-        return out.replaceAll("\\[", "")
-                .replaceAll("]", "")
-                .replaceAll("\"", "");
+        return line.replaceAll("\\[", "")
+                   .replaceAll("]", "")
+                   .replaceAll("\"", "");
     }
 
 }

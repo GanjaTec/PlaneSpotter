@@ -61,7 +61,7 @@ public class InfoPane extends JPanel {
         this.infoList.setBorder(GUIConstants.MENU_BORDER);
         this.infoList.setFont(GUIConstants.FONT_MENU.deriveFont(12f));
         this.infoList.setCellRenderer(new Renderer());
-        this.infoList.setBounds(10, 10, super.getWidth() - 20, super.getHeight() / 2);
+        this.infoList.setBounds(10, 10, super.getWidth() - 20, 330);
         super.add(this.infoList);
     }
 

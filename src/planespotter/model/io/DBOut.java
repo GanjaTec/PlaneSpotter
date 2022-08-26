@@ -2,6 +2,7 @@ package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
 
+import org.jetbrains.annotations.Range;
 import planespotter.constants.SQLQueries;
 import planespotter.dataclasses.*;
 import planespotter.constants.UserSettings;
@@ -556,12 +557,8 @@ public final class DBOut extends DBConnector {
 		return flightIDs;
 	}
 
-	public Flight getFlightByID(int id)
+	public Flight getFlightByID(@Range(from = 0, to = Integer.MAX_VALUE) int id)
 			throws DataNotFoundException {
-
-		if (id < 0) {
-			return null;
-		}
 
 		Flight flight = null;
 		Plane plane;
@@ -1315,7 +1312,7 @@ public final class DBOut extends DBConnector {
 		return map;
 	}
 
-	public Deque<String> getAllAirportTags()
+	public Deque<String> getAllAirportTagsNotDistinct()
 			throws DataNotFoundException {
 
 		var tags = new ArrayDeque<String>();

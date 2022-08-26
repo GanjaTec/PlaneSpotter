@@ -13,26 +13,27 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @name Areas
  * @author Lukas
+ * @author jml04
  * @version 1.0
  *
- * class areas contains all map areas as complicated coordinate-strings
+ * @description
+ * class areas contains all map areas as complicated coordinate-strings.
+ * Area Structure:
+ *
+ * " {lat-topLeft} %2C {latBottomRight} %2C {lonTopLeft} %2C {lonBottomRight} "
+ *
+ * lat's go from 90 to -90
+ * lon's go from -180 to 180
+ *
+ * Example.: "86.0%2C-45.8%2C-120.1%2C150.5"
+ *
  */
-public final class Areas {
+public abstract class Areas {
 
 	/**
-	 * Area-Separator-String, is used to separate the doubles in an Area-String
+	 * Area-Separator-String, used to separate the doubles in an Area-String
 	 */
 	private static final String SEPARATOR = "%2C";
-	/**
-	 * Area Structure:
-	 *
-	 * " {lat-topLeft} %2C {latBottomRight} %2C {lonTopLeft} %2C {lonBottomRight} "
-	 *
-	 * lat's go from 90 to -90
-	 * lon's go from -180 to 180
-	 *
-	 * Bsp.: "86.0%2C-45.8%2C-120.1%2C150.5"
-	 */
 
 	//Ukraine War
 	public static final String UKRAINE = "52.567%2C45.909%2C17.843%2C45.967";
@@ -87,28 +88,45 @@ public final class Areas {
 	public static final String[] NAFC = {};
 
 	/**
+	 * locates the current lat-lon-rectangle (area) of the map by
+	 * getting map-positions with getPos. method
+	 *
+	 * @param map is the {@link TreasureMap} where the current area is located on
+	 * @return the current map area, packed in a {@link String} array
+	 */
+	@NotNull
+	public static String[] getCurrentArea(@NotNull final TreasureMap map) {
+		// area with panel size
+		final ICoordinate topLeft = map.getPosition(0, 0);
+		final ICoordinate bottomRight = map.getPosition(map.getWidth(), map.getHeight());
+		return new String[] {
+				Areas.newArea(topLeft, bottomRight)
+		};
+	}
+
+	/**
 	 * creates a 1D-Array of Area Strings, which are created by coordinates
 	 * in a 6 * 6 2D array with newArea()
+	 * O(n) / O(xLength * yLength)
 	 *
 	 * @return Array of Areas (whole world)
 	 */
-	// TODO: 02.08.2022 2. method getWorldAreaRaster1D(float gridSize) which uses this one
 	@NotNull
 	public static synchronized String[] getWorldAreaRaster1D(@Range(from = 1, to = 180) double latSize,
 															 @Range(from = 1, to = 360) double lonSize) {
 
 		double lat, lon = -180.;
-		byte xLength = (byte) (360 / lonSize),
-			 yLength = (byte) (180 / latSize);
+		short xLength = (short) (360 / lonSize),
+			  yLength = (short) (180 / latSize);
 
 		final String[][] areaRaster2D = new String[xLength][yLength]; // xLength * yLength Raster of Areas
-		final String[] areaRaster1D = new String[xLength * yLength]; // 6 * 6 Raster as 1D-Array
+		final String[] areaRaster1D = new String[xLength * yLength]; // xLength * yLength Raster as 1D-Array
 		final AtomicInteger index = new AtomicInteger(0);
 
-		for (byte x = 0; x < xLength; x++) {
+		for (short x = 0; x < xLength; x++) {
 			lat = 90.;
-			for (byte y = 0; y < yLength; y++) {
-				areaRaster2D[x][y] = Areas.newArea(new Position(lat, lon), new Position(lat - latSize, lon + lonSize));
+			for (short y = 0; y < yLength; y++) {
+				areaRaster2D[x][y] = newArea(new Position(lat, lon), new Position(lat - latSize, lon + lonSize));
 				lat -= latSize;
 			}
 			lon += lonSize;
@@ -120,12 +138,18 @@ public final class Areas {
 		return areaRaster1D;
 	}
 
+	/**
+	 * collects all area constants and returns them
+	 *
+	 * @return all area constants in a {@link String} array
+	 */
 	public static synchronized String[] getAllAreas() {
 		int eastLength = EASTERN_FRONT.length;
 		int gerLength = GERMANY.length;
 		int itaSwiAuLength = ITA_SWI_AU.length;
 		final int length = eastLength + gerLength + itaSwiAuLength;
-		var areas = new String[length];
+		String[] areas = new String[length];
+
 		int a = 0, b = 0, c = 0; // counters
 		for (int addIdx = 0; addIdx < length; addIdx++) {
 			if (a < eastLength) {
@@ -183,16 +207,6 @@ public final class Areas {
 		 */
 		public static String newArea(final ICoordinate topLeft, final ICoordinate bottomRight) {
 			return newArea(topLeft.getLat(), bottomRight.getLat(), topLeft.getLon(), bottomRight.getLon());
-		}
-
-		@NotNull
-		public static String[] getCurrentArea(@NotNull final TreasureMap map) {
-			// area with panel size
-			ICoordinate topLeft = map.getPosition(0, 0);
-			ICoordinate bottomRight = map.getPosition(map.getWidth(), map.getHeight());
-			return new String[] {
-					Areas.newArea(topLeft, bottomRight)
-			};
 		}
 
 }

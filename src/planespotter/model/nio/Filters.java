@@ -1,6 +1,7 @@
 package planespotter.model.nio;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import planespotter.constants.Configuration;
 import planespotter.throwables.InvalidDataException;
 
@@ -15,36 +16,50 @@ public class Filters {
         if (filename.isBlank()) {
             throw new InvalidDataException("File name must not be blank!");
         }
-        return new Filters(new ArrayList<>(0));
+        throw new UnsupportedOperationException("Not implemented yet!");
     }
 
 
 
     private final List<String> filters;
 
+    public Filters() {
+        this(new ArrayList<>(0));
+    }
+
     public Filters(@NotNull List<String> filters) {
         this.filters = filters;
+    }
+
+    public void set(@NotNull String... filters) {
+        if (filters == null || filters.length == 0) {
+            this.filters.clear();
+            return;
+        }
+        for (String f : filters) {
+            this.add(f);
+        }
     }
 
     public void add(@NotNull String filter) {
         if (filter.isBlank()) {
             throw new InvalidDataException("Filter must not be blank!");
         }
-        filters.add(filter);
+        this.filters.add(filter);
     }
 
     public boolean remove(@NotNull String filter) {
-        return filters.remove(filter);
+        return this.filters.remove(filter);
     }
 
     @NotNull
     public List<String> getFilters() {
-        return filters;
+        return this.filters;
     }
 
     @NotNull
     public Stream<String> stream() {
-        return filters.stream();
+        return this.filters.stream();
     }
 
 }

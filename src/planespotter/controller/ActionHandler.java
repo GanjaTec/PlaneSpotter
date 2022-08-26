@@ -2,6 +2,7 @@ package planespotter.controller;
 
 import org.jetbrains.annotations.NotNull;
 
+import planespotter.a_test.Test;
 import planespotter.constants.*;
 import planespotter.dataclasses.Hotkey;
 import planespotter.display.Diagrams;
@@ -12,14 +13,17 @@ import planespotter.display.models.InfoPane;
 import planespotter.display.models.LayerPane;
 import planespotter.display.models.SearchPane;
 import planespotter.display.models.SettingsPane;
-import planespotter.model.nio.LiveLoader;
+import planespotter.model.io.DBOut;
 import planespotter.statistics.Statistics;
-import planespotter.throwables.IllegalInputException;
-import planespotter.util.math.MathUtils;
+import planespotter.throwables.DataNotFoundException;
+import planespotter.util.Bitmap;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -45,16 +49,16 @@ public abstract class ActionHandler
 
     // ActionHandler instance, we need only one instance here,
     // because we don't want parallel listeners who listen to the same actions
-    private static final ActionHandler INSTANCE;
+    @NotNull private static final ActionHandler INSTANCE;
 
     // global event dispatcher, events come here before going to the components listeners,
     // used for global hotkeys
-    private static final KeyEventDispatcher GLOBAL_EVENT_DISPATCHER;
+    @NotNull private static final KeyEventDispatcher GLOBAL_EVENT_DISPATCHER;
 
     // map for all global hotkeys,
     // key is the Hotkey object with the key data
     // value is the (Runnable) action for the specific hotkey
-    private static final Map<Hotkey, Runnable> HOTKEYS;
+    @NotNull private static final Map<Hotkey, Runnable> HOTKEYS;
 
     // initializing all static members
     static {
@@ -65,6 +69,19 @@ public abstract class ActionHandler
 
         HOTKEYS = new HashMap<>(1);
         initHotkeys();
+    }
+
+    // ActionHandler hash code
+    private final int hashCode = System.identityHashCode(this);
+
+
+    // instance //
+
+    /**
+     * private ActionHandler constructor for main instance
+     */
+    private ActionHandler() {
+        // nothing to do
     }
 
     /**
@@ -145,19 +162,6 @@ public abstract class ActionHandler
         return INSTANCE;
     }
 
-    // ActionHandler hash code
-    private final int hashCode = System.identityHashCode(this);
-
-    /**
-     * private ActionHandler constructor for main instance
-     */
-    private ActionHandler() {
-        // nothing to do
-    }
-
-
-    // on-action methods
-
     /**
      * executed when a button is clicked,
      * executes certain actions for different
@@ -183,14 +187,10 @@ public abstract class ActionHandler
                 ctrl.show(ViewType.MAP_HEATMAP);
 
             } else if (button.getName().equals("loadMap")) {
-                try {
-                    //var inputs = gui.searchInput();
-                    String[] inputs;
-                    if ((inputs = ctrl.getUI().getSearchPanel().searchInput()) != null) {
-                        ctrl.search(inputs, 1);
-                    }
-                } catch (IllegalInputException e) {
-                    ctrl.handleException(e);
+                //var inputs = gui.searchInput();
+                String[] inputs;
+                if ((inputs = ctrl.getUI().getSearchPanel().searchInput()) != null) {
+                    ctrl.search(inputs, 1);
                 }
             }
         }, "Action Handler", false, Scheduler.MID_PRIO, true);
@@ -246,7 +246,7 @@ public abstract class ActionHandler
     /**
      * executed when the window is resized
      *
-     * @param ui is the GUI instance that owns all components
+     * @param ui is the UI instance that owns all components
      */
     public void windowResized(UserInterface ui) {
         JFrame window = ui.getWindow();
@@ -257,10 +257,11 @@ public abstract class ActionHandler
         map.setBounds(layerPane.getBounds());
         Component top = layerPane.getTop();
         if (top instanceof SearchPane) {
-            top.setBounds(10, 10, 250, layerPane.getHeight());
+            top.setBounds(10, 10, top.getWidth(), top.getHeight());
         } else if (top instanceof InfoPane ip) {
-            top.setBounds(0, 0, 270, layerPane.getHeight());
-            ip.getInfoList().setBounds(10, 10, 250, MathUtils.divide(layerPane.getHeight(), 2));
+            ip.setBounds(0, 0, 270, layerPane.getHeight());
+            JList<String> infoList = ip.getInfoList();
+            infoList.setBounds(10, 10, infoList.getWidth(), infoList.getHeight());
         }
 
     }
@@ -296,8 +297,9 @@ public abstract class ActionHandler
             case "Fr24-Supplier" -> ctrl.runFr24Collector();
             case "Top-Airports" -> Diagrams.showTopAirports(ui, new Statistics());
             case "Top-Airlines" -> Diagrams.showTopAirlines(ui, new Statistics());
+            case "Position-HeatMap" -> ctrl.showBitmap();
 
-            case "ADSB-Supplier", "Antenna", "Position-HeatMap" -> ui.showWarning(Warning.NOT_SUPPORTED_YET);
+            case "ADSB-Supplier", "Antenna" -> ui.showWarning(Warning.NOT_SUPPORTED_YET);
         }
     }
 

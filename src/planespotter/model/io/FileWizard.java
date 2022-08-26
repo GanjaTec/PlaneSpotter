@@ -2,31 +2,33 @@ package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import planespotter.constants.Configuration;
-import planespotter.controller.Controller;
 import planespotter.dataclasses.MapData;
 import planespotter.constants.UserSettings;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.InvalidDataException;
-import planespotter.util.Logger;
 import planespotter.util.Time;
 
 import java.io.*;
 import java.nio.file.FileAlreadyExistsException;
 
 /**
- * @name FileMaster
+ * @name FileWizard
  * @author jml04
  * @version 1.0
  *
- * class FileMaster is a file manager that loads and saves files
+ * @description
+ * class FileMaster is a file manager that contains functions
+ * to write and read (save and load) files
  */
 public class FileWizard {
 
     private static final FileWizard fileWizard = new FileWizard();
 
     /**
-     * constructor
+     * private constructor,
+     * used for static instance
      */
     private FileWizard() {
     }
@@ -38,8 +40,7 @@ public class FileWizard {
      * are ignored, because they are never updated
      */
     public synchronized boolean saveConfig() {
-        File config;
-        config = new File(Configuration.CONFIG_FILENAME);
+        File config = new File(Configuration.CONFIG_FILENAME);
         if (!config.exists()) { // creating new file if there is no existing one
             try {
                 config.createNewFile();
@@ -61,16 +62,16 @@ public class FileWizard {
      */
     @NotNull
     public synchronized MapData loadPlsFile(@NotNull File selected)
-            throws DataNotFoundException, InvalidDataException {
+            throws InvalidDataException, FileNotFoundException {
 
         if (selected.exists()) {
             try {
                 return this.readMapData(selected);
-            } catch (IOException | ClassNotFoundException | ClassCastException e) {
+            } catch (IOException ioe) {
                 throw new InvalidDataException("Map data is invalid, try another file!");
             }
         }
-        throw new DataNotFoundException("Error! File not found or invalid MapData!");
+        throw new FileNotFoundException("Error! File not found!");
     }
 
     /**
@@ -119,14 +120,18 @@ public class FileWizard {
      */
     @NotNull
     private synchronized MapData readMapData(@NotNull File file)
-            throws ClassCastException, IOException, ClassNotFoundException {
+            throws IOException {
 
         // replaced default try-finally block with try-with-resource block,
         //  which has automatic resource-management
         try (FileInputStream fis = new FileInputStream(file);
              ObjectInputStream ois = new ObjectInputStream(fis)) {
 
-            return (MapData) ois.readObject();
+            try {
+                return (MapData) ois.readObject();
+            } catch (ClassNotFoundException | ClassCastException e) {
+                throw new IOException("MapData object is invalid!", e);
+            }
         }
     }
 
@@ -140,6 +145,15 @@ public class FileWizard {
 
             oos.writeObject(mapData);
         }
+    }
+
+    private synchronized void writeLog(@NotNull File file, OutputStream os) {
+
+    }
+
+    private synchronized void writeLog(@NotNull File file, PrintWriter writer) {
+        // try to write System.out (PrintStream) into file
+
     }
 
     private synchronized void writeLog(@NotNull File file, @NotNull String text)

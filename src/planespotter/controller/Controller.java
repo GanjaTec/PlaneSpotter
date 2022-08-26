@@ -9,6 +9,7 @@ import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
 
 import planespotter.constants.*;
+import planespotter.display.models.PaneModels;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.FileWizard;
 import planespotter.model.nio.Fr24Supplier;
@@ -23,12 +24,13 @@ import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.IllegalInputException;
 import planespotter.throwables.InvalidDataException;
+import planespotter.util.Bitmap;
 import planespotter.util.math.MathUtils;
 import planespotter.util.Utilities;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
+import java.io.*;
 import java.nio.file.FileAlreadyExistsException;
 import java.sql.SQLException;
 import java.util.*;
@@ -73,17 +75,7 @@ public abstract class Controller {
         ROOT_PATH = Utilities.getAbsoluteRootPath();
     }
 
-    /**
-     * getter for the static {@link Controller} instance
-     *
-     * @return the controller instance
-     */
-    @NotNull
-    public static Controller getInstance() {
-        return INSTANCE;
-    }
-
-    // instance fields
+    // -- instance fields --
 
     // hash code
     private final int hashCode;
@@ -118,11 +110,21 @@ public abstract class Controller {
      */
     private Controller() {
         this.hashCode = System.identityHashCode(INSTANCE);
-        this.clicking = false;
         this.scheduler = new Scheduler();
         this.ui = new UserInterface(ActionHandler.getActionHandler());
-        this.terminated = false;
         this.liveLoader = new LiveLoader();
+        this.clicking = false;
+        this.terminated = false;
+    }
+
+    /**
+     * getter for the static {@link Controller} instance
+     *
+     * @return the controller instance
+     */
+    @NotNull
+    public static Controller getInstance() {
+        return INSTANCE;
     }
 
     /**
@@ -130,6 +132,7 @@ public abstract class Controller {
      * and opening a UI-window
      */
     public synchronized void start() {
+        PaneModels.startScreenAnimation(2);
         this.initialize();
         this.ui.getWindow().setVisible(true);
         this.done(true);
@@ -160,45 +163,48 @@ public abstract class Controller {
         int option = JOptionPane.showConfirmDialog(this.ui.getWindow(),
                 "Do you really want to exit PlaneSpotter?",
                     "Exit", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-        // yes-option
-        if (option == JOptionPane.YES_OPTION) {
-            this.ui.showLoadingScreen(true);
-            // disabling tasks
-            this.liveLoader.setLive(false);
-            if (this.liveThread != null && this.liveThread.isAlive()) {
-                this.liveThread.interrupt();
-            }
-            this.setLoading(true);
-            // saving the configuration in 'config.psc'
-            FileWizard fileWizard = FileWizard.getFileWizard();
-            fileWizard.saveConfig();
-            // inserting remaining frames, if option is enabled
-            if (insertRemainingFrames && DBIn.isEnabled()) {
-                try {
-                    DBIn.insertRemaining(this.scheduler, this.liveLoader);
-                } catch (NoAccessException ignored) {
-                }
-            }
-            // waiting for remaining tasks
-            while (this.scheduler.active() > 0) {
-                try {
-                    this.wait(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            this.notifyAll();
-            // disabling last tasks
-            DBIn.setEnabled(false);
-            this.done(true);
-            this.terminated = true;
-            // shutting down scheduler
-            boolean shutdown = this.scheduler.shutdown(1);
-            byte exitStatus = MathUtils.toBinary(shutdown);
-            // shutting down the VM
-            RUNTIME.exit(exitStatus);
-
+        if (option != JOptionPane.YES_OPTION) {
+            return; // no-option case, no shutdown, abort method
         }
+        this.ui.showLoadingScreen(true);
+        // disabling tasks
+        this.liveLoader.setLive(false);
+        if (this.liveThread != null && this.liveThread.isAlive()) {
+            this.liveThread.interrupt();
+        }
+        this.setLoading(true);
+        // saving the configuration in 'config.psc'
+        FileWizard fileWizard = FileWizard.getFileWizard();
+        fileWizard.saveConfig();
+        if (Configuration.SAVE_LOGS) {
+            fileWizard.saveLogFile("a_log", "[DEBUG] No output text yet...");
+        }
+        // inserting remaining frames, if option is enabled
+        if (insertRemainingFrames && DBIn.isEnabled()) {
+            try {
+                DBIn.insertRemaining(this.scheduler, this.liveLoader);
+            } catch (NoAccessException ignored) {
+            }
+        }
+        // waiting for remaining tasks
+        while (this.scheduler.active() > 0) {
+            try {
+                this.wait(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        this.notifyAll();
+        // disabling last tasks
+        DBIn.setEnabled(false);
+        this.done(true);
+        this.terminated = true;
+        // shutting down scheduler
+        boolean shutdown = this.scheduler.shutdown(1);
+        byte exitStatus = MathUtils.toBinary(shutdown);
+        // shutting down the VM
+        RUNTIME.exit(exitStatus);
+
     }
 
     private void emergencyShutdown(@Nullable Throwable problem) {
@@ -219,11 +225,14 @@ public abstract class Controller {
      * @param playSound indicates if the method should play a sound at the end
      */
     public void done(boolean playSound) {
-        this.loading = false;
-        if (playSound) {
-            Utilities.playSound(SOUND_DEFAULT.get());
+        try {
+            this.loading = false;
+            if (playSound) {
+                Utilities.playSound(SOUND_DEFAULT.get());
+            }
+        } finally {
+            this.ui.showLoadingScreen(false);
         }
-        this.ui.showLoadingScreen(false);
     }
 
     /**
@@ -248,23 +257,24 @@ public abstract class Controller {
         DBOut dbOut = DBOut.getDBOut();
 
         try {
-            this.ui.showLoadingScreen(true);
             this.setLoading(true);
+            this.ui.showLoadingScreen(true);
 
-            UserInterface ui = this.getUI();
-            ui.setViewType(type);
-            ui.getMapManager().clearMap();
             if (type != MAP_LIVE) {
                 this.liveLoader.setLive(false);
             }
+            this.ui.setViewType(type);
+            this.ui.getMapManager().clearMap();
+
             switch (type) {
-                case LIST_FLIGHT -> { }
+                case LIST_FLIGHT -> { /*removed Flight-List implementation*/ }
                 case MAP_LIVE -> this.liveLoader.setLive(true);
-                case MAP_FROMSEARCH -> this.showSearchMap(mapManager);
-                case MAP_TRACKING -> this.showTrackingMap(mapManager);
-                case MAP_TRACKING_NP -> this.showTrackingMapNoPoints(mapManager);
+                case MAP_FROMSEARCH,
+                        MAP_TRACKING -> this.showTrackingMap(mapManager, true);
+                case MAP_TRACKING_NP -> this.showTrackingMap(mapManager, false);
                 // significance map should be improved
                 case MAP_SIGNIFICANCE -> this.showSignificanceMap(mapManager, dbOut);
+                // heatmap should be implemented
                 case MAP_HEATMAP -> {  }
             }
         } finally {
@@ -279,10 +289,14 @@ public abstract class Controller {
      * @param button is the clicked search button, 0 = LIST, 1 = MAP
      */
     // TODO: 24.05.2022 DEBUG PLANE SEARCH, AIRLINE SEARCH
-    public void search(@NotNull String[] inputs, int button)
-            throws IllegalInputException {
+    public void search(@NotNull String[] inputs, int button) {
 
-        Utilities.checkInputs(inputs);
+        try {
+            Utilities.checkInputs(inputs);
+        } catch (IllegalInputException e) {
+            this.handleException(e);
+            return;
+        }
 
         Search search;
         if (button == 1) {
@@ -369,15 +383,20 @@ public abstract class Controller {
                 mapManager = this.ui.getMapManager();
                 newMarkerList = new ArrayList<>();
                 counter = 0;
-                DefaultMapMarker newMarker;
+                PlaneMarker newMarker;
                 Coordinate markerCoord;
+                int heading = 0;
                 for (MapMarker marker : markers) {
+                    if (marker instanceof PlaneMarker dmm) {
+                        heading = dmm.getHeading();
+                    }
                     markerCoord = marker.getCoordinate();
-                    newMarker = new DefaultMapMarker(markerCoord, 0);
                     if (!markerHit && mapManager.isMarkerHit(markerCoord, clickedCoord)) {
                         markerHit = true;
+                        newMarker = new PlaneMarker(markerCoord, heading, true, true);
                         this.onMarkerHit(MAP_LIVE, newMarker, counter, null, null);
                     } else {
+                        newMarker = new PlaneMarker(markerCoord, heading, true, false);
                         newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
                     }
                     newMarker.setName(marker.getName());
@@ -404,7 +423,7 @@ public abstract class Controller {
         List<MapMarker> newMarkerList;
         Vector<DataPoint> data;
         Coordinate markerCoord;
-        DefaultMapMarker newMarker;
+        PlaneMarker newMarker;
         MapManager mapManager;
         DBOut dbOut;
         boolean markerHit = false;
@@ -422,11 +441,12 @@ public abstract class Controller {
                 // going though markers
                 for (MapMarker m : mapMarkers) {
                     markerCoord = m.getCoordinate();
-                    newMarker = new DefaultMapMarker(markerCoord, 90); // FIXME: 13.05.2022 // FIXME 19.05.2022
                     if (mapManager.isMarkerHit(markerCoord, clickedCoord) && !markerHit) {
                         markerHit = true;
+                        newMarker = new PlaneMarker(markerCoord, 90, true, true);
                         this.onMarkerHit(MAP_FROMSEARCH, newMarker, counter, data, dbOut);
                     } else {
+                        newMarker = new PlaneMarker(markerCoord, 90, true, false);
                         newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
                     }
                     newMarker.setName(m.getName());
@@ -443,11 +463,11 @@ public abstract class Controller {
         return markerHit;
     }
 
-    public void onMarkerHit(ViewType viewType, @NotNull DefaultMapMarker marker,
+    public void onMarkerHit(ViewType viewType, @NotNull PlaneMarker marker,
                              int counter, Vector<DataPoint> dataPoints,
                              DBOut dbOut) {
 
-        Flight flight;
+        Flight flight = null;
         int flightID;
         DataPoint dataPoint;
 
@@ -468,6 +488,9 @@ public abstract class Controller {
                 dataPoint = flight.dataPoints().get(0);
                 this.ui.showInfo(flight, dataPoint);
             }
+        }
+        if (flight != null) {
+            this.ui.getMapManager().setSelectedICAO(flight.plane().icao());
         }
     }
 
@@ -550,7 +573,7 @@ public abstract class Controller {
             MapData loaded = fileWizard.loadPlsFile(file);
             this.loadedData = loaded.data();
             this.show(loaded.viewType());
-        } catch (DataNotFoundException | InvalidDataException e) {
+        } catch (FileNotFoundException | InvalidDataException e) {
             this.handleException(e);
         } finally {
             this.done(false);
@@ -579,7 +602,8 @@ public abstract class Controller {
         } else if (thr instanceof TimeoutException) {
             this.ui.showWarning(Warning.TIMEOUT);
         } else if (thr instanceof RejectedExecutionException) {
-            this.ui.showWarning(Warning.REJECTED_EXECUTION);
+            boolean terminated = thr.getMessage().contains("TERMINATED");
+            this.ui.showWarning(Warning.REJECTED_EXECUTION, terminated ? "Executor is terminated!" : "");
         } else if (thr instanceof IllegalInputException) {
             this.ui.showWarning(Warning.ILLEGAL_INPUT);
         } else if (thr instanceof InvalidDataException ide) {
@@ -591,13 +615,15 @@ public abstract class Controller {
         } else if (thr instanceof FileAlreadyExistsException fae) {
             this.ui.showWarning(Warning.FILE_ALREADY_EXISTS, fae.getMessage());
             fae.printStackTrace();
+        } else if (thr instanceof FileNotFoundException fnf) {
+            this.ui.showWarning(Warning.FILE_NOT_FOUND, fnf.getMessage());
+        } else if (thr instanceof NumberFormatException nfe) {
+            this.ui.showWarning(Warning.NUMBER_EXPECTED, nfe.getMessage());
         } else {
             this.ui.showWarning(Warning.UNKNOWN_ERROR, thr.getMessage());
             thr.printStackTrace();
         }
     }
-
-    // private methods
 
     private void showSignificanceMap(@NotNull MapManager bbn, @NotNull DBOut dbOut) {
 
@@ -609,43 +635,48 @@ public abstract class Controller {
             aps = dbOut.getAllAirports();
             signifMap = stats.airportSignificance(aps);
             bbn.createSignificanceMap(signifMap, this.ui.getMap());
-        } catch (DataNotFoundException e) {
-            e.printStackTrace();
+        } catch (DataNotFoundException dnf) {
+            this.handleException(dnf);
         }
     }
 
-    private void showTrackingMapNoPoints(@NotNull MapManager mapManager) {
-
-        Flight flight = null;
-        DBOut dbOut = DBOut.getDBOut();
-
-        int flightID = (!this.loadedData.isEmpty()) ? this.loadedData.get(0).flightID() : -1;
-        try {
-            flight = dbOut.getFlightByID(flightID);
-        } catch (DataNotFoundException ignored) {
+    private void showTrackingMap(@NotNull MapManager mapManager, boolean showPoints) {
+        if (this.loadedData.isEmpty()) {
+            return;
         }
-        mapManager.createTrackingMap(this.loadedData, flight, false);
-    }
-
-    private void showTrackingMap(@NotNull MapManager mapManager) {
 
         DBOut dbOut = DBOut.getDBOut();
         Flight flight = null;
-        Vector<DataPoint> data = this.loadedData;
 
-        int flightID = (!data.isEmpty()) ? data.get(0).flightID() : -1;
+        int flightID = this.loadedData.get(0).flightID();
         try {
             flight = (flightID != -1) ? dbOut.getFlightByID(flightID) : null;
         } catch (DataNotFoundException ignored) {
         }
-        mapManager.createTrackingMap(data, flight, true);
+        mapManager.createTrackingMap(this.loadedData, flight, showPoints);
     }
 
-    private void showSearchMap(@NotNull MapManager mapManager) {
-        if (this.loadedData.isEmpty()) {
+    public void showBitmap() {
+        String input = JOptionPane.showInputDialog("Please enter a grid size (0.1 - 2.0)", 0.5);
+        if (input == null || input.isBlank()) {
             return;
         }
-        mapManager.createTrackingMap(this.loadedData, null, true);
+        this.scheduler.exec(() -> {
+            try {
+                this.setLoading(true);
+                this.ui.showLoadingScreen(true);
+                float gridSize = Float.parseFloat(input);
+                Vector<Position> allPositions = DBOut.getDBOut().getAllTrackingPositions();
+                Bitmap bitmap = Bitmap.fromPosVector(allPositions, gridSize);
+                Diagrams.showPosHeatMap(this.ui, bitmap);
+            } catch (NumberFormatException nfe) {
+                this.ui.showWarning(Warning.NUMBER_EXPECTED, "Please enter a float value (0.1 - 2.0)");
+            } catch (DataNotFoundException e) {
+                this.handleException(e);
+            } finally {
+                this.done(false);
+            }
+        }, "Loading Data", false, Scheduler.MID_PRIO, true);
     }
 
     /**
@@ -704,6 +735,8 @@ public abstract class Controller {
     }
 
     /**
+     * getter for the Controller hash code
+     *
      * @return controller hash code
      */
     @Override

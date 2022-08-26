@@ -18,9 +18,11 @@ import java.io.*;
  * @name UserSettings
  * @author jml04
  * @version 1.0
+ *
  * @description
  * class UserSettings contains the user settings which can be edited in the settings menu
  */
+// TODO: 24.08.2022 MERGE WITH Configuration class
 public class UserSettings {
     // TODO: 07.08.2022 maybe save all non-final values in one HashMap
     // max loaded data
@@ -60,7 +62,7 @@ public class UserSettings {
             Object[] defaultValues = {50000, DEFAULT_MAP, 6, 12};
             initialize(defaultValues);
         }
-        collectorFilters = Filters.read(Configuration.FILTERS_FILENAME);
+        collectorFilters = null/*Filters.read(Configuration.FILTERS_FILENAME)*/;
     }
 
     /**
