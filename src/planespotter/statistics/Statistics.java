@@ -9,6 +9,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
 import planespotter.throwables.InvalidDataException;
+import planespotter.util.Bitmap;
 import planespotter.util.Time;
 import planespotter.util.math.Vector2D;
 import planespotter.model.io.DBOut;
@@ -77,6 +78,28 @@ public class Statistics {
                 .forEach(key -> dataset.addValue(stats.get(key), "Row-Key", String.valueOf(key)));
 
         return dataset;
+    }
+
+    /**
+     * this method creates a {@link Bitmap} containing all positions from the tracking-table (DB),
+     * so all existing {@link Position}s from all {@link DataPoint}s,
+     * the higher a level on a {@link Bitmap}-field, the more {@link Position}s are there
+     *
+     * @param gridSize is the multiplier for one grid-rectangle
+     *                 (gridSize = 1 : 360x180,
+     *                  gridSize = 2 : 180x90,
+     *                  gridSize = 0.5 : 720x360,
+     *                  ...... )
+     * @return {@link Bitmap} from all tracking-{@link Position}s
+     * @throws DataNotFoundException if no {@link Position}s were found in the DB
+     */
+    @NotNull
+    public Bitmap globalPositionBitmap(float gridSize)
+            throws DataNotFoundException {
+
+        DBOut dbOut = DBOut.getDBOut();
+        Vector<Position> allPositions = dbOut.getAllTrackingPositions();
+        return Bitmap.fromPosVector(allPositions, gridSize);
     }
 
     /**
@@ -220,11 +243,17 @@ public class Statistics {
      */
     @NotNull
     public Map<String, Integer> onlySignificant(@NotNull final Map<String, Integer> map, final int minValue) {
+        Deque<String> removeKeys = new ArrayDeque<>();
         map.forEach((key, val) -> {
             if (val < minValue) {
-                map.remove(key);
+                removeKeys.add(key);
             }
         });
+        String key;
+        while (!removeKeys.isEmpty()) {
+            key = removeKeys.poll();
+            map.remove(key);
+        }
         return map;
     }
 

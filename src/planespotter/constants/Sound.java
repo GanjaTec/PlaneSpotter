@@ -1,9 +1,12 @@
 package planespotter.constants;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @name Sound
  * @author jml04
  * @version 1.0
+ *
  * @description
  * enum Sound contains all Windows-Sounds with key strings
  */
@@ -23,13 +26,17 @@ public enum Sound {
     SOUND_RESTORE_UP("win.sound.restoreDown"),
     SOUND_RESTOPRE_DOWN("win.sound.restoreUp"),
     SOUND_START("win.sound.src");
+
     // key string instance field
-    private final String sound;
+    @NotNull private final String sound;
+
     // private enum constructor
-    Sound(String sound) {
+    Sound(@NotNull String sound) {
         this.sound = sound;
     }
+
     // key string getter
+    @NotNull
     public final String get() {
         return this.sound;
     }

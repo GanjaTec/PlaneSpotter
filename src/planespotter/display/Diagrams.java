@@ -34,8 +34,8 @@ public class Diagrams {
     }
 
     public static void showTopAirlines(UserInterface ui, Statistics stats) {
-        var input = JOptionPane.showInputDialog("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
-        if (input == null || input.isBlank()) {
+        String input = ui.getUserInput("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
+        if (input.isBlank()) {
             return;
         }
         LayerPane layerPane = ui.getLayerPane();
@@ -48,8 +48,8 @@ public class Diagrams {
     }
 
     public static void showTopAirports(UserInterface ui, Statistics stats) {
-        var input = JOptionPane.showInputDialog("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
-        if (input == null || input.isBlank()) {
+        String input = ui.getUserInput("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
+        if (input.isBlank()) {
             return;
         }
         LayerPane layerPane = ui.getLayerPane();

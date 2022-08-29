@@ -65,7 +65,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         super(exitOnClose, new Fr24Supplier());
         this.filters = withFilters ? UserSettings.getCollectorFilters() : null;
         this.liveLoader = new LiveLoader();
-        this.inserter = new Inserter(this.liveLoader);
+        this.inserter = new Inserter(this.liveLoader, 100);
         this.worldAreaRaster1D = Areas.getWorldAreaRaster1D(gridSizeLat, gridSizeLon);
     }
 

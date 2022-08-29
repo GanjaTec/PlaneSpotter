@@ -11,6 +11,7 @@ import java.util.Vector;
  * @author jml04
  * @version 1.0
  *
+ * @description
  * record MapData represents a map within its data points,
  * view type and current visible area
  */

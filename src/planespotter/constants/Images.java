@@ -1,5 +1,7 @@
 package planespotter.constants;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 import static planespotter.constants.Paths.IMAGE_PATH;
@@ -8,8 +10,9 @@ import static planespotter.constants.Paths.IMAGE_PATH;
  * @name Images
  * @author jml04
  * @version 1.0
+ *
  * @description
- * enum Images contains all images for the GUI
+ * enum Images contains all images that are used in the {@link planespotter.display.UserInterface}
  */
 public enum Images {
     TITLE(new ImageIcon(IMAGE_PATH + "newTitle.png")),
@@ -31,13 +34,17 @@ public enum Images {
     AIRPLANE_ICON_8x(new ImageIcon(IMAGE_PATH + "airplane_icon_8x.png")),
     DEFAULT_AIRPLANE_ICON_16x(new ImageIcon(IMAGE_PATH  + "airplane_icon_16x.png")),
     SELECTED_AIRPLANE_ICON_16x(new ImageIcon(IMAGE_PATH + "selected_airplane_icon_16x.png"));
+
     // image instance field
-    private final ImageIcon img;
+    @NotNull private final ImageIcon img;
+
     // private enum constructor
-    Images(final ImageIcon img) {
+    Images(final @NotNull ImageIcon img) {
         this.img = img;
     }
+
     // image getter
+    @NotNull
     public ImageIcon get() {
         return this.img;
     }

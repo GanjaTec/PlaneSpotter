@@ -1,5 +1,11 @@
 package planespotter.constants;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @name Configuration
  * @author jml04
@@ -12,7 +18,7 @@ package planespotter.constants;
 public abstract class Configuration {
 
     // title
-    public static final String TITLE = "PlaneSpotter v0.3";
+    @NotNull public static final String TITLE = "PlaneSpotter v0.3";
 
     // max thread pool size
     public static final int MAX_THREADPOOL_SIZE = 80;
@@ -25,11 +31,25 @@ public abstract class Configuration {
     public static final int CORE_POOLSIZE = 0;
 
     // configuration file name
-    public static final String CONFIG_FILENAME = Paths.RESOURCE_PATH + "config.psc";
+    @NotNull public static final String CONFIG_FILENAME = Paths.RESOURCE_PATH + "config.psc";
 
     // filter file name
-    public static final String FILTERS_FILENAME = Paths.RESOURCE_PATH + "filters.psc";
+    @NotNull public static final String FILTERS_FILENAME = Paths.RESOURCE_PATH + "filters.psc";
 
     // 'save logs' flag, logs are saved on shutdown, if enabled
     public static final boolean SAVE_LOGS = false;
+
+
+    @NotNull private static final Map<String, Object> props = new HashMap<>();
+
+
+
+    @Nullable
+    public static Object getProperty(@NotNull String key) {
+        return props.get(key);
+    }
+
+    public static void setProperty(@NotNull String key, @NotNull Object value) {
+        props.put(key, value);
+    }
 }

@@ -55,16 +55,18 @@ public class LiveLoader {
     @NotNull private final ConcurrentLinkedQueue<Fr24Frame> insertLater;
 
     /**
-     *
+     * creates a new, default {@link LiveLoader} a max. queue
+     * size of 20000 and a live period of 2 seconds
      */
     public LiveLoader() {
         this(20000, 2);
     }
 
     /**
+     * creates a new {@link LiveLoader} with custom parameters
      *
-     *
-     * @param maxQueueSize
+     * @param maxQueueSize is the maximum insertLater-queue size
+     * @param liveDataPeriodSec is the live-data insert period in seconds
      */
     public LiveLoader(int maxQueueSize, int liveDataPeriodSec) {
         this.maxQueueSize = maxQueueSize;
@@ -122,10 +124,11 @@ public class LiveLoader {
     }
 
     /**
-     * loads live-data directly from Fr24 by running suppliers
-     * and turns them directly into Flight objects.
+     * loads live-data directly from Fr24 and turns them directly into
+     * Flight objects by running suppliers, polling the frames from the
+     * insertLater-queue and mapping the results to {@link Flight}s.
      * This method doesn't load the data into the DB, but adds it
-     * to the insertLater-queue where the data is added from
+     * to the insertLater-queue where the data can be added from.
      *
      * @return Vector of Flight objects, loaded directly by a supplier
      */
@@ -135,8 +138,13 @@ public class LiveLoader {
         //deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF");
 
         String[] currentArea = Areas.getCurrentArea(map);
+        // TODO: 28.08.2022 use collectPStream here and let it return boolean
+        // TODO: 28.08.2022 also move collectPStream here to LiveLoader and make it not static anymore!
+        // TODO: 28.08.2022 delete collectFramesForArea
         if (Fr24Supplier.collectFramesForArea(this, currentArea, deserializer, false)) {
 
+            // we are working with a pseudo ID here, because we do not want
+            // to get the real ID from the DB here, would take too long!
             AtomicInteger pseudoID = new AtomicInteger(0);
             return this.pollFrames(Integer.MAX_VALUE)
                     .map(frame -> Flight.parseFlight(frame, pseudoID.getAndIncrement()))

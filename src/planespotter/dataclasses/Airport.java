@@ -3,8 +3,10 @@ package planespotter.dataclasses;
 import java.io.Serializable;
 
 /**
- * @author Janne Matti
+ * @name Airport
+ * @author jml04
  * @author Lukas
+ * @version 1.0
  *
  * @description
  * Data Structure used to represent a DB entry from the 'Airports'-Table

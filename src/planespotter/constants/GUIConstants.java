@@ -10,9 +10,11 @@ import static planespotter.constants.DefaultColor.*;
  * @name GUIConstants
  * @author jml04
  * @version 1.0
+ *
  * @description
  * class GUIConstants contains all constants needed in the display package
  */
+@Deprecated(since = "new UserInterface", forRemoval = true)
 public final class GUIConstants {
 
     /**

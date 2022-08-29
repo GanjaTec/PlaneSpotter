@@ -51,7 +51,7 @@ public class Fr24Supplier implements Supplier {
 		this.threadNumber = threadNumber;
 		this.ThreadName = "SupplierThread-" + threadNumber;
 		this.area = area;
-		this.httpClient = HttpClient.newHttpClient();
+		this.httpClient = HttpClient.newHttpClient(); // TODO: 26.08.2022 we could make the HttpClient static to use always the same one
 	}
 
 	@Override
@@ -148,7 +148,7 @@ public class Fr24Supplier implements Supplier {
 					System.out.println("Max queue-size reached!");
 					return;
 				}
-				Fr24Supplier supplier = new Fr24Supplier(tNumber.get(), area);
+				Fr24Supplier supplier = new Fr24Supplier(tNumber.getAndIncrement(), area);
 
 				Deque<Fr24Frame> data;
 				try {

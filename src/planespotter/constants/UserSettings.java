@@ -22,6 +22,7 @@ import java.io.*;
  * @description
  * class UserSettings contains the user settings which can be edited in the settings menu
  */
+// TODO: 26.08.2022 not static
 // TODO: 24.08.2022 MERGE WITH Configuration class
 public class UserSettings {
     // TODO: 07.08.2022 maybe save all non-final values in one HashMap

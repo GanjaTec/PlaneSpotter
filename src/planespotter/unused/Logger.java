@@ -1,4 +1,4 @@
-package planespotter.util;
+package planespotter.unused;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
