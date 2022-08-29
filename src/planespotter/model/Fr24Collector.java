@@ -92,9 +92,9 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
 
         super.scheduler.schedule(() -> super.scheduler.exec(() -> {
             // executing suppliers to collect Fr24-Data
-            Fr24Supplier.collectPStream(this.liveLoader, extAreas, deserializer, true);
+            this.liveLoader.collectPStream(extAreas, deserializer, true);
             // adding all deserialized world-raster-areas to frames deque
-            Fr24Supplier.collectPStream(this.liveLoader, this.worldAreaRaster1D, deserializer, true);
+            this.liveLoader.collectPStream(this.worldAreaRaster1D, deserializer, true);
             
         }, "Data Collector Thread", false, Scheduler.HIGH_PRIO, true),
                 "Collect Data", 0, REQUEST_PERIOD);
