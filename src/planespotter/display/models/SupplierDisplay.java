@@ -8,6 +8,7 @@ import planespotter.controller.Controller;
 import planespotter.model.Collector;
 import planespotter.model.io.DBIn;
 import planespotter.model.nio.Supplier;
+import planespotter.util.Utilities;
 import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
@@ -60,7 +61,7 @@ public class SupplierDisplay implements WindowListener {
 
     public void start() {
         this.frame.setVisible(true);
-        this.tryAddTrayIcon();
+        Utilities.addTrayIcon(Images.FLYING_PLANE_ICON.get().getImage(), e -> this.frame.setVisible(!this.frame.isVisible()));
     }
 
     private JFrame frame(int defaultCloseOperation) {
@@ -181,20 +182,7 @@ public class SupplierDisplay implements WindowListener {
         this.progressBar.setValue(memoryUsage);
         this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");
         if (error != null) {
-            this.errorLabel.setText("Error: " + error.getMessage());
-        }
-    }
-
-    private void tryAddTrayIcon() {
-        if (SystemTray.isSupported()) {
-            var trayIcon = new TrayIcon(Images.FLYING_PLANE_ICON.get().getImage());
-            trayIcon.setImageAutoSize(true);
-            trayIcon.addActionListener(e -> this.frame.setVisible(!this.frame.isVisible()));
-            try {
-                SystemTray.getSystemTray().add(trayIcon);
-            } catch (AWTException e) {
-                e.printStackTrace();
-            }
+            this.errorLabel.setText("LastError: " + error.getMessage());
         }
     }
 

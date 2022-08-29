@@ -199,10 +199,12 @@ public class LiveLoader {
                     Utilities.checkStatusCode(response.statusCode());
                     data = deserializer.deserialize(response);
                     this.insertLater(data);
-                } catch (SSLHandshakeException ssl) {
-                    Controller.getInstance().handleException(ssl);
                 } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
+                    if (e instanceof SSLHandshakeException ssl) {
+                        Controller.getInstance().handleException(ssl);
+                    } else {
+                        e.printStackTrace();
+                    }
                 }
             });
         }

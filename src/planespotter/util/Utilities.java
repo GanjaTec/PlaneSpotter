@@ -13,6 +13,7 @@ import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.Array;
@@ -307,6 +308,28 @@ public abstract class Utilities {
         return Arrays.stream(deque.toArray(Integer[]::new))
                 .mapToInt(Integer::intValue)
                 .toArray();
+    }
+
+    /**
+     * adds a custom icon to the {@link SystemTray}
+     *
+     * @param icon is the added icon ({@link Image})
+     * @param onClick is the ({@link FunctionalInterface}) {@link ActionListener} which is executed on icon click
+     * @return true if the icon was added to the {@link SystemTray}, else false
+     */
+    public static boolean addTrayIcon(@NotNull Image icon, @NotNull ActionListener onClick) {
+        if (SystemTray.isSupported()) {
+            TrayIcon trayIcon = new TrayIcon(icon);
+            trayIcon.setImageAutoSize(true);
+            trayIcon.addActionListener(onClick);
+            try {
+                SystemTray.getSystemTray().add(trayIcon);
+                return true;
+            } catch (AWTException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
     }
 
     /**

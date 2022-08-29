@@ -142,6 +142,10 @@ public abstract class Controller {
      */
     private void initialize() {
         if (!this.initialized) {
+            Utilities.addTrayIcon(Images.PLANE_ICON_16x.get().getImage(), e -> {
+                JFrame window = this.ui.getWindow();
+                window.setVisible(!window.isVisible());
+            });
             this.liveLoader.setLive(true);
             boolean onlyMilitary = false;
             this.liveThread = this.scheduler.runThread(() -> this.liveLoader.liveDataTask(this, onlyMilitary), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
