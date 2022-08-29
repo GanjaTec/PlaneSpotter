@@ -54,6 +54,10 @@ public class Fr24Supplier implements Supplier {
 		this.httpClient = HttpClient.newHttpClient();
 	}
 
+	/**
+	 * Override for the supply method of the Supplier Interface
+	 * prepares and runs the supplier thread
+	 */
 	@Override
 	public void supply() {
 		try {
@@ -71,12 +75,40 @@ public class Fr24Supplier implements Supplier {
 		}
 	}
 
-	public HttpResponse<String> sendRequest()
-			throws IOException, InterruptedException {
 
-		HttpRequest request = this.createHttpRequest("https://data-live.flightradar24.com/zones/fcgi/feed.js?faa=1&"
-				// bounds defines the visible area on the live map, directly linked to planes in
-				// response, parameterize
+	/**
+	 * sends a HTTP Request for live Data to Flightradar24, returns a HttpResponse containing the JSON with all flights
+	 * contained in the given area. Uses an User-Agent string to mimic a browser in order to circumvent access-restrictions
+	 * which would appear as HTTP Status code 451 (unavailabe for legal reasons). A rather strange status code since
+	 * it is (as of RFC 9110) just a proposed status code used for censored websites and its probably misused by the devs
+	 * of flightradar24.
+	 *
+	 * To quote RFC 7725:
+	 * 	  "This status code indicates that the server is denying access to the
+	 *    resource as a consequence of a legal demand.
+	 *
+	 *    The server in question might not be an origin server.  This type of
+	 *    legal demand typically most directly affects the operations of ISPs
+	 *    and search engines."
+	 *
+	 * The different parts of the request itself are as following, all of those are FR24 internal settings:
+	 * bounds: the area from where planes are querried
+	 * satellite, mlat, flarm, adsb: the datasource for the positioning data itself, leave enabled
+	 * gnd, air: planes on the ground and in the air, leave enabled
+	 * vehicles: airport support vehicles, leave disabled
+	 * estimated: estimate plane positions based on previous dataframes
+	 * maxage: dont list planes that had no updates longer than value in seconds
+	 * gliders: disable gliders
+	 * stats: stats for the json response, contains number of planes and other statistics in the response, leave disabled or it will break the deserializer
+	 *
+	 * @return HttpResponse, the json containing the response of the server
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	public HttpResponse<String> sendRequest() throws IOException, InterruptedException {
+
+		HttpRequest request = HttpRequest.newBuilder(URI.create("https://data-live.flightradar24.com/zones/fcgi/feed.js?faa=1&"
+				// bounds defines the visible area on the live map, directly linked to planes in the response
 				+ "bounds=" + area + "&"
 				+ "satellite=1&"
 				+ "mlat=1&"
@@ -90,84 +122,18 @@ public class Fr24Supplier implements Supplier {
 				+ "maxage=14400&"
 				// Disable gliders and stats
 				+ "gliders=0&"
-				+ "stats=0");
-		return this.httpClient.send(request, BodyHandlers.ofString());
-	}
-
-	private HttpRequest createHttpRequest(final String request) {
-		return HttpRequest.newBuilder(URI.create(request))
-				// User agent to prevent Response Code 451
+				+ "stats=0"))
 				.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0")
 				.build();
-	}
-
-	/**
-	 * gets HttpResponse's for specific areas and deserializes its data to Frames
-	 *
-	 * @param areas are the Areas where data should be deserialized from
-	 * @param deserializer is the Fr24Deserializer which is used to deserialize the requested data
-	 * @param ignoreMaxSize if it's true, allowed max size of insertLater-queue is ignored
-	 * @see planespotter.model.nio.LiveLoader
-	 */
-	@SuppressWarnings(value = "duplicate")
-	public static synchronized boolean collectFramesForArea(@NotNull LiveLoader liveLoader, @NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize) {
-		System.out.println("[Supplier] Collecting Fr24-Data...");
-
-		Arrays.stream(areas)
-				.parallel()
-				.forEach(area -> {
-					Fr24Supplier supplier = new Fr24Supplier(0, area);
-					if (!ignoreMaxSize && liveLoader.maxSizeReached()) {
-						System.out.println("Queue is full!");
-						return;
-					}
-					HttpResponse<String> response;
-					try {
-						response = supplier.sendRequest();
-					} catch (IOException | InterruptedException e) {
-						e.printStackTrace();
-						return;
-					}
-					int statusCode = response.statusCode();
-					Utilities.checkStatusCode(statusCode);
-					Deque<Fr24Frame> data = deserializer.deserialize(response);
-					liveLoader.insertLater(data);
-				});
-
-		return true;
-	}
-
-	public static synchronized void collectPStream(@NotNull LiveLoader liveLoader, @NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize) {
-		System.out.println("[Supplier] Collecting Fr24-Data with parallel Stream...");
-
-		AtomicInteger tNumber = new AtomicInteger(0);
-		long startTime = Time.nowMillis();
-		try (Stream<@NotNull String> parallel = Arrays.stream(areas).parallel()) {
-			parallel.forEach(area -> {
-				if (!ignoreMaxSize && liveLoader.maxSizeReached()) {
-					System.out.println("Max queue-size reached!");
-					return;
-				}
-				Fr24Supplier supplier = new Fr24Supplier(tNumber.get(), area);
-
-				Deque<Fr24Frame> data;
-				try {
-					HttpResponse<String> response = supplier.sendRequest();
-					Utilities.checkStatusCode(response.statusCode());
-					data = deserializer.deserialize(response);
-					liveLoader.insertLater(data);
-				} catch (IOException | InterruptedException e) {
-					e.printStackTrace();
-				}
-			});
-		}
-		System.out.println("[Supplier] Elapsed time: " + Time.elapsedMillis(startTime) + " ms");
+		return this.httpClient.send(request, BodyHandlers.ofString());
 	}
 	
 	/**
+	 * old method to write json to csv, not longer used but maybe will be in the future
+	 *
 	 * @deprecated
 	 * 
-	 * @param data
+	 * @param List<String> data
 	 * @throws IOException
 	 */
 	@Deprecated
@@ -189,10 +155,18 @@ public class Fr24Supplier implements Supplier {
 		}
 	}
 
+	/**
+	 * getter for threadnumber
+	 * @return int threadnumber
+	 */
 	public int getThreadNumber() {
 		return this.threadNumber;
 	}
 
+	/**
+	 * getter for threadname
+	 * @return String threadname
+	 */
 	public String getThreadName() {
 		return this.ThreadName;
 	}
