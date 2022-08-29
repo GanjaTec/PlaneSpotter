@@ -12,6 +12,7 @@ import planespotter.throwables.InvalidDataException;
 import planespotter.util.Time;
 import planespotter.util.Utilities;
 
+import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.util.*;
@@ -76,9 +77,9 @@ public class LiveLoader {
         this.liveDataPeriodSec = liveDataPeriodSec;
     }
 
-    public void liveDataTask(@NotNull Controller ctrl) {
+    public void liveDataTask(@NotNull Controller ctrl, boolean onlyMilitary) {
         // loading init-live-data
-        this.loadLiveData(ctrl);
+        this.loadLiveData(ctrl, onlyMilitary);
         // endless live-data task
         synchronized (liveLock) {
             while (!ctrl.isTerminated()) {
@@ -92,7 +93,7 @@ public class LiveLoader {
                 }
                 // loading live-data, if live-map is enabled
                 if (this.isLive()) {
-                    this.loadLiveData(ctrl);
+                    this.loadLiveData(ctrl, onlyMilitary);
                 }
             }
         }
@@ -103,7 +104,7 @@ public class LiveLoader {
      * but not into the DB
      * @see LiveLoader
      */
-    private void loadLiveData(@NotNull Controller ctrl) {
+    private void loadLiveData(@NotNull Controller ctrl, boolean onlyMilitary) {
 
         List<MapMarker> markerList;
         TreasureMap map;
@@ -114,7 +115,7 @@ public class LiveLoader {
             map = ctrl.getUI().getMap();
             // transforming liveData-flight-Vector into list of MapMarkers
             // after loading it directly from fr24
-            ctrl.liveData = this.getLiveFlights(map);
+            ctrl.liveData = this.getLiveFlights(map, onlyMilitary);
             markerList = ctrl.liveData
                     .stream()
                     .map(flight -> PlaneMarker.fromFlight(flight, ctrl.getUI().getMapManager().getSelectedICAO(), true))
@@ -134,9 +135,11 @@ public class LiveLoader {
      * @return Vector of Flight objects, loaded directly by a supplier
      */
     @NotNull
-    public Vector<Flight> getLiveFlights(@NotNull final TreasureMap map) {
+    public Vector<Flight> getLiveFlights(@NotNull final TreasureMap map, boolean onlyMilitary) {
         Fr24Deserializer deserializer = new Fr24Deserializer();
-        //deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF");
+        if (onlyMilitary) {
+            deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF", "VIVI", "CASA", "K35R", "Q4");
+        }
 
         String[] currentArea = Areas.getCurrentArea(map);
         if (collectPStream(currentArea, deserializer, false)) {
@@ -196,6 +199,8 @@ public class LiveLoader {
                     Utilities.checkStatusCode(response.statusCode());
                     data = deserializer.deserialize(response);
                     this.insertLater(data);
+                } catch (SSLHandshakeException ssl) {
+                    Controller.getInstance().handleException(ssl);
                 } catch (IOException | InterruptedException e) {
                     e.printStackTrace();
                 }

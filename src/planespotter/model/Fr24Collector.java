@@ -13,6 +13,8 @@ import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.nio.LiveLoader;
 
+import java.util.ArrayDeque;
+
 /**
  * @name Fr24Collector
  * @author jml04
@@ -41,7 +43,9 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
      * @param args can be ignored
      */
     public static void main(String[] args) {
-        new Fr24Collector(true, false, UserSettings.getGridsizeLat(), UserSettings.getGridsizeLon()).start();
+        // only military with a small grid size
+        int sLat = 2, sLon = 4;
+        new Fr24Collector(true, true, sLat, sLon).start();
     }
 
     @Nullable private final Filters filters;
@@ -65,7 +69,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         super(exitOnClose, new Fr24Supplier());
         this.filters = withFilters ? UserSettings.getCollectorFilters() : null;
         this.liveLoader = new LiveLoader();
-        this.inserter = new Inserter(this.liveLoader, 100);
+        this.inserter = new Inserter(this.liveLoader, super.getErrorQueue());
         this.worldAreaRaster1D = Areas.getWorldAreaRaster1D(gridSizeLat, gridSizeLon);
     }
 
@@ -115,7 +119,8 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
 
             Fr24Frame lastFrame = DBIn.getLastFrame();
             super.display.update(super.insertedNow.get(), super.newPlanesNow.get(), super.newFlightsNow.get(),
-                    (lastFrame != null) ? lastFrame.toShortString() : "None", this.liveLoader.getQueueSize());
+                                 (lastFrame != null) ? lastFrame.toShortString() : "None",
+                                 this.liveLoader.getQueueSize(), super.errorQueue.poll());
         }, 0, 1);
     }
 

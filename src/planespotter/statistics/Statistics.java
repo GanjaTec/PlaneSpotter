@@ -264,7 +264,7 @@ public class Statistics {
      * @return
      */
     public Map<String, Integer> tagCount(@NotNull final Deque<String> tags) {
-        HashMap<String, Integer> map = new HashMap<>();
+        Map<String, Integer> map = new HashMap<>();
         tags.forEach(tag -> {
             if (map.containsKey(tag)) {
                 map.replace(tag, map.get(tag) + 1);
@@ -300,30 +300,22 @@ public class Statistics {
         return maps;
     }
 
-    public JFreeChart airlineSignificance(int minCount) {
+    public JFreeChart airlineSignificance(int minCount)
+            throws DataNotFoundException {
+
         DBOut dbOut = DBOut.getDBOut();
-        Deque<String> airlineTags = null;
-        try {
-            airlineTags = dbOut.getAllAirlineTags();
-        } catch (DataNotFoundException e) {
-            Controller.getInstance().handleException(e);
-        }
-        assert airlineTags != null;
+        Deque<String> airlineTags = dbOut.getAllAirlineTags();
         Map<String, Integer> airlStats = this.onlySignificant(this.tagCount(airlineTags), minCount);
         CategoryDataset dataset = Statistics.createBarDataset(airlStats);
         return ChartFactory.createBarChart("Airline-Significance", "Airlines", "Flight-Count",
                                             dataset, PlotOrientation.HORIZONTAL, true, true, false);
     }
 
-    public JFreeChart airportSignificance(int minCount) {
+    public JFreeChart airportSignificance(int minCount)
+            throws DataNotFoundException {
+
         DBOut dbOut = DBOut.getDBOut();
-        Deque<String> airportTags = null;
-        try {
-            airportTags = dbOut.getAllAirportTagsNotDistinct();
-        } catch (DataNotFoundException e) {
-            Controller.getInstance().handleException(e);
-        }
-        assert airportTags != null;
+        Deque<String> airportTags = dbOut.getAllAirportTagsNotDistinct();
         Map<String, Integer> apStats = this.onlySignificant(this.tagCount(airportTags), minCount);
         CategoryDataset dataset = Statistics.createBarDataset(apStats);
         return ChartFactory.createBarChart("Airport-Significance", "Airports", "Flight-Count",
