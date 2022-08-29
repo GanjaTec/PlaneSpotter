@@ -288,6 +288,7 @@ public abstract class Controller {
      * @param button is the clicked search button, 0 = LIST, 1 = MAP
      */
     // TODO: 24.05.2022 DEBUG PLANE SEARCH, AIRLINE SEARCH
+    // TODO: 29.08.2022 plane, airline search , flights: flightNr
     public void search(@NotNull String[] inputs, int button) {
 
         try {
@@ -304,24 +305,29 @@ public abstract class Controller {
 
             search = new Search();
             SearchType currentSearchType = this.ui.getSearchPanel().getCurrentSearchType();
+            ViewType showType;
             try {
-                switch (currentSearchType) {
+                showType = switch (currentSearchType) {
                     case AIRLINE -> {
                         this.loadedData = search.forAirline(inputs);
-                        this.show(MAP_TRACKING_NP);
+                        yield MAP_TRACKING_NP;
                     }
                     case AIRPORT -> {
                         this.loadedData = search.forAirport(inputs);
-                        this.show(MAP_TRACKING_NP);
+                        yield MAP_TRACKING_NP;
                     }
                     case FLIGHT -> {
                         this.loadedData = search.forFlight(inputs);
-                        this.show(MAP_TRACKING);
+                        yield MAP_TRACKING;
                     }
                     case PLANE -> {
                         this.loadedData = search.forPlane(inputs);
-                        this.show(MAP_FROMSEARCH);
+                        yield MAP_FROMSEARCH;
                     }
+                    default -> null;
+                };
+                if (showType != null) {
+                    this.show(showType);
                 }
             } catch (DataNotFoundException dnf) {
                 this.handleException(dnf);
@@ -386,8 +392,8 @@ public abstract class Controller {
                 Coordinate markerCoord;
                 int heading = 0;
                 for (MapMarker marker : markers) {
-                    if (marker instanceof PlaneMarker dmm) {
-                        heading = dmm.getHeading();
+                    if (marker instanceof PlaneMarker pm) {
+                        heading = pm.getHeading();
                     }
                     markerCoord = marker.getCoordinate();
                     if (!markerHit && mapManager.isMarkerHit(markerCoord, clickedCoord)) {

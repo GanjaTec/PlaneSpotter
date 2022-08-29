@@ -13,6 +13,7 @@ import planespotter.display.models.*;
 import planespotter.model.nio.LiveLoader;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 
 /**
@@ -25,6 +26,9 @@ import java.io.File;
  * which is a lot more easy than the old GUI class
  */
 public class UserInterface {
+
+    // the default font with a size of 16, can be changed
+    @NotNull public static final Font DEFAULT_FONT = new Font("DialogInput", Font.BOLD, 16);
 
     // main window, contains all components
     @NotNull
@@ -164,6 +168,39 @@ public class UserInterface {
      */
     public void showLoadingScreen(boolean show) {
         this.getLayerPane().showOverTop(show);
+    }
+
+    /**
+     * unselects all {@link JMenuBar} items
+     */
+    public void unselectMenuBar() {
+        this.window.getJMenuBar().setSelected(null);
+    }
+
+    /**
+     * sets the {@link UserInterface} to fullscreen mode
+     *
+     * @param fullScreen is the full-screen flag, enabled if true, else disabled
+     */
+    public void setFullScreen(boolean fullScreen) {
+        JFrame w = this.window;
+        w.dispose();
+        w.setUndecorated(fullScreen);
+        w.setExtendedState(fullScreen ? Frame.MAXIMIZED_BOTH : Frame.NORMAL);
+        if (!fullScreen) {
+            w.setSize(w.getPreferredSize());
+            w.setLocationRelativeTo(null);
+        }
+        w.setVisible(true);
+    }
+
+    /**
+     * getter for the fullscreen-enabled flag
+     *
+     * @return true if the fullscreen-mode is enabled, else false
+     */
+    public boolean isFullscreen() {
+        return this.window.getExtendedState() == Frame.MAXIMIZED_BOTH && this.window.isUndecorated();
     }
 
     /**

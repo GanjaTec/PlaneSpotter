@@ -12,6 +12,7 @@ import planespotter.model.nio.Filters;
 import planespotter.throwables.ExtensionException;
 import planespotter.throwables.InvalidDataException;
 
+import java.awt.*;
 import java.io.*;
 
 /**
@@ -64,7 +65,8 @@ public class UserSettings {
             initialize(defaultValues);
         }
         collectorFilters = new Filters().add("RCH").add("DUKE").add("FORTE").add("CASA").add("VIVI")
-                                        .add("EYE").add("NCR").add("LAGR");
+                                        .add("EYE").add("NCR").add("LAGR").add("SNIPER").add("VALOR")
+                                        .add("MMF").add("HOIS").add("K35R").add("SONIC").add("Q4");
         //collectorFilters = null/*Filters.read(Configuration.FILTERS_FILENAME)*/;
     }
 

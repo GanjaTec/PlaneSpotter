@@ -4,6 +4,7 @@ import libs.UWPButton;
 import org.jetbrains.annotations.NotNull;
 import planespotter.constants.SearchType;
 import planespotter.controller.ActionHandler;
+import planespotter.display.UserInterface;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,7 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.DefaultColor.*;
 
 /**
@@ -34,7 +34,7 @@ public final class SearchModels {
         searchFor.setBounds(parent.getWidth()/2, 10, (parent.getWidth()-20)/2, 25);
         searchFor.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         searchFor.setForeground(DEFAULT_MAP_ICON_COLOR.get());
-        searchFor.setFont(FONT_MENU);
+        searchFor.setFont(UserInterface.DEFAULT_FONT);
         searchFor.addItemListener(listener);
 
         return searchFor;
@@ -48,7 +48,7 @@ public final class SearchModels {
         var boxLabel = new JLabel("Search for:");
         boxLabel.setBounds(10, 10, (parent.getWidth()-20)/2, 25);
         boxLabel.setForeground(DEFAULT_MAP_ICON_COLOR.get());
-        boxLabel.setFont(FONT_MENU);
+        boxLabel.setFont(UserInterface.DEFAULT_FONT);
         boxLabel.setOpaque(false);
 
         return boxLabel;
@@ -94,7 +94,7 @@ public final class SearchModels {
         headMessage.setLineWrap(true);
         headMessage.setWrapStyleWord(true);
         headMessage.setOpaque(false);
-        var font = new Font(FONT_MENU.getFontName(), Font.PLAIN, 12);
+        var font = new Font(UserInterface.DEFAULT_FONT.getFontName(), Font.PLAIN, 12);
         headMessage.setFont(font);
 
         return headMessage;
@@ -159,10 +159,10 @@ public final class SearchModels {
                 }
                 bt.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
                 bt.setForeground(DEFAULT_FONT_COLOR.get());
-                bt.setBorder(MENU_BORDER);
+                bt.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
                 bt.addActionListener(listener);
             }
-            c.setFont(FONT_MENU);
+            c.setFont(UserInterface.DEFAULT_FONT);
             c.setVisible(false);
         }
         return components;
@@ -222,10 +222,10 @@ public final class SearchModels {
                 }
                 bt.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
                 bt.setForeground(DEFAULT_FONT_COLOR.get());
-                bt.setBorder(MENU_BORDER);
+                bt.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
                 bt.addActionListener(listener);
             }
-            c.setFont(FONT_MENU);
+            c.setFont(UserInterface.DEFAULT_FONT);
             c.setVisible(false);
         }
         return components;
@@ -277,10 +277,10 @@ public final class SearchModels {
                 }
                 bt.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
                 bt.setForeground(DEFAULT_FONT_COLOR.get());
-                bt.setBorder(MENU_BORDER);
+                bt.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
                 bt.addActionListener(listener);
             }
-            c.setFont(FONT_MENU);
+            c.setFont(UserInterface.DEFAULT_FONT);
             c.setVisible(false);
         }
         return components;
@@ -336,10 +336,10 @@ public final class SearchModels {
                 }
                 bt.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
                 bt.setForeground(DEFAULT_FONT_COLOR.get());
-                bt.setBorder(MENU_BORDER);
+                bt.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
                 bt.addActionListener(listener);
             }
-            c.setFont(FONT_MENU);
+            c.setFont(UserInterface.DEFAULT_FONT);
             c.setVisible(false);
         }
         return components;

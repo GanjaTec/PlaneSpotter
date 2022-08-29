@@ -4,6 +4,7 @@ import libs.UWPButton;
 import org.jetbrains.annotations.NotNull;
 import planespotter.constants.UserSettings;
 import planespotter.controller.ActionHandler;
+import planespotter.display.UserInterface;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,7 +15,6 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import static planespotter.constants.DefaultColor.*;
-import static planespotter.constants.GUIConstants.FONT_MENU;
 
 public class SettingsPane extends JDialog {
 
@@ -26,22 +26,22 @@ public class SettingsPane extends JDialog {
         var maxLoadLbl = new JLabel("Max. loaded Data:");
         maxLoadLbl.setBounds(20, 10, 300, 25);
         maxLoadLbl.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-        maxLoadLbl.setFont(FONT_MENU);
+        maxLoadLbl.setFont(UserInterface.DEFAULT_FONT);
         maxLoadLbl.setOpaque(false);
         var mapType = new JLabel("Map Type:");
         mapType.setBounds(20, 50, 300, 25);
         mapType.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-        mapType.setFont(FONT_MENU);
+        mapType.setFont(UserInterface.DEFAULT_FONT);
         mapType.setOpaque(false);
         var livePeriod = new JLabel("Live Data Period (sec):");
         livePeriod.setBounds(20, 90, 300, 25);
         livePeriod.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-        livePeriod.setFont(FONT_MENU);
+        livePeriod.setFont(UserInterface.DEFAULT_FONT);
         livePeriod.setOpaque(false);
         var liveMapFilters = new JLabel("Live Map Filters: ");
         liveMapFilters.setBounds(20, 130, 300, 25);
         liveMapFilters.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-        liveMapFilters.setFont(FONT_MENU);
+        liveMapFilters.setFont(UserInterface.DEFAULT_FONT);
         liveMapFilters.setOpaque(false);
         
         super.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 540, 400);
@@ -84,7 +84,7 @@ public class SettingsPane extends JDialog {
         maxLoadTxtfield.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR.get()));
         maxLoadTxtfield.setBackground(DEFAULT_FONT_COLOR.get());
         maxLoadTxtfield.setForeground(DEFAULT_ACCENT_COLOR.get());
-        maxLoadTxtfield.setFont(FONT_MENU);
+        maxLoadTxtfield.setFont(UserInterface.DEFAULT_FONT);
         maxLoadTxtfield.addKeyListener(listener);
 
         return maxLoadTxtfield;
@@ -96,13 +96,13 @@ public class SettingsPane extends JDialog {
         var cancel = new UWPButton("Cancel");
         cancel.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         cancel.setForeground(DEFAULT_FONT_COLOR.get());
-        cancel.setFont(FONT_MENU);
+        cancel.setFont(UserInterface.DEFAULT_FONT);
         cancel.setBounds(mid - 140, height, 120, 25);
         cancel.addActionListener(listener);
         var confirm = new UWPButton("Confirm");
         confirm.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         confirm.setForeground(DEFAULT_FONT_COLOR.get());
-        confirm.setFont(FONT_MENU);
+        confirm.setFont(UserInterface.DEFAULT_FONT);
         confirm.setBounds(mid + 20, height, 120, 25);
         confirm.addActionListener(listener);
         return new UWPButton[] {
@@ -122,7 +122,7 @@ public class SettingsPane extends JDialog {
         mapTypeCmbBox.setBorder(BorderFactory.createLineBorder(DEFAULT_FONT_COLOR.get()));
         mapTypeCmbBox.setBackground(DEFAULT_FONT_COLOR.get());
         mapTypeCmbBox.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-        mapTypeCmbBox.setFont(FONT_MENU);
+        mapTypeCmbBox.setFont(UserInterface.DEFAULT_FONT);
         mapTypeCmbBox.addItemListener(listener);
 
         return mapTypeCmbBox;
@@ -142,7 +142,7 @@ public class SettingsPane extends JDialog {
         button.setEffectColor(DEFAULT_FONT_COLOR.get());
         button.setSelectedColor(DEFAULT_MAP_ICON_COLOR.get());
         button.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
-        button.setFont(FONT_MENU);
+        button.setFont(UserInterface.DEFAULT_FONT);
         button.addActionListener(listener);
 
         return button;

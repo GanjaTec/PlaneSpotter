@@ -1,14 +1,14 @@
 package planespotter.controller;
 
 import org.jetbrains.annotations.NotNull;
-
 import org.jetbrains.annotations.Nullable;
+
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
+
 import planespotter.constants.*;
 import planespotter.dataclasses.Hotkey;
 import planespotter.display.Diagrams;
 import planespotter.model.Scheduler;
-import planespotter.display.TreasureMap;
 import planespotter.display.UserInterface;
 import planespotter.display.models.InfoPane;
 import planespotter.display.models.LayerPane;
@@ -311,6 +311,7 @@ public abstract class ActionHandler
         switch (text) {
             case "Open" -> ctrl.loadFile();
             case "Save As" -> ctrl.saveFile();
+            case "Fullscreen" -> ui.setFullScreen(!ui.isFullscreen());
             case "Exit" -> ctrl.shutdown(false);
             case "Fr24-Supplier" -> ctrl.runFr24Collector();
             // TODO: 25.08.2022 ctrl.showStats(ViewType type)
@@ -389,8 +390,10 @@ public abstract class ActionHandler
             this.mapClicked(e, ctrl, ui);
         } else if (component instanceof JMenu menu) {
             this.menuClicked(menu);
+            ui.unselectMenuBar();
         } else if (component instanceof JMenuItem item) {
             this.menuItemClicked(ctrl, item);
+            ui.unselectMenuBar();
         }
     }
 

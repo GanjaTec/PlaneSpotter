@@ -33,7 +33,8 @@ public enum Images {
     EXIT_ICON_16x(new ImageIcon(IMAGE_PATH + "exit_icon_16x.png")),
     AIRPLANE_ICON_8x(new ImageIcon(IMAGE_PATH + "airplane_icon_8x.png")),
     DEFAULT_AIRPLANE_ICON_16x(new ImageIcon(IMAGE_PATH  + "airplane_icon_16x.png")),
-    SELECTED_AIRPLANE_ICON_16x(new ImageIcon(IMAGE_PATH + "selected_airplane_icon_16x.png"));
+    SELECTED_AIRPLANE_ICON_16x(new ImageIcon(IMAGE_PATH + "selected_airplane_icon_16x.png")),
+    FULLSCREEN_ICON_16x(new ImageIcon(IMAGE_PATH + "fullscreen_icon_16x.png"));
 
     // image instance field
     @NotNull private final ImageIcon img;

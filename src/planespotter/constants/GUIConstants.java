@@ -25,8 +25,8 @@ public final class GUIConstants {
     /**
      * default fonts
      */
-    public static final Font TITLE_FONT = new Font("Copperplate Gothic", Font.BOLD, 40),
-                             FONT_MENU = new Font("DialogInput", Font.BOLD, 16);
+    public static final Font TITLE_FONT = new Font("Copperplate Gothic", Font.BOLD, 40);
+
 
     /**
      * component borders

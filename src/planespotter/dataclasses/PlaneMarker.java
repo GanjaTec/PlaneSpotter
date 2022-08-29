@@ -90,10 +90,10 @@ public class PlaneMarker extends MapMarkerDot implements MapMarker {
      * creates a {@link PlaneMarker} by {@link DataPoint} by creating a marker with the {@link DataPoint}'s
      * {@link Position} and heading
      *
-     * @param dataPoint
-     * @param showIcon
-     * @param selected
-     * @return
+     * @param dataPoint is the {@link DataPoint} where the position- and heading-data is from
+     * @param showIcon indicates if the plane icon should be displayed
+     * @param selected indicates if the marker is selected
+     * @return the {@link PlaneMarker}, converted from {@link Position}
      */
     @NotNull
     public static PlaneMarker fromDataPoint(@NotNull DataPoint dataPoint, boolean showIcon, boolean selected) {
@@ -101,13 +101,14 @@ public class PlaneMarker extends MapMarkerDot implements MapMarker {
     }
 
     /**
+     * creates a {@link PlaneMarker} by {@link DataPoint} by creating a marker with the {@link DataPoint}'s
+     * {@link Position} and heading, and with a specific color
      *
-     *
-     * @param dataPoint
-     * @param color
-     * @param showIcon
-     * @param selected
-     * @return
+     * @param dataPoint is the {@link DataPoint} where the position- and heading-data is from
+     * @param color is the marker color, unnecessary if the icon is shown
+     * @param showIcon indicates if the plane icon should be displayed
+     * @param selected indicates if the marker is selected
+     * @return the {@link PlaneMarker}, converted from {@link Position}
      */
     @NotNull
     public static PlaneMarker fromDataPoint(@NotNull DataPoint dataPoint, @NotNull Color color, boolean showIcon, boolean selected) {
@@ -115,13 +116,13 @@ public class PlaneMarker extends MapMarkerDot implements MapMarker {
     }
 
     /**
+     * creates a {@link PlaneMarker} from a specific {@link Position} with specific heading
      *
-     *
-     * @param pos
-     * @param heading
-     * @param showIcon
-     * @param selected
-     * @return
+     * @param pos is the {@link Position} to be converted to {@link PlaneMarker}
+     * @param heading is the plane heading in degrees
+     * @param showIcon indicates if the plane icon should be displayed
+     * @param selected indicates if the marker is selected
+     * @return PlaneMarker, converted from {@link Position}
      */
     @NotNull
     public static PlaneMarker fromPosition(@NotNull Position pos, int heading, boolean showIcon, boolean selected) {
@@ -129,14 +130,14 @@ public class PlaneMarker extends MapMarkerDot implements MapMarker {
     }
 
     /**
+     * creates a {@link PlaneMarker} with specific color and heading
      *
-     *
-     * @param pos
-     * @param color
-     * @param heading
-     * @param showIcon
-     * @param selected
-     * @return
+     * @param pos is the {@link Position} to convert to {@link PlaneMarker}
+     * @param color is the marker color, unnecessary if the icon is shown
+     * @param heading is the plane heading in degrees
+     * @param showIcon indicates if the plane icon should be displayed
+     * @param selected indicates if the marker is selected
+     * @return PlaneMarker, converted from {@link Position}
      */
     @NotNull
     public static PlaneMarker fromPosition(@NotNull Position pos, @NotNull Color color, int heading, boolean showIcon, boolean selected) {
@@ -146,12 +147,13 @@ public class PlaneMarker extends MapMarkerDot implements MapMarker {
     }
 
     /**
+     * gets the default {@link MarkerPainter} by returning a {@link MarkerPainter}
+     * with the right icon and heading
      *
-     *
-     * @param heading
-     * @param showIcon
-     * @param selected
-     * @return
+     * @param heading is the plane heading in degrees
+     * @param showIcon indicates if plane icons should be displayed
+     * @param selected indicates if a marker is selected
+     * @return the default {@link MarkerPainter}
      */
     @Nullable
     private static MarkerPainter getDefaultPainter(int heading, boolean showIcon, boolean selected) {
@@ -165,29 +167,30 @@ public class PlaneMarker extends MapMarkerDot implements MapMarker {
     }
 
     /**
+     * getter for the plane heading that is paired with this marker
      *
-     *
-     * @return
+     * @return the heading of this marker, in degrees
      */
     public int getHeading() {
         return this.heading;
     }
 
     /**
+     * indicates if this marker is selected
      *
-     *
-     * @return
+     * @return true if this marker is selected, else false
      */
     public boolean isSelected() {
         return this.selected;
     }
 
     /**
+     * overwritten paint-method, paints this marker with the default marker painter
+     * if it's not null, else with the superclass
      *
-     *
-     * @param g
-     * @param position
-     * @param radius
+     * @param g is the marker-{@link Graphics} to be painted
+     * @param position is the {@link Point} where the marker is painted
+     * @param radius is the radius of the marker, unnecessary with icon
      */
     @Override
     public void paint(@NotNull Graphics g, @NotNull Point position, int radius) {
