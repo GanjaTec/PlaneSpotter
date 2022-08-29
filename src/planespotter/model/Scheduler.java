@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author jml04
  * @version 1.1
  *
+ * @description
  * Scheduler class contains all thread pool executors and is responsible for threading.
  * It is able to execute tasks once and in period,
  * hold it static if you need only one instance, else use multiple instances

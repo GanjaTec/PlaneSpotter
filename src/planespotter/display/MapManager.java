@@ -4,19 +4,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.*;
-import planespotter.constants.GUIConstants;
 import planespotter.constants.UserSettings;
 import planespotter.controller.ActionHandler;
 import planespotter.dataclasses.*;
-import planespotter.display.models.HeatMapRectangle;
 import planespotter.util.Utilities;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static planespotter.constants.DefaultColor.DEFAULT_BORDER_COLOR;
 
 /**
  * @name MapManager
@@ -69,7 +69,7 @@ public final class MapManager {
                     int lvl = significanceMap.get(ap);
                     if (lvl > 9) {
                         atomRadius.set(lvl / 100);
-                        atomCoord.set(Position.toCoordinate(ap.pos()));
+                        atomCoord.set(ap.pos().toCoordinate());
                         var mark = new MapMarkerCircle(atomCoord.get(), atomRadius.get());
                         mark.setColor(Color.RED);
                         mark.setBackColor(null);
@@ -77,26 +77,6 @@ public final class MapManager {
                     }
                 });
         viewer.setMapMarkerList(markers);
-    }
-
-    public void createPrototypeHeatMap(@NotNull final HashMap<Position, Integer> heatMap, @NotNull final TreasureMap viewer) {
-        var markers = new LinkedList<MapMarker>();
-        MapMarkerCircle newMarker;
-        for (var pos : heatMap.keySet()) {
-            int radius = heatMap.get(pos)/10000;
-            //newMarker = new MapMarkerCircle(Position.toCoordinate(pos), radius);
-            newMarker = new PlaneMarker.HeatMapMarker(Position.toCoordinate(pos), heatMap.get(pos)/8);
-            newMarker.setColor(Color.RED);
-            newMarker.setBackColor(null);
-            markers.add(newMarker);
-        }
-
-        viewer.setMapMarkerList(markers);
-    }
-
-    public void createRasterHeatMap(@NotNull final BufferedImage heatMapImg, @NotNull final TreasureMap viewer) {
-        var rect = new HeatMapRectangle(heatMapImg, viewer);
-        viewer.addMapRectangle(rect);
     }
 
     /**
@@ -112,7 +92,7 @@ public final class MapManager {
         if (parent != null) {
             viewer.setBounds(parent.getBounds());
         }
-        viewer.setBorder(GUIConstants.LINE_BORDER);
+        viewer.setBorder(BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR.get()));
         viewer.setZoomControlsVisible(false);
         viewer.setTileSource(mapType);
         viewer.setVisible(true);
@@ -201,8 +181,8 @@ public final class MapManager {
                         && dp.timestamp() >= lastdp.timestamp()
                         && !lonJump) {
 
-                    coord1 = Position.toCoordinate(dpPos);
-                    coord2 = Position.toCoordinate(lastdp.pos());
+                    coord1 = dpPos.toCoordinate();
+                    coord2 = lastdp.pos().toCoordinate();
                     line = new MapPolygonImpl(coord1, coord2, coord1);
                     line.setColor(markerColor);
                     polys.add(line);

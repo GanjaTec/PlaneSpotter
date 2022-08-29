@@ -13,9 +13,9 @@ import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
 import java.nio.file.Files;
@@ -95,36 +95,6 @@ public abstract class Utilities {
             return true;
         }
         return false;
-    }
-
-    /**
-     * rotates an image by certain degrees
-     * the rotating technique is a bit tricky, because we cannot
-     * just do something like img.rotate(...), we have to create
-     * a new, rotated Graphics first and then draw the image on it.
-     *
-     * @param img is the {@link Image} that should be rotated
-     * @param degrees is the degree of the rotation, from 0 to 360
-     * @param imageType is the image type constant from {@link BufferedImage}
-     * @param flipHorizontally indicates if the image should be flipped horizontally
-     * @return {@link BufferedImage} with specific rotation
-     */
-    @NotNull
-    public static BufferedImage rotate(@NotNull Image img, @Range(from = 0, to = 360) final int degrees, int imageType, boolean flipHorizontally) {
-        final int width = img.getWidth(null);
-        final int height = img.getHeight(null);
-
-        BufferedImage buf = new BufferedImage(width, height, imageType);
-        Graphics2D graphics = buf.createGraphics();
-
-        graphics.rotate(Math.toRadians(degrees), MathUtils.divide(width, 2), MathUtils.divide(height, 2));
-        if (flipHorizontally) {
-            graphics.drawImage(img, width, 0, -width, height, null);
-        } else {
-            graphics.drawImage(img, 0, 0, null);
-        }
-
-        return buf;
     }
 
     /**
@@ -233,72 +203,6 @@ public abstract class Utilities {
     }
 
     /**
-     * packs a string in the format 'myText'
-     *
-     * @param str is the string to pack
-     * @return packed input string with 's
-     */
-    @NotNull
-    public static String packString(@NotNull String str) {
-        return "'" + str + "'";
-    }
-
-    /**
-     * strips a string to the right format
-     * Example: from ' "Hello" ' to ' Hello '
-     *
-     * @param in is the string to strip
-     * @return input-string, but without the "s
-     */
-    @NotNull
-    public static String stripString(@NotNull String in) {
-        return in.replaceAll("\"", "");
-    }
-
-    /**
-     * checks a string for illegal characters or expressions
-     *
-     * @param check is the (sql) string to check
-     * @return string, without illegal characters/expressions
-     */
-    @NotNull
-    public static String checkString(@NotNull String check)
-        throws IllegalInputException {
-
-        if (       check.contains("*")      || check.contains(";")
-                || check.contains("SELECT") || check.contains("select")
-                || check.contains("JOIN")   || check.contains("join")
-                || check.contains("DROP")   || check.contains("drop")
-                || check.contains("INSERT") || check.contains("insert")
-                || check.contains("FROM")   || check.contains("from")
-                || check.contains("TABLE")  || check.contains("--")) {
-            // throwing new exception because of illegal data in the input string
-            throw new IllegalInputException("Input expressions or characters not allowed!");
-        }
-        // replacing all '%', to prevent inputs like '%.....%', which take too much time to search for
-        // '%' is a SQL-placeholder for everything with any length
-        return check.replaceAll("%", "");
-    }
-
-    /**
-     * checks an array of input strings for illegal
-     * characters or expressions
-     *
-     * @param inputs is the input string-array which is going to be checked
-     * @return the checked array, without illegal expressions
-     * @throws IllegalInputException if an illegal expression was found
-     */
-    @NotNull
-    public static String[] checkInputs(@NotNull String... inputs)
-            throws IllegalInputException {
-
-        for (int i = 0; i < inputs.length; i++) {
-            inputs[i] = checkString(inputs[i]);
-        }
-        return inputs;
-    }
-
-    /**
      * converts a {@link Number} to an {@link Integer}, not directly by casting,
      * but by just calling the intValue() method from the Number class
      *
@@ -369,11 +273,17 @@ public abstract class Utilities {
     public static <T> Deque<?> parseDeque(@NotNull T arrayOrCollection) {
         if (arrayOrCollection instanceof Collection<?> collection) {
             return new ArrayDeque<>(collection);
-        } else try {
-            return new ArrayDeque<>(List.of(arrayOrCollection));
-        } catch (final Throwable thr) {
-            throw new InvalidDataException("incorrect input, array or collection expected");
+        } else if (arrayOrCollection instanceof Object[] arr) {
+            return new ArrayDeque<>(List.of(arr));
+        } else if (arrayOrCollection.getClass().isArray()) {
+            int length = Array.getLength(arrayOrCollection);
+            Deque<Object> dq = new ArrayDeque<>();
+            for (int i = 0; i < length; i++) {
+                dq.add(Array.get(arrayOrCollection, i));
+            }
+            return dq;
         }
+        throw new InvalidDataException("incorrect input, array or collection expected!");
     }
 
     /**
@@ -496,6 +406,98 @@ public abstract class Utilities {
     }
 
     /**
+     * checks a {@link java.net.http.HttpResponse} status code,
+     * does nothing if it is 200 (default),
+     * if it is not 200, an exception is thrown
+     *
+     * @param status is the status code, given by the {@link java.net.http.HttpResponse}
+     * @throws Fr24Exception when the status code is invalid
+     */
+    public static void checkStatusCode(int status) {
+        String invalidMsg = "CheckStatus: Status code" + status + " is invalid!";
+        StatusException stex = switch (status) {
+            case 200 -> null; // status code is OK
+            case 451 -> new StatusException(invalidMsg + "\nSeems like there is a problem with the Http-header (User-Agent)!");
+            default -> new StatusException(invalidMsg + "\nUnknown error!");
+        };
+        if (stex != null) {
+            throw stex;
+        }
+    }
+
+
+    // string utilities
+
+    /**
+     * packs a string in the format 'myText'
+     *
+     * @param str is the string to pack
+     * @return packed input string with 's
+     */
+    @NotNull
+    public static String packString(@NotNull String str) {
+        return "'" + str + "'";
+    }
+
+    /**
+     * strips a string to the right format
+     * Example: from ' "Hello" ' to ' Hello '
+     *
+     * @param in is the string to strip
+     * @return input-string, but without the "s
+     */
+    @NotNull
+    public static String stripString(@NotNull String in) {
+        return in.replaceAll("\"", "");
+    }
+
+    /**
+     * checks a string for illegal characters or expressions
+     *
+     * @param check is the (sql) string to check
+     * @return string, without illegal characters/expressions
+     */
+    @NotNull
+    public static String checkString(@NotNull String check)
+            throws IllegalInputException {
+
+        if (       check.contains("*")      || check.contains(";")
+                || check.contains("SELECT") || check.contains("select")
+                || check.contains("JOIN")   || check.contains("join")
+                || check.contains("DROP")   || check.contains("drop")
+                || check.contains("INSERT") || check.contains("insert")
+                || check.contains("FROM")   || check.contains("from")
+                || check.contains("TABLE")  || check.contains("--")) {
+            // throwing new exception because of illegal data in the input string
+            throw new IllegalInputException("Input expressions or characters not allowed!");
+        }
+        // replacing all '%', to prevent inputs like '%.....%', which take too much time to search for
+        // '%' is a SQL-placeholder for everything with any length
+        return check.replaceAll("%", "");
+    }
+
+    /**
+     * checks an array of input strings for illegal
+     * characters or expressions
+     *
+     * @param inputs is the input string-array which is going to be checked
+     * @return the checked array, without illegal expressions
+     * @throws IllegalInputException if an illegal expression was found
+     */
+    @NotNull
+    public static String[] checkInputs(@NotNull String... inputs)
+            throws IllegalInputException {
+
+        for (int i = 0; i < inputs.length; i++) {
+            inputs[i] = checkString(inputs[i]);
+        }
+        return inputs;
+    }
+
+
+    // image utilities
+
+    /**
      * brings an image in a certain scale
      *
      * @param img is the input image that should be scaled
@@ -510,25 +512,37 @@ public abstract class Utilities {
     }
 
     /**
-     * checks a {@link java.net.http.HttpResponse} status code,
-     * does nothing if it is 200 (default),
-     * if it is not 200, an exception is thrown
+     * rotates an image by certain degrees
+     * the rotating technique is a bit tricky, because we cannot
+     * just do something like img.rotate(...), we have to create
+     * a new, rotated Graphics first and then draw the image on it.
      *
-     * @param status is the status code, given by the {@link java.net.http.HttpResponse}
-     * @throws Fr24Exception when the status code is invalid
+     * @param img is the {@link Image} that should be rotated
+     * @param degrees is the degree of the rotation, from 0 to 360
+     * @param imageType is the image type constant from {@link BufferedImage}
+     * @param flipHorizontally indicates if the image should be flipped horizontally
+     * @return {@link BufferedImage} with specific rotation
      */
-    public static void checkStatusCode(int status) {
-        String invalidMsg = "CheckStatus: Status code" + status + " is invalid!";
-        Fr24Exception frex;
-        frex = switch (status) {
-            case 200 -> null; // status code is OK
-            case 451 -> new Fr24Exception(invalidMsg + "\nSeems like there is a problem with the Http-header (User-Agent)!");
-            default -> new Fr24Exception(invalidMsg + "\nUnknown error!");
-        };
-        if (frex != null) {
-            throw frex;
+    @NotNull
+    public static BufferedImage rotate(@NotNull Image img, @Range(from = 0, to = 360) final int degrees, int imageType, boolean flipHorizontally) {
+        final int width = img.getWidth(null);
+        final int height = img.getHeight(null);
+
+        BufferedImage buf = new BufferedImage(width, height, imageType);
+        Graphics2D graphics = buf.createGraphics();
+
+        graphics.rotate(Math.toRadians(degrees), MathUtils.divide(width, 2), MathUtils.divide(height, 2));
+        if (flipHorizontally) {
+            graphics.drawImage(img, width, 0, -width, height, null);
+        } else {
+            graphics.drawImage(img, 0, 0, null);
         }
+
+        return buf;
     }
+
+
+    // file utilities
 
     /**
      * counts the lines of code with given file extensions
@@ -622,6 +636,19 @@ public abstract class Utilities {
         if (!file.getName().endsWith(expectedExtension)) {
             throw new ExtensionException("File does not have the expected extension " + expectedExtension);
         }
+    }
+
+
+    // reflection utilities
+
+    /**
+     * finds the {@link Class} who called this method
+     *
+     * @return the caller class of this method as a {@link Class} object
+     */
+    public static Class<?> getCallerClass() {
+        StackWalker stackWalker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
+        return stackWalker.getCallerClass();
     }
 
     /**

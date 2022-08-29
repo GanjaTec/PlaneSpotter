@@ -3,11 +3,12 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * @author Janne Matti
+ * @name Flight
+ * @author jml04
  * @author Lukas
  *
  *@description
- * This Class is used to Represent a single Flight with all off its Datapoints
+ * This Class is used to Represent a single Flight with all off its Data Points
  */
 public record Flight(int id,
                      Airport src,

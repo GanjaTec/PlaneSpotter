@@ -132,7 +132,7 @@ public class UserInterface {
     public void showWarning(@NotNull Warning type, @Nullable String addTxt) {
         if (!this.warningShown) {
             String message = type.message();
-            if (addTxt != null) {
+            if (addTxt != null && !addTxt.isBlank()) {
                 message += "\n" + addTxt;
             }
             this.warningShown = true;
@@ -148,6 +148,11 @@ public class UserInterface {
                 this.warningShown = false;
             }
         }
+    }
+
+    @NotNull
+    public String getUserInput(@NotNull String msg, @NotNull Number initValue) {
+        return JOptionPane.showInputDialog(msg, initValue);
     }
 
     /**

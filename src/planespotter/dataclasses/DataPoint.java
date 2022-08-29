@@ -3,8 +3,10 @@ package planespotter.dataclasses;
 import java.io.Serializable;
 
 /**
- * @author Janne Matti
+ * @name DataPoint
+ * @author jml04
  * @author Lukas
+ * @version 1.0
  *
  * @description
  * This Class is used to represent a single DB Entry from the 'Tracking'-Table

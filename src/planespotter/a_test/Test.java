@@ -1,7 +1,6 @@
 package planespotter.a_test;
 
-import jdk.internal.misc.VM;
-import jdk.jfr.internal.JVM;
+import com.sun.net.httpserver.HttpHandlers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.TestOnly;
@@ -29,12 +28,21 @@ import javax.swing.Timer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.ref.Cleaner;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
+import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 
 @TestOnly
@@ -55,18 +63,33 @@ public class Test {
         System.out.println(result);
 */
 
-        DBOut dbOut = DBOut.getDBOut();
-        Vector<Position> allPos = dbOut.getAllTrackingPositions();
-        Bitmap bitmap = Bitmap.fromPosVector(allPos, 0.5f);
-        Bitmap.write(bitmap, Paths.RESOURCE_PATH + "bitmap.bmp");
+        connectTest();
 
-        /*Fr24Frame frame = new Fr24Frame("test", 4.64, 56.52, 56, 20000, 637, 4400, "T-ABC", "B738", "B-333", 2928383, "CDG", "BER", "flight1", "unknwn1", "abc22", "DUKE222", "hallo", "NCR");
-        Utilities.printCurrentFields(frame);
-*/
     }
 
-    private static Unsafe getUnsafe(@NotNull Class<?> caller) {
-        if (caller != Test.class) {
+    /**
+     * something like this could be used when starting the program,
+     * as a connection 'pre-check' (also for the map tile URLs),
+     * maybe with param 'URL... urls'
+     *
+     * @throws IOException
+     */
+    public static void connectTest() throws IOException {
+        String spec = "https://data-live.flightradar24.com/";
+        URL testUrl = new URL(spec);
+        URLConnection conn = testUrl.openConnection();
+        conn.setConnectTimeout(5000);
+        try {
+            conn.connect();
+            InetAddress address = InetAddress.getByName(testUrl.getHost());
+            System.out.println(address.getHostName() + " reachable: " + address.isReachable(10));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Unsafe getUnsafe() {
+        if (Utilities.getCallerClass() != Test.class) {
             throw new IllegalCallerException("This method may only be used in the Test class!");
         }
         try {
@@ -83,7 +106,7 @@ public class Test {
      * unsafe class is able to do 'JVM-actions' like allocating memory or sth. like that
      */
     private static void unsafeTest() {
-        Unsafe unsafe = getUnsafe(Test.class);
+        Unsafe unsafe = getUnsafe();
         System.out.println(unsafe.addressSize());
         unsafe.allocateMemory(4);
 

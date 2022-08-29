@@ -18,15 +18,14 @@ public class ProtoDeserializer implements AbstractDeserializer<String> {
     @Override
     @NotNull
     public Collection<? extends Frame> deserialize(@NotNull String rawData) {
-        InvalidDataException invalidData = new InvalidDataException("Couldn't decode data, check input String!");
         ModeSDecoder decoder = new ModeSDecoder();
         try {
             ModeSReply reply = decoder.decode(rawData);
             System.out.println(reply.toString());
             System.out.println(Arrays.toString(reply.getIcao24()));
         } catch (BadFormatException | UnspecifiedFormatError e) {
-            invalidData.initCause(e);
+            throw new InvalidDataException("Couldn't decode data, check input String!", e);
         }
-        throw invalidData;
+        throw new UnsupportedOperationException();
     }
 }

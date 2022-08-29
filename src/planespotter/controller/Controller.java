@@ -541,6 +541,7 @@ public abstract class Controller {
         this.setLoading(true);
 
         //this.gui.setCurrentVisibleRect(this.ui.getMap().getVisibleRect()); // TODO visible rect beim repainten speichern
+        // TODO 2.Möglichkeit: center und zoom speichern
 
         try {
             fileChooser = MenuModels.fileSaver(this.ui.getWindow());
@@ -657,8 +658,8 @@ public abstract class Controller {
     }
 
     public void showBitmap() {
-        String input = JOptionPane.showInputDialog("Please enter a grid size (0.1 - 2.0)", 0.5);
-        if (input == null || input.isBlank()) {
+        String input = this.ui.getUserInput("Please enter a grid size (0.1 - 2.0)", 0.5);
+        if (input.isBlank()) {
             return;
         }
         this.scheduler.exec(() -> {
@@ -666,8 +667,7 @@ public abstract class Controller {
                 this.setLoading(true);
                 this.ui.showLoadingScreen(true);
                 float gridSize = Float.parseFloat(input);
-                Vector<Position> allPositions = DBOut.getDBOut().getAllTrackingPositions();
-                Bitmap bitmap = Bitmap.fromPosVector(allPositions, gridSize);
+                Bitmap bitmap = new Statistics().globalPositionBitmap(gridSize);
                 Diagrams.showPosHeatMap(this.ui, bitmap);
             } catch (NumberFormatException nfe) {
                 this.ui.showWarning(Warning.NUMBER_EXPECTED, "Please enter a float value (0.1 - 2.0)");

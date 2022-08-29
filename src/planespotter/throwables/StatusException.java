@@ -1,8 +1,6 @@
 package planespotter.throwables;
 
-import java.io.IOException;
-
-public class StatusException extends IOException {
+public class StatusException extends Fr24Exception {
 
     public StatusException() {
     }

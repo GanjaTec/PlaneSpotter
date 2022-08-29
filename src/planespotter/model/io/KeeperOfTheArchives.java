@@ -2,9 +2,11 @@ package planespotter.model.io;
 
 import planespotter.throwables.DataNotFoundException;
 import planespotter.unused.KeeperOfTheArchivesSenior;
+import planespotter.util.math.MathUtils;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static planespotter.util.Time.*;
 
@@ -53,7 +55,7 @@ public class KeeperOfTheArchives implements Keeper {
     public void keep() {
         long startMillis = nowMillis();
         System.out.println("KeeperOfTheArchives has started working...");
-        int rowsUpdated = 0;
+        AtomicInteger rowsUpdated = new AtomicInteger();
         Map<Integer, Long> fIDsAndTimestamps;
         try {
             fIDsAndTimestamps = dbo.getLiveFlightIDsWithTimestamp();
@@ -64,16 +66,15 @@ public class KeeperOfTheArchives implements Keeper {
         if (fIDsAndTimestamps.isEmpty()) {
             return;
         }
-        Set<Integer> fids = fIDsAndTimestamps.keySet();
-        long ts;
-        for (int id : fids) {
-            ts = fIDsAndTimestamps.get(id);
-            long tDiff = nowMillis()/1000 - ts;
+        fIDsAndTimestamps.forEach((id, ts) -> {
+            long tDiff = MathUtils.divide(nowMillis(), 1000L) - ts;
             if (tDiff > this.thresholdMillis) {
                 dbi.updateFlightEnd(id, ts);
-                rowsUpdated++;
+                // TODO: 29.08.2022 we could use one big query at the end instead of this
+                // TODO: 29.08.2022 updateFlightEnds(int[] ids, long[] timestamps)
+                rowsUpdated.getAndIncrement();
             }
-        }
+        });
         long elapsed = elapsedSeconds(startMillis);
         System.out.println("KeeperOfTheArchives finished work on the DB in " + elapsed +
                            " seconds!\n" + rowsUpdated + " rows updated");

@@ -2,7 +2,8 @@ package planespotter.controller;
 
 import org.jetbrains.annotations.NotNull;
 
-import planespotter.a_test.Test;
+import org.jetbrains.annotations.Nullable;
+import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import planespotter.constants.*;
 import planespotter.dataclasses.Hotkey;
 import planespotter.display.Diagrams;
@@ -13,17 +14,11 @@ import planespotter.display.models.InfoPane;
 import planespotter.display.models.LayerPane;
 import planespotter.display.models.SearchPane;
 import planespotter.display.models.SettingsPane;
-import planespotter.model.io.DBOut;
 import planespotter.statistics.Statistics;
-import planespotter.throwables.DataNotFoundException;
-import planespotter.util.Bitmap;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -68,7 +63,7 @@ public abstract class ActionHandler
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(GLOBAL_EVENT_DISPATCHER);
 
         HOTKEYS = new HashMap<>(1);
-        initHotkeys();
+        initHotkeys(null);
     }
 
     // ActionHandler hash code
@@ -119,12 +114,29 @@ public abstract class ActionHandler
     /**
      * initializes all hotkeys with a Hotkey object (key)
      * and a Runnable action (value)
+     *
+     * @param additionals are additional {@link Hotkey}s, paired with actions (in a {@link Map}) that should be initialized
      */
-    private static void initHotkeys() {
+    private static void initHotkeys(@Nullable Map<Hotkey, Runnable> additionals) {
         Runnable shiftSAction = () -> getActionHandler().menuClicked(new JMenu("Search"));
 
-        // shift S
+        // shift S / default search hotkey
         HOTKEYS.put(new Hotkey(VK_S, true, false, false), shiftSAction);
+
+        if (additionals == null) {
+            return;
+        }
+        // variable hotkeys
+        Hotkey key;
+        Runnable value;
+        for (Map.Entry<Hotkey, Runnable> add : additionals.entrySet()) {
+            key = add.getKey();
+            value = add.getValue();
+            if (key == null || value == null) {
+                continue;
+            }
+            HOTKEYS.put(key, value);
+        }
     }
 
     /**
@@ -171,7 +183,7 @@ public abstract class ActionHandler
      * @param ctrl is the main controller instance
      * @param ui is the main GUI instance
      */
-    public synchronized void buttonClicked(JButton button, Controller ctrl, UserInterface ui) {
+    public synchronized void buttonClicked(@NotNull JButton button, @NotNull Controller ctrl, @NotNull UserInterface ui) {
         ctrl.getScheduler().exec(() -> {
 
             if (button.getText().equals("Cancel")) {
@@ -204,10 +216,10 @@ public abstract class ActionHandler
      * @param ctrl is the Controller instance (given by Controller.getInstance())
      * @param ui is the {@link UserInterface} instance (given by Controller.getUI())
      */
-    public synchronized void mapClicked(MouseEvent clickEvent, Controller ctrl, UserInterface ui) {
+    public synchronized void mapClicked(@NotNull MouseEvent clickEvent, @NotNull Controller ctrl, UserInterface ui) {
         int button = clickEvent.getButton();
         if (button == MouseEvent.BUTTON1) {
-            var clicked = ui.getMap().getPosition(clickEvent.getPoint());
+            ICoordinate clicked = ui.getMap().getPosition(clickEvent.getPoint());
             boolean hit = switch (ui.getCurrentViewType()) {
                 case MAP_LIVE -> ctrl.onLiveClick(clicked);
                 case MAP_FROMSEARCH -> ctrl.onClick_all(clicked);
@@ -227,12 +239,12 @@ public abstract class ActionHandler
      * @param event is the KeyEvent
      * @param ui is the GUI instance
      */
-    public void keyEntered(KeyEvent event, UserInterface ui) {
-        var source = event.getSource();
+    public void keyEntered(@NotNull KeyEvent event, @NotNull UserInterface ui) {
+        Object source = event.getSource();
         int key = event.getKeyCode();
         try {
             if (source instanceof JTextField && key == VK_ENTER) {
-                var jButton = new JButton();
+                JButton jButton = new JButton();
                 jButton.setName("loadMap");
                 this.buttonClicked(jButton, Controller.getInstance(), ui);
             }
@@ -248,13 +260,18 @@ public abstract class ActionHandler
      *
      * @param ui is the UI instance that owns all components
      */
-    public void windowResized(UserInterface ui) {
+    public void windowResized(@NotNull UserInterface ui) {
         JFrame window = ui.getWindow();
         LayerPane layerPane = ui.getLayerPane();
-        TreasureMap map = ui.getMap();
+        //TreasureMap map = ui.getMap();
 
         layerPane.setBounds(0, 0, window.getWidth(), window.getHeight());
-        map.setBounds(layerPane.getBounds());
+
+        Component bottom = layerPane.getBottom();
+        if (bottom != null) {
+            bottom.setBounds(layerPane.getBounds());
+        }
+        //map.setBounds(layerPane.getBounds());
         Component top = layerPane.getTop();
         if (top instanceof SearchPane) {
             top.setBounds(10, 10, top.getWidth(), top.getHeight());
@@ -267,13 +284,13 @@ public abstract class ActionHandler
     }
 
     /**
-     *
+     * this method is called when an {@link JComboBox}-item is changed
      *
      * @param source is the source component, on which the change occurred
      * @param item is the item String
      * @param ui is the GUI instance
      */
-    private void itemChanged(Object source, String item, UserInterface ui) {
+    private void itemChanged(@NotNull Object source, @NotNull String item, @NotNull UserInterface ui) {
         SearchPane searchPanel = ui.getSearchPanel();
         if (source == searchPanel.getSearchCmbBox()) {
             searchPanel.clearSearch();
@@ -295,6 +312,7 @@ public abstract class ActionHandler
             case "Save As" -> ctrl.saveFile();
             case "Exit" -> ctrl.shutdown(false);
             case "Fr24-Supplier" -> ctrl.runFr24Collector();
+            // TODO: 25.08.2022 ctrl.showStats(ViewType type)
             case "Top-Airports" -> Diagrams.showTopAirports(ui, new Statistics());
             case "Top-Airlines" -> Diagrams.showTopAirlines(ui, new Statistics());
             case "Position-HeatMap" -> ctrl.showBitmap();

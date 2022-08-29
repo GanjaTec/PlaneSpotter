@@ -27,6 +27,7 @@ public interface MarkerPainter {
      * inner class HeatMapPainter represents a painter for a heat map,
      * contains the overwritten method void paint()
      */
+    @Deprecated(since = "new heatmap")
     class HeatMarkerPainter implements MarkerPainter {
 
         private final Color color;
