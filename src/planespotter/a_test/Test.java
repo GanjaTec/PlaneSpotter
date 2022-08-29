@@ -1,6 +1,5 @@
 package planespotter.a_test;
 
-import com.sun.net.httpserver.HttpHandlers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.TestOnly;
