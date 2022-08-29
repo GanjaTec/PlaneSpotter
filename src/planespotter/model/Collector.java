@@ -5,6 +5,8 @@ import planespotter.display.models.SupplierDisplay;
 import planespotter.model.nio.Supplier;
 
 import javax.swing.*;
+import java.util.ArrayDeque;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -40,13 +42,15 @@ public abstract class Collector<S extends Supplier> {
                                   newPlanesNow, newPlanesAll,
                                   newFlightsNow, newFlightsAll;
 
+    protected final Queue<Throwable> errorQueue;
+
     /**
      * collector super-constructor
      *
      * @param exitOnClose indicates if the whole program should exit
      *                    when the 'X'-button is pressed
      */
-    protected Collector(boolean exitOnClose, S supplier) {
+    protected Collector(boolean exitOnClose, @NotNull S supplier) {
         int closeOperation = (exitOnClose)
                 ? WindowConstants.EXIT_ON_CLOSE
                 : WindowConstants.DISPOSE_ON_CLOSE;
@@ -58,6 +62,7 @@ public abstract class Collector<S extends Supplier> {
         this.newPlanesAll = new AtomicInteger(0);
         this.newFlightsNow = new AtomicInteger(0);
         this.newFlightsAll = new AtomicInteger(0);
+        this.errorQueue = new ArrayDeque<>();
         // setting collector flags to 'running'
         this.paused = false;
         this.enabled = true;
@@ -144,5 +149,10 @@ public abstract class Collector<S extends Supplier> {
 
     public boolean isSubTask() {
         return this.isSubTask;
+    }
+
+    @NotNull
+    public Queue<Throwable> getErrorQueue() {
+        return errorQueue;
     }
 }

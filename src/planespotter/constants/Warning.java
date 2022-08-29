@@ -24,6 +24,7 @@ public enum Warning {
     FILE_NOT_FOUND("File couldn't be found, check Path and try again!"),
     OUT_OF_RANGE("Input out of range!"),
     NOT_SUPPORTED_YET("This feature is not supported yet!"),
+    HANDSHAKE("Handshake Exception, pausing Collector for 1 minute!"),
     OUT_OF_MEMORY("OutOfMemoryError, please restart the program!");
 
     // warning string instance field

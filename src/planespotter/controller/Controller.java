@@ -25,6 +25,7 @@ import planespotter.util.Bitmap;
 import planespotter.util.math.MathUtils;
 import planespotter.util.Utilities;
 
+import javax.net.ssl.SSLHandshakeException;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -601,6 +602,13 @@ public abstract class Controller {
             }
         } else if (thr instanceof DataNotFoundException dnf) {
             this.ui.showWarning(Warning.NO_DATA_FOUND, dnf.getMessage());
+        } else if (thr instanceof SSLHandshakeException ssl) {
+            this.ui.showWarning(Warning.HANDSHAKE, ssl.getMessage());
+            this.liveLoader.setLive(false);
+            DBIn.setEnabled(false);
+            Scheduler.sleepSec(60);
+            DBIn.setEnabled(true);
+            this.liveLoader.setLive(true);
         } else if (thr instanceof TimeoutException) {
             this.ui.showWarning(Warning.TIMEOUT);
         } else if (thr instanceof RejectedExecutionException) {

@@ -12,6 +12,7 @@ import planespotter.throwables.InvalidDataException;
 import planespotter.util.Time;
 import planespotter.util.Utilities;
 
+import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.util.*;
@@ -198,6 +199,8 @@ public class LiveLoader {
                     Utilities.checkStatusCode(response.statusCode());
                     data = deserializer.deserialize(response);
                     this.insertLater(data);
+                } catch (SSLHandshakeException ssl) {
+                    Controller.getInstance().handleException(ssl);
                 } catch (IOException | InterruptedException e) {
                     e.printStackTrace();
                 }
