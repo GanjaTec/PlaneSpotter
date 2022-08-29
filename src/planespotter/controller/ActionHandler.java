@@ -15,6 +15,7 @@ import planespotter.display.models.LayerPane;
 import planespotter.display.models.SearchPane;
 import planespotter.display.models.SettingsPane;
 import planespotter.statistics.Statistics;
+import planespotter.throwables.DataNotFoundException;
 
 import javax.swing.*;
 import java.awt.*;
@@ -313,8 +314,20 @@ public abstract class ActionHandler
             case "Exit" -> ctrl.shutdown(false);
             case "Fr24-Supplier" -> ctrl.runFr24Collector();
             // TODO: 25.08.2022 ctrl.showStats(ViewType type)
-            case "Top-Airports" -> Diagrams.showTopAirports(ui, new Statistics());
-            case "Top-Airlines" -> Diagrams.showTopAirlines(ui, new Statistics());
+            case "Top-Airports" -> {
+                try {
+                    Diagrams.showTopAirports(ui, new Statistics());
+                } catch (DataNotFoundException e) {
+                    ctrl.handleException(e);
+                }
+            }
+            case "Top-Airlines" -> {
+                try {
+                    Diagrams.showTopAirlines(ui, new Statistics());
+                } catch (DataNotFoundException e) {
+                    ctrl.handleException(e);
+                }
+            }
             case "Position-HeatMap" -> ctrl.showBitmap();
 
             case "ADSB-Supplier", "Antenna" -> ui.showWarning(Warning.NOT_SUPPORTED_YET);

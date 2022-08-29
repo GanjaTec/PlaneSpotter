@@ -183,7 +183,7 @@ public final class MapManager {
 
                     coord1 = dpPos.toCoordinate();
                     coord2 = lastdp.pos().toCoordinate();
-                    line = new MapPolygonImpl(coord1, coord2, coord1);
+                    line = new MapPolygonImpl(coord1, coord2, coord1); // we need a line, so we use one point twice
                     line.setColor(markerColor);
                     polys.add(line);
                 }

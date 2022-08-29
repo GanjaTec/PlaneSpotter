@@ -590,8 +590,9 @@ public abstract class Controller {
      */
     public void handleException(@NotNull final Throwable thr) {
 
-        if (thr instanceof DataNotFoundException dnf) {
-            this.ui.showWarning(Warning.NO_DATA_FOUND, dnf.getMessage());
+        if (thr instanceof OutOfMemoryError oom) {
+            this.ui.showWarning(Warning.OUT_OF_MEMORY);
+            this.emergencyShutdown(oom);
         } else if (thr instanceof SQLException sql) {
             String message = sql.getMessage();
             thr.printStackTrace();
@@ -600,6 +601,8 @@ public abstract class Controller {
                 // emergency shutdown because of DB-Bug
                 this.emergencyShutdown(sql);
             }
+        } else if (thr instanceof DataNotFoundException dnf) {
+            this.ui.showWarning(Warning.NO_DATA_FOUND, dnf.getMessage());
         } else if (thr instanceof TimeoutException) {
             this.ui.showWarning(Warning.TIMEOUT);
         } else if (thr instanceof RejectedExecutionException) {
@@ -671,7 +674,7 @@ public abstract class Controller {
                 Diagrams.showPosHeatMap(this.ui, bitmap);
             } catch (NumberFormatException nfe) {
                 this.ui.showWarning(Warning.NUMBER_EXPECTED, "Please enter a float value (0.1 - 2.0)");
-            } catch (DataNotFoundException e) {
+            } catch (DataNotFoundException | OutOfMemoryError e) {
                 this.handleException(e);
             } finally {
                 this.done(false);
