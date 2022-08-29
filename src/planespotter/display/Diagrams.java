@@ -8,6 +8,7 @@ import planespotter.constants.UnicodeChar;
 import planespotter.constants.Warning;
 import planespotter.display.models.LayerPane;
 import planespotter.statistics.Statistics;
+import planespotter.throwables.DataNotFoundException;
 import planespotter.util.Bitmap;
 import planespotter.util.Utilities;
 
@@ -33,7 +34,9 @@ public class Diagrams {
         layerPane.replaceBottom(heatMapPanel(layerPane, bitmapImg));
     }
 
-    public static void showTopAirlines(UserInterface ui, Statistics stats) {
+    public static void showTopAirlines(UserInterface ui, Statistics stats)
+            throws DataNotFoundException {
+
         String input = ui.getUserInput("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
         if (input.isBlank()) {
             return;
@@ -47,7 +50,9 @@ public class Diagrams {
         }
     }
 
-    public static void showTopAirports(UserInterface ui, Statistics stats) {
+    public static void showTopAirports(UserInterface ui, Statistics stats)
+            throws DataNotFoundException {
+
         String input = ui.getUserInput("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
         if (input.isBlank()) {
             return;

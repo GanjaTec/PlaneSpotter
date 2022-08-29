@@ -63,7 +63,9 @@ public class UserSettings {
             Object[] defaultValues = {50000, DEFAULT_MAP, 6, 12};
             initialize(defaultValues);
         }
-        collectorFilters = null/*Filters.read(Configuration.FILTERS_FILENAME)*/;
+        collectorFilters = new Filters().add("RCH").add("DUKE").add("FORTE").add("CASA").add("VIVI")
+                                        .add("EYE").add("NCR").add("LAGR");
+        //collectorFilters = null/*Filters.read(Configuration.FILTERS_FILENAME)*/;
     }
 
     /**

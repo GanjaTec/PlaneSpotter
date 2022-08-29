@@ -1,6 +1,7 @@
 package planespotter.display.models;
 
 import libs.UWPButton;
+import org.jetbrains.annotations.Nullable;
 import planespotter.model.Fr24Collector;
 import planespotter.constants.Images;
 import planespotter.controller.Controller;
@@ -17,7 +18,6 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static planespotter.constants.DefaultColor.*;
-import static planespotter.constants.GUIConstants.MENU_BORDER;
 import static planespotter.constants.Images.FLYING_PLANE_ICON;
 import static planespotter.util.math.MathUtils.divide;
 
@@ -48,8 +48,9 @@ public class SupplierDisplay implements WindowListener {
                          newFlightsLabel = new JLabel(),
                          statusLabel = new JLabel(),
                          lastFrameLabel = new JLabel(),
-                         queueSizeLabel = new JLabel();
-    private final JLabel[] labels = {insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel, statusLabel, lastFrameLabel, queueSizeLabel};
+                         queueSizeLabel = new JLabel(),
+                         errorLabel = new JLabel();
+    private final JLabel[] labels = {insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel, statusLabel, lastFrameLabel, queueSizeLabel, errorLabel};
     private final JFrame frame;
 
     public SupplierDisplay(int defaultCloseOperation, Collector<? extends Supplier> collector) {
@@ -74,7 +75,7 @@ public class SupplierDisplay implements WindowListener {
         this.progressBar.setBounds(10, y, compWidth - 20, 20);
         this.progressBar.setString("Memory Usage");
         this.progressBar.setStringPainted(true);
-        this.progressBar.setBorder(MENU_BORDER);
+        this.progressBar.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
 
         var seps = new JSeparator[] {
                 new JSeparator(), new JSeparator(), new JSeparator(),
@@ -156,7 +157,7 @@ public class SupplierDisplay implements WindowListener {
         this.statusLabel.setText(STATUS_TXT + text);
     }
 
-    public synchronized void update(final int insertedNow, final int newPlanesNow, final int newFlightsNow, String lastFrame, int queueSize) {
+    public synchronized void update(final int insertedNow, final int newPlanesNow, final int newFlightsNow, String lastFrame, int queueSize, @Nullable Throwable error) {
         this.inserted[0] += insertedNow;
         this.inserted[1] += newPlanesNow;
         this.inserted[2] += newFlightsNow;
@@ -179,6 +180,9 @@ public class SupplierDisplay implements WindowListener {
         memoryUsage = (this.totalMemory - freeMemory);
         this.progressBar.setValue(memoryUsage);
         this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");
+        if (error != null) {
+            this.errorLabel.setText("Error: " + error.getMessage());
+        }
     }
 
     private void tryAddTrayIcon() {

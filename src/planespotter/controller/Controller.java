@@ -14,20 +14,18 @@ import planespotter.model.io.DBIn;
 import planespotter.model.io.FileWizard;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.nio.LiveLoader;
-import planespotter.throwables.NoAccessException;
+import planespotter.throwables.*;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
 import planespotter.display.models.MenuModels;
 import planespotter.model.*;
 import planespotter.model.io.DBOut;
 import planespotter.statistics.Statistics;
-import planespotter.throwables.DataNotFoundException;
-import planespotter.throwables.IllegalInputException;
-import planespotter.throwables.InvalidDataException;
 import planespotter.util.Bitmap;
 import planespotter.util.math.MathUtils;
 import planespotter.util.Utilities;
 
+import javax.net.ssl.SSLHandshakeException;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -145,7 +143,8 @@ public abstract class Controller {
     private void initialize() {
         if (!this.initialized) {
             this.liveLoader.setLive(true);
-            this.liveThread = this.scheduler.runThread(() -> this.liveLoader.liveDataTask(this), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
+            boolean onlyMilitary = false;
+            this.liveThread = this.scheduler.runThread(() -> this.liveLoader.liveDataTask(this, onlyMilitary), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
             this.initialized = true;
         }
     }
@@ -590,8 +589,9 @@ public abstract class Controller {
      */
     public void handleException(@NotNull final Throwable thr) {
 
-        if (thr instanceof DataNotFoundException dnf) {
-            this.ui.showWarning(Warning.NO_DATA_FOUND, dnf.getMessage());
+        if (thr instanceof OutOfMemoryError oom) {
+            this.ui.showWarning(Warning.OUT_OF_MEMORY);
+            this.emergencyShutdown(oom);
         } else if (thr instanceof SQLException sql) {
             String message = sql.getMessage();
             thr.printStackTrace();
@@ -600,6 +600,15 @@ public abstract class Controller {
                 // emergency shutdown because of DB-Bug
                 this.emergencyShutdown(sql);
             }
+        } else if (thr instanceof DataNotFoundException dnf) {
+            this.ui.showWarning(Warning.NO_DATA_FOUND, dnf.getMessage());
+        } else if (thr instanceof SSLHandshakeException ssl) {
+            this.ui.showWarning(Warning.HANDSHAKE, ssl.getMessage());
+            this.liveLoader.setLive(false);
+            DBIn.setEnabled(false);
+            Scheduler.sleepSec(60);
+            DBIn.setEnabled(true);
+            this.liveLoader.setLive(true);
         } else if (thr instanceof TimeoutException) {
             this.ui.showWarning(Warning.TIMEOUT);
         } else if (thr instanceof RejectedExecutionException) {
@@ -667,11 +676,15 @@ public abstract class Controller {
                 this.setLoading(true);
                 this.ui.showLoadingScreen(true);
                 float gridSize = Float.parseFloat(input);
+                if (gridSize < 0.05) {
+                    this.ui.showWarning(Warning.OUT_OF_RANGE, "grid size must be 0.05 or higher!");
+                    return;
+                }
                 Bitmap bitmap = new Statistics().globalPositionBitmap(gridSize);
                 Diagrams.showPosHeatMap(this.ui, bitmap);
             } catch (NumberFormatException nfe) {
                 this.ui.showWarning(Warning.NUMBER_EXPECTED, "Please enter a float value (0.1 - 2.0)");
-            } catch (DataNotFoundException e) {
+            } catch (DataNotFoundException | OutOfMemoryError e) {
                 this.handleException(e);
             } finally {
                 this.done(false);
