@@ -41,7 +41,9 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
      * @param args can be ignored
      */
     public static void main(String[] args) {
-        new Fr24Collector(true, false, UserSettings.getGridsizeLat(), UserSettings.getGridsizeLon()).start();
+        // only military with a small grid size
+        int sLat = 2, sLon = 4;
+        new Fr24Collector(true, true, sLat, sLon).start();
     }
 
     @Nullable private final Filters filters;
@@ -65,7 +67,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         super(exitOnClose, new Fr24Supplier());
         this.filters = withFilters ? UserSettings.getCollectorFilters() : null;
         this.liveLoader = new LiveLoader();
-        this.inserter = new Inserter(this.liveLoader, 100);
+        this.inserter = new Inserter(this.liveLoader, 500);
         this.worldAreaRaster1D = Areas.getWorldAreaRaster1D(gridSizeLat, gridSizeLon);
     }
 

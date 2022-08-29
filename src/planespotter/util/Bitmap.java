@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Range;
 import planespotter.dataclasses.Position;
 import planespotter.throwables.InvalidArrayException;
 import planespotter.throwables.InvalidDataException;
+import planespotter.throwables.OutOfRangeException;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -66,9 +67,14 @@ public class Bitmap {
      *                  represents specific coordinates and each value stands
      *                  for the number of positions in a certain field
      * @param gridSize is the bitmap grid size, 1 is normal (360x180), 0.5 is the double (720x360)
+     *                 (should be 0.05 or higher to prevent memory problems)
      * @return Bitmap instance, created by pos-vector under a certain grid size
      */
+    @NotNull
     public static Bitmap fromPosVector(@NotNull Vector<Position> positions, @Range(from = 0, to = 2) float gridSize) {
+        if (gridSize < 0.025) {
+            throw new OutOfRangeException("grid size must be 0.025 or higher!");
+        }
 
         int width = (int) divide(360., gridSize) + 1;
         int height = (int) divide(180., gridSize) + 1;
@@ -94,6 +100,7 @@ public class Bitmap {
      * @param ints2d is the input 2D-int array, which is automatically converted to byte-array
      * @return Bitmap from 2D-int array
      */
+    @NotNull
     public static Bitmap fromInt2d(int[][] ints2d) {
 
         int width = ints2d.length;

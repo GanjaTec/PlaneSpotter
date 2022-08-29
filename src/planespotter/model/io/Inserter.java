@@ -40,6 +40,7 @@ public class Inserter implements Runnable {
                     Scheduler.sleep(500);
                 try (Stream<Fr24Frame> fr24Frames = this.liveLoader.pollFrames(MIN_INSERT_COUNT)) { // try to change to Integer.MAX_VALUE
                     DBIn.write(fr24Frames);
+                    exceptions.poll();
                     // we could poll an exception here to prevent reaching the exception limit very slow
                 } catch (final Exception ex) {
                     exceptions.add(ex);

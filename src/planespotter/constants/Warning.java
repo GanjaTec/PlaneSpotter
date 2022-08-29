@@ -22,6 +22,7 @@ public enum Warning {
     FILE_ALREADY_EXISTS("File already exists, please choose another name!"),
     INVALID_DATA("Some data is invalid, try again."),
     FILE_NOT_FOUND("File couldn't be found, check Path and try again!"),
+    OUT_OF_RANGE("Input out of range!"),
     NOT_SUPPORTED_YET("This feature is not supported yet!"),
     OUT_OF_MEMORY("OutOfMemoryError, please restart the program!");
 

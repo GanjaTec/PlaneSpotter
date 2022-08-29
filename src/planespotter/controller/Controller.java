@@ -14,16 +14,13 @@ import planespotter.model.io.DBIn;
 import planespotter.model.io.FileWizard;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.nio.LiveLoader;
-import planespotter.throwables.NoAccessException;
+import planespotter.throwables.*;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
 import planespotter.display.models.MenuModels;
 import planespotter.model.*;
 import planespotter.model.io.DBOut;
 import planespotter.statistics.Statistics;
-import planespotter.throwables.DataNotFoundException;
-import planespotter.throwables.IllegalInputException;
-import planespotter.throwables.InvalidDataException;
 import planespotter.util.Bitmap;
 import planespotter.util.math.MathUtils;
 import planespotter.util.Utilities;
@@ -145,7 +142,8 @@ public abstract class Controller {
     private void initialize() {
         if (!this.initialized) {
             this.liveLoader.setLive(true);
-            this.liveThread = this.scheduler.runThread(() -> this.liveLoader.liveDataTask(this), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
+            boolean onlyMilitary = false;
+            this.liveThread = this.scheduler.runThread(() -> this.liveLoader.liveDataTask(this, onlyMilitary), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
             this.initialized = true;
         }
     }
@@ -670,6 +668,10 @@ public abstract class Controller {
                 this.setLoading(true);
                 this.ui.showLoadingScreen(true);
                 float gridSize = Float.parseFloat(input);
+                if (gridSize < 0.05) {
+                    this.ui.showWarning(Warning.OUT_OF_RANGE, "grid size must be 0.05 or higher!");
+                    return;
+                }
                 Bitmap bitmap = new Statistics().globalPositionBitmap(gridSize);
                 Diagrams.showPosHeatMap(this.ui, bitmap);
             } catch (NumberFormatException nfe) {

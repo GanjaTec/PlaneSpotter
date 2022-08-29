@@ -41,11 +41,12 @@ public class Filters {
         }
     }
 
-    public void add(@NotNull String filter) {
+    public Filters add(@NotNull String filter) {
         if (filter.isBlank()) {
             throw new InvalidDataException("Filter must not be blank!");
         }
         this.filters.add(filter);
+        return this;
     }
 
     public boolean remove(@NotNull String filter) {
