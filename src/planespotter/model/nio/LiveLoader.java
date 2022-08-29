@@ -9,7 +9,11 @@ import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
 import planespotter.display.TreasureMap;
 import planespotter.throwables.InvalidDataException;
+import planespotter.util.Time;
+import planespotter.util.Utilities;
 
+import java.io.IOException;
+import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
@@ -135,7 +139,7 @@ public class LiveLoader {
         //deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF");
 
         String[] currentArea = Areas.getCurrentArea(map);
-        if (Fr24Supplier.collectFramesForArea(this, currentArea, deserializer, false)) {
+        if (collectPStream(currentArea, deserializer, false)) {
 
             AtomicInteger pseudoID = new AtomicInteger(0);
             return this.pollFrames(Integer.MAX_VALUE)
@@ -163,6 +167,42 @@ public class LiveLoader {
         // iterating over polled frames from insertLater-queue and limiting to count
         return Stream.iterate(this.insertLater.poll(), x -> this.insertLater.poll())
                 .limit(maxElements);
+    }
+
+    /**
+     * gets HttpResponse's for specific areas and deserializes its data to Frames
+     *
+     * @param areas are the Areas where data should be deserialized from
+     * @param deserializer is the Fr24Deserializer which is used to deserialize the requested data
+     * @param ignoreMaxSize if it's true, allowed max size of insertLater-queue is ignored
+     * @see planespotter.model.nio.LiveLoader
+     */
+    public synchronized boolean collectPStream(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize) {
+        System.out.println("[Supplier] Collecting Fr24-Data with parallel Stream...");
+
+        AtomicInteger tNumber = new AtomicInteger(0);
+        long startTime = Time.nowMillis();
+        try (Stream<@NotNull String> parallel = Arrays.stream(areas).parallel()) {
+            parallel.forEach(area -> {
+                if (!ignoreMaxSize && this.maxSizeReached()) {
+                    System.out.println("Max queue-size reached!");
+                    return;
+                }
+                Fr24Supplier supplier = new Fr24Supplier(tNumber.getAndIncrement(), area);
+
+                Deque<Fr24Frame> data;
+                try {
+                    HttpResponse<String> response = supplier.sendRequest();
+                    Utilities.checkStatusCode(response.statusCode());
+                    data = deserializer.deserialize(response);
+                    this.insertLater(data);
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+        System.out.println("[Supplier] Elapsed time: " + Time.elapsedMillis(startTime) + " ms");
+        return true;
     }
 
     /**
