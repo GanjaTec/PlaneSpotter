@@ -96,7 +96,7 @@ public abstract class Areas {
 	 */
 	@NotNull
 	public static String[] getCurrentArea(@NotNull final TreasureMap map) {
-		// area with panel size
+		// area with map size
 		final ICoordinate topLeft = map.getPosition(0, 0);
 		final ICoordinate bottomRight = map.getPosition(map.getWidth(), map.getHeight());
 		return new String[] {

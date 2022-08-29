@@ -1,12 +1,15 @@
 package planespotter.constants;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @name SearchType
  * @author jml04
  * @version 1.0
+ *
  * @description
  * enum SearchType contains all search types, with string-names
- * has a static method byItem() to get an item by string
+ * has a static method byItemString() to get an item by string
  */
 public enum SearchType {
     AIRLINE("Airline"),
@@ -14,10 +17,12 @@ public enum SearchType {
     FLIGHT("Flight"),
     PLANE("Plane"),
     AREA("Area");
+
     // item string
-    private final String item;
+    @NotNull private final String item;
+
     // private enum constructor
-    SearchType(String item) {
+    SearchType(@NotNull String item) {
         this.item = item;
     }
 
@@ -27,6 +32,7 @@ public enum SearchType {
      * @param item is the input item string
      * @return enum constant by item if one exists, else null
      */
+    @NotNull
     public static SearchType byItemString(String item) {
         return switch (item) {
             case "Flight" -> FLIGHT;
@@ -34,7 +40,7 @@ public enum SearchType {
             case "Airline" -> AIRLINE;
             case "Airport" -> AIRPORT;
             case "Area" -> AREA;
-            default -> null;
+            default -> throw new NullPointerException("SearchType not found!");
         };
     }
 }

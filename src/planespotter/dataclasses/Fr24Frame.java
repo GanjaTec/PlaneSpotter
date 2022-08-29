@@ -3,7 +3,6 @@ package planespotter.dataclasses;
 /**
  * @name Fr24Frame
  * @author Lukas
- * @author jml04
  * @version 1.0
  *
  * @description
@@ -13,25 +12,25 @@ package planespotter.dataclasses;
 // TODO: 13.06.2022 move fields to superclass Frame
 // TODO: 13.06.2022 change to record
 public class Fr24Frame extends Frame {
-	private String icaoaddr;
-	private double lat;
-	private double lon;
-	private int heading;
-	private int altitude;
-	private int groundspeed;
-	private int squawk;
-	private String tailnumber;
-	private String planetype;
-	private String registration;
-	private int timestamp;
-	private String srcairport;
-	private String destairport;
-	private String flightnumber;
-	private String unknown1;
-	private String unknown2;
-	private String callsign;
-	private String unknown3;
-	private String airline;
+	private final String icaoaddr;
+	private final double lat;
+	private final double lon;
+	private final int heading;
+	private final int altitude;
+	private final int groundspeed;
+	private final int squawk;
+	private final String tailnumber;
+	private final String planetype;
+	private final String registration;
+	private final int timestamp;
+	private final String srcairport;
+	private final String destairport;
+	private final String flightnumber;
+	private final String unknown1;
+	private final String unknown2;
+	private final String callsign;
+	private final String unknown3;
+	private final String airline;
 
 	public Fr24Frame(String icao, double lat, double lon, int heading, int alt, int speed,
 					 int squawk, String tail, String type, String registration, int time,
@@ -164,7 +163,7 @@ public class Fr24Frame extends Frame {
 	}
 
 	/**
-	 * prints all values
+	 * prints all values of this class, using toString method
 	 */
 	public void printValues() {
 		System.out.println(this);

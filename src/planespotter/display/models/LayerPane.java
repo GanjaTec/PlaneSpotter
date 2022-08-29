@@ -3,6 +3,7 @@ package planespotter.display.models;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.model.Scheduler;
+import planespotter.throwables.OutOfRangeException;
 import planespotter.util.math.Vector2D;
 
 import javax.swing.*;
@@ -115,7 +116,20 @@ public class LayerPane extends JLayeredPane {
 
     @Nullable
     public Component getTop() {
-        return Arrays.stream(this.getComponentsInLayer(DYNAMIC_LAYER))
+        return getLayer(DYNAMIC_LAYER);
+    }
+
+    @Nullable
+    public Component getBottom() {
+        return getLayer(BOTTOM_LAYER);
+    }
+
+    @Nullable
+    private Component getLayer(int layer) {
+        if (layer < BOTTOM_LAYER || layer > TOP_LAYER) {
+            throw new OutOfRangeException("Layer must be between 0 and 2!");
+        }
+        return Arrays.stream(this.getComponentsInLayer(layer))
                 .findFirst()
                 .orElse(null);
     }

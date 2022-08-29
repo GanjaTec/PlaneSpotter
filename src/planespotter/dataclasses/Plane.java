@@ -3,9 +3,12 @@ package planespotter.dataclasses;
 import java.io.Serializable;
 
 /**
- * @author Janne Matti
+ * @name Plane
+ * @author jml04
  * @author Lukas
+ * @version 1.0
  *
+ * @description
  * This Class is used to Represent a DB Entry from the 'Plane' Table 
  */
 public record Plane(int id,

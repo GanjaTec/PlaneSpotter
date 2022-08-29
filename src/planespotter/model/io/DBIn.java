@@ -11,15 +11,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import planespotter.controller.Controller;
 import planespotter.model.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.nio.LiveLoader;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.NoAccessException;
-import planespotter.util.Logger;
 
-import static planespotter.model.nio.LiveLoader.*;
 import static planespotter.util.Time.elapsedSeconds;
 import static planespotter.util.Time.nowMillis;
 
@@ -71,8 +68,8 @@ public final class DBIn extends DBConnector {
 		DBOut dbo = DBOut.getDBOut();
 		DBIn dbi = DBIn.getDBIn();
 		HashMap<String, Integer> airlineTagsIDs = new HashMap<>(),
-				planeIcaoIDs = new HashMap<>(),
-				flightNRsIDs = new HashMap<>();
+								 planeIcaoIDs = new HashMap<>(),
+								 flightNRsIDs = new HashMap<>();
 		try {
 			airlineTagsIDs = dbo.getAirlineTagsIDs();
 			planeIcaoIDs = dbo.getPlaneIcaosIDs();

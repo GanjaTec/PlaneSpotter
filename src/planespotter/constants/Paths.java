@@ -1,5 +1,6 @@
 package planespotter.constants;
 
+import org.jetbrains.annotations.NotNull;
 import planespotter.controller.Controller;
 
 /**
@@ -8,8 +9,9 @@ import planespotter.controller.Controller;
  * @author Bennet
  * @author Lukas
  * @version 1.0
+ *
  * @description
- * Contains all (absolute) paths to various resource,
+ * Contains all (relative, except ROOT_PATH) paths to various resource,
  * root directory is the project directory
  */
 public final class Paths {
@@ -25,36 +27,36 @@ public final class Paths {
      * src-path
      * contains all project sources
      */
-    public static final String SRC_PATH = "src\\";
+    @NotNull public static final String SRC_PATH = "src\\";
 
     /**
      * python-helper-path
      * contains all python-helper-scripts
      */
-    public static final String PY_RUNTIME_HELPER = "python-helper\\runtime-helper\\";
+    @NotNull public static final String PY_RUNTIME_HELPER = "python-helper\\runtime-helper\\";
 
     /**
      * libs-path
      * contains all external libraries
      */
-    public static final String LIBS_PATH = SRC_PATH + "libs\\";
+    @NotNull public static final String LIBS_PATH = SRC_PATH + "libs\\";
 
     /**
      * code path
      * contains all project code
      */
-    public static final String CODE_PATH = SRC_PATH + "planespotter\\";
+    @NotNull public static final String CODE_PATH = SRC_PATH + "planespotter\\";
 
     /**
      * resource-path
      * contains all project resources
      */
-    public static final String RESOURCE_PATH = CODE_PATH + "resource\\";
+    @NotNull public static final String RESOURCE_PATH = CODE_PATH + "resource\\";
 
     /**
      * image-path
      * contains all used images
      */
-    public static final String IMAGE_PATH = RESOURCE_PATH + "img\\";
+    @NotNull public static final String IMAGE_PATH = RESOURCE_PATH + "img\\";
 
 }

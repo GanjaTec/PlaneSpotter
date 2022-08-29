@@ -133,7 +133,7 @@ public class Fr24Supplier implements Supplier {
 	 *
 	 * @deprecated
 	 * 
-	 * @param List<String> data
+	 * @param data are the String-lines which are written to CSV
 	 * @throws IOException
 	 */
 	@Deprecated

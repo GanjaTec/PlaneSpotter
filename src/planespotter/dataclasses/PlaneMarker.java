@@ -80,28 +80,64 @@ public class PlaneMarker extends MapMarkerDot implements MapMarker {
     public static PlaneMarker fromFlight(@NotNull Flight flight, @Nullable String lastIcao, boolean showIcon) {
         final DataPoint dataPoint = flight.dataPoints().get(0);
         final String icao = flight.plane().icao();
-        if (lastIcao != null && lastIcao.equalsIgnoreCase(icao)) {
-            return PlaneMarker.fromDataPoint(dataPoint, DEFAULT_MAP_ICON_COLOR.get(), showIcon, true);
-        }
-        return PlaneMarker.fromDataPoint(dataPoint, DEFAULT_MAP_ICON_COLOR.get(), showIcon, false);
+        boolean selected = lastIcao != null && lastIcao.equalsIgnoreCase(icao);
+
+        return fromDataPoint(dataPoint, DEFAULT_MAP_ICON_COLOR.get(), showIcon, selected);
 
     }
 
+    /**
+     * creates a {@link PlaneMarker} by {@link DataPoint} by creating a marker with the {@link DataPoint}'s
+     * {@link Position} and heading
+     *
+     * @param dataPoint
+     * @param showIcon
+     * @param selected
+     * @return
+     */
     @NotNull
     public static PlaneMarker fromDataPoint(@NotNull DataPoint dataPoint, boolean showIcon, boolean selected) {
         return fromPosition(dataPoint.pos(), dataPoint.heading(), showIcon, selected);
     }
 
+    /**
+     *
+     *
+     * @param dataPoint
+     * @param color
+     * @param showIcon
+     * @param selected
+     * @return
+     */
     @NotNull
     public static PlaneMarker fromDataPoint(@NotNull DataPoint dataPoint, @NotNull Color color, boolean showIcon, boolean selected) {
         return fromPosition(dataPoint.pos(), color, dataPoint.heading(), showIcon, selected);
     }
 
+    /**
+     *
+     *
+     * @param pos
+     * @param heading
+     * @param showIcon
+     * @param selected
+     * @return
+     */
     @NotNull
     public static PlaneMarker fromPosition(@NotNull Position pos, int heading, boolean showIcon, boolean selected) {
-        return new PlaneMarker(Position.toCoordinate(pos), heading, showIcon, selected);
+        return new PlaneMarker(pos.toCoordinate(), heading, showIcon, selected);
     }
 
+    /**
+     *
+     *
+     * @param pos
+     * @param color
+     * @param heading
+     * @param showIcon
+     * @param selected
+     * @return
+     */
     @NotNull
     public static PlaneMarker fromPosition(@NotNull Position pos, @NotNull Color color, int heading, boolean showIcon, boolean selected) {
         PlaneMarker marker = fromPosition(pos, heading, showIcon, selected);
@@ -109,6 +145,14 @@ public class PlaneMarker extends MapMarkerDot implements MapMarker {
         return marker;
     }
 
+    /**
+     *
+     *
+     * @param heading
+     * @param showIcon
+     * @param selected
+     * @return
+     */
     @Nullable
     private static MarkerPainter getDefaultPainter(int heading, boolean showIcon, boolean selected) {
         if (!showIcon) {
@@ -120,14 +164,31 @@ public class PlaneMarker extends MapMarkerDot implements MapMarker {
                 : (g, pos, radius) -> g.drawImage(Utilities.rotate(DEFAULT_PLANE_ICON, heading, imgType, false), pos.x- DEFAULT_PLANE_ICON.getWidth(null)/2, pos.y- DEFAULT_PLANE_ICON.getHeight(null)/2, null);
     }
 
+    /**
+     *
+     *
+     * @return
+     */
     public int getHeading() {
         return this.heading;
     }
 
+    /**
+     *
+     *
+     * @return
+     */
     public boolean isSelected() {
         return this.selected;
     }
 
+    /**
+     *
+     *
+     * @param g
+     * @param position
+     * @param radius
+     */
     @Override
     public void paint(@NotNull Graphics g, @NotNull Point position, int radius) {
         if (this.painter == null) {
@@ -137,42 +198,6 @@ public class PlaneMarker extends MapMarkerDot implements MapMarker {
         this.painter.paint(g, position, radius);
     }
 
-    public static class HeatMapMarker extends MapMarkerCircle {
-
-        private final int level;
-        private final Color color;
-        private final MarkerPainter painter;
-
-        /**
-         * constructor for CustomMapMarker
-         *
-         * @param coord is the Map Marker coord,
-         * @param coord
-         * @param
-         */
-        public HeatMapMarker(@NotNull Coordinate coord, int level) {
-            super(coord, 1);
-            if (level < 0) {
-                throw new OutOfRangeException("level may not be negative!");
-            }
-            this.level = level;
-            this.color = Utilities.colorByLevel(this.level);
-            this.painter = new MarkerPainter.HeatMarkerPainter(this.color);
-            //this.setBackColor(this.color);
-        }
-
-
-
-        @Override
-        public void paint(Graphics g, Point position, int radius) {
-            if (this.painter == null) {
-                super.paint(g, position, radius);
-            } else {
-                this.painter.paint(g, position, radius);
-            }
-
-        }
-    }
 }
 
 

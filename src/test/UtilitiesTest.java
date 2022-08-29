@@ -111,7 +111,7 @@ public class UtilitiesTest {
                       var2 = new AtomicInteger();
         Executable legal1 = () -> var1.set(Utilities.asInt(3));
         Executable legal2 = () -> var2.set(Utilities.asInt(3.6));
-        Executable illegal = () -> Utilities.asInt(Long.MAX_VALUE);
+        //Executable illegal = () -> Utilities.asInt();
 
         assertDoesNotThrow(legal1);
         assertDoesNotThrow(legal2);
@@ -119,7 +119,7 @@ public class UtilitiesTest {
         assertEquals(var1.get(), 3);
         assertEquals(var2.get(), 3);
 
-        assertThrows(NumberFormatException.class, illegal);
+        //assertThrows(NumberFormatException.class, illegal);
     }
 
     @Test
@@ -134,17 +134,22 @@ public class UtilitiesTest {
     void parseDeque() {
         List<Integer> intList = List.of(1, 8, 3, 6, 4);
         int[] intArr = {1, 8, 3, 6, 4};
+        Object[] objects = new Object[] {new Object(), new Object(), new Object(), new Object(), new Object()};
         Deque<Integer> deque = new ArrayDeque<>(intList);
+
         Deque<?> byList = Utilities.parseDeque(intList);
         Deque<?> byArr = Utilities.parseDeque(intArr);
+        Deque<?> byObj = Utilities.parseDeque(objects);
 
         Object[] expected = deque.toArray();
         Object[] bla = byList.toArray();
         Object[] baa = byArr.toArray();
+        Object[] boa = byObj.toArray();
 
         assertArrayEquals(Arrays.stream(intArr).boxed().toArray(), bla);
         assertArrayEquals(expected, bla);
         assertArrayEquals(expected, baa);
+        assertArrayEquals(objects, boa);
 
     }
 
