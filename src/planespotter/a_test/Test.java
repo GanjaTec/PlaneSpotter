@@ -21,10 +21,17 @@ import planespotter.util.Time;
 import planespotter.util.Utilities;
 import sun.misc.Unsafe;
 
+import javax.imageio.ImageIO;
+import javax.print.DocFlavor;
+import javax.print.DocPrintJob;
+import javax.print.PrintService;
+import javax.print.SimpleDoc;
 import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
@@ -53,11 +60,25 @@ public class Test {
         result = PyAdapter.runScript(Paths.PY_RUNTIME_HELPER + "testprint.py");
         System.out.println(result);
 */
-        DBOut dbOut = DBOut.getDBOut();
-        long start = Time.nowMillis();
-        @NotNull List<Flight> allFlights = dbOut.getAllFlightsBetween(330000, 340000);
-        System.out.println("Elapsed: " + Time.elapsedSeconds(start) + "s, " + Time.elapsedMillis(start) + "ms");
+        PrinterJob printer = PrinterJob.getPrinterJob();
+        for (PrintService printService : PrinterJob.lookupPrintServices()) {
+            printer.setPrintService(printService);
+            printTest(printer);
+        }
 
+    }
+
+    private static void printTest(PrinterJob printer) throws PrinterException {
+        printer.setPrintable((g, pageFormat, index) -> {
+            try {
+                g.drawImage(ImageIO.read(new File(Paths.RESOURCE_PATH + "bitmap.bmp")), 0, 0, null);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return -1;
+            }
+            return index;
+        });
+        printer.print();
     }
 
     /**
