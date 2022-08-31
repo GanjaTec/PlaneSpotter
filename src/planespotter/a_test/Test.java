@@ -10,6 +10,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 
 import planespotter.constants.*;
 import planespotter.dataclasses.Flight;
+import planespotter.model.nio.ADSBSupplier;
 import planespotter.unused.ANSIColor;
 import planespotter.util.Bitmap;
 import planespotter.dataclasses.DataPoint;
@@ -62,11 +63,8 @@ public class Test {
         result = PyAdapter.runScript(Paths.PY_RUNTIME_HELPER + "testprint.py");
         System.out.println(result);
 */
-        PrinterJob printer = PrinterJob.getPrinterJob();
-        for (PrintService printService : PrinterJob.lookupPrintServices()) {
-            printer.setPrintService(printService);
-            printTest(printer);
-        }
+
+        new ADSBSupplier().supply();
 
     }
 

@@ -33,10 +33,7 @@ import java.util.List;
  * @see Fr24Collector
  * @see planespotter.a_test.TestMain
  */
-public class Fr24Supplier implements Supplier {
-
-	// static HttpClient instance, fixed thread overhead
-	private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+public class Fr24Supplier implements HttpSupplier {
 
 	// class instance fields
 	private final int threadNumber;
@@ -115,6 +112,8 @@ public class Fr24Supplier implements Supplier {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
+	@Override
+	@NotNull
 	public HttpResponse<String> sendRequest() throws IOException, InterruptedException {
 
 		HttpRequest request = HttpRequest.newBuilder(URI.create("https://data-live.flightradar24.com/zones/fcgi/feed.js?faa=1&"
