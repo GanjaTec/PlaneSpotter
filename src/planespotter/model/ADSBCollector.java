@@ -1,6 +1,6 @@
 package planespotter.model;
 
-import planespotter.model.nio.ADSBSupplier;
+import planespotter.unused.ProtoSupplierADSB;
 
 /**
  * @name ADSBCollector
@@ -10,7 +10,7 @@ import planespotter.model.nio.ADSBSupplier;
  * ADSBCollector is a Collector-subclass for
  * collecting ADSB data with custom antenna
  */
-public class ADSBCollector extends Collector<ADSBSupplier> {
+public class ADSBCollector extends Collector<ProtoSupplierADSB> {
 
     public static void main(String[] args) {
         new ADSBCollector(true).start();
@@ -23,7 +23,7 @@ public class ADSBCollector extends Collector<ADSBSupplier> {
      *                    when the 'X'-button is pressed
      */
     protected ADSBCollector(boolean exitOnClose) {
-        super(exitOnClose, new ADSBSupplier(null, 0, false)); // example
+        super(exitOnClose, new ProtoSupplierADSB(null, 0, false)); // example
     }
 
     /**

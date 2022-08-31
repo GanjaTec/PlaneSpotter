@@ -36,6 +36,14 @@ public class FileWizard {
     private FileWizard() {
     }
 
+    /**
+     * writes any type of image to a specific '.bmp' (bitmap) file
+     *
+     * @param img is the {@link Image} to be written
+     * @param imgType is the {@link Image} type constant from {@link java.awt.image.BufferedImage}.'...'
+     * @param file is the {@link File} where the {@link Image} is saved in
+     * @throws IOException
+     */
     public void writeBitmapImg(@NotNull Image img, int imgType, @NotNull File file) throws IOException {
         ImageIO.write(Utilities.createBufferedImage(img, imgType), "BMP", file);
     }

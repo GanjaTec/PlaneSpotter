@@ -524,6 +524,9 @@ public abstract class Controller {
      */
     // TODO: 14.08.2022 move to MapManager
     boolean onTrackingClick(@NotNull ICoordinate clickedCoord) { // TODO aufteilen
+        if (getDataList() == null) {
+            return false;
+        }
         TreasureMap map = getUI().getMap();
         List<MapMarker> markers = map.getMapMarkerList();
         MapManager mapManager = getUI().getMapManager();
@@ -720,19 +723,20 @@ public abstract class Controller {
     }
 
     private void showTrackingMap(@NotNull MapManager mapManager, boolean showPoints) {
-        if (getDataList().isEmpty()) {
+        Vector<DataPoint> dataList = getDataList();
+        if (dataList == null || dataList.isEmpty()) {
             return;
         }
 
         DBOut dbOut = DBOut.getDBOut();
         Flight flight = null;
 
-        int flightID = getDataList().get(0).flightID();
+        int flightID = dataList.get(0).flightID();
         try {
             flight = (flightID != -1) ? dbOut.getFlightByID(flightID) : null;
         } catch (DataNotFoundException ignored) {
         }
-        mapManager.createTrackingMap(getDataList(), flight, showPoints);
+        mapManager.createTrackingMap(dataList, flight, showPoints);
     }
 
     public void showBitmap(@Nullable Bitmap bitmap, @Nullable BufferedImage buf) {

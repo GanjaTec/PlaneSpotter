@@ -1,113 +1,37 @@
 package planespotter.model.nio;
 
-import org.opensky.example.ExampleDecoder;
+import org.jetbrains.annotations.NotNull;
+import planespotter.dataclasses.Frame;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.Socket;
-import java.util.concurrent.TimeUnit;
+import java.net.URI;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.Collection;
 
-public class ADSBSupplier implements Supplier{
+public class ADSBSupplier implements HttpSupplier {
 
-    private final String host;
-    private final int port;
+    private static final URI REQUEST_URI = URI.create("http://192.168.178.47:8080/data/aircraft.json");
 
-    private boolean running;
-
-    public ADSBSupplier(String ip, int port, boolean run) {
-        this.host = ip;
-        this.port = port;
-        this.running = run;
+    public ADSBSupplier() {
 
     }
 
     @Override
     public void supply() {
-        getCon();
-
+        HttpResponse<String> response;
         try {
-            System.out.println("Reader ready? " + in.ready());
-            while (this.running) {
-                while (in.ready()) {
-                    //String encoded = in.readLine();
-                    in.lines()
-                            .filter(s -> s.matches("^\\*[A-F0-9]+\\;$"))
-                            .map(s -> s.replace("*", "").replace(";", ""))
-                            .forEach(this::decode);
-
-
-                    toFrame();
-                    groupFrames();
-
-                }
-            }
-
-        } catch (IOException ex) {
-            System.out.println("Nothing to be read on the Stream!");
-        }
-        //printOutput();
-        //toFrame();
-        //groupFrames();
-
-    }
-
-    private Socket clientSocket;
-    private BufferedReader in;
-    private int startingDelay = 400;
-    public void getCon() {
-
-        try {
-            System.out.println("Trying to get Connection...");
-            clientSocket = new Socket(this.host, this.port);
-            System.out.print("Connection Established!\nStarting InputStream...");
-            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-
-            while (!in.ready()) {
-                System.out.println(".");
-                TimeUnit.MILLISECONDS.sleep(startingDelay);
-            }
-            System.out.println("InputStream started!");
-
-        } catch (IOException ex) {
-            System.out.println("Host not found!");
-        } catch (InterruptedException ex) {
-            System.out.println("Interrupted while sleeping!");
-        }
-
-    }
-
-    public void decode (String raw) {
-        ExampleDecoder decoder = new ExampleDecoder();
-        long time = System.currentTimeMillis();
-
-        decoder.decodeMsg(time, raw, null);
-    }
-
-    public void toFrame(){
-
-    }
-
-    public void groupFrames() {
-
-    }
-
-
-
-    public void printOutput() {
-        try {
-            System.out.println("Reader ready? " + in.ready());
-            while (true) {
-                while (in.ready()) {
-                    System.out.println(in.readLine());
-
-                }
-            }
-
-        } catch (IOException ex) {
-            System.out.println("Nothing to be read on the Stream!");
+            response = sendRequest();
+            System.out.println(response.body());
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
-
+    @Override
+    @NotNull
+    public HttpResponse<String> sendRequest() throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder(REQUEST_URI).build();
+        return HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+    }
 }
