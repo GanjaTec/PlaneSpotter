@@ -28,7 +28,7 @@ import java.util.Arrays;
 public abstract sealed class DBConnector
 		permits DBIn, DBOut {
 
-	// writing boolean, true when writing
+	// database monitor object
 	@NotNull protected static final Object DB_SYNC;
 
 	// database name
@@ -39,6 +39,8 @@ public abstract sealed class DBConnector
 
 	// database Source-Object
 	@NotNull private static final SQLiteDataSource database;
+
+	//private static Connection connection;
 
 	// initializing Database
 	static {
@@ -55,6 +57,17 @@ public abstract sealed class DBConnector
 		database.setReadUncommited(true);
 		// enabling the shared cache for the database
 		database.setSharedCache(true);
+		// setting DB synchronous mode to 'normal'
+		database.setSynchronous("NORMAL");
+		// setting DB locking mode to 'normal'
+		database.setLockingMode("NORMAL");
+
+		/*try {
+			connection = database.getConnection();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			connection = null;
+		}*/
 	}
 
 	/**
@@ -68,6 +81,7 @@ public abstract sealed class DBConnector
 			throws SQLException {
 
 		return database.getConnection();
+		//return connection == null ? (connection = database.getConnection()) : connection;
 	}
 
 	/**

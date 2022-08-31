@@ -16,6 +16,7 @@ import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.nio.LiveLoader;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.NoAccessException;
+import planespotter.util.Time;
 
 import static planespotter.util.Time.elapsedSeconds;
 import static planespotter.util.Time.nowMillis;
