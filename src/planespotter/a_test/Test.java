@@ -10,6 +10,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 
 import planespotter.constants.*;
 import planespotter.dataclasses.Flight;
+import planespotter.model.nio.ADSBSupplier;
 import planespotter.unused.ANSIColor;
 import planespotter.util.Bitmap;
 import planespotter.dataclasses.DataPoint;
@@ -30,6 +31,8 @@ import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.*;
@@ -60,16 +63,15 @@ public class Test {
         result = PyAdapter.runScript(Paths.PY_RUNTIME_HELPER + "testprint.py");
         System.out.println(result);
 */
-        PrinterJob printer = PrinterJob.getPrinterJob();
-        for (PrintService printService : PrinterJob.lookupPrintServices()) {
-            printer.setPrintService(printService);
-            printTest(printer);
-        }
+
+        new ADSBSupplier().supply();
 
     }
 
     private static void printTest(PrinterJob printer) throws PrinterException {
         printer.setPrintable((g, pageFormat, index) -> {
+            pageFormat.setOrientation(PageFormat.LANDSCAPE);
+            pageFormat.setPaper(new Paper());
             try {
                 g.drawImage(ImageIO.read(new File(Paths.RESOURCE_PATH + "bitmap.bmp")), 0, 0, null);
             } catch (IOException e) {

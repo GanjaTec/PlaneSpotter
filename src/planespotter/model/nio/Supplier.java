@@ -1,5 +1,7 @@
 package planespotter.model.nio;
 
+import planespotter.unused.ProtoSupplierADSB;
+
 /**
  * @name Supplier
  * @author jml04
@@ -11,7 +13,7 @@ package planespotter.model.nio;
  * which collect data and supply it to the database,
  * by deserializing it and turning it into database-friendly
  * Frames
- * @see planespotter.model.nio.ADSBSupplier
+ * @see ProtoSupplierADSB
  * @see planespotter.model.nio.Fr24Supplier
  * for examples
  */
@@ -22,7 +24,7 @@ public interface Supplier extends Runnable {
      * supplier-method,
      * collects data, deserializes
      * and supplies it to the database
-     * @see planespotter.model.nio.ADSBSupplier
+     * @see ProtoSupplierADSB
      * @see planespotter.model.nio.Fr24Supplier
      * for examples
      *

@@ -47,28 +47,18 @@ public abstract class ActionHandler
     // because we don't want parallel listeners who listen to the same actions
     @NotNull private static final ActionHandler INSTANCE;
 
-    // global event dispatcher, events come here before going to the components listeners,
-    // used for global hotkeys
-    @NotNull private static final KeyEventDispatcher GLOBAL_EVENT_DISPATCHER;
-
-    // map for all global hotkeys,
-    // key is the Hotkey object with the key data
-    // value is the (Runnable) action for the specific hotkey
-    @NotNull private static final Map<Hotkey, Runnable> HOTKEYS;
+    // TODO: 31.08.2022 class HotkeyManager
 
     // initializing all static members
     static {
         INSTANCE = new ActionHandler() {};
-
-        GLOBAL_EVENT_DISPATCHER = initGlobalEventDispatcher();
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(GLOBAL_EVENT_DISPATCHER);
-
-        HOTKEYS = new HashMap<>(2);
-        initHotkeys(null);
     }
 
+    // hotkey manager instance
+    @NotNull private final HotkeyManager hotkeyManager;
+
     // ActionHandler hash code
-    private final int hashCode = System.identityHashCode(this);
+    private final int hashCode;
 
 
     // instance //
@@ -77,106 +67,28 @@ public abstract class ActionHandler
      * private ActionHandler constructor for main instance
      */
     private ActionHandler() {
-        // nothing to do
-    }
-
-    /**
-     * hot key event dispatcher,
-     * listens to global key events
-     *
-     * @return {@link KeyEventDispatcher}, which listens to global hotkeys
-     */
-    @NotNull
-    private static KeyEventDispatcher initGlobalEventDispatcher() {
-        return keyEvent -> {
-            int eventID = keyEvent.getID();
-            if (eventID == KEY_PRESSED) {
-                // getting pressed key
-                int keyCode = keyEvent.getKeyCode();
-                boolean shiftDown = keyEvent.isShiftDown(),
-                        ctrlDown = keyEvent.isControlDown(),
-                        altDown = keyEvent.isAltDown();
-                Hotkey hotkey = new Hotkey(keyCode, shiftDown, ctrlDown, altDown);
-                Runnable action;
-                // checking hotkeys
-                Set<Hotkey> hotkeys = HOTKEYS.keySet();
-                for (Hotkey key : hotkeys) {
-                    if (key.equals(hotkey)) {
-                        action = HOTKEYS.get(key);
-                        action.run();
-                        return true;
-                    }
-                }
-            }
-            return false;
-        };
-    }
-
-    /**
-     * initializes all hotkeys with a Hotkey object (key)
-     * and a Runnable action (value)
-     *
-     * @param additionals are additional {@link Hotkey}s, paired with actions (in a {@link Map}) that should be initialized
-     */
-    private static void initHotkeys(@Nullable Map<Hotkey, Runnable> additionals) {
         Runnable shiftSAction, f11Action;
+        Map<Hotkey, Runnable> initKeys = new HashMap<>();
 
         // shift S / default search hotkey
         shiftSAction = () -> getActionHandler().menuClicked(new JMenu("Search"));
-        HOTKEYS.put(new Hotkey(VK_S, true, false, false), shiftSAction);
+        initKeys.put(new Hotkey(VK_S, true, false, false), shiftSAction);
         // F11 / default fullscreen hotkey
         f11Action = () -> getActionHandler().menuItemClicked(Controller.getInstance(), new JMenuItem("Fullscreen"));
-        HOTKEYS.put(new Hotkey(VK_F11, false, false, false), f11Action);
+        initKeys.put(new Hotkey(VK_F11, false, false, false), f11Action);
 
-        if (additionals == null) {
-            return;
-        }
-        // variable (optional) hotkeys
-        Hotkey key;
-        Runnable value;
-        for (Map.Entry<Hotkey, Runnable> add : additionals.entrySet()) {
-            key = add.getKey();
-            value = add.getValue();
-            if (key == null || value == null) {
-                continue;
-            }
-            HOTKEYS.put(key, value);
-        }
+        this.hotkeyManager = new HotkeyManager(initKeys);
+        this.hashCode = System.identityHashCode(this);
     }
 
-    /**
-     * adds a hotkey to the hotkey hash map
-     *
-     * @param hotkey is the {@link Hotkey} object (key)
-     * @param action is the action ({@link Runnable}) that is executed when the hotkey is pressed
-     * @return true if the hotkey was added, else false
-     */
-    public static boolean addHotkey(@NotNull Hotkey hotkey, @NotNull Runnable action) {
-        if (HOTKEYS.containsKey(hotkey)) {
-            return false;
-        }
-        HOTKEYS.put(hotkey, action);
-        return true;
-    }
-
-    /**
-     * removes a hotkey from the hotkey map, if present
-     *
-     * @param hotkey is the {@link Hotkey} object (key) to remove
-     * @return true if the hotkey was removed, else false (e.g. when no hotkey was found)
-     */
-    public static boolean removeHotkey(@NotNull Hotkey hotkey) {
-        return HOTKEYS.remove(hotkey) != null;
-    }
-
-    /**
-     * getter for main instance of {@link ActionHandler}
-     *
-     * @return main ActionHandler
-     */
     @NotNull
     public static ActionHandler getActionHandler() {
         return INSTANCE;
+    }
+
+    @NotNull
+    public HotkeyManager getHotkeyManager() {
+        return this.hotkeyManager;
     }
 
     /**
@@ -330,7 +242,7 @@ public abstract class ActionHandler
                     ctrl.handleException(e);
                 }
             }
-            case "Position-HeatMap" -> ctrl.showBitmap();
+            case "Position-HeatMap" -> ctrl.show(ViewType.MAP_HEATMAP);
 
             case "ADSB-Supplier", "Antenna" -> ui.showWarning(Warning.NOT_SUPPORTED_YET);
         }
@@ -470,6 +382,116 @@ public abstract class ActionHandler
     public String toString() {
         return "ActionHandler";
     }
+
+
+    private static class HotkeyManager {
+
+        // map for all global hotkeys,
+        // key is the Hotkey object with the key data
+        // value is the (Runnable) action for the specific hotkey
+        @NotNull private final Map<Hotkey, Runnable> hotkeys;
+
+        /**
+         * constructs a {@link HotkeyManager}
+         * initializing global listener and hotkey map
+          */
+        private HotkeyManager(@Nullable Map<Hotkey, Runnable> initKeys) {
+            // global event dispatcher, events come here before going to the components listeners,
+            // used for global hotkeys
+            @NotNull KeyEventDispatcher globalEventDispatcher = initGlobalEventDispatcher();
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(globalEventDispatcher);
+
+            this.hotkeys = new HashMap<>(2);
+            initHotkeys(initKeys);
+        }
+
+        /**
+         * hot key event dispatcher,
+         * listens to global key events
+         *
+         * @return {@link KeyEventDispatcher}, which listens to global hotkeys
+         */
+        @NotNull
+        private KeyEventDispatcher initGlobalEventDispatcher() {
+            return keyEvent -> {
+                int eventID = keyEvent.getID();
+                if (eventID == KEY_PRESSED) {
+                    // getting pressed key
+                    int keyCode = keyEvent.getKeyCode();
+                    boolean shiftDown = keyEvent.isShiftDown(),
+                            ctrlDown = keyEvent.isControlDown(),
+                            altDown = keyEvent.isAltDown();
+                    Hotkey hotkey = new Hotkey(keyCode, shiftDown, ctrlDown, altDown);
+                    Runnable action;
+                    // checking hotkeys
+                    Set<Hotkey> hotkeys = this.hotkeys.keySet();
+                    for (Hotkey key : hotkeys) {
+                        if (key.equals(hotkey)) {
+                            action = this.hotkeys.get(key);
+                            action.run();
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
+        }
+
+        /**
+         * initializes all hotkeys with a Hotkey object (key)
+         * and a Runnable action (value)
+         *
+         * @param additionals are additional {@link Hotkey}s, paired with actions (in a {@link Map}) that should be initialized
+         */
+        private void initHotkeys(@Nullable Map<Hotkey, Runnable> additionals) {
+            if (additionals == null) {
+                return;
+            }
+            // variable (optional) hotkeys
+            Hotkey key;
+            Runnable value;
+            for (Map.Entry<Hotkey, Runnable> add : additionals.entrySet()) {
+                key = add.getKey();
+                value = add.getValue();
+                if (key == null || value == null) {
+                    continue;
+                }
+                hotkeys.put(key, value);
+            }
+        }
+
+        /**
+         * adds a hotkey to the hotkey hash map
+         *
+         * @param hotkey is the {@link Hotkey} object (key)
+         * @param action is the action ({@link Runnable}) that is executed when the hotkey is pressed
+         * @return true if the hotkey was added, else false
+         */
+        public boolean addHotkey(@NotNull Hotkey hotkey, @NotNull Runnable action) {
+            if (hotkeys.containsKey(hotkey)) {
+                return false;
+            }
+            hotkeys.put(hotkey, action);
+            return true;
+        }
+
+        /**
+         * removes a hotkey from the hotkey map, if present
+         *
+         * @param hotkey is the {@link Hotkey} object (key) to remove
+         * @return true if the hotkey was removed, else false (e.g. when no hotkey was found)
+         */
+        public boolean removeHotkey(@NotNull Hotkey hotkey) {
+            return hotkeys.remove(hotkey) != null;
+        }
+
+        /**
+         * getter for main instance of {@link ActionHandler}
+         *
+         * @return main ActionHandler
+         */
+    }
+
 
     /*
      * the following listener-methods are unused

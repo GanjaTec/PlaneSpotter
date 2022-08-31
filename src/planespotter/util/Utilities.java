@@ -592,6 +592,21 @@ public abstract class Utilities {
         return buf;
     }
 
+    /**
+     * converts an {@link Image} of any type (mostly ToolkitImages) to {@link BufferedImage}
+     *
+     * @param img is the {@link Image} to be converted
+     * @param imgType is the image type constant from {@link BufferedImage}.'...'
+     * @return new {@link BufferedImage}, converted from any {@link Image} type
+     */
+    @NotNull
+    public static BufferedImage createBufferedImage(Image img, int imgType) {
+        BufferedImage buf = new BufferedImage(img.getWidth(null), img.getHeight(null), imgType);
+        Graphics2D g = buf.createGraphics();
+        g.drawImage(img, 0, 0, null);
+        return buf;
+    }
+
 
     // file utilities
 

@@ -1,5 +1,6 @@
 package planespotter.controller;
 
+import libs.ZoomPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +26,11 @@ import planespotter.util.Bitmap;
 import planespotter.util.math.MathUtils;
 import planespotter.util.Utilities;
 
+import javax.imageio.ImageIO;
 import javax.net.ssl.SSLHandshakeException;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
@@ -158,10 +161,10 @@ public abstract class Controller {
                 JFrame window = getUI().getWindow();
                 window.setVisible(!window.isVisible());
             });
-            liveLoader.setLive(true);
             boolean onlyMilitary = false;
             liveThread = scheduler.runThread(() -> liveLoader.runTask(this, onlyMilitary), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
             this.initialized = true;
+            show(MAP_LIVE);
         }
     }
 
@@ -290,7 +293,7 @@ public abstract class Controller {
                 // significance map should be improved
                 case MAP_SIGNIFICANCE -> showSignificanceMap(mapManager, dbOut);
                 // heatmap should be implemented
-                case MAP_HEATMAP -> {  }
+                case MAP_HEATMAP -> showBitmap(null, null);
             }
         } finally {
             done(false);
@@ -521,6 +524,9 @@ public abstract class Controller {
      */
     // TODO: 14.08.2022 move to MapManager
     boolean onTrackingClick(@NotNull ICoordinate clickedCoord) { // TODO aufteilen
+        if (getDataList() == null) {
+            return false;
+        }
         TreasureMap map = getUI().getMap();
         List<MapMarker> markers = map.getMapMarkerList();
         MapManager mapManager = getUI().getMapManager();
@@ -552,31 +558,45 @@ public abstract class Controller {
     }
 
     public void saveFile() {
-
-        JFileChooser fileChooser;
-        Rectangle rect;
-        MapData mapData;
-        File selected;
-
         getUI().showLoadingScreen(true);
         setLoading(true);
 
-        //gui.setCurrentVisibleRect(getUI().getMap().getVisibleRect()); // TODO visible rect beim repainten speichern
+        // TODO visible rect beim repainten speichern
         // TODO 2.Möglichkeit: center und zoom speichern
-
         try {
-            fileChooser = MenuModels.fileSaver(getUI().getWindow());
-            rect = /*(gui.getCurrentVisibleRect() != null) ? gui.getCurrentVisibleRect() :*/ null;
-            selected = fileChooser.getSelectedFile();
+            ViewType currentViewType = getUI().getCurrentViewType();
+            String extensions = currentViewType == MAP_HEATMAP ? ".bmp" : ".pls";
+            JFileChooser fileChooser = MenuModels.fileSaver(getUI().getWindow(), extensions);
+            Rectangle rect = /*(gui.getCurrentVisibleRect() != null) ? gui.getCurrentVisibleRect() :*/ null;
+            File selected = fileChooser.getSelectedFile();
             if (selected == null) {
                 done(false);
                 return;
             }
-            // new MapData object with loadedData, view type and visible rectangle
-            ViewType currentViewType = getUI().getCurrentViewType();
-            mapData = new MapData(getDataList(), currentViewType, rect);
-            FileWizard.getFileWizard().savePlsFile(mapData, selected);
-        } catch (DataNotFoundException | FileAlreadyExistsException e) {
+            String warningMsg = "Couldn't write file, please check the file type!";
+            switch (currentViewType) {
+                case MAP_HEATMAP -> {
+                    Component bottom = getUI().getLayerPane().getBottom();
+                    if (selected.getName().endsWith(".bmp") && bottom instanceof ZoomPane zoomPane) {
+                        // writing Bitmap image with FileWizard
+                        Image bitmap = zoomPane.getContent();
+                        FileWizard.getFileWizard().writeBitmapImg(bitmap, BufferedImage.TYPE_BYTE_GRAY, selected);
+                    } else {
+                        getUI().showWarning(Warning.INVALID_DATA, warningMsg + extensions);
+                    }
+                }
+                case MAP_TRACKING, MAP_TRACKING_NP, MAP_FROMSEARCH, MAP_SIGNIFICANCE -> {
+                    if (selected.getName().endsWith(".pls")) {
+                        // new MapData object with loadedData, view type and visible rectangle
+                        MapData mapData = new MapData(getDataList(), currentViewType, rect);
+                        FileWizard.getFileWizard().savePlsFile(mapData, selected);
+                    } else {
+                        getUI().showWarning(Warning.INVALID_DATA, warningMsg + extensions);
+                    }
+                }
+                default -> getUI().showWarning(Warning.NOT_SUPPORTED_YET, "These filetypes are not savable yet!");
+            }
+        } catch (DataNotFoundException | IOException e) {
             handleException(e);
         } finally {
             done(false);
@@ -591,11 +611,18 @@ public abstract class Controller {
             if (file == null) {
                 return;
             }
-            FileWizard fileWizard = FileWizard.getFileWizard();
-            MapData loaded = fileWizard.loadPlsFile(file);
-            setDataList(loaded.data());
-            show(loaded.viewType());
-        } catch (FileNotFoundException | InvalidDataException e) {
+            String filename = file.getName();
+            if (filename.endsWith(".bmp")) {
+                BufferedImage buf = ImageIO.read(file);
+                showBitmap(null, buf);
+                // TODO: 31.08.2022 show Bitmap from File or Image
+            } else if (filename.endsWith(".pls")) {
+                FileWizard fileWizard = FileWizard.getFileWizard();
+                MapData loaded = fileWizard.loadPlsFile(file);
+                setDataList(loaded.data());
+                show(loaded.viewType());
+            }
+        } catch (InvalidDataException | IOException e) {
             handleException(e);
         } finally {
             done(false);
@@ -696,45 +723,53 @@ public abstract class Controller {
     }
 
     private void showTrackingMap(@NotNull MapManager mapManager, boolean showPoints) {
-        if (getDataList().isEmpty()) {
+        Vector<DataPoint> dataList = getDataList();
+        if (dataList == null || dataList.isEmpty()) {
             return;
         }
 
         DBOut dbOut = DBOut.getDBOut();
         Flight flight = null;
 
-        int flightID = getDataList().get(0).flightID();
+        int flightID = dataList.get(0).flightID();
         try {
             flight = (flightID != -1) ? dbOut.getFlightByID(flightID) : null;
         } catch (DataNotFoundException ignored) {
         }
-        mapManager.createTrackingMap(getDataList(), flight, showPoints);
+        mapManager.createTrackingMap(dataList, flight, showPoints);
     }
 
-    public void showBitmap() {
-        String input = getUI().getUserInput("Please enter a grid size (0.1 - 2.0)", 0.5);
-        if (input.isBlank()) {
-            return;
-        }
-        scheduler.exec(() -> {
-            try {
-                setLoading(true);
-                getUI().showLoadingScreen(true);
-                float gridSize = Float.parseFloat(input);
-                if (gridSize < 0.05) {
-                    getUI().showWarning(Warning.OUT_OF_RANGE, "grid size must be 0.05 or higher!");
-                    return;
-                }
-                Bitmap bitmap = new Statistics().globalPositionBitmap(gridSize);
-                Diagrams.showPosHeatMap(getUI(), bitmap);
-            } catch (NumberFormatException nfe) {
-                getUI().showWarning(Warning.NUMBER_EXPECTED, "Please enter a float value (0.1 - 2.0)");
-            } catch (DataNotFoundException | OutOfMemoryError e) {
-                handleException(e);
-            } finally {
-                done(false);
+    public void showBitmap(@Nullable Bitmap bitmap, @Nullable BufferedImage buf) {
+        if (bitmap == null && buf == null) {
+            String input = getUI().getUserInput("Please enter a grid size (0.025 - 2.0)", 0.5);
+            if (input.isBlank()) {
+                return;
             }
-        }, "Loading Data", false, Scheduler.MID_PRIO, true);
+            scheduler.exec(() -> {
+                try {
+                    setLoading(true);
+                    getUI().showLoadingScreen(true);
+                    getUI().setViewType(MAP_HEATMAP);
+                    float gridSize = Float.parseFloat(input);
+                    if (gridSize < 0.025) {
+                        getUI().showWarning(Warning.OUT_OF_RANGE, "grid size must be 0.025 or higher!");
+                        return;
+                    }
+                    Bitmap bmp = new Statistics().globalPositionBitmap(gridSize);
+                    Diagrams.showPosHeatMap(getUI(), bmp);
+                } catch (NumberFormatException nfe) {
+                    getUI().showWarning(Warning.NUMBER_EXPECTED, "Please enter a float value (0.025 - 10.0)");
+                } catch (DataNotFoundException | OutOfMemoryError e) {
+                    handleException(e);
+                } finally {
+                    done(false);
+                }
+            }, "Loading Data", false, Scheduler.MID_PRIO, true);
+        } else if (bitmap != null) {
+            Diagrams.showPosHeatMap(getUI(), bitmap);
+        } else {
+            Diagrams.showPosHeatMap(getUI(), buf);
+        }
     }
 
     /**

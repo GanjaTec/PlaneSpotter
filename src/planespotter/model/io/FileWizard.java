@@ -9,7 +9,10 @@ import planespotter.constants.UserSettings;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.InvalidDataException;
 import planespotter.util.Time;
+import planespotter.util.Utilities;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.io.*;
 import java.nio.file.FileAlreadyExistsException;
 
@@ -31,6 +34,18 @@ public class FileWizard {
      * used for static instance
      */
     private FileWizard() {
+    }
+
+    /**
+     * writes any type of image to a specific '.bmp' (bitmap) file
+     *
+     * @param img is the {@link Image} to be written
+     * @param imgType is the {@link Image} type constant from {@link java.awt.image.BufferedImage}.'...'
+     * @param file is the {@link File} where the {@link Image} is saved in
+     * @throws IOException
+     */
+    public void writeBitmapImg(@NotNull Image img, int imgType, @NotNull File file) throws IOException {
+        ImageIO.write(Utilities.createBufferedImage(img, imgType), "BMP", file);
     }
 
     /**

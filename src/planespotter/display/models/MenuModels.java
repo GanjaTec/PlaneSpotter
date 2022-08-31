@@ -102,11 +102,15 @@ public final class MenuModels {
     /**
      * @return file chooser for file dialog
      */
-    public static JFileChooser fileSaver(JFrame parent) {
+    public static JFileChooser fileSaver(JFrame parent, String... extensions) {
         var home = FileSystemView.getFileSystemView().getHomeDirectory();
         var fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);
-        var pls = new FileNameExtensionFilter("nur .pls-Dateien", "pls"); // TODO constant?
+        var pls = new FileNameExtensionFilter(
+                "allowed types: " + Arrays.toString(extensions),
+                Arrays.stream(extensions)
+                        .map(s -> s.replaceAll("\\.", ""))
+                        .toArray(String[]::new));
         fileChooser.setFileFilter(pls);
         fileChooser.showSaveDialog(parent);
 
