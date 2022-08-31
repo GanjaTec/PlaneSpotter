@@ -1187,14 +1187,14 @@ public final class DBOut extends DBConnector {
 			var query = "SELECT ID, flightnr " +
 						"FROM flights " +
 						"WHERE (endTime IS NULL)";
-			synchronized (DB_SYNC) {
+			//synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
 					map.put(rs.getString(2), rs.getInt(1));
 				}
 				result.close();
-			}
+			//}
 		} catch (SQLException | NoAccessException e) {
 			e.printStackTrace();
 		}
@@ -1303,14 +1303,14 @@ public final class DBOut extends DBConnector {
 		var map = new HashMap<String, Integer>();
 		try {
 			var query = "SELECT icaotag, ID FROM airlines";
-			synchronized (DB_SYNC) {
+			//synchronized (DB_SYNC) {
 				var result = super.queryDB(query);
 				var rs = result.resultSet();
 				while (rs.next()) {
 					map.put(rs.getString(1), rs.getInt(2));
 				}
 				result.close();
-			}
+			//}
 			if (map.isEmpty()) {
 				throw new DataNotFoundException("No Airline-Tags and IDs found!");
 			}
@@ -1325,7 +1325,7 @@ public final class DBOut extends DBConnector {
 
 		var map = new HashMap<String, Integer>();
 			var query = "SELECT icaonr, ID FROM planes";
-			synchronized (DB_SYNC) {
+			//synchronized (DB_SYNC) {
 				try (DBResult result = super.queryDB(query)) {
 					ResultSet rs = result.resultSet();
 					while (rs.next()) {
@@ -1334,7 +1334,7 @@ public final class DBOut extends DBConnector {
 				} catch (NoAccessException | SQLException e) {
 					e.printStackTrace();
 				}
-			}
+			//}
 			if (map.isEmpty()) {
 				throw new DataNotFoundException("No Plane-ICAOs and IDs found!");
 			}

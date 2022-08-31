@@ -18,11 +18,8 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 /**
  * @name Supplier
@@ -37,21 +34,34 @@ import java.util.stream.Stream;
  * @see planespotter.a_test.TestMain
  */
 public class Fr24Supplier implements Supplier {
+
+	// static HttpClient instance, fixed thread overhead
+	private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+
 	// class instance fields
 	private final int threadNumber;
 	private final String ThreadName;
 	private final String area;
-	private final HttpClient httpClient;
 
+	/**
+	 * constructs a default {@link Fr24Supplier} with thread number 0 and no area,
+	 * can be used as utility-supplier if needed.
+	 * WARNING: this supplier is not able to collect data
+	 */
 	public Fr24Supplier() {
 		this(0, "");
 	}
 
+	/**
+	 * constructs a custom {@link Fr24Supplier} with thread number and area
+	 *
+	 * @param threadNumber is the thread number
+	 * @param area is the area String
+	 */
 	public Fr24Supplier(int threadNumber, @NotNull String area) {
 		this.threadNumber = threadNumber;
 		this.ThreadName = "SupplierThread-" + threadNumber;
 		this.area = area;
-		this.httpClient = HttpClient.newHttpClient();
 	}
 
 	/**
@@ -125,7 +135,7 @@ public class Fr24Supplier implements Supplier {
 				+ "stats=0"))
 				.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0")
 				.build();
-		return this.httpClient.send(request, BodyHandlers.ofString());
+		return HTTP_CLIENT.send(request, BodyHandlers.ofString());
 	}
 	
 	/**
