@@ -10,7 +10,6 @@ import planespotter.controller.ActionHandler;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.display.models.*;
-import planespotter.model.nio.LiveLoader;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,9 +85,9 @@ public class UserInterface {
      * @param dataPoint is the {@link DataPoint} to be displayed
      */
     public void showInfo(@NotNull Flight flight, @NotNull DataPoint dataPoint) {
-        int x = 0, y = 0, width = 270, height = this.layerPane.getHeight();
-        InfoPane infoPane = InfoPane.of(this.layerPane, flight, dataPoint);
-        this.layerPane.addTop(infoPane, x, y, width, height);
+        int x = 0, y = 0, width = 270, height = layerPane.getHeight();
+        InfoPane infoPane = InfoPane.of(layerPane, flight, dataPoint);
+        layerPane.addTop(infoPane, x, y, width, height);
         //this.layerPane.moveTop(x - width, y, width, height, x, y, 1000);
     }
 
@@ -102,9 +101,9 @@ public class UserInterface {
             y = searchPanel.getY(),
             width = searchPanel.getWidth(),
             height = searchPanel.getHeight();
-        this.getLayerPane().addTop(this.searchPanel, x, y, width, height);
-        this.searchPanel.setVisible(!this.searchPanel.isVisible());
-        this.searchPanel.showSearch(type);
+        layerPane.addTop(searchPanel, x, y, width, height);
+        searchPanel.setVisible(!searchPanel.isVisible());
+        searchPanel.showSearch(type);
         // trying to animate components
         //this.layerPane.moveTop(x-100, y-100, width, height, x, y, 2000);
     }
@@ -115,7 +114,7 @@ public class UserInterface {
      * @param show indicates the visibility
      */
     public void showSettings(boolean show) {
-        this.settings.setVisible(show);
+        settings.setVisible(show);
     }
 
     /**
@@ -124,7 +123,7 @@ public class UserInterface {
      * @param type is the {@link Warning} type
      */
     public void showWarning(@NotNull Warning type) {
-        this.showWarning(type, null);
+        showWarning(type, null);
     }
 
     /**
@@ -134,12 +133,12 @@ public class UserInterface {
      * @param addTxt is the additional text, may be null
      */
     public void showWarning(@NotNull Warning type, @Nullable String addTxt) {
-        if (!this.warningShown) {
+        if (!warningShown) {
             String message = type.message();
             if (addTxt != null && !addTxt.isBlank()) {
                 message += "\n" + addTxt;
             }
-            this.warningShown = true;
+            warningShown = true;
             try {
                 JOptionPane.showOptionDialog(
                         this.getWindow(),
@@ -149,14 +148,33 @@ public class UserInterface {
                         JOptionPane.WARNING_MESSAGE,
                         null, null, null); // TODO: 30.06.2022 warning icon
             } finally {
-                this.warningShown = false;
+                warningShown = false;
             }
         }
     }
 
+    /**
+     * clears the current view, removes all {@link planespotter.dataclasses.PlaneMarker}s from the map
+     * and all components from the {@link LayerPane}, sets the default bottom component (map) visible
+     */
+    public void clearView() {
+        LayerPane layerPane = getLayerPane();
+        getMapManager().clearMap();
+        layerPane.removeTop();
+        layerPane.setBottomDefault();
+    }
+
+    /**
+     * gets a user-input {@link String} from a {@link JOptionPane}-input dialog
+     *
+     * @param msg is the input dialog message
+     * @param initValue is the initial value in the input text field
+     * @return the user input as a {@link String} or "" if the input is null
+     */
     @NotNull
     public String getUserInput(@NotNull String msg, @NotNull Number initValue) {
-        return JOptionPane.showInputDialog(msg, initValue);
+        String input;
+        return (input = JOptionPane.showInputDialog(msg, initValue)) == null ? "" : input;
     }
 
     /**
@@ -174,7 +192,7 @@ public class UserInterface {
      * unselects all {@link JMenuBar} items
      */
     public void unselectMenuBar() {
-        this.window.getJMenuBar().setSelected(null);
+        window.getJMenuBar().setSelected(null);
     }
 
     /**
@@ -200,7 +218,7 @@ public class UserInterface {
      * @return true if the fullscreen-mode is enabled, else false
      */
     public boolean isFullscreen() {
-        return this.window.getExtendedState() == Frame.MAXIMIZED_BOTH && this.window.isUndecorated();
+        return window.getExtendedState() == Frame.MAXIMIZED_BOTH && this.window.isUndecorated();
     }
 
     /**
@@ -260,7 +278,7 @@ public class UserInterface {
      */
     @Nullable
     public File getSelectedFile() {
-        JFileChooser fileChooser = MenuModels.fileLoader(this.getWindow());
+        JFileChooser fileChooser = MenuModels.fileLoader(getWindow());
         return fileChooser.getSelectedFile();
     }
 

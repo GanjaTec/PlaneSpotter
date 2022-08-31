@@ -13,8 +13,6 @@ import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.nio.LiveLoader;
 
-import java.util.ArrayDeque;
-
 /**
  * @name Fr24Collector
  * @author jml04
@@ -96,9 +94,9 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
 
         super.scheduler.schedule(() -> super.scheduler.exec(() -> {
             // executing suppliers to collect Fr24-Data
-            this.liveLoader.collectPStream(extAreas, deserializer, true);
+            this.liveLoader.collectData(extAreas, deserializer, true);
             // adding all deserialized world-raster-areas to frames deque
-            this.liveLoader.collectPStream(this.worldAreaRaster1D, deserializer, true);
+            this.liveLoader.collectData(this.worldAreaRaster1D, deserializer, true);
             
         }, "Data Collector Thread", false, Scheduler.HIGH_PRIO, true),
                 "Collect Data", 0, REQUEST_PERIOD);

@@ -8,6 +8,9 @@ import planespotter.constants.Areas;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
 import planespotter.display.TreasureMap;
+import planespotter.model.DataTask;
+import planespotter.model.Scheduler;
+import planespotter.throwables.InvalidArrayException;
 import planespotter.throwables.InvalidDataException;
 import planespotter.util.Time;
 import planespotter.util.Utilities;
@@ -38,7 +41,7 @@ import java.util.stream.Stream;
  * @see planespotter.constants.Areas
  * @see java.util.concurrent.ConcurrentLinkedQueue
  */
-public class LiveLoader {
+public class LiveLoader implements DataTask {
 
     private static final Object liveLock = new Object();
 
@@ -60,16 +63,18 @@ public class LiveLoader {
     @NotNull private final ConcurrentLinkedQueue<Fr24Frame> insertLater;
 
     /**
-     *
+     * default {@link LiveLoader} constructor, uses a maxQueueSize
+     * of 20000 and a liveDataPeriod of 2 seconds
      */
     public LiveLoader() {
         this(20000, 2);
     }
 
     /**
+     * {@link LiveLoader} constructor with specific maxQueueSize and period
      *
-     *
-     * @param maxQueueSize
+     * @param maxQueueSize is the max. size for the insertLater-{@link Queue}
+     * @param liveDataPeriodSec is the loading period in seconds
      */
     public LiveLoader(int maxQueueSize, int liveDataPeriodSec) {
         this.maxQueueSize = maxQueueSize;
@@ -77,9 +82,22 @@ public class LiveLoader {
         this.liveDataPeriodSec = liveDataPeriodSec;
     }
 
-    public void liveDataTask(@NotNull Controller ctrl, boolean onlyMilitary) {
+    /**
+     * The live-data-task, endless data loading, while the controller is alive.
+     * Waits on the liveLock object and tries to load live-data.
+     *
+     * @param ctrl is the {@link Controller} instance
+     * @param flags are the flags where the task is initialized with, in this case the
+     *              'onlyMilitary' flag, indicates if only military data should be loaded
+     */
+    @Override
+    public void runTask(@NotNull Controller ctrl, boolean... flags) {
+        if (flags == null || flags.length == 0) {
+            throw new InvalidArrayException("Flags array needs the onlyMilitary flag!");
+        }
+        boolean onlyMilitary = flags[0];
         // loading init-live-data
-        this.loadLiveData(ctrl, onlyMilitary);
+        loadLiveData(ctrl, onlyMilitary);
         // endless live-data task
         synchronized (liveLock) {
             while (!ctrl.isTerminated()) {
@@ -87,52 +105,63 @@ public class LiveLoader {
                 try {
                     liveLock.wait(TimeUnit.SECONDS.toMillis(this.liveDataPeriodSec));
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    ctrl.handleException(e);
                 } finally {
                     liveLock.notify();
                 }
                 // loading live-data, if live-map is enabled
-                if (this.isLive()) {
-                    this.loadLiveData(ctrl, onlyMilitary);
+                if (isLive()) {
+                    loadLiveData(ctrl, onlyMilitary);
                 }
             }
         }
     }
 
     /**
-     * loads Fr24-data directly into the liveData-Collection,
-     * but not into the DB
-     * @see LiveLoader
+     * loads Fr24-data directly into the liveData-Collection (ctrl.liveData)
+     * and into the {@link TreasureMap}, but not into the database.
+     *
+     * @param ctrl is the {@link Controller} instance
+     * @param onlyMilitary indicates if only military data should be loaded
      */
     private void loadLiveData(@NotNull Controller ctrl, boolean onlyMilitary) {
 
-        List<MapMarker> markerList;
-        TreasureMap map;
-        // checking for 'already loading' and setting controller loading
-        if (!ctrl.isLoading()) {
-            ctrl.setLoading(true);
+        ctrl.getScheduler().exec(() -> {
+                    List<MapMarker> markerList;
+                    TreasureMap map;
+                    // checking for 'already loading' and setting controller loading
+                    if (!ctrl.isLoading()) {
+                        ctrl.setLoading(true);
 
-            map = ctrl.getUI().getMap();
-            // transforming liveData-flight-Vector into list of MapMarkers
-            // after loading it directly from fr24
-            ctrl.liveData = this.getLiveFlights(map, onlyMilitary);
-            markerList = ctrl.liveData
-                    .stream()
-                    .map(flight -> PlaneMarker.fromFlight(flight, ctrl.getUI().getMapManager().getSelectedICAO(), true))
-                    .collect(Collectors.toList());
-            // setting new map marker list on the map
-            map.setMapMarkerList(markerList);
-            ctrl.done(false);
-        }
+                        map = ctrl.getUI().getMap();
+                        // transforming liveData-flight-Vector into list of MapMarkers
+                        // after loading it directly from fr24
+                        Vector<Flight> liveFlights = getLiveFlights(map, onlyMilitary);
+                        ctrl.setLiveDataList(liveFlights);
+                        markerList = ctrl.getLiveDataList()
+                                .stream()
+                                .map(flight -> PlaneMarker.fromFlight(flight, ctrl.getUI().getMapManager().getSelectedICAO(), true))
+                                .collect(Collectors.toList());
+                        // setting new map marker list on the map
+                        map.setMapMarkerList(markerList);
+                        ctrl.done(false);
+                    }
+                }, "LiveData Loader", true, Scheduler.HIGH_PRIO, true)
+                .join();
     }
 
     /**
      * loads live-data directly from Fr24 by running suppliers
      * and turns them directly into Flight objects.
      * This method doesn't load the data into the DB, but adds it
-     * to the insertLater-queue where the data is added from
+     * to the insertLater-queue where the data can be added from,
+     * but we poll it directly after putting it into
+     * and parse it to {@link Flight}s
      *
-     * @return Vector of Flight objects, loaded directly by a supplier
+     * @param map is the {@link TreasureMap} where the area, in which the {@link Flight}s are loaded,
+     *            comes from, can be found in the {@link planespotter.display.UserInterface} class
+     * @param onlyMilitary indicates if only military data should be loaded
+     * @return Vector of {@link Flight} objects, loaded directly with {@link Supplier}s
      */
     @NotNull
     public Vector<Flight> getLiveFlights(@NotNull final TreasureMap map, boolean onlyMilitary) {
@@ -142,10 +171,10 @@ public class LiveLoader {
         }
 
         String[] currentArea = Areas.getCurrentArea(map);
-        if (collectPStream(currentArea, deserializer, false)) {
+        if (collectData(currentArea, deserializer, false)) {
 
             AtomicInteger pseudoID = new AtomicInteger(0);
-            return this.pollFrames(Integer.MAX_VALUE)
+            return pollFrames(Integer.MAX_VALUE)
                     .map(frame -> Flight.parseFlight(frame, pseudoID.getAndIncrement()))
                     .collect(Collectors.toCollection(Vector::new));
         }
@@ -156,38 +185,37 @@ public class LiveLoader {
      * polls a certain amount of frames from the
      * insert-later-deque if it is not empty
      *
-     * @param maxElements is the max. pull count
-     * @return Stream of Frames with @param count as length
+     * @param maxElements is the max. pull count, if it is higher than the
+     *                    queue size, it's decremented to the queue size
+     * @return Stream of Frames with @param maxElements (or queue size) as length
      */
     @NotNull
     public Stream<Fr24Frame> pollFrames(@Range(from = 1, to = Integer.MAX_VALUE) int maxElements) {
         if (this.isEmpty()) { // checking for empty queue
             throw new InvalidDataException("Insert-later-Queue is empty, make sure it is not empty!");
-
-        } else if (!this.canPoll(maxElements)) { // checking queue size
-            maxElements = this.getQueueSize();
         }
-        // iterating over polled frames from insertLater-queue and limiting to count
-        return Stream.iterate(this.insertLater.poll(), x -> this.insertLater.poll())
-                .limit(maxElements);
+        // iterating over polled frames from insertLater-queue and limiting to size
+        int size = Math.min(maxElements, getQueueSize());
+        return Stream.iterate(insertLater.poll(), x -> insertLater.poll())
+                .limit(size);
     }
 
     /**
-     * gets HttpResponse's for specific areas and deserializes its data to Frames
+     * gets HttpResponse's for specific areas and deserializes its data to Frames,
+     * then directly adds the frames to the insertLater-{@link Queue}
      *
      * @param areas are the Areas where data should be deserialized from
-     * @param deserializer is the Fr24Deserializer which is used to deserialize the requested data
+     * @param deserializer is the {@link Fr24Deserializer} which is used to deserialize the requested data
      * @param ignoreMaxSize if it's true, allowed max size of insertLater-queue is ignored
-     * @see planespotter.model.nio.LiveLoader
      */
-    public synchronized boolean collectPStream(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize) {
+    public synchronized boolean collectData(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize) {
         System.out.println("[Supplier] Collecting Fr24-Data with parallel Stream...");
 
         AtomicInteger tNumber = new AtomicInteger(0);
         long startTime = Time.nowMillis();
         try (Stream<@NotNull String> parallel = Arrays.stream(areas).parallel()) {
             parallel.forEach(area -> {
-                if (!ignoreMaxSize && this.maxSizeReached()) {
+                if (!ignoreMaxSize && maxSizeReached()) {
                     System.out.println("Max queue-size reached!");
                     return;
                 }
@@ -198,7 +226,7 @@ public class LiveLoader {
                     HttpResponse<String> response = supplier.sendRequest();
                     Utilities.checkStatusCode(response.statusCode());
                     data = deserializer.deserialize(response);
-                    this.insertLater(data);
+                    insertLater(data);
                 } catch (IOException | InterruptedException e) {
                     if (e instanceof SSLHandshakeException ssl) {
                         Controller.getInstance().handleException(ssl);
@@ -219,28 +247,17 @@ public class LiveLoader {
      * @param data is the data to add to insert later
      */
     public void insertLater(@NotNull final Collection<Fr24Frame> data) {
-        this.insertLater.addAll(data);
+        insertLater.addAll(data);
     }
 
     /**
      * indicates if a method may load frames into the insertLater-deque
      * by checking if the max. Size (MAX_QUEUE_SIZE) is reached.
      *
-     * @return true if the insertLater-size is greater than 10000, else false
+     * @return true if the insertLater-size is greater than MAX_QUEUE_SIZE, else false
      */
     protected boolean maxSizeReached() {
-        return this.insertLater.size() > this.maxQueueSize;
-    }
-
-    /**
-     * indicates if a method may collect data from the insertLater-deque
-     *
-     * @param count is the exclusive minimum size, the deque must have to return true
-     * @return true, if insertLater.size() is greater or equals count, else false
-     *         if true, another Method gets ac
-     */
-    public boolean canPoll(final int count) {
-        return this.insertLater.size() > count;
+        return insertLater.size() >= getMaxQueueSize();
     }
 
     /**
@@ -249,7 +266,7 @@ public class LiveLoader {
      * @return true if the insert-later-deque is empty, else false
      */
     public boolean isEmpty() {
-        return this.insertLater.isEmpty();
+        return insertLater.isEmpty();
     }
 
     /**

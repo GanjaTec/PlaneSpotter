@@ -1,6 +1,7 @@
 package planespotter.display.models;
 
 import libs.UWPButton;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.model.Fr24Collector;
 import planespotter.constants.Images;
@@ -51,7 +52,7 @@ public class SupplierDisplay implements WindowListener {
                          lastFrameLabel = new JLabel(),
                          queueSizeLabel = new JLabel(),
                          errorLabel = new JLabel();
-    private final JLabel[] labels = {insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel, statusLabel, lastFrameLabel, queueSizeLabel, errorLabel};
+    private final JLabel[] labels = {insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel, lastFrameLabel, queueSizeLabel, errorLabel, statusLabel};
     private final JFrame frame;
 
     public SupplierDisplay(int defaultCloseOperation, Collector<? extends Supplier> collector) {
@@ -123,6 +124,7 @@ public class SupplierDisplay implements WindowListener {
         this.statusLabel.setForeground(DEFAULT_ACCENT_COLOR.get());
         this.setStatus("enabled, running");
         this.setQueueSize(0);
+        this.setError("");
 
         var panel = new JPanel();
         panel.setLayout(null);
@@ -144,6 +146,10 @@ public class SupplierDisplay implements WindowListener {
         frame.add(panel);
 
         return frame;
+    }
+
+    private void setError(@NotNull String error) {
+        this.errorLabel.setText("Last Error: " + error);
     }
 
     private void setQueueSize(int size) {
@@ -182,7 +188,7 @@ public class SupplierDisplay implements WindowListener {
         this.progressBar.setValue(memoryUsage);
         this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");
         if (error != null) {
-            this.errorLabel.setText("LastError: " + error.getMessage());
+            this.setError(error.getMessage());
         }
     }
 

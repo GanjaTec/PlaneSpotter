@@ -19,6 +19,7 @@ import java.io.*;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
+import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -81,6 +82,32 @@ public abstract class Utilities {
     @NotNull
     public static String getAbsoluteRootPath() {
         return (Controller.ROOT_PATH == null) ? System.getProperty("user.dir") : Controller.ROOT_PATH;
+    }
+
+    /**
+     * does a connection pre-check for all given {@link URL}s
+     *
+     * @param urls are the {@link URL}s to check
+     * @throws Fr24Exception if a connection check failed
+     */
+    public static void connectionPreCheck(@NotNull URL... urls) throws Fr24Exception {
+        URLConnection conn;
+        InetAddress address = null;
+        String hostName;
+        for (URL url : urls) {
+            try {
+                conn = url.openConnection();
+                conn.setConnectTimeout(5000);
+                conn.connect();
+                address = InetAddress.getByName(url.getHost());
+                if (!address.isReachable(5000)) {
+                    throw new IOException();
+                }
+            } catch (IOException e) {
+                hostName = address == null ? "N/A" : address.getHostName();
+                throw new Fr24Exception("address " + hostName + "is not reachable!");
+            }
+        }
     }
 
     /**
@@ -318,18 +345,19 @@ public abstract class Utilities {
      * @return true if the icon was added to the {@link SystemTray}, else false
      */
     public static boolean addTrayIcon(@NotNull Image icon, @NotNull ActionListener onClick) {
-        if (SystemTray.isSupported()) {
-            TrayIcon trayIcon = new TrayIcon(icon);
-            trayIcon.setImageAutoSize(true);
-            trayIcon.addActionListener(onClick);
-            try {
-                SystemTray.getSystemTray().add(trayIcon);
-                return true;
-            } catch (AWTException e) {
-                e.printStackTrace();
-            }
+        if (!SystemTray.isSupported()) {
+            return false;
         }
-        return false;
+        TrayIcon trayIcon = new TrayIcon(icon);
+        trayIcon.setImageAutoSize(true);
+        trayIcon.addActionListener(onClick);
+        try {
+            SystemTray.getSystemTray().add(trayIcon);
+            return true;
+        } catch (AWTException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     /**

@@ -8,7 +8,7 @@ package planespotter.throwables;
  * Fr24Exception is always thrown, when there is an error with the
  * Fr24-data, which we want to collect
  */
-public class Fr24Exception extends InvalidDataException {
+public class Fr24Exception extends RuntimeException {
 
     public Fr24Exception(String msg) {
         super(msg);

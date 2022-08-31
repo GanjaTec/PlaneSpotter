@@ -1,7 +1,6 @@
 package planespotter.display.models;
 
 import org.jetbrains.annotations.NotNull;
-import planespotter.constants.GUIConstants;
 import planespotter.constants.SearchType;
 import planespotter.controller.ActionHandler;
 import planespotter.throwables.NoSuchComponentException;
@@ -36,7 +35,7 @@ public class SearchPane extends JPanel {
 
         super.setBounds(10, 175, 250, parent.getHeight()-265);
         super.setBackground(DEFAULT_ACCENT_COLOR.get());
-        super.setBorder(GUIConstants.MENU_BORDER);
+        super.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
         super.setLayout(null);
         super.setVisible(false);
 

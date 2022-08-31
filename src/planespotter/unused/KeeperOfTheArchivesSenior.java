@@ -37,7 +37,7 @@ public class KeeperOfTheArchivesSenior implements Runnable{ // TODO: 11.06.2022 
 		try {
 			List<Integer> IDs = dbo.checkEnded();
 			for(int id : IDs) {
-				long ts = dbo.getLastTimestempByFlightID(id);
+				long ts = dbo.getLastTimestampByFlightID(id);
 				long tdiff = (System.currentTimeMillis() / 1000L) - ts; 
 				if(tdiff > this.threshold) {
 					dbi.updateFlightEnd(id, ts);
