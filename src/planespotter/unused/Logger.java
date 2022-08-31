@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.Objects;
 
-import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.DefaultColor.*;
 import static planespotter.constants.Images.PAPER_PLANE_ICON;
 
@@ -54,7 +53,7 @@ public class Logger extends JFrame implements ComponentListener {
         this.out.setBounds(0, 0, super.getWidth()-25, super.getHeight()-45);
         this.out.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         this.out.setForeground(DEFAULT_FONT_COLOR.get());
-        this.out.setBorder(MENU_BORDER);
+        this.out.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
         this.out.setCaretColor(DEFAULT_MAP_ICON_COLOR.get());
         this.out.setEditable(false);
         this.out.setFont(new Font("Consolas", Font.PLAIN, 12));

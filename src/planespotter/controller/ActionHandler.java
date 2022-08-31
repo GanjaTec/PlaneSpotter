@@ -1,14 +1,14 @@
 package planespotter.controller;
 
 import org.jetbrains.annotations.NotNull;
-
 import org.jetbrains.annotations.Nullable;
+
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
+
 import planespotter.constants.*;
 import planespotter.dataclasses.Hotkey;
 import planespotter.display.Diagrams;
 import planespotter.model.Scheduler;
-import planespotter.display.TreasureMap;
 import planespotter.display.UserInterface;
 import planespotter.display.models.InfoPane;
 import planespotter.display.models.LayerPane;
@@ -63,7 +63,7 @@ public abstract class ActionHandler
         GLOBAL_EVENT_DISPATCHER = initGlobalEventDispatcher();
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(GLOBAL_EVENT_DISPATCHER);
 
-        HOTKEYS = new HashMap<>(1);
+        HOTKEYS = new HashMap<>(2);
         initHotkeys(null);
     }
 
@@ -119,15 +119,19 @@ public abstract class ActionHandler
      * @param additionals are additional {@link Hotkey}s, paired with actions (in a {@link Map}) that should be initialized
      */
     private static void initHotkeys(@Nullable Map<Hotkey, Runnable> additionals) {
-        Runnable shiftSAction = () -> getActionHandler().menuClicked(new JMenu("Search"));
+        Runnable shiftSAction, f11Action;
 
         // shift S / default search hotkey
+        shiftSAction = () -> getActionHandler().menuClicked(new JMenu("Search"));
         HOTKEYS.put(new Hotkey(VK_S, true, false, false), shiftSAction);
+        // F11 / default fullscreen hotkey
+        f11Action = () -> getActionHandler().menuItemClicked(Controller.getInstance(), new JMenuItem("Fullscreen"));
+        HOTKEYS.put(new Hotkey(VK_F11, false, false, false), f11Action);
 
         if (additionals == null) {
             return;
         }
-        // variable hotkeys
+        // variable (optional) hotkeys
         Hotkey key;
         Runnable value;
         for (Map.Entry<Hotkey, Runnable> add : additionals.entrySet()) {
@@ -200,7 +204,6 @@ public abstract class ActionHandler
                 ctrl.show(ViewType.MAP_HEATMAP);
 
             } else if (button.getName().equals("loadMap")) {
-                //var inputs = gui.searchInput();
                 String[] inputs;
                 if ((inputs = ctrl.getUI().getSearchPanel().searchInput()) != null) {
                     ctrl.search(inputs, 1);
@@ -247,7 +250,7 @@ public abstract class ActionHandler
             if (source instanceof JTextField && key == VK_ENTER) {
                 JButton jButton = new JButton();
                 jButton.setName("loadMap");
-                this.buttonClicked(jButton, Controller.getInstance(), ui);
+                buttonClicked(jButton, Controller.getInstance(), ui);
             }
         } catch (NumberFormatException ex) {
             System.err.println("NumberFormatException in ActionHandler.keyEntered");
@@ -264,7 +267,6 @@ public abstract class ActionHandler
     public void windowResized(@NotNull UserInterface ui) {
         JFrame window = ui.getWindow();
         LayerPane layerPane = ui.getLayerPane();
-        //TreasureMap map = ui.getMap();
 
         layerPane.setBounds(0, 0, window.getWidth(), window.getHeight());
 
@@ -272,7 +274,6 @@ public abstract class ActionHandler
         if (bottom != null) {
             bottom.setBounds(layerPane.getBounds());
         }
-        //map.setBounds(layerPane.getBounds());
         Component top = layerPane.getTop();
         if (top instanceof SearchPane) {
             top.setBounds(10, 10, top.getWidth(), top.getHeight());
@@ -311,6 +312,7 @@ public abstract class ActionHandler
         switch (text) {
             case "Open" -> ctrl.loadFile();
             case "Save As" -> ctrl.saveFile();
+            case "Fullscreen" -> ui.setFullScreen(!ui.isFullscreen());
             case "Exit" -> ctrl.shutdown(false);
             case "Fr24-Supplier" -> ctrl.runFr24Collector();
             // TODO: 25.08.2022 ctrl.showStats(ViewType type)
@@ -343,12 +345,9 @@ public abstract class ActionHandler
             case "Search" -> ui.showSearch(SearchType.FLIGHT);
             case "Settings" -> ui.showSettings(true);
             case "Close View" -> {
-                ctrl.loadedData = null;
+                ctrl.setDataList(null);
                 ctrl.getLiveLoader().setLive(false);
-                ui.getMapManager().clearMap();
-                LayerPane layerPane = ui.getLayerPane();
-                layerPane.removeTop();
-                layerPane.setBottomDefault();
+                ui.clearView();
             }
         }
     }
@@ -364,12 +363,13 @@ public abstract class ActionHandler
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        var src = e.getSource();
+        Object src = e.getSource();
         if (src instanceof JButton bt) {
-            var ctrl = Controller.getInstance();
-            var ui = ctrl.getUI();
-            if (e.getID() != KEY_TYPED) {
-                this.buttonClicked(bt, ctrl, ui);
+            Controller ctrl = Controller.getInstance();
+            UserInterface ui = ctrl.getUI();
+            int eventID = e.getID();
+            if (eventID != KEY_TYPED) {
+                buttonClicked(bt, ctrl, ui);
             }
         }
     }
@@ -386,11 +386,13 @@ public abstract class ActionHandler
         UserInterface ui = ctrl.getUI();
         Component component = e.getComponent();
         if (component == ui.getMap()) {
-            this.mapClicked(e, ctrl, ui);
+            mapClicked(e, ctrl, ui);
         } else if (component instanceof JMenu menu) {
-            this.menuClicked(menu);
+            menuClicked(menu);
+            ui.unselectMenuBar();
         } else if (component instanceof JMenuItem item) {
-            this.menuItemClicked(ctrl, item);
+            menuItemClicked(ctrl, item);
+            ui.unselectMenuBar();
         }
     }
 
@@ -402,8 +404,8 @@ public abstract class ActionHandler
      */
     @Override
     public void keyPressed(KeyEvent e) {
-        var ui = Controller.getInstance().getUI();
-        this.keyEntered(e, ui);
+        UserInterface ui = Controller.getInstance().getUI();
+        keyEntered(e, ui);
     }
 
     /**
@@ -415,7 +417,7 @@ public abstract class ActionHandler
     @Override
     public void componentResized(ComponentEvent e) {
         UserInterface ui = Controller.getInstance().getUI();
-        this.windowResized(ui);
+        windowResized(ui);
     }
 
     /**
@@ -426,7 +428,7 @@ public abstract class ActionHandler
      */
     @Override
     public void componentShown(ComponentEvent e) {
-        this.componentResized(e);
+        componentResized(e);
     }
 
     /**
@@ -437,10 +439,10 @@ public abstract class ActionHandler
      */
     @Override
     public void itemStateChanged(ItemEvent e) {
-        var src = e.getSource();
-        var item = (String) e.getItem();
-        var ui = Controller.getInstance().getUI();
-        this.itemChanged(src, item, ui);
+        Object src = e.getSource();
+        String item = (String) e.getItem();
+        UserInterface ui = Controller.getInstance().getUI();
+        itemChanged(src, item, ui);
     }
 
     /**

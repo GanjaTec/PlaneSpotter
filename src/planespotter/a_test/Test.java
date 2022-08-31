@@ -1,7 +1,6 @@
 package planespotter.a_test;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -10,8 +9,8 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import planespotter.constants.*;
-import planespotter.dataclasses.Fr24Frame;
-import planespotter.model.Scheduler;
+import planespotter.dataclasses.Flight;
+import planespotter.unused.ANSIColor;
 import planespotter.util.Bitmap;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Position;
@@ -22,27 +21,27 @@ import planespotter.util.Time;
 import planespotter.util.Utilities;
 import sun.misc.Unsafe;
 
+import javax.imageio.ImageIO;
+import javax.print.DocFlavor;
+import javax.print.DocPrintJob;
+import javax.print.PrintService;
+import javax.print.SimpleDoc;
 import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.io.*;
-import java.lang.ref.Cleaner;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
-import java.net.URI;
+import java.net.Socket;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.http.HttpClient;
-import java.net.http.HttpHeaders;
-import java.net.http.HttpResponse;
+import java.net.http.WebSocket;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.LockSupport;
-import java.util.logging.Level;
-import java.util.stream.Stream;
 
 @TestOnly
 public class Test {
@@ -61,9 +60,25 @@ public class Test {
         result = PyAdapter.runScript(Paths.PY_RUNTIME_HELPER + "testprint.py");
         System.out.println(result);
 */
+        PrinterJob printer = PrinterJob.getPrinterJob();
+        for (PrintService printService : PrinterJob.lookupPrintServices()) {
+            printer.setPrintService(printService);
+            printTest(printer);
+        }
 
-        connectTest();
+    }
 
+    private static void printTest(PrinterJob printer) throws PrinterException {
+        printer.setPrintable((g, pageFormat, index) -> {
+            try {
+                g.drawImage(ImageIO.read(new File(Paths.RESOURCE_PATH + "bitmap.bmp")), 0, 0, null);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return -1;
+            }
+            return index;
+        });
+        printer.print();
     }
 
     /**

@@ -1,5 +1,6 @@
 package planespotter.display;
 
+import libs.ZoomPane;
 import org.jetbrains.annotations.NotNull;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -85,15 +86,12 @@ public class Diagrams {
     }
 
     @NotNull
-    private static JPanel heatMapPanel(@NotNull Component parent, @NotNull BufferedImage heatMapImg) {
+    private static ZoomPane heatMapPanel(@NotNull Component parent, @NotNull Image heatMapImg) {
         int width = parent.getWidth(),
             height = parent.getHeight();
-        ImageIcon imgIcon = new ImageIcon(heatMapImg);
-        JLabel imgLabel = new JLabel(Utilities.scale(imgIcon, width, height));
-        JPanel panel = new JPanel(null);
+        Image scaled = Utilities.scale(new ImageIcon(heatMapImg), width, height).getImage();
+        ZoomPane panel = new ZoomPane(scaled);
         panel.setBounds(0, 0, width, height);
-        imgLabel.setBounds(panel.getBounds());
-        panel.add(imgLabel);
         return panel;
     }
 

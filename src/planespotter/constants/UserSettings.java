@@ -36,7 +36,7 @@ public class UserSettings {
     private static int GRIDSIZE_LON;
 
     // default map base url
-    private static final String BASE_URL;
+    public static final String MAP_BASE_URL;
 
     // map types
     public static final TileSource BING_MAP, TRANSPORT_MAP, DEFAULT_MAP;
@@ -47,11 +47,11 @@ public class UserSettings {
     // static initializer
     static {
         // setting default map ('osm') base url
-        BASE_URL = "https://a.tile.openstreetmap.de";
+        MAP_BASE_URL = "https://a.tile.openstreetmap.de";
         // setting tile sources
         BING_MAP = new BingAerialTileSource();
         TRANSPORT_MAP = new OsmTileSource.TransportMap();
-        DEFAULT_MAP = new TMSTileSource(new TileSourceInfo("OSM", BASE_URL, "0"));
+        DEFAULT_MAP = new TMSTileSource(new TileSourceInfo("OSM", MAP_BASE_URL, "0"));
         // initializing non-final fields
         try {
             // initialization with saved config file
@@ -64,7 +64,8 @@ public class UserSettings {
             initialize(defaultValues);
         }
         collectorFilters = new Filters().add("RCH").add("DUKE").add("FORTE").add("CASA").add("VIVI")
-                                        .add("EYE").add("NCR").add("LAGR");
+                                        .add("EYE").add("NCR").add("LAGR").add("SNIPER").add("VALOR")
+                                        .add("MMF").add("HOIS").add("K35R").add("SONIC").add("Q4");
         //collectorFilters = null/*Filters.read(Configuration.FILTERS_FILENAME)*/;
     }
 

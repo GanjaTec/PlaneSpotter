@@ -2,7 +2,6 @@ package planespotter.model;
 
 import org.jetbrains.annotations.NotNull;
 import planespotter.controller.Controller;
-import planespotter.dataclasses.Airline;
 import planespotter.dataclasses.DataPoint;
 import planespotter.model.io.DBOut;
 import planespotter.throwables.DataNotFoundException;
@@ -23,7 +22,7 @@ import java.util.*;
 public class Search {
 
     // search cache for data recycling, but still in development
-    private final LRUCache<String, Vector<DataPoint>> searchCache;
+    private final LRUCache<@NotNull String, Vector<DataPoint>> searchCache;
 
     /**
      * constructor, equivalent to 'new Search(100)'
@@ -57,8 +56,8 @@ public class Search {
             DBOut out = DBOut.getDBOut();
             if (!id.isBlank()) {
                 int fid = Integer.parseInt(id);
-                ctrl.loadedData = out.getTrackingByFlight(fid);
-                return ctrl.loadedData;
+                ctrl.setDataList(out.getTrackingByFlight(fid));
+                return ctrl.getDataList();
             } else if (!callsign.isBlank()) {
                 Deque<String> signs = this.findCallsigns(callsign);
                 Deque<Integer> fids = new ArrayDeque<>();
@@ -67,15 +66,15 @@ public class Search {
                 }
                 int[] ids = Utilities.parseIntArray(fids);
                 String key = "tracking" + Arrays.toString(ids);
-                ctrl.loadedData = this.searchCache.get(key);
-                if (ctrl.loadedData == null) {
-                    ctrl.loadedData = out.getTrackingsByFlightIDs(ids);
-                    this.searchCache.put(key, ctrl.loadedData);
+                ctrl.setDataList(this.searchCache.get(key));
+                if (ctrl.getDataList() == null) {
+                    ctrl.setDataList(out.getTrackingsByFlightIDs(ids));
+                    this.searchCache.put(key, ctrl.getDataList());
                 }
-                if (ctrl.loadedData.isEmpty()) {
+                if (ctrl.getDataList().isEmpty()) {
                     ex = new DataNotFoundException("No flight found for callsign " + callsign + "!");
                 } else {
-                    return ctrl.loadedData;
+                    return ctrl.getDataList();
                 }
             }
         } catch (DataNotFoundException ignored) {
@@ -134,26 +133,26 @@ public class Search {
             // trackings with airport id (-> airport join)
         } else if (!tag.isBlank()) {
             var key = "airport" + tag.toUpperCase();
-            ctrl.loadedData = this.searchCache.get(key);
-            if (ctrl.loadedData == null) {
-                int[] fids = out.getFlightIDsIDsByAirportTag(tag);
-                ctrl.loadedData = new Vector<>(out.getTrackingsByFlightIDs(fids));
-                this.searchCache.put(key, ctrl.loadedData);
+            ctrl.setDataList(this.searchCache.get(key));
+            if (ctrl.getDataList() == null) {
+                int[] fids = out.getFlightIDsByAirportTag(tag);
+                ctrl.setDataList(new Vector<>(out.getTrackingsByFlightIDs(fids)));
+                this.searchCache.put(key, ctrl.getDataList());
             }
         } else if (!name.isBlank()) {
             var key = "airport" + name.toUpperCase();
-            ctrl.loadedData = this.searchCache.get(key);
-            if (ctrl.loadedData == null) {
+            ctrl.setDataList(this.searchCache.get(key));
+            if (ctrl.getDataList() == null) {
                 // FIXME too slow
                 int[] fids = out.getFlightIDsByAirportName(name);
-                ctrl.loadedData = new Vector<>(out.getTrackingsByFlightIDs(fids));
-                this.searchCache.put(key, ctrl.loadedData);
+                ctrl.setDataList(new Vector<>(out.getTrackingsByFlightIDs(fids)));
+                this.searchCache.put(key, ctrl.getDataList());
             }
         }
-        if (ctrl.loadedData.isEmpty()) {
+        if (ctrl.getDataList() == null || ctrl.getDataList().isEmpty()) {
             throw new DataNotFoundException("No airports found for these inputs!");
         }
-        return ctrl.loadedData;
+        return ctrl.getDataList();
     }
 
     public Vector<DataPoint> forAirline(@NotNull String[] inputs)

@@ -70,6 +70,7 @@ public class Bitmap {
      *                 (should be 0.05 or higher to prevent memory problems)
      * @return Bitmap instance, created by pos-vector under a certain grid size
      */
+    @HighMemory(msg = "Huge 2D-arrays (with gridSize about 0.025 and lower) cause OutOfMemoryError")
     @NotNull
     public static Bitmap fromPosVector(@NotNull Vector<Position> positions, @Range(from = 0, to = 2) float gridSize) {
         if (gridSize < 0.025) {
@@ -100,6 +101,7 @@ public class Bitmap {
      * @param ints2d is the input 2D-int array, which is automatically converted to byte-array
      * @return Bitmap from 2D-int array
      */
+    @HighMemory(msg = "Huge 2D-arrays (with gridSize about 0.025 and lower) cause OutOfMemoryError")
     @NotNull
     public static Bitmap fromInt2d(int[][] ints2d) {
 
