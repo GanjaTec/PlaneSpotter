@@ -1,6 +1,7 @@
 package planespotter.display.models;
 
 import libs.UWPButton;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.model.Fr24Collector;
 import planespotter.constants.Images;
@@ -8,6 +9,7 @@ import planespotter.controller.Controller;
 import planespotter.model.Collector;
 import planespotter.model.io.DBIn;
 import planespotter.model.nio.Supplier;
+import planespotter.util.Utilities;
 import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
@@ -50,7 +52,7 @@ public class SupplierDisplay implements WindowListener {
                          lastFrameLabel = new JLabel(),
                          queueSizeLabel = new JLabel(),
                          errorLabel = new JLabel();
-    private final JLabel[] labels = {insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel, statusLabel, lastFrameLabel, queueSizeLabel, errorLabel};
+    private final JLabel[] labels = {insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel, lastFrameLabel, queueSizeLabel, errorLabel, statusLabel};
     private final JFrame frame;
 
     public SupplierDisplay(int defaultCloseOperation, Collector<? extends Supplier> collector) {
@@ -60,7 +62,7 @@ public class SupplierDisplay implements WindowListener {
 
     public void start() {
         this.frame.setVisible(true);
-        this.tryAddTrayIcon();
+        Utilities.addTrayIcon(Images.FLYING_PLANE_ICON.get().getImage(), e -> this.frame.setVisible(!this.frame.isVisible()));
     }
 
     private JFrame frame(int defaultCloseOperation) {
@@ -122,6 +124,7 @@ public class SupplierDisplay implements WindowListener {
         this.statusLabel.setForeground(DEFAULT_ACCENT_COLOR.get());
         this.setStatus("enabled, running");
         this.setQueueSize(0);
+        this.setError("");
 
         var panel = new JPanel();
         panel.setLayout(null);
@@ -143,6 +146,10 @@ public class SupplierDisplay implements WindowListener {
         frame.add(panel);
 
         return frame;
+    }
+
+    private void setError(@NotNull String error) {
+        this.errorLabel.setText("Last Error: " + error);
     }
 
     private void setQueueSize(int size) {
@@ -181,20 +188,7 @@ public class SupplierDisplay implements WindowListener {
         this.progressBar.setValue(memoryUsage);
         this.memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + this.totalMemory + " MB");
         if (error != null) {
-            this.errorLabel.setText("Error: " + error.getMessage());
-        }
-    }
-
-    private void tryAddTrayIcon() {
-        if (SystemTray.isSupported()) {
-            var trayIcon = new TrayIcon(Images.FLYING_PLANE_ICON.get().getImage());
-            trayIcon.setImageAutoSize(true);
-            trayIcon.addActionListener(e -> this.frame.setVisible(!this.frame.isVisible()));
-            try {
-                SystemTray.getSystemTray().add(trayIcon);
-            } catch (AWTException e) {
-                e.printStackTrace();
-            }
+            this.setError(error.getMessage());
         }
     }
 

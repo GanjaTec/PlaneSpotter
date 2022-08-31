@@ -15,8 +15,18 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.util.Properties;
 
+/**
+ * @name PyAdapter
+ * @author jml04
+ * @version 1.0
+ *
+ * @description
+ * The {@link PyAdapter} class represents a python-adapter which is able to
+ * run python scripts and functions, implementation not finished yet
+ */
 public class PyAdapter {
 
+    // the python interpreter (IDLE) which runs py
     private static final PythonInterpreter py;
 
     static {

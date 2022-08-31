@@ -2,12 +2,15 @@ package planespotter.display.models;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import planespotter.constants.GUIConstants;
+
 import planespotter.dataclasses.*;
+import planespotter.display.UserInterface;
 import planespotter.util.Utilities;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static planespotter.constants.DefaultColor.DEFAULT_SEARCH_ACCENT_COLOR;
 
 public class InfoPane extends JPanel {
 
@@ -58,8 +61,8 @@ public class InfoPane extends JPanel {
 
         this.infoList = (listData == null) ? new JList<>() : new JList<>(listData);
         this.infoList.setFocusable(false);
-        this.infoList.setBorder(GUIConstants.MENU_BORDER);
-        this.infoList.setFont(GUIConstants.FONT_MENU.deriveFont(12f));
+        this.infoList.setBorder(BorderFactory.createLineBorder(DEFAULT_SEARCH_ACCENT_COLOR.get()));
+        this.infoList.setFont(UserInterface.DEFAULT_FONT.deriveFont(12f));
         this.infoList.setCellRenderer(new Renderer());
         this.infoList.setBounds(10, 10, super.getWidth() - 20, 330);
         super.add(this.infoList);

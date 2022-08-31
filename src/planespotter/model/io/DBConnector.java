@@ -29,7 +29,7 @@ public abstract sealed class DBConnector
 		permits DBIn, DBOut {
 
 	// writing boolean, true when writing
-	@NotNull public static final Object DB_SYNC;
+	@NotNull protected static final Object DB_SYNC;
 
 	// database name
 	@NotNull public static final String DB_NAME;
@@ -44,13 +44,17 @@ public abstract sealed class DBConnector
 	static {
 		// setting database monitor object
 		DB_SYNC = new Object();
-		// setting final database Strings
+		// setting database name and URL
 		DB_NAME = "plane.db";
 		DB_URL = "jdbc:sqlite:" + DB_NAME;
 		// setting up database source
 		database = new SQLiteDataSource();
 		database.setUrl(DB_URL);
 		database.setDatabaseName(DB_NAME);
+		// allowing the database to accept several read-connections at once
+		database.setReadUncommited(true);
+		// enabling the shared cache for the database
+		database.setSharedCache(true);
 	}
 
 	/**

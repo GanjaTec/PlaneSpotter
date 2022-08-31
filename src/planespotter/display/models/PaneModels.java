@@ -12,7 +12,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.TimeUnit;
 
-import static planespotter.constants.GUIConstants.*;
 import static planespotter.constants.DefaultColor.*;
 import static planespotter.constants.Images.*;
 
@@ -28,9 +27,11 @@ public final class PaneModels {
     @NotNull
     public static JFrame windowFrame(@NotNull ActionHandler listener) {
         // getting main window object
-        var window = new JFrame(Configuration.TITLE);
-        // setting window start size
-        window.setSize(1280, 720);
+        JFrame window = new JFrame(Configuration.TITLE);
+        // setting window start size and preferred size
+        Dimension size = new Dimension(1280, 720);
+        window.setSize(size);
+        window.setPreferredSize(size);
         // setting default close operation, do nothing for external exit action
         window.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         // setting window location relative to null
@@ -91,7 +92,7 @@ public final class PaneModels {
         var stats = new JPanel();
         stats.setBounds(0, 24, parent.getWidth(), parent.getHeight()-24);
         stats.setLayout(null);
-        stats.setBorder(LINE_BORDER);
+        stats.setBorder(BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR.get()));
         //stats.setOpaque(false);
         if (data instanceof Image img) {
             var label = new JLabel(new ImageIcon(img));
@@ -114,7 +115,7 @@ public final class PaneModels {
         sp.setBackground(DEFAULT_BG_COLOR.get());
         sp.setForeground(DEFAULT_BORDER_COLOR.get());
         sp.setBounds(0, 0, parent.getWidth(), parent.getHeight());
-        sp.setBorder(LINE_BORDER);
+        sp.setBorder(BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR.get()));
         var verticalScrollBar = sp.getVerticalScrollBar();
         verticalScrollBar.setBackground(DEFAULT_BG_COLOR.get());
         verticalScrollBar.setForeground(DEFAULT_ACCENT_COLOR.get());

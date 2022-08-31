@@ -1,24 +1,17 @@
 package planespotter.display.models;
 
-import libs.UWPButton;
 import org.jetbrains.annotations.NotNull;
+
 import planespotter.constants.Images;
 import planespotter.controller.ActionHandler;
+import planespotter.display.UserInterface;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyListener;
 import java.io.File;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static planespotter.constants.GUIConstants.*;
-import static planespotter.constants.DefaultColor.*;
-
 /**
  * @name MenuModels
  * @author jml04
@@ -47,6 +40,7 @@ public final class MenuModels {
         JMenuItem[] fileItems = new JMenuItem[] {
                 new JMenuItem("Open", Images.OPEN_FILE_ICON_16x.get()),
                 new JMenuItem("Save As", Images.SAVE_FILE_ICON_16x.get()),
+                new JMenuItem("Fullscreen", Images.FULLSCREEN_ICON_16x.get()),
                 new JMenuItem("Exit", Images.EXIT_ICON_16x.get())
         };
         JMenu heatMapMenu = new JMenu("Heat-Map");
@@ -65,7 +59,7 @@ public final class MenuModels {
                 new JMenuItem("ADSB-Supplier", Images.PLANE_ICON_16x.get()),
                 new JMenuItem("Antenna", Images.ANTENNA_ICON_16x.get())
         };
-        Font font = FONT_MENU.deriveFont(13f);
+        Font font = UserInterface.DEFAULT_FONT.deriveFont(13f);
 
         Arrays.stream(fileItems).forEach(item -> {
             item.addMouseListener(actionHandler);
