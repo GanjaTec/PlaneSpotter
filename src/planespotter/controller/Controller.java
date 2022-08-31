@@ -1,5 +1,6 @@
 package planespotter.controller;
 
+import libs.ZoomPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +26,11 @@ import planespotter.util.Bitmap;
 import planespotter.util.math.MathUtils;
 import planespotter.util.Utilities;
 
+import javax.imageio.ImageIO;
 import javax.net.ssl.SSLHandshakeException;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
@@ -158,10 +161,10 @@ public abstract class Controller {
                 JFrame window = getUI().getWindow();
                 window.setVisible(!window.isVisible());
             });
-            liveLoader.setLive(true);
             boolean onlyMilitary = false;
             liveThread = scheduler.runThread(() -> liveLoader.runTask(this, onlyMilitary), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
             this.initialized = true;
+            show(MAP_LIVE);
         }
     }
 
@@ -553,30 +556,45 @@ public abstract class Controller {
 
     public void saveFile() {
 
-        JFileChooser fileChooser;
-        Rectangle rect;
-        MapData mapData;
-        File selected;
+        JFileChooser fileChooser; Rectangle rect; File selected;
 
         getUI().showLoadingScreen(true);
         setLoading(true);
 
-        //gui.setCurrentVisibleRect(getUI().getMap().getVisibleRect()); // TODO visible rect beim repainten speichern
+        // TODO visible rect beim repainten speichern
         // TODO 2.Möglichkeit: center und zoom speichern
 
         try {
-            fileChooser = MenuModels.fileSaver(getUI().getWindow());
+            ViewType currentViewType = getUI().getCurrentViewType();
+            String extensions = currentViewType == MAP_HEATMAP ? ".bmp" : ".pls";
+            fileChooser = MenuModels.fileSaver(getUI().getWindow(), extensions);
             rect = /*(gui.getCurrentVisibleRect() != null) ? gui.getCurrentVisibleRect() :*/ null;
             selected = fileChooser.getSelectedFile();
             if (selected == null) {
                 done(false);
                 return;
             }
-            // new MapData object with loadedData, view type and visible rectangle
-            ViewType currentViewType = getUI().getCurrentViewType();
-            mapData = new MapData(getDataList(), currentViewType, rect);
-            FileWizard.getFileWizard().savePlsFile(mapData, selected);
-        } catch (DataNotFoundException | FileAlreadyExistsException e) {
+            String warningMsg = "Couldn't write image file, please use \nthe correct file type ";
+            switch (currentViewType) {
+                case MAP_HEATMAP -> {
+                    Component bottom = getUI().getLayerPane().getBottom();
+                    if (selected.getName().endsWith(".bmp") && bottom instanceof ZoomPane zoomPane) {
+                        FileWizard.getFileWizard().writeBitmapImg(zoomPane.getContent(), BufferedImage.TYPE_BYTE_GRAY, selected);
+                    } else {
+                        getUI().showWarning(Warning.INVALID_DATA, warningMsg + "'.bmp'");
+                    }
+                }
+                default -> {
+                    if (selected.getName().endsWith(".pls")) {
+                        // new MapData object with loadedData, view type and visible rectangle
+                        MapData mapData = new MapData(getDataList(), currentViewType, rect);
+                        FileWizard.getFileWizard().savePlsFile(mapData, selected);
+                    } else {
+                        getUI().showWarning(Warning.INVALID_DATA, warningMsg + ".pls");
+                    }
+                }
+            }
+        } catch (DataNotFoundException | IOException e) {
             handleException(e);
         } finally {
             done(false);
@@ -720,6 +738,7 @@ public abstract class Controller {
             try {
                 setLoading(true);
                 getUI().showLoadingScreen(true);
+                getUI().setViewType(MAP_HEATMAP);
                 float gridSize = Float.parseFloat(input);
                 if (gridSize < 0.05) {
                     getUI().showWarning(Warning.OUT_OF_RANGE, "grid size must be 0.05 or higher!");
