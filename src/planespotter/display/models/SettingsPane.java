@@ -39,12 +39,17 @@ public class SettingsPane extends JDialog {
         livePeriod.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         livePeriod.setFont(UserInterface.DEFAULT_FONT);
         livePeriod.setOpaque(false);
-        JLabel liveMapFilters = new JLabel("Live Map Filters: ");
+        JLabel liveMapFilters = new JLabel("Live Map / Supplier Filters: ");
         liveMapFilters.setBounds(20, 130, 300, 25);
         liveMapFilters.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         liveMapFilters.setFont(UserInterface.DEFAULT_FONT);
         liveMapFilters.setOpaque(false);
-        
+        JLabel hotkeys = new JLabel("Hotkey Settings:");
+        hotkeys.setBounds(20, 170, 300, 25);
+        hotkeys.setForeground(DEFAULT_SEARCH_ACCENT_COLOR.get());
+        hotkeys.setFont(UserInterface.DEFAULT_FONT);
+        hotkeys.setOpaque(false);
+
         super.setBounds(parent.getWidth()/2-250, parent.getHeight()/2-200, 540, 400);
         super.setLayout(null);
         super.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
@@ -57,8 +62,9 @@ public class SettingsPane extends JDialog {
         this.maxLoadTxtField = maxLoadTxtField(actionHandler);
         this.mapTypeCmbBox = mapTypeCmbBox(actionHandler);
         JButton[] settingsButtons = mainButtons(this, actionHandler);
-        UWPButton filterButton = filterButton(actionHandler);
         this.livePeriodSlider = livePeriodSlider();
+        UWPButton filterButton = filterButton(actionHandler);
+        UWPButton hotkeyButton = hotkeyButton(actionHandler);
 
         Arrays.stream(separators).forEach(super::add);
         Arrays.stream(settingsButtons).forEach(super::add);
@@ -70,6 +76,8 @@ public class SettingsPane extends JDialog {
         super.add(mapType);
         super.add(livePeriod);
         super.add(liveMapFilters);
+        super.add(hotkeys);
+        super.add(hotkeyButton);
 
         this.maxLoadTxtField.setText(String.valueOf(UserSettings.getMaxLoadedData()));
 
