@@ -330,7 +330,7 @@ public abstract class ActionHandler
                     ctrl.handleException(e);
                 }
             }
-            case "Position-HeatMap" -> ctrl.showBitmap();
+            case "Position-HeatMap" -> ctrl.show(ViewType.MAP_HEATMAP);
 
             case "ADSB-Supplier", "Antenna" -> ui.showWarning(Warning.NOT_SUPPORTED_YET);
         }
