@@ -30,6 +30,8 @@ import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.*;
@@ -70,6 +72,8 @@ public class Test {
 
     private static void printTest(PrinterJob printer) throws PrinterException {
         printer.setPrintable((g, pageFormat, index) -> {
+            pageFormat.setOrientation(PageFormat.LANDSCAPE);
+            pageFormat.setPaper(new Paper());
             try {
                 g.drawImage(ImageIO.read(new File(Paths.RESOURCE_PATH + "bitmap.bmp")), 0, 0, null);
             } catch (IOException e) {

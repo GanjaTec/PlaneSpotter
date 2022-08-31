@@ -47,6 +47,11 @@ public class ZoomPane extends JPanel implements MouseWheelListener, MouseListene
         addMouseListener(this);
     }
 
+    @NotNull
+    public Image getContent() {
+        return image;
+    }
+
     @Override
     public void paint(Graphics g) {
         super.paint(g);
