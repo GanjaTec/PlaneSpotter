@@ -5,11 +5,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import planespotter.constants.SQLQueries;
 import planespotter.dataclasses.*;
-import planespotter.constants.UserSettings;
 import planespotter.dataclasses.DBResult;
 import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.NoAccessException;
 import planespotter.util.HighMemory;
+import planespotter.util.LRUCache;
 import planespotter.util.Utilities;
 import planespotter.throwables.DataNotFoundException;
 
@@ -43,6 +43,15 @@ public final class DBOut extends DBConnector {
 		INSTANCE = new DBOut();
 	}
 
+	private final LRUCache<String, PreparedStatement> outputCache;
+
+	/**
+	 * private constructor for main instance
+	 */
+	private DBOut() {
+		this.outputCache = new LRUCache<>(100, true);
+	}
+
 	/**
 	 * getter for main DBOut-instance
 	 *
@@ -51,13 +60,6 @@ public final class DBOut extends DBConnector {
 	@NotNull
 	public static DBOut getDBOut() {
 		return INSTANCE;
-	}
-
-	/**
-	 * private constructor for main instance
-	 */
-	private DBOut() {
-		// do nothing, no fields to initialize
 	}
 
 	/**
@@ -443,17 +445,16 @@ public final class DBOut extends DBConnector {
 	 * @return List<Flight> containing all Flight Objects
 	 */
 	@HighMemory(msg = "Uses too much memory!")
-	public List<Flight> getAllFlights() throws DataNotFoundException {
+	public List<Flight> getAllFlights(int dataLimit) throws DataNotFoundException {
 
-		HashMap<Integer, DataPoint> dps;
-		Airport[] aps; Flight flight; Plane plane;
+		HashMap<Integer, DataPoint> dps; Airport[] aps; Flight flight; Plane plane;
 		ArrayList<Flight> flights = new ArrayList<>();
 		synchronized (DB_SYNC) {
 			try (DBResult result = queryDB(SQLQueries.GET_FLIGHTS);
 				 ResultSet rs = result.resultSet()) {
 
 				int counter = 0;
-				while (rs.next() && counter++ <= UserSettings.getMaxLoadedData()) { // counter: max flights -> to limit the incoming data (prevents a crash)
+				while (rs.next() && counter++ <= dataLimit) { // counter: max flights -> to limit the incoming data (prevents a crash)
 					dps = getCompleteTrackingByFlight(rs.getInt("ID"));
 					aps = getAirports(rs.getString("src"), rs.getString("dest"));
 					plane = getPlaneByID(rs.getInt("plane"));
@@ -1230,7 +1231,7 @@ public final class DBOut extends DBConnector {
 		return map;
 	}
 
-	public final int getTableSize(final String table)
+	public int getTableSize(final String table)
 			throws DataNotFoundException {
 
 		int size = -1;
@@ -1254,7 +1255,7 @@ public final class DBOut extends DBConnector {
 		return size;
 	}
 
-	public final Deque<String> getICAOsByPlaneIDs(final Deque<Integer> planeIDs)
+	public Deque<String> getICAOsByPlaneIDs(final Deque<Integer> planeIDs)
 			throws DataNotFoundException {
 
 		final var icaos = new ArrayDeque<String>();
@@ -1276,7 +1277,7 @@ public final class DBOut extends DBConnector {
 		return icaos;
 	}
 
-	public final Deque<Integer> getAllPlaneIDs()
+	public Deque<Integer> getAllPlaneIDs()
 			throws DataNotFoundException {
 
 		var ids = new ArrayDeque<Integer>();
@@ -1461,7 +1462,7 @@ public final class DBOut extends DBConnector {
 		return dps;
 	}
 
-	public int[] getFlightIDsByAirlineTag(@NotNull String iataTag)
+	/*public int[] getFlightIDsByAirlineTag(@NotNull String iataTag)
 			throws DataNotFoundException {
 
 		final String query = "SELECT f.ID FROM flights f " +
@@ -1483,7 +1484,7 @@ public final class DBOut extends DBConnector {
 			e.printStackTrace();
 		}
 		throw new DataNotFoundException("No flight IDs found for airline " + iataTag);
-	}
+	}*/
 
 	@NotNull
 	public Vector<Position> getPositionsByFlightIDs(int[] fids)
@@ -1551,6 +1552,63 @@ public final class DBOut extends DBConnector {
 		}
 		return data;
 
+	}
+
+	/**
+	 * returns all {@link Flight} IDs by an {@link Airline} ID
+	 *
+	 * @param aID is the {@link Airline} ID to search for
+	 * @return int array of the {@link Flight} IDs with that {@link Airline} ID
+	 */
+	public int[] getFlightIDsByAirlineID(int aID) throws DataNotFoundException {
+		PreparedStatement stmt;
+		try {
+			stmt = outputCache.getOrDefaultSet("fIDsByAirlID",
+					createPreparedStatement("SELECT f.ID FROM flights f JOIN planes p ON p.ID = f.plane AND p.airline = (?)"));
+			stmt.setInt(1, aID);
+			try (ResultSet rs = stmt.executeQuery()) {
+				int[] fids = new int[0];
+				int last;
+				while (rs.next()) {
+					last = fids.length;
+					fids = Arrays.copyOf(fids, last + 1);
+					fids[last] = rs.getInt(1);
+				}
+				return fids;
+			}
+		} catch (SQLException e) {
+			throw new DataNotFoundException(e);
+		}
+	}
+
+	/**
+	 * returns all {@link Flight} IDs by an {@link Airline} ID
+	 *
+	 * @param aTag is the {@link Airline} tag to search for
+	 * @return int array of the {@link Flight} IDs with that {@link Airline} ID
+	 */
+	public int[] getFlightIDsByAirlineTag(@NotNull String aTag) throws DataNotFoundException {
+		PreparedStatement stmt;
+		try {
+			stmt = outputCache.getOrDefaultSet("fIDsByAirlTag",
+					createPreparedStatement("SELECT f.ID FROM flights f " +
+											"JOIN planes p ON p.ID = f.plane " +
+											"JOIN airlines a ON a.ID = p.airline " +
+											"AND a.icaotag IS (?)"));
+			stmt.setString(1, aTag);
+			try (ResultSet rs = stmt.executeQuery()) {
+				int[] fids = new int[0];
+				int last;
+				while (rs.next()) {
+					last = fids.length;
+					fids = Arrays.copyOf(fids, last + 1);
+					fids[last] = rs.getInt(1);
+				}
+				return fids;
+			}
+		} catch (SQLException e) {
+			throw new DataNotFoundException(e);
+		}
 	}
 
 }

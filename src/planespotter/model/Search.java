@@ -10,6 +10,7 @@ import planespotter.util.LRUCache;
 import planespotter.util.Utilities;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @name Search

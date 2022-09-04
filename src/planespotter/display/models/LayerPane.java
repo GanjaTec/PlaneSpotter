@@ -9,6 +9,8 @@ import planespotter.util.math.Vector2D;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static planespotter.util.math.MathUtils.divide;
 
@@ -186,24 +188,38 @@ public class LayerPane extends JLayeredPane {
      * @param sizeDirection
      * @param timeMillis
      */
-    private synchronized void move(@NotNull Component comp, int startX, int startY, int startWidth, int startHeight, @NotNull final Vector2D<Integer> direction, final Vector2D<Integer> sizeDirection, final int timeMillis) {
+    private synchronized void move(@NotNull Component comp, final int startX, final int startY, final int startWidth, final int startHeight, @NotNull final Vector2D<Integer> direction, final Vector2D<Integer> sizeDirection, final int timeMillis) {
 
         int xVel = divide(direction.x, timeMillis),
             yVel = divide(direction.y, timeMillis),
             wVel = divide(sizeDirection.x, timeMillis),
             hVel = divide(sizeDirection.y, timeMillis);
+        AtomicInteger x = new AtomicInteger(startX),
+                      y = new AtomicInteger(startY),
+                      w = new AtomicInteger(startWidth),
+                      h = new AtomicInteger(startHeight);
         int timeout = 50;
-        for (int t = 0; t < timeMillis; t += timeout) {
-            comp.setBounds(startX, startY, startWidth, startHeight);
-            //comp.repaint(); // needed?
-            comp.getParent().repaint();
+        // do not create a new scheduler every time
+        Scheduler animator = new Scheduler();
+        try {
+            animator.schedule(() -> {
+                        //for (int t = 0; t < timeMillis; t += timeout) {
+                        comp.setBounds(x.get(), y.get(), w.get(), h.get());
+                        //comp.repaint(); // needed?
+                        //comp.getParent().repaint();
+                        comp.repaint(x.get(), y.get(), w.get(), h.get());
 
-            startX += xVel;
-            startY += yVel;
-            startWidth += wVel;
-            startHeight += hVel;
 
-            Scheduler.sleep(50);
+                        x.addAndGet(xVel);
+                        y.addAndGet(yVel);
+                        w.addAndGet(wVel);
+                        h.addAndGet(hVel);
+
+                        //Scheduler.sleep(50);
+                    }, 0, timeout)
+                    .get(timeMillis, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException ignored) {
         }
+        //}
     }
 }

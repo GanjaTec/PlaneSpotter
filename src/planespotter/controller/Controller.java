@@ -1,6 +1,7 @@
 package planespotter.controller;
 
 import libs.ZoomPane;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,13 +9,18 @@ import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.TMSTileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 
 import planespotter.constants.*;
 import planespotter.display.models.PaneModels;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.FileWizard;
+import planespotter.model.nio.Filters;
 import planespotter.model.nio.Fr24Supplier;
-import planespotter.model.nio.LiveLoader;
+import planespotter.model.nio.DataLoader;
 import planespotter.throwables.*;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
@@ -33,7 +39,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ConnectException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
 import java.sql.SQLException;
@@ -45,6 +50,11 @@ import java.util.concurrent.TimeoutException;
 import static planespotter.constants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
 import static planespotter.constants.Sound.SOUND_DEFAULT;
 import static planespotter.constants.ViewType.*;
+
+/*
+ * TIP: use Thread.onSpinWait() while busy-waiting (each iteration in while loop),
+ *      improves the performance
+ */
 
 /**
  * @name Controller
@@ -105,8 +115,11 @@ public abstract class Controller {
     // live data thread
     @Nullable private Thread liveThread;
 
-    // live loader instance (for live data tasks)
-    @NotNull private final LiveLoader liveLoader;
+    // data loader instance (for live data tasks)
+    @NotNull private final DataLoader dataLoader;
+
+    // configuration instance
+    @NotNull private final Configuration config;
 
     /**
      * private constructor for Controller main instance,
@@ -114,9 +127,13 @@ public abstract class Controller {
      */
     private Controller() {
         this.hashCode = System.identityHashCode(INSTANCE);
+        this.config = new Configuration();
+        initConfig();
         this.scheduler = new Scheduler();
-        this.ui = new UserInterface(ActionHandler.getActionHandler());
-        this.liveLoader = new LiveLoader();
+        this.dataLoader = new DataLoader();
+        this.ui = new UserInterface(ActionHandler.getActionHandler(),
+                                    (TileSource) config.getProperty("currentMapSource"),
+                                    (String) config.getProperty("title"));
         this.clicking = false;
         this.terminated = false;
     }
@@ -130,16 +147,66 @@ public abstract class Controller {
     public static Controller getInstance() {
         return INSTANCE;
     }
-
     /**
      * starts the program by initializing the controller
      * and opening a UI-window
      */
     public synchronized void start() {
-        PaneModels.startScreenAnimation(2);
+        Thread animation = scheduler.shortTask(() -> PaneModels.startScreenAnimation(2));
         initialize();
+        try {
+            scheduler.await(animation);
+        } catch (InterruptedException ignored) {
+        } finally {
+            done(true);
+        }
         getUI().getWindow().setVisible(true);
-        done(true);
+    }
+
+    /**
+     * initializes the {@link Configuration} class and
+     * its constant which are saved in a {@link HashMap},
+     * you can add your own properties here or with
+     * {@link Configuration}.setProperty(key, value) if needed
+     */
+    private void initConfig() {
+        // initializing static properties
+        config.setProperty("title", "PlaneSpotter v0.3");
+        config.setProperty("threadKeepAliveTime", 4L);
+        config.setProperty("maxThreads", 80);
+        config.setProperty("saveLogs", false);
+        config.setProperty("mapBaseUrl", "https://a.tile.openstreetmap.de");
+        config.setProperty("fr24RequestUri", "https://data-live.flightradar24.com/");
+        config.setProperty("adsbRequestUri", "http://192.168.178.47:8080/data/aircraft.json");
+        config.setProperty("bingMap", new BingAerialTileSource());
+        config.setProperty("transportMap", new OsmTileSource.TransportMap());
+        config.setProperty("openStreetMap", new TMSTileSource(new TileSourceInfo("OSM", (String) config.getProperty("mapBaseUrl"), "0")));
+
+        // initializing user properties
+        FileWizard fileWizard = FileWizard.getFileWizard();
+        Object[] values = null;
+        try {
+            values = fileWizard.readConfig(Configuration.CONFIG_FILENAME);
+
+        } catch (Exception e) {
+            // catching all exceptions here to prevent ExceptionInInitializerError
+            // printing stack trace for full exception information
+            e.printStackTrace();
+        } finally {
+            if (values == null || values.length != 4) {
+                values = new Object[] {50000, TreasureMap.OPEN_STREET_MAP, 6, 12};
+            }
+            config.setProperty("dataLimit", values[0]);
+            config.setProperty("currentMapSource", values[1]);
+            config.setProperty("gridSizeLat", values[2]);
+            config.setProperty("gridSizeLon", values[3]);
+        }
+
+        // should also be saved in 'filters.psc', not static
+        Filters collectorFilters = new Filters().add("RCH").add("DUKE").add("FORTE").add("CASA").add("VIVI")
+                                                .add("EYE").add("NCR").add("LAGR").add("SNIPER").add("VALOR")
+                                                .add("MMF").add("HOIS").add("K35R").add("SONIC").add("Q4");
+        config.setProperty("collectorFilters", collectorFilters);
     }
 
     /**
@@ -148,21 +215,25 @@ public abstract class Controller {
      */
     private void initialize() {
         if (!this.initialized) {
-            try {
-                URL[] urls = new URL[] {
-                        new URL("https://data-live.flightradar24.com/"),
-                        new URL(UserSettings.MAP_BASE_URL)
-                };
-                Utilities.connectionPreCheck(urls);
-            } catch (MalformedURLException | Fr24Exception e) {
-                handleException(e);
-            }
+            // trying to add tray icon to system tray
             Utilities.addTrayIcon(Images.PLANE_ICON_16x.get().getImage(), e -> {
                 JFrame window = getUI().getWindow();
                 window.setVisible(!window.isVisible());
             });
+            // testing connections
+            try {
+                URL[] urls = new URL[] {
+                        new URL((String) config.getProperty("fr24RequestUri")),
+                        new URL((String) config.getProperty("mapBaseUrl")),
+                        new URL((String) config.getProperty("adsbRequestUri"))
+                };
+                Utilities.connectionPreCheck(2000, urls);
+            } catch (IOException | Fr24Exception e) {
+                handleException(e);
+            }
+            // starting tasks and finishing
             boolean onlyMilitary = false;
-            liveThread = scheduler.runThread(() -> liveLoader.runTask(this, onlyMilitary), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
+            liveThread = scheduler.runThread(() -> dataLoader.runTask(this, onlyMilitary), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
             this.initialized = true;
             show(MAP_LIVE);
         }
@@ -186,35 +257,36 @@ public abstract class Controller {
         }
         getUI().showLoadingScreen(true);
         // disabling tasks
-        liveLoader.setLive(false);
+        dataLoader.setLive(false);
         if (liveThread != null && liveThread.isAlive()) {
             liveThread.interrupt();
         }
         setLoading(true);
         // saving the configuration in 'config.psc'
         FileWizard fileWizard = FileWizard.getFileWizard();
-        fileWizard.saveConfig();
-        if (Configuration.SAVE_LOGS) {
+        try {
+            fileWizard.writeConfig(config, Configuration.CONFIG_FILENAME);
+        } catch (IOException ioe) {
+            handleException(ioe);
+        }
+        // saving log, if option is enabled
+        if (!((boolean) getConfig().getProperty("saveLogs"))) {
             fileWizard.saveLogFile("a_log", "[DEBUG] No output text yet...");
         }
         // inserting remaining frames, if option is enabled
-        if (insertRemainingFrames && DBIn.isEnabled()) {
+        DBIn dbIn = DBIn.getDBIn();
+        if (insertRemainingFrames && dbIn.isEnabled()) {
             try {
-                DBIn.insertRemaining(scheduler, liveLoader);
+                dbIn.insertRemaining(scheduler, dataLoader);
             } catch (NoAccessException ignored) {
             }
         }
-        // waiting for remaining tasks
+        // busy-waiting for remaining tasks
         while (scheduler.active() > 0) {
-            try {
-                this.wait(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            Thread.onSpinWait();
         }
-        this.notifyAll();
         // disabling last tasks
-        DBIn.setEnabled(false);
+        dbIn.setEnabled(false);
         done(true);
         this.terminated = true;
         // shutting down scheduler
@@ -279,14 +351,14 @@ public abstract class Controller {
             getUI().showLoadingScreen(true);
 
             if (type != MAP_LIVE) {
-                liveLoader.setLive(false);
+                dataLoader.setLive(false);
             }
             getUI().setViewType(type);
             getUI().getMapManager().clearMap();
 
             switch (type) {
                 case LIST_FLIGHT -> { /*removed Flight-List implementation*/ }
-                case MAP_LIVE -> liveLoader.setLive(true);
+                case MAP_LIVE -> dataLoader.setLive(true);
                 case MAP_FROMSEARCH,
                         MAP_TRACKING -> showTrackingMap(mapManager, true);
                 case MAP_TRACKING_NP -> showTrackingMap(mapManager, false);
@@ -362,29 +434,31 @@ public abstract class Controller {
      */
     public void confirmSettings(@NotNull String... data) {
 
-        TileSource currentMapSource;
-        int maxLoadedData, livePeriodSec;
+        int dataLimit, livePeriodSec; TileSource currentMapSource;
 
         getUI().showLoadingScreen(true);
         try {
             // data[0]
-            maxLoadedData = Integer.parseInt(data[0]);
-            UserSettings.setMaxLoadedData(maxLoadedData);
-            currentMapSource = UserSettings.getCurrentMapSource();
+            dataLimit = Integer.parseInt(data[0]);
+            getConfig().setProperty("dataLimit", dataLimit);
             // data[1]
-            switch (data[1]) {
-                case "Bing Map" -> currentMapSource = UserSettings.BING_MAP;
-                case "Default Map" -> currentMapSource = UserSettings.DEFAULT_MAP;
-                case "Transport Map" -> currentMapSource = UserSettings.TRANSPORT_MAP;
-            }
-            UserSettings.setCurrentMapSource(currentMapSource);
+            currentMapSource = switch (data[1]) {
+                case "Bing Map" -> TreasureMap.BING_MAP;
+                case "Transport Map" -> TreasureMap.TRANSPORT_MAP;
+                default /*"Open Street Map"*/ -> TreasureMap.OPEN_STREET_MAP;
+            };
+            getConfig().setProperty("currentMapSource", currentMapSource);
             getUI().getMap().setTileSource(currentMapSource);
             // data[2]
             livePeriodSec = Integer.parseInt(data[2]);
-            liveLoader.setLiveDataPeriod(livePeriodSec);
+            dataLoader.setLiveDataPeriod(livePeriodSec);
         } finally {
             // saving config after reset
-            FileWizard.getFileWizard().saveConfig();
+            try {
+                FileWizard.getFileWizard().writeConfig(config, Configuration.CONFIG_FILENAME);
+            } catch (IOException ioe) {
+                handleException(ioe);
+            }
             done(false);
         }
     }
@@ -399,7 +473,7 @@ public abstract class Controller {
         boolean markerHit = false;
         int counter;
 
-        if (!this.clicking && liveLoader.isLive()) {
+        if (!this.clicking && dataLoader.isLive()) {
             try {
                 this.clicking = true;
                 map = getUI().getMap();
@@ -636,7 +710,7 @@ public abstract class Controller {
      * @param thr is the throwable (usually an exception)
      *            which is thrown and going to be handled
      */
-    public void handleException(@NotNull final Throwable thr) {
+    public void handleException(final Throwable thr) {
 
         if (thr instanceof OutOfMemoryError oom) {
             getUI().showWarning(Warning.OUT_OF_MEMORY);
@@ -658,11 +732,12 @@ public abstract class Controller {
             // handling for all I/O-exceptions
             if (ioe instanceof SSLHandshakeException ssl) {
                 getUI().showWarning(Warning.HANDSHAKE, ssl.getMessage());
-                liveLoader.setLive(false);
-                DBIn.setEnabled(false);
+                dataLoader.setLive(false);
+                DBIn dbIn = DBIn.getDBIn();
+                dbIn.setEnabled(false);
                 Scheduler.sleepSec(60);
-                DBIn.setEnabled(true);
-                liveLoader.setLive(true);
+                dbIn.setEnabled(true);
+                dataLoader.setLive(true);
 
             } else if (ioe instanceof ConnectException cex) {
                 getUI().showWarning(Warning.NO_CONNECTION, cex.getMessage());
@@ -698,10 +773,10 @@ public abstract class Controller {
 
         } else if (thr instanceof Fr24Exception frex) {
             if (frex.getMessage().endsWith("not reachable!")) {
-                getUI().showWarning(Warning.DATA_CLOUD_NOT_REACHABLE);
+                getUI().showWarning(Warning.URL_NOT_REACHABLE);
             }
 
-        } else {
+        } else if (thr != null) {
             getUI().showWarning(Warning.UNKNOWN_ERROR, thr.getMessage());
             thr.printStackTrace();
         }
@@ -831,13 +906,24 @@ public abstract class Controller {
     }
 
     /**
-     * getter for {@link LiveLoader} instance
+     * getter for {@link DataLoader} instance
      *
-     * @return the {@link LiveLoader} instance
+     * @return the {@link DataLoader} instance
      */
     @NotNull
-    public LiveLoader getLiveLoader() {
-        return this.liveLoader;
+    public DataLoader getLiveLoader() {
+        return this.dataLoader;
+    }
+
+    /**
+     * getter for the {@link Configuration} instance,
+     * which contains all property constants
+     *
+     * @return the {@link Configuration} instance
+     */
+    @NotNull
+    public Configuration getConfig() {
+        return config;
     }
 
     /**

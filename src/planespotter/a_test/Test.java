@@ -64,7 +64,10 @@ public class Test {
         System.out.println(result);
 */
 
-        new ADSBSupplier().supply();
+
+        System.out.println(null instanceof Object);
+
+        //new ADSBSupplier().supply();
 
     }
 

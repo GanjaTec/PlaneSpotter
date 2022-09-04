@@ -1,7 +1,14 @@
 package planespotter.display;
 
+import org.jetbrains.annotations.NotNull;
 import org.openstreetmap.gui.jmapviewer.JMapViewer;
 import org.openstreetmap.gui.jmapviewer.MemoryTileCache;
+import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.TMSTileSource;
+import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
+import planespotter.constants.Configuration;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -15,15 +22,27 @@ import java.awt.image.BufferedImage;
  */
 public class TreasureMap extends JMapViewer {
 
-    public static final Object PAINT_LOCK = new Object();
+    @NotNull public static final Object PAINT_LOCK = new Object();
+
+    @NotNull public static final TileSource OPEN_STREET_MAP, BING_MAP, TRANSPORT_MAP;
+
+    static {
+        // setting tile sources
+        OPEN_STREET_MAP = new TMSTileSource(new TileSourceInfo("OSM", "https://a.tile.openstreetmap.de", "0"));
+        BING_MAP = new BingAerialTileSource();
+        TRANSPORT_MAP = new OsmTileSource.TransportMap();
+    }
+
     // heat map image
-    private BufferedImage heatMap = null;
+    private BufferedImage heatMap;
 
     /**
      * treasure map constructor
      */
     public TreasureMap() {
         super(new MemoryTileCache());
+
+        heatMap = null;
     }
 
     /**

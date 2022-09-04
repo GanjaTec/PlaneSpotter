@@ -9,6 +9,7 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Deprecated(since = "new Deserializer with correct data")
 /* @unused */												// could be turned into ADSBDeserializer
@@ -72,7 +73,7 @@ public class Deserializer implements AbstractDeserializer<HttpResponse<String>> 
 	
 	//Convert String to Frame-Objects
 	@Override
-	public @NotNull List<Fr24Frame> deserialize(@NotNull HttpResponse<String> resp) {
+	public @NotNull Stream<Fr24Frame> deserialize(@NotNull HttpResponse<String> resp) {
 		List<Fr24Frame> fr24Frames = new ArrayList<>();
 		for(String row : stringMagic(resp)) {
 			String[] r = row.split(",");
@@ -86,6 +87,6 @@ public class Deserializer implements AbstractDeserializer<HttpResponse<String>> 
 					r[7], r[8], r[9], Integer.parseInt(r[10]), r[11], r[12], r[13], r[14], r[15], r[16], r[17], r[18]);
 			fr24Frames.add(fr24Frame);
 		}
-		return fr24Frames;
+		return fr24Frames.stream();
 	}
 }

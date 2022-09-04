@@ -7,16 +7,19 @@ import java.sql.*;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import planespotter.dataclasses.ADSBFrame;
+import planespotter.dataclasses.Frame;
 import planespotter.model.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
-import planespotter.model.nio.LiveLoader;
+import planespotter.model.nio.DataLoader;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.NoAccessException;
-import planespotter.util.Time;
+import planespotter.util.LRUCache;
 
 import static planespotter.util.Time.elapsedSeconds;
 import static planespotter.util.Time.nowMillis;
@@ -31,27 +34,49 @@ public final class DBIn extends DBConnector {
 	private static final DBIn INSTANCE;
 
 	// 'data loader enabled' flag
-	private static boolean enabled;
+	private boolean enabled;
 
 	// last inserted frame
-	private static Fr24Frame lastFrame;
+	private Fr24Frame lastFrame;
 
 	// inserted frames counter for all writeToDB inserts
-	private static int frameCount, planeCount, flightCount;
+	private int frameCount, planeCount, flightCount;
 
-	// initializing instance, counters and flags
+	// initializing instance
 	static {
 		INSTANCE = new DBIn();
-
-		lastFrame = null;
-		frameCount = 0;
-		planeCount = 0;
-		flightCount = 0;
-		enabled = true;
 	}
 
-	public static void write(@NotNull final Stream<Fr24Frame> fr24frames) {
-		write((Deque<Fr24Frame>) fr24frames.collect(Collectors.toCollection(ArrayDeque::new)));
+	@NotNull private final LRUCache<String, PreparedStatement> insertCache;
+
+	/**
+	 * private constructor, for main instance
+	 */
+	private DBIn() {
+		this.insertCache = new LRUCache<>(50, true);
+		this.lastFrame = null;
+		this.frameCount = 0;
+		this.planeCount = 0;
+		this.flightCount = 0;
+		this.enabled = true;
+	}
+
+	/**
+	 * getter for DBIn main instance
+	 *
+	 * @return main instance of DBIn class
+	 */
+	public static DBIn getDBIn() {
+		return INSTANCE;
+	}
+
+
+	public void writeADSB(@NotNull final Stream<ADSBFrame> adsbFrames) {
+
+	}
+
+	public void writeFr24(@NotNull final Stream<Fr24Frame> fr24frames) {
+		write(fr24frames.collect(Collectors.toCollection(ArrayDeque::new)));
 	}
 
 	/**
@@ -61,13 +86,13 @@ public final class DBIn extends DBConnector {
 	 *
 	 * @param fr24Frames are the Fr24Frames to write, could be extended to '<? extends Frame>'
 	 */
-	public static synchronized void write(@NotNull final Deque<Fr24Frame> fr24Frames) {
-		if (!enabled) {
+	// TODO: 31.08.2022 use stream instead of deque
+	public synchronized void write(@NotNull final Deque<Fr24Frame> fr24Frames) {
+		if (!enabled || fr24Frames.isEmpty()) {
 			return;
 		}
 		long startTime = nowMillis();
 		DBOut dbo = DBOut.getDBOut();
-		DBIn dbi = DBIn.getDBIn();
 		HashMap<String, Integer> airlineTagsIDs = new HashMap<>(),
 								 planeIcaoIDs = new HashMap<>(),
 								 flightNRsIDs = new HashMap<>();
@@ -81,29 +106,28 @@ public final class DBIn extends DBConnector {
 			// ( For example when the DB gets cleared )
 		}
 		Fr24Frame frame;
-		int airlineID, planeID, flightID;
-		boolean checkPlane, checkFlight;
+		 int airlineID, planeID, flightID;
 		while (!fr24Frames.isEmpty() && enabled) {
 			frame = fr24Frames.poll();
 			// insert into planes
 			airlineID = airlineTagsIDs.getOrDefault(frame.getAirline(), 1);
 			planeID = planeIcaoIDs.getOrDefault(frame.getIcaoAdr(), -1);
-			checkPlane = planeID > -1;
-			if (!checkPlane) {
-				planeID = dbi.insertPlane(frame, airlineID);
+
+			if (planeID <= -1) {
+				planeID = insertPlane(frame, airlineID);
 				// increasing inserted planes value
 				increasePlaneCount();
 			}
 			// insert into flights
 			flightID = flightNRsIDs.getOrDefault(frame.getFlightnumber(), -1);
-			checkFlight = flightID > -1;
-			if (!checkFlight) {
-				flightID = dbi.insertFlight(frame, planeID);
+
+			if (flightID <= -1) {
+				flightID = insertFlight(frame, planeID);
 				// increasing inserted flights value
 				increaseFlightCount();
 			}
 			// insert into tracking
-			dbi.insertTracking(frame, flightID);
+			insertTracking(frame, flightID);
 			// increasing the inserted frames value
 			increaseFrameCount();
 			// setting current frame as last frame
@@ -119,14 +143,22 @@ public final class DBIn extends DBConnector {
 	 * @return inserted frames count as an int
 	 */
 	@NotNull
-	public static synchronized CompletableFuture<Void> insertRemaining(@NotNull final Scheduler scheduler, @NotNull LiveLoader liveLoader)
+	public synchronized CompletableFuture<Void> insertRemaining(@NotNull final Scheduler scheduler, @NotNull DataLoader dataLoader)
 			throws NoAccessException {
 		if (!enabled) {
 			throw new NoAccessException("DB-Writer is disabled!");
 		}
-		Stream<Fr24Frame> frames = liveLoader.pollFrames(Integer.MAX_VALUE);
+		Stream<? extends Frame> frames = dataLoader.pollFrames(Integer.MAX_VALUE);
 
-		return scheduler.exec(() -> write(frames), "Inserter", false, Scheduler.HIGH_PRIO, false);
+		return scheduler.exec(() -> {
+			writeFr24(frames.map(frame -> {
+						if (frame instanceof Fr24Frame fr24) {
+							return fr24;
+						}
+						return null;
+					})
+					.filter(Objects::nonNull));
+		}, "Inserter", false, Scheduler.HIGH_PRIO, false);
 
 	}
 
@@ -135,14 +167,14 @@ public final class DBIn extends DBConnector {
 	 *
 	 * @return last inserted frame, or null if there is no last frame
 	 */
-	public static Fr24Frame getLastFrame() {
+	public Fr24Frame getLastFrame() {
 		return lastFrame;
 	}
 
 	/**
 	 * @return true if the DBWriter is enabled, else false
 	 */
-	public static boolean isEnabled() {
+	public boolean isEnabled() {
 		return enabled;
 	}
 
@@ -151,69 +183,50 @@ public final class DBIn extends DBConnector {
 	 *
 	 * @param b is the enabled flag, [true -> enabled, false -> disabled]
 	 */
-	public static void setEnabled(boolean b) {
+	public void setEnabled(boolean b) {
 		enabled = b;
 	}
 
 	/**
 	 * @return all inserted frames count
 	 */
-	public static int getFrameCount() {
+	public int getFrameCount() {
 		return frameCount;
 	}
 
 	/**
 	 * @return all inserted planes count
 	 */
-	public static int getPlaneCount() {
+	public int getPlaneCount() {
 		return planeCount;
 	}
 
 	/**
 	 * @return all inserted flights count
 	 */
-	public static int getFlightCount() {
+	public int getFlightCount() {
 		return flightCount;
 	}
 
 	/**
 	 * increases the 'all frame count' by 1
 	 */
-	private static synchronized void increaseFrameCount() {
+	private synchronized void increaseFrameCount() {
 		frameCount++;
 	}
 
 	/**
 	 * increases the 'all planes count' by 1
 	 */
-	private static synchronized void increasePlaneCount() {
+	private synchronized void increasePlaneCount() {
 		planeCount++;
 	}
 
 	/**
 	 * increases the 'all flights count' by 1
 	 */
-	private static synchronized void increaseFlightCount() {
+	private synchronized void increaseFlightCount() {
 		flightCount++;
-	}
-
-	/**
-	 * getter for DBIn main instance
-	 *
-	 * @return main instance of DBIn class
-	 */
-	public static DBIn getDBIn() {
-		return INSTANCE;
-	}
-
-
-	// vvv instance vvv
-
-	/**
-	 * private constructor, for main instance
-	 */
-	private DBIn() {
-		// do nothing, no fields to initialize
 	}
 
 	/**
@@ -229,7 +242,7 @@ public final class DBIn extends DBConnector {
 				Connection conn = DBConnector.getConnection();
 				// TODO Airline ID anfrage
 				// insert into planes
-				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.PLANEQUERRY, Statement.RETURN_GENERATED_KEYS);
+				PreparedStatement pstmt = insertCache.getOrDefaultSet("insertPlane", conn.prepareStatement(SQLQueries.PLANEQUERRY, Statement.RETURN_GENERATED_KEYS));
 				pstmt.setString(1, f.getIcaoAdr());
 				pstmt.setString(2, f.getTailnr());
 				pstmt.setString(3, f.getRegistration());
@@ -237,13 +250,13 @@ public final class DBIn extends DBConnector {
 				pstmt.setInt(5, airlineID);
 				pstmt.executeUpdate();
 
-				ResultSet rs = pstmt.getGeneratedKeys();
-				int id = -1;
-				if (rs.next()) {
-					id = rs.getInt(1);
+				try (ResultSet rs = pstmt.getGeneratedKeys()) {
+					int id = -1;
+					if (rs.next()) {
+						id = rs.getInt(1);
+					}
+					return id;
 				}
-				conn.close();
-				return id;
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -262,7 +275,7 @@ public final class DBIn extends DBConnector {
 		try {
 			synchronized (DB_SYNC) {
 				Connection conn = getConnection();
-				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.FLIGHTQUERRY, Statement.RETURN_GENERATED_KEYS);
+				PreparedStatement pstmt = insertCache.getOrDefaultSet("insertFlight", conn.prepareStatement(SQLQueries.FLIGHTQUERRY, Statement.RETURN_GENERATED_KEYS));
 
 				pstmt.setInt(1, planeID);
 				pstmt.setString(2, f.getSrcAirport());
@@ -272,13 +285,13 @@ public final class DBIn extends DBConnector {
 				pstmt.setLong(6, f.getTimestamp());
 				pstmt.executeUpdate();
 
-				ResultSet rs = pstmt.getGeneratedKeys();
-				int id = -1;
-				if (rs.next()) {
-					id = rs.getInt(1);
+				try (ResultSet rs = pstmt.getGeneratedKeys()) {
+					int id = -1;
+					if (rs.next()) {
+						id = rs.getInt(1);
+					}
+					return id;
 				}
-				conn.close();
-				return id;
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -297,7 +310,7 @@ public final class DBIn extends DBConnector {
 			synchronized (DB_SYNC) {
 				Connection conn = DBConnector.getConnection();
 				// insert into tracking
-				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.TRACKINGQUERRY);
+				PreparedStatement pstmt = insertCache.getOrDefaultSet("insertTracking", conn.prepareStatement(SQLQueries.TRACKINGQUERRY));
 				pstmt.setInt(1, id);
 				pstmt.setDouble(2, f.getLat());
 				pstmt.setDouble(3, f.getLon());
@@ -307,7 +320,6 @@ public final class DBIn extends DBConnector {
 				pstmt.setInt(7, f.getSquawk());
 				pstmt.setLong(8, f.getTimestamp());
 				pstmt.executeUpdate();
-				conn.close();
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -325,11 +337,10 @@ public final class DBIn extends DBConnector {
 			synchronized (DB_SYNC) {
 				Connection conn = DBConnector.getConnection();
 
-				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.UPDATE_FLIGHT_END);
+				PreparedStatement pstmt = insertCache.getOrDefaultSet("updateFlight", conn.prepareStatement(SQLQueries.UPDATE_FLIGHT_END));
 				pstmt.setInt(2, id);
 				pstmt.setLong(1, timestamp);
 				pstmt.executeUpdate();
-				conn.close();
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import planespotter.constants.Configuration;
 import planespotter.controller.Controller;
+import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.OutOfRangeException;
 
 import java.util.concurrent.*;
@@ -41,7 +42,7 @@ public class Scheduler {
 
     // initializing static fields
     static {
-        LOW_PRIO = 2;
+        LOW_PRIO = 1;
         MID_PRIO = 5;
         HIGH_PRIO = 9;
         threadMaker = new ThreadMaker();
@@ -58,20 +59,22 @@ public class Scheduler {
     private final int hashCode = System.identityHashCode(this);
 
     /**
-     * constructor, creates a new Scheduler with MAX_THREADPOOL_SIZE
-     * constant as max. ThreadPool-size
+     * constructor, creates a new Scheduler with a max size
+     * of 20 and a thread-keep-alive-time of 4 seconds
      */
     public Scheduler() {
-        this(Configuration.MAX_THREADPOOL_SIZE);
+        this(20, 4L);
     }
 
     /**
-     * second Scheduler constructor with specific pool size
+     * second Scheduler constructor with specific
+     * pool size and thread-keep-alive-time
      *
-     * @param maxPoolsize is the max. ThreadPool-size
+     * @param maxPoolSize is the max. ThreadPool-size
+     * @param keepAliveSeconds is the keep-alive-time in seconds
      */
-    public Scheduler(int maxPoolsize) {
-        this.exe = new ThreadPoolExecutor(Configuration.CORE_POOLSIZE, maxPoolsize, Configuration.KEEP_ALIVE_TIME,
+    public Scheduler(int maxPoolSize, long keepAliveSeconds) {
+        this.exe = new ThreadPoolExecutor(0, maxPoolSize, keepAliveSeconds,
                                           TimeUnit.SECONDS, new SynchronousQueue<>(), threadMaker, rejectedExecutionHandler);
         this.scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker, rejectedExecutionHandler);
     }
@@ -168,7 +171,8 @@ public class Scheduler {
                     .orTimeout(15, TimeUnit.SECONDS)
                     .exceptionally(e -> {
                         Controller.getInstance().handleException(e);
-                        this.interruptThread(currentThread.get());
+                        currentThread.set(Thread.currentThread());
+                        interruptThread(currentThread.get());
                         // FIXME: 22.05.2022 interrupt läuft noch nicht
                         return null;
                     });
@@ -195,10 +199,34 @@ public class Scheduler {
         return thread;
     }
 
-    public void await(@NotNull Thread t)
+    /**
+     * runs a short task ({@link Runnable}) as non-daemon thread with
+     * the name 'Short-Task' and a priority of 5 (MID_PRIO)
+     *
+     * @param task is the {@link Runnable} that is executed as the task
+     */
+    @NotNull
+    public Thread shortTask(@NotNull Runnable task) {
+        return runThread(task, "Short-Task", false, MID_PRIO);
+    }
+
+    /**
+     * awaits a single task of different types
+     *
+     * @param task is the task that should be awaited, must be an
+     *             instance of {@link Thread} or {@link CompletableFuture}
+     * @throws InterruptedException if the waiting is interrupted
+     */
+    public <T> void await(@NotNull T task)
             throws InterruptedException {
 
-        t.join();
+        if (task instanceof Thread thread) {
+            thread.join();
+        } else if (task instanceof CompletableFuture<?> future) {
+            future.join();
+        } else {
+            throw new InvalidDataException("Task must be instance of Thread or CompletableFuture!");
+        }
     }
 
     /**

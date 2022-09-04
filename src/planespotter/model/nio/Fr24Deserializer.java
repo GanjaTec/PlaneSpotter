@@ -1,19 +1,20 @@
 package planespotter.model.nio;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 
+import com.google.gson.stream.MalformedJsonException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.throwables.Fr24Exception;
 import planespotter.throwables.InvalidDataException;
+import planespotter.util.Utilities;
 
 import java.net.http.HttpResponse;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @name Fr24Deserializer
@@ -25,7 +26,10 @@ import java.util.*;
  * It converts a HttpResponse to a Collection of Frames,
  * which can be used to create further dataclasses like flights, planes, etc...
  */
+// TODO: 31.08.2022 always reuse the same deserializer
 public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<String>> {
+
+    @NotNull private static final Gson gson = new Gson();
 
     // filter expressions, may be null or empty
     @NotNull private Filters filters;
@@ -58,46 +62,39 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
 
     /**
      * deserializes incoming {@link HttpResponse} that contains Fr24-Data
-     * from json to {@link Fr24Frame}-{@link ArrayDeque}
+     * from json to {@link Fr24Frame}-{@link ArrayDeque},
+     * now improved with a {@link JsonParser} and a faster stream
+     * that filters the {@link JsonObject}-entries for valid frames
+     * and maps them into frames
      *
      * @param response is the HttpResponse to deserialize
      * @return ArrayDeque of deserialized Frames
      */
     @Override
     @NotNull
-    public Deque<Fr24Frame> deserialize(@NotNull HttpResponse<String> response) {
-        JsonArray jsa = this.parseJsonArray(response, this.filters.getFilters());
-        ArrayDeque<Fr24Frame> frames = new ArrayDeque<>();
-        Iterator<JsonElement> it = jsa.iterator();
-        Gson gson = new Gson();
-        Fr24Frame fr24Frame;
-        for (JsonElement j; it.hasNext(); /**/) {
-            j = it.next();
-            fr24Frame = gson.fromJson(j, Fr24Frame.class);
-            frames.add(fr24Frame);
+    public Stream<Fr24Frame> deserialize(@NotNull HttpResponse<String> response) {
+        JsonElement element = JsonParser.parseString(response.body());
+        if (element instanceof JsonObject obj) {
+            return obj.entrySet()
+                    .stream()
+                    .filter(e -> {
+                        String key = e.getKey();
+                        JsonElement value = e.getValue();
+                        boolean unnecessary = key.equals("full_count") || key.equals("version");
+                        return !unnecessary && filterBy(value.toString(), filters.getFilters());
+                    })
+                    // Fr24 is using a JsonArray of values here instead of a JsonObject so we have to
+                    // parse the weird JsonArray to JsonObject here to make it readable for Gson.fromJsonm,
+                    .map(e -> {
+                        try {
+                            return gson.fromJson(e.getValue(), Fr24Frame.class);
+                        } catch (JsonSyntaxException syntax) {
+                            JsonObject jo = parseJsonObject(e.getValue().toString());
+                            return gson.fromJson(jo, Fr24Frame.class);
+                        }
+                    });
         }
-        return frames;
-    }
-
-    /**
-     * parses a HttpResponse to a JsonArray by taking the lines
-     * of the response body as a stream, filtering out 1-element-lines,
-     * mapping to a stream of unwrapped Strings (without [, ] or "),
-     * mapping again to a stream of JsonObjects and
-     * adding every element to the JsonArray.
-     *
-     * @param resp is the HttpResponse with String body to parse
-     * @return JsonArray by HttpResponse
-     */
-    @NotNull
-    private JsonArray parseJsonArray(@NotNull HttpResponse<String> resp, @Nullable List<String> filter) {
-        JsonArray jsa = new JsonArray(); // creating new JsonArray
-        resp.body().lines() // getting stream of body-lines
-                .filter(s -> s.length() > 1 && filterBy(s, filter)) // filtering out valid and filter-allowed lines
-                .map(this::unwrap) // unwrapping line strings from certain expressions
-                .map(this::parseJsonObject) // parsing lines to JsonObjects
-                .forEach(jsa::add); // adding JsonObject to JsonArray
-        return jsa;
+        throw new Fr24Exception("Input Json is invalid, check request and response!");
     }
 
     /**
@@ -125,8 +122,6 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
         return false;
     }
 
-    //TODO check o.getAsJsonArray für ganzes objekt -> könnte viel arbeit ersparen
-
     /**
      * parses a single line to a JsonObject by splitting the line by regex ","
      * and adding the split properties to the JsonObject.
@@ -139,6 +134,9 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
         if (line.isBlank()) {
             throw new InvalidDataException("line may not be blank!");
         }
+        line = line.replaceAll("\"", "")
+                   .replaceAll("\\[", "")
+                   .replaceAll("]", "");
         String[] cols = line.split(",");
         JsonObject o = new JsonObject();
         try {
@@ -189,29 +187,6 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
         } catch (NumberFormatException ignored) {
         }
         return orElse;
-    }
-
-    /**
-     * unwraps a String from expressions like '{' and the beginning JSON-expressions,
-     * these shouldn't be removed, but Gson::fromJson is not able to work with the direct
-     * JSON input Strings (maybe they are invalid, could be a method from Fr24 to make the data structure more complex)
-     *
-     * @param line is the line String to unwrap
-     * @return unwrapped input sting
-     */
-    private String unwrap(@NotNull String line) {
-        try {
-            if (line.startsWith("{") && line.length() > 43) {
-                line = line.substring(43);
-            } else {
-                line = line.substring(12);
-            }
-        } catch (StringIndexOutOfBoundsException e) {
-            throw new Fr24Exception("Invalid Fr24-Data!", e);
-        }
-        return line.replaceAll("\\[", "")
-                   .replaceAll("]", "")
-                   .replaceAll("\"", "");
     }
 
 }

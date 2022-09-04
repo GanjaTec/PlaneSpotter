@@ -112,13 +112,13 @@ public class Statistics {
      */
     // FIXME: 23.08.2022 will probably take too much time
     @NotNull
-    public Map<String, int[]> topAirlinesPerAirport(int maxAirlinesPerAirport)
+    public Map<String, int[]> topAirlinesPerAirport(int maxAirlinesPerAirport, int dataLimit)
             throws DataNotFoundException {
 
         DBOut dbOut = DBOut.getDBOut();
         Map<String, Map<Integer, Integer>> airportMap = new HashMap<>();
         // TODO replace allFLights with extra method with a smaller (faster) query
-        List<Flight> allFlights = dbOut.getAllFlights();
+        List<Flight> allFlights = dbOut.getAllFlights(dataLimit);
         Map<String, int[]> apTopAirlines = new HashMap<>();
         String src, dest;
         int airline;
