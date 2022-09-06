@@ -1,5 +1,6 @@
 package planespotter.display.models;
 
+import KentHipos.Kensoft;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.model.Scheduler;
@@ -24,8 +25,7 @@ public class LayerPane extends JLayeredPane {
     // instance fields
 
     // default bottom component
-    @Nullable
-    private Component defaultBottomComp, defaultOverTopComp;
+    @Nullable private Component defaultBottomComp, defaultOverTopComp;
 
     /**
      * creates a new LayerPane with a background map viewer
@@ -36,8 +36,8 @@ public class LayerPane extends JLayeredPane {
     public LayerPane(@NotNull Dimension size) {
 
         super();
-        super.setLocation(0, 0);
-        super.setSize(size);
+        setLocation(0, 0);
+        setSize(size);
     }
 
     /**
@@ -51,12 +51,16 @@ public class LayerPane extends JLayeredPane {
      * @param height is the component height
      */
     public void addTop(@NotNull Component comp, int x, int y, int width, int height) {
-        this.add(DYNAMIC_LAYER, comp, x, y, width, height);
+        add(DYNAMIC_LAYER, comp, x, y, width, height);
     }
 
+    /**
+     * sets the default bottom component as bottom-comp
+     * if it is not null
+     */
     public void setBottomDefault() {
-        if (this.defaultBottomComp != null) {
-            this.replaceBottom(this.defaultBottomComp);
+        if (defaultBottomComp != null) {
+            replaceBottom(defaultBottomComp);
         }
     }
 
@@ -71,10 +75,10 @@ public class LayerPane extends JLayeredPane {
      * @param height is the component height
      */
     private void add(int layer, @NotNull Component comp, int x, int y, int width, int height) {
-        this.removeComps(layer);
+        removeComps(layer);
         comp.setBounds(x, y, width, height);
-        super.add(comp);
-        super.setLayer(comp, layer);
+        add(comp);
+        setLayer(comp, layer);
     }
 
     /**
@@ -83,7 +87,7 @@ public class LayerPane extends JLayeredPane {
      * @param layer is the layer index, use LayerPane constants here
      */
     private void removeComps(int layer) {
-        Component[] comps = super.getComponentsInLayer(layer);
+        Component[] comps = getComponentsInLayer(layer);
         Arrays.stream(comps)
                 .forEach(super::remove);
     }
@@ -93,7 +97,7 @@ public class LayerPane extends JLayeredPane {
     }
 
     public void replaceBottom(@NotNull Component comp) {
-        this.add(BOTTOM_LAYER, comp, 0, 0, super.getWidth(), super.getHeight());
+        add(BOTTOM_LAYER, comp, 0, 0, getWidth(), getHeight());
     }
 
     public void setDefaultBottomComponent(@NotNull Component comp) {
@@ -105,13 +109,13 @@ public class LayerPane extends JLayeredPane {
     }
 
     public void showOverTop(boolean show) {
-        if (this.defaultOverTopComp != null) {
-            this.defaultOverTopComp.setVisible(show);
+        if (defaultOverTopComp != null) {
+            defaultOverTopComp.setVisible(show);
             if (show) {
-                this.defaultOverTopComp.setLocation((super.getWidth()/2) + (this.defaultOverTopComp.getWidth()/2), (super.getWidth()/2) + (this.defaultOverTopComp.getHeight()/2));
-                this.add(TOP_LAYER, this.defaultOverTopComp, 0, 0, super.getWidth(), super.getHeight());
+                defaultOverTopComp.setLocation((getWidth()/2) + (defaultOverTopComp.getWidth()/2), (getWidth()/2) + (defaultOverTopComp.getHeight()/2));
+                add(TOP_LAYER, defaultOverTopComp, 0, 0, getWidth(), getHeight());
             } else {
-                this.removeComps(TOP_LAYER);
+                removeComps(TOP_LAYER);
             }
         }
     }
@@ -131,95 +135,38 @@ public class LayerPane extends JLayeredPane {
         if (layer < BOTTOM_LAYER || layer > TOP_LAYER) {
             throw new OutOfRangeException("Layer must be between 0 and 2!");
         }
-        return Arrays.stream(this.getComponentsInLayer(layer))
+        return Arrays.stream(getComponentsInLayer(layer))
                 .findFirst()
                 .orElse(null);
     }
 
-    /**
-     *
-     *
-     * @param startX
-     * @param startY
-     * @param width
-     * @param height
-     * @param endX
-     * @param endY
-     * @param timeMillis
-     */
-    public synchronized void moveTop(int startX, int startY, int width, int height, final int endX, final int endY, final int timeMillis) {
+    public void move(@NotNull Component comp, @NotNull MoveDirection direction, int x , int y, int amount) {
+        comp.setLocation(x, y);
+        Kensoft animation = new Kensoft();
+        int delay = 10,
+            compX = comp.getX(),
+            compY = comp.getY(),
+            plus  = 10;
 
-        this.moveTop(startX, startY, width, height, endX, endY, width, height, timeMillis);
+        if (comp instanceof JLabel lbl) {
+            switch (direction) {
+                case UP -> animation.jLabelYUp(compY, compY+amount, delay, plus, lbl);
+                case DOWN -> animation.jLabelYDown(compY, compY+amount, delay, plus, lbl);
+                case LEFT -> animation.jLabelXLeft(compX, compX+amount, delay, plus, lbl);
+                case RIGHT -> animation.jLabelXRight(compX, compX+amount, delay, plus, lbl);
+            }
+
+        } else if (comp instanceof JPanel pnl) {
+            switch (direction) {
+                case UP -> animation.jPanelYUp(compY, compY + amount, delay, plus, pnl);
+                case DOWN -> animation.jPanelYDown(compY, compY + amount, delay, plus, pnl);
+                case LEFT -> animation.jPanelXLeft(compX, compX + amount, delay, plus, pnl);
+                case RIGHT -> animation.jPanelXRight(compX, compX + amount, delay, plus, pnl);
+            }
+        }
     }
 
-    /**
-     *
-     *
-     * @param startX
-     * @param startY
-     * @param startWidth
-     * @param startHeight
-     * @param endX
-     * @param endY
-     * @param endWidth
-     * @param endHeight
-     * @param timeMillis
-     */
-    public synchronized void moveTop(int startX, int startY, int startWidth, int startHeight, final int endX, final int endY, final int endWidth, final int endHeight, final int timeMillis) {
-        Component top;
-        if ((top = this.getTop()) == null) {
-            return;
-        }
-        Vector2D<Integer> direction = new Vector2D<>(endX - startX, endY - startY),
-                          sizeDirection = new Vector2D<>(endWidth - startWidth, endHeight - startHeight);
-
-        this.move(top, startX, startY, startWidth, startHeight, direction, sizeDirection, timeMillis);
-    }
-
-    /**
-     *
-     *
-     * @param comp
-     * @param startX
-     * @param startY
-     * @param startWidth
-     * @param startHeight
-     * @param direction
-     * @param sizeDirection
-     * @param timeMillis
-     */
-    private synchronized void move(@NotNull Component comp, final int startX, final int startY, final int startWidth, final int startHeight, @NotNull final Vector2D<Integer> direction, final Vector2D<Integer> sizeDirection, final int timeMillis) {
-
-        int xVel = divide(direction.x, timeMillis),
-            yVel = divide(direction.y, timeMillis),
-            wVel = divide(sizeDirection.x, timeMillis),
-            hVel = divide(sizeDirection.y, timeMillis);
-        AtomicInteger x = new AtomicInteger(startX),
-                      y = new AtomicInteger(startY),
-                      w = new AtomicInteger(startWidth),
-                      h = new AtomicInteger(startHeight);
-        int timeout = 50;
-        // do not create a new scheduler every time
-        Scheduler animator = new Scheduler();
-        try {
-            animator.schedule(() -> {
-                        //for (int t = 0; t < timeMillis; t += timeout) {
-                        comp.setBounds(x.get(), y.get(), w.get(), h.get());
-                        //comp.repaint(); // needed?
-                        //comp.getParent().repaint();
-                        comp.repaint(x.get(), y.get(), w.get(), h.get());
-
-
-                        x.addAndGet(xVel);
-                        y.addAndGet(yVel);
-                        w.addAndGet(wVel);
-                        h.addAndGet(hVel);
-
-                        //Scheduler.sleep(50);
-                    }, 0, timeout)
-                    .get(timeMillis, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException ignored) {
-        }
-        //}
+    public enum MoveDirection {
+        UP, DOWN, LEFT, RIGHT
     }
 }

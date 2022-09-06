@@ -92,7 +92,8 @@ public class UserInterface {
         int x = 0, y = 0, width = 270, height = layerPane.getHeight();
         InfoPane infoPane = InfoPane.of(layerPane, flight, dataPoint);
         layerPane.addTop(infoPane, x, y, width, height);
-        //this.layerPane.moveTop(x - width, y, width, height, x, y, 1000);
+        // component animation
+        layerPane.move(infoPane, LayerPane.MoveDirection.RIGHT, x-200, y, 200);
     }
 
     /**
@@ -101,15 +102,15 @@ public class UserInterface {
      * @param type is the {@link SearchType}
      */
     public void showSearch(@NotNull SearchType type) {
-        int x = searchPanel.getX(),
-            y = searchPanel.getY(),
-            width = searchPanel.getWidth(),
+        int x      = 10,
+            y      = 175,
+            width  = 250,
             height = searchPanel.getHeight();
         layerPane.addTop(searchPanel, x, y, width, height);
         searchPanel.setVisible(!searchPanel.isVisible());
         searchPanel.showSearch(type);
-        // trying to animate components
-        //this.layerPane.moveTop(x-100, y-100, width, height, x, y, 2000);
+        // component animation
+        layerPane.move(searchPanel, LayerPane.MoveDirection.RIGHT, x-200, y, 200);
     }
 
     /**

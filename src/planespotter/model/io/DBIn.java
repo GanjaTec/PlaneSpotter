@@ -47,13 +47,10 @@ public final class DBIn extends DBConnector {
 		INSTANCE = new DBIn();
 	}
 
-	@NotNull private final LRUCache<String, PreparedStatement> insertCache;
-
 	/**
 	 * private constructor, for main instance
 	 */
 	private DBIn() {
-		this.insertCache = new LRUCache<>(50, true);
 		this.lastFrame = null;
 		this.frameCount = 0;
 		this.planeCount = 0;
@@ -237,12 +234,10 @@ public final class DBIn extends DBConnector {
 	 * @return
 	 */
 	public int insertPlane(@NotNull Fr24Frame f, int airlineID) {
-		try {
-			synchronized (DB_SYNC) {
-				Connection conn = DBConnector.getConnection();
-				// TODO Airline ID anfrage
-				// insert into planes
-				PreparedStatement pstmt = insertCache.getOrDefaultSet("insertPlane", conn.prepareStatement(SQLQueries.PLANEQUERRY, Statement.RETURN_GENERATED_KEYS));
+		synchronized (DB_SYNC) {
+			// insert into planes
+			try (Connection conn = DBConnector.getConnection(false);
+				 PreparedStatement pstmt = conn.prepareStatement(SQLQueries.PLANEQUERRY, Statement.RETURN_GENERATED_KEYS)) {
 				pstmt.setString(1, f.getIcaoAdr());
 				pstmt.setString(2, f.getTailnr());
 				pstmt.setString(3, f.getRegistration());
@@ -250,16 +245,11 @@ public final class DBIn extends DBConnector {
 				pstmt.setInt(5, airlineID);
 				pstmt.executeUpdate();
 
-				try (ResultSet rs = pstmt.getGeneratedKeys()) {
-					int id = -1;
-					if (rs.next()) {
-						id = rs.getInt(1);
-					}
-					return id;
-				}
+				ResultSet rs = pstmt.getGeneratedKeys();
+				return rs.next() ? rs.getInt(1) : -1;
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 		return -1;
 	}
@@ -272,10 +262,9 @@ public final class DBIn extends DBConnector {
 	 * @return
 	 */
 	public int insertFlight(@NotNull Fr24Frame f, int planeID) {
-		try {
-			synchronized (DB_SYNC) {
-				Connection conn = getConnection();
-				PreparedStatement pstmt = insertCache.getOrDefaultSet("insertFlight", conn.prepareStatement(SQLQueries.FLIGHTQUERRY, Statement.RETURN_GENERATED_KEYS));
+		synchronized (DB_SYNC) {
+			try (Connection conn = getConnection(false);
+				 PreparedStatement pstmt = conn.prepareStatement(SQLQueries.FLIGHTQUERRY, Statement.RETURN_GENERATED_KEYS)) {
 
 				pstmt.setInt(1, planeID);
 				pstmt.setString(2, f.getSrcAirport());
@@ -285,16 +274,11 @@ public final class DBIn extends DBConnector {
 				pstmt.setLong(6, f.getTimestamp());
 				pstmt.executeUpdate();
 
-				try (ResultSet rs = pstmt.getGeneratedKeys()) {
-					int id = -1;
-					if (rs.next()) {
-						id = rs.getInt(1);
-					}
-					return id;
-				}
+				ResultSet rs = pstmt.getGeneratedKeys();
+				return rs.next() ? rs.getInt(1) : -1;
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 		return -1;
 	}
@@ -306,11 +290,10 @@ public final class DBIn extends DBConnector {
 	 * @param id
 	 */
 	public void insertTracking(@NotNull Fr24Frame f, int id) {
-		try {
-			synchronized (DB_SYNC) {
-				Connection conn = DBConnector.getConnection();
-				// insert into tracking
-				PreparedStatement pstmt = insertCache.getOrDefaultSet("insertTracking", conn.prepareStatement(SQLQueries.TRACKINGQUERRY));
+		synchronized (DB_SYNC) {
+			// insert into tracking
+			try (Connection conn = DBConnector.getConnection(false);
+				 PreparedStatement pstmt = conn.prepareStatement(SQLQueries.TRACKINGQUERRY)) {
 				pstmt.setInt(1, id);
 				pstmt.setDouble(2, f.getLat());
 				pstmt.setDouble(3, f.getLon());
@@ -320,9 +303,9 @@ public final class DBIn extends DBConnector {
 				pstmt.setInt(7, f.getSquawk());
 				pstmt.setLong(8, f.getTimestamp());
 				pstmt.executeUpdate();
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -333,17 +316,15 @@ public final class DBIn extends DBConnector {
 	 * @param timestamp
 	 */
 	public void updateFlightEnd(int id, long timestamp) {
-		try {
-			synchronized (DB_SYNC) {
-				Connection conn = DBConnector.getConnection();
-
-				PreparedStatement pstmt = insertCache.getOrDefaultSet("updateFlight", conn.prepareStatement(SQLQueries.UPDATE_FLIGHT_END));
+		synchronized (DB_SYNC) {
+			try (Connection conn = DBConnector.getConnection(false);
+				 PreparedStatement pstmt = conn.prepareStatement(SQLQueries.UPDATE_FLIGHT_END)) {
 				pstmt.setInt(2, id);
 				pstmt.setLong(1, timestamp);
 				pstmt.executeUpdate();
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 	}
 
