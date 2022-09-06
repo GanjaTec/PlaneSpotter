@@ -26,7 +26,7 @@ public enum Warning {
     NOT_SUPPORTED_YET("This feature is not supported yet!"),
     HANDSHAKE("Handshake Exception, pausing Collector for 1 minute!"),
     NO_CONNECTION("Connection failed, please check internet connection and try again!"),
-    DATA_CLOUD_NOT_REACHABLE("Data cloud not reachable, please check your internet connection and try again!"),
+    URL_NOT_REACHABLE("a data cloud URL is not reachable, please check your internet connection!"),
     OUT_OF_MEMORY("OutOfMemoryError, please restart the program!");
 
     // warning string instance field

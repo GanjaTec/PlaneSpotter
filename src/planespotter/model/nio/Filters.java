@@ -49,6 +49,13 @@ public class Filters {
         return this;
     }
 
+    public Filters addAll(@NotNull String @NotNull ... filters) {
+        for (String filter : filters) {
+            add(filter);
+        }
+        return this;
+    }
+
     public boolean remove(@NotNull String filter) {
         return this.filters.remove(filter);
     }

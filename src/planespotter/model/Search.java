@@ -10,6 +10,7 @@ import planespotter.util.LRUCache;
 import planespotter.util.Utilities;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @name Search
@@ -175,13 +176,13 @@ public class Search {
         }
 
         if (idInt != -1) {
-            //fids = dbOut.getFlightIDsByAirlineID(idInt);
+            fids = dbOut.getFlightIDsByAirlineID(idInt);
         } else if (!tag.isBlank()) {
             fids = dbOut.getFlightIDsByAirlineTag(tag);
         } else if (!name.isBlank()) {
-
+            fids = dbOut.getFlightIDsByAirlineName(name);
         } else if (!country.isBlank()) {
-
+            fids = dbOut.getFlightIDsByAirlineCountry(country);
         }
         data = dbOut.getTrackingsByFlightIDs(fids);
 

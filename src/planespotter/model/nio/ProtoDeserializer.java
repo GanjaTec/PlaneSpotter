@@ -11,13 +11,14 @@ import planespotter.throwables.InvalidDataException;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Stream;
 
 @TestOnly
 public class ProtoDeserializer implements AbstractDeserializer<String> {
 
     @Override
     @NotNull
-    public Collection<? extends Frame> deserialize(@NotNull String rawData) {
+    public Stream<? extends Frame> deserialize(@NotNull String rawData) {
         ModeSDecoder decoder = new ModeSDecoder();
         try {
             ModeSReply reply = decoder.decode(rawData);

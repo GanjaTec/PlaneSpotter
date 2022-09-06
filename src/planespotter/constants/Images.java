@@ -22,7 +22,7 @@ public enum Images {
     PAPER_PLANE_ICON(new ImageIcon(IMAGE_PATH + "planespotter_icon.png")),
     FLYING_PLANE_ICON(new ImageIcon(IMAGE_PATH + "flying_plane_icon.png")),
     START_SCREEN(new ImageIcon(IMAGE_PATH + "start_img.png")),
-    LOADING_CYCLE_GIF(new ImageIcon(IMAGE_PATH + "loadingCycle.gif")),
+    LOADING_CYCLE_GIF(new ImageIcon(IMAGE_PATH + "loading2.gif")),
     OPEN_FILE_ICON_16x(new ImageIcon(IMAGE_PATH + "open_file_icon_16x.png")),
     SAVE_FILE_ICON_16x(new ImageIcon(IMAGE_PATH + "save_file_icon_16x.png")),
     PLANE_ICON_16x(new ImageIcon(IMAGE_PATH + "plane_icon_16x.png")),

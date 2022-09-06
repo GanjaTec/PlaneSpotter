@@ -1,13 +1,14 @@
 package test;
 
+import junit.framework.AssertionFailedError;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import planespotter.constants.Paths;
+import planespotter.constants.Configuration;
+import planespotter.controller.Controller;
 import planespotter.model.io.FileWizard;
 
 import java.io.File;
-import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,8 +37,14 @@ class FileWizardTest {
     }
 
     @Test
-    void saveConfig() {
-        assertDoesNotThrow(() -> fileWizard.saveConfig());
+    void writeConfig() {
+        Configuration config = Controller.getInstance().getConfig();
+        String filename = "testConfig.psc";
+        assertDoesNotThrow(() -> fileWizard.writeConfig(config, filename));
+        File file = new File(filename);
+        if (!file.exists() || !file.delete()) {
+            throw new AssertionFailedError("Config couldn't be found or deleted!");
+        }
     }
 
     @Test

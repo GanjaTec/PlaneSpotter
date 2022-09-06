@@ -12,13 +12,7 @@ package planespotter.dataclasses;
 // TODO: 13.06.2022 move fields to superclass Frame
 // TODO: 13.06.2022 change to record
 public class Fr24Frame extends Frame {
-	private final String icaoaddr;
-	private final double lat;
-	private final double lon;
-	private final int heading;
-	private final int altitude;
-	private final int groundspeed;
-	private final int squawk;
+
 	private final String tailnumber;
 	private final String planetype;
 	private final String registration;
@@ -34,15 +28,10 @@ public class Fr24Frame extends Frame {
 
 	public Fr24Frame(String icao, double lat, double lon, int heading, int alt, int speed,
 					 int squawk, String tail, String type, String registration, int time,
-					 String src, String dest, String flight, String unk1, String unk2, String callsign, String unk3,
-					 String airline) {
-		this.icaoaddr = icao;
-		this.lat = lat;
-		this.lon = lon;
-		this.heading = heading;
-		this.altitude = alt;
-		this.groundspeed = speed;
-		this.squawk = squawk;
+					 String src, String dest, String flight, String unk1, String unk2,
+					 String callsign, String unk3, String airline) {
+
+		super(icao, lat, lon, heading, alt, speed, squawk);
 		this.tailnumber = tail;
 		this.planetype = type;
 		this.registration = registration;
@@ -56,34 +45,6 @@ public class Fr24Frame extends Frame {
 		this .unknown3 = unk3;
 		this.airline = airline;
 
-	}
-	
-	public String getIcaoAdr() {
-		return this.icaoaddr;
-	}
-	
-	public double getLat() {
-		return this.lat;
-	}
-	
-	public double getLon() {
-		return this.lon;
-	}
-	
-	public int getHeading() {
-		return this.heading;
-	}
-	
-	public int getAltitude() {
-		return this.altitude;
-	}
-	
-	public int getGroundspeed() {
-		return this.groundspeed;
-	}
-	
-	public int getSquawk() {
-		return this.squawk;
 	}
 	
 	public String getTailnr() {

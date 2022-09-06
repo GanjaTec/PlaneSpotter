@@ -68,48 +68,48 @@ public class SearchPane extends JPanel {
         if (type == SearchType.AREA) {
             return; // area search is not implemented
         }
-        List<JComponent> search = this.allSearchModels.get(type);
-        for (List<JComponent> model : this.allSearchModels.values()) {
+        List<JComponent> search = allSearchModels.get(type);
+        for (List<JComponent> model : allSearchModels.values()) {
             boolean isSearchModel = (model == search);
             for (JComponent comp : model) {
                 comp.setVisible(isSearchModel);
             }
         }
-        this.currentSearchType = type;
+        currentSearchType = type;
     }
 
     @NotNull
     public JTextField getSearchField(@NotNull String key) {
-        if (!this.searchFields.containsKey(key)) {
+        if (!searchFields.containsKey(key)) {
             throw new NoSuchComponentException("No search field found for key " + key + "!");
         }
-        return this.searchFields.get(key);
+        return searchFields.get(key);
 
     }
 
     @NotNull
     public String[] searchInput() {
-        return switch (this.currentSearchType) {
+        return switch (currentSearchType) {
             case FLIGHT -> new String[] {
-                    this.getSearchField("flight.id").getText(),
-                    this.getSearchField("flight.callsign").getText()
+                    getSearchField("flight.id").getText(),
+                    getSearchField("flight.callsign").getText()
             };
             case PLANE -> new String[] {
-                    this.getSearchField("plane.id").getText(),
-                    this.getSearchField("plane.type").getText(),
-                    this.getSearchField("plane.icao").getText(),
-                    this.getSearchField("plane.tailnr").getText()
+                    getSearchField("plane.id").getText(),
+                    getSearchField("plane.type").getText(),
+                    getSearchField("plane.icao").getText(),
+                    getSearchField("plane.tailnr").getText()
             };
             case AIRLINE -> new String[] {
-                    this.getSearchField("airline.id").getText(),
-                    this.getSearchField("airline.tag").getText(),
-                    this.getSearchField("airline.name").getText(),
-                    this.getSearchField("airline.country").getText()
+                    getSearchField("airline.id").getText(),
+                    getSearchField("airline.tag").getText(),
+                    getSearchField("airline.name").getText(),
+                    getSearchField("airline.country").getText()
             };
             case AIRPORT -> new String[] {
-                    this.getSearchField("airport.id").getText(),
-                    this.getSearchField("airport.tag").getText(),
-                    this.getSearchField("airport.name").getText()
+                    getSearchField("airport.id").getText(),
+                    getSearchField("airport.tag").getText(),
+                    getSearchField("airport.name").getText()
             };
             default -> throw new NoSuchComponentException();
         };
@@ -117,7 +117,7 @@ public class SearchPane extends JPanel {
 
     public void clearSearch() {
         final String blank = "";
-        this.allSearchModels.get(this.currentSearchType)
+        allSearchModels.get(currentSearchType)
                 .forEach(m -> {
                     if (m instanceof JTextField jtf) {
                         jtf.setText(blank);
@@ -128,7 +128,7 @@ public class SearchPane extends JPanel {
 
     @NotNull
     public SearchType getCurrentSearchType() {
-        return this.currentSearchType;
+        return currentSearchType;
     }
 
     @NotNull

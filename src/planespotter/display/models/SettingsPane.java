@@ -79,7 +79,7 @@ public class SettingsPane extends JDialog {
         super.add(hotkeys);
         super.add(hotkeyButton);
 
-        this.maxLoadTxtField.setText(String.valueOf(UserSettings.getMaxLoadedData()));
+        this.maxLoadTxtField.setText(String.valueOf(50000));
 
         super.setVisible(false);
     }
@@ -124,7 +124,7 @@ public class SettingsPane extends JDialog {
     @NotNull
     private JComboBox<String> mapTypeCmbBox(@NotNull ItemListener listener) {
         JComboBox<String> mapTypeCmbBox = new JComboBox<>(new String[] {
-                "Default Map",
+                "Open Street Map",
                 "Bing Map",
                 "Transport Map"
         });
@@ -190,7 +190,7 @@ public class SettingsPane extends JDialog {
     public String[] getValues() {
         return new String[] {
                 this.maxLoadTxtField.getText(),
-                (String) Objects.requireNonNullElse(this.mapTypeCmbBox.getSelectedItem(), "Default Map"),
+                (String) Objects.requireNonNullElse(this.mapTypeCmbBox.getSelectedItem(), "Open Street Map"),
                 String.valueOf(this.livePeriodSlider.getValue())
         };
     }

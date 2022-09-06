@@ -87,20 +87,21 @@ public abstract class Utilities {
     /**
      * does a connection pre-check for all given {@link URL}s
      *
+     * @param timeoutMillis is the maximum request time
      * @param urls are the {@link URL}s to check
      * @throws Fr24Exception if a connection check failed
      */
-    public static void connectionPreCheck(@NotNull URL... urls) throws Fr24Exception {
+    public static void connectionPreCheck(int timeoutMillis, @NotNull URL... urls) throws Fr24Exception {
         URLConnection conn;
         InetAddress address = null;
         String hostName;
         for (URL url : urls) {
             try {
                 conn = url.openConnection();
-                conn.setConnectTimeout(5000);
+                conn.setConnectTimeout(timeoutMillis);
                 conn.connect();
                 address = InetAddress.getByName(url.getHost());
-                if (!address.isReachable(5000)) {
+                if (!address.isReachable(timeoutMillis)) {
                     throw new IOException();
                 }
             } catch (IOException e) {
@@ -465,11 +466,12 @@ public abstract class Utilities {
      * @throws Fr24Exception when the status code is invalid
      */
     public static void checkStatusCode(int status) {
-        String invalidMsg = "CheckStatus: Status code" + status + " is invalid!";
+        String invalidMsg = "CheckStatus: Status code '" + status + "' is invalid!";
         StatusException stex = switch (status) {
-            case 200 -> null; // status code is OK
-            case 451 -> new StatusException(invalidMsg + "\nSeems like there is a problem with the Http-header (User-Agent)!");
-            default -> new StatusException(invalidMsg + "\nUnknown error!");
+            case 200, 201 -> null; // status code is OK
+            case 403 -> new StatusException(status, invalidMsg + "\n Error 403, Forbidden");
+            case 451 -> new StatusException(status, invalidMsg + "\nSeems like there is a problem with the Http-header (User-Agent)!");
+            default -> new StatusException(status, invalidMsg + "\nUnknown error!");
         };
         if (stex != null) {
             throw stex;

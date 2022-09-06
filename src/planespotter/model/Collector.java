@@ -34,7 +34,7 @@ public abstract class Collector<S extends Supplier> {
     // supplier instance, can be every Supplier-subclass
     protected final S supplier;
     // display, variations should be added
-    protected final SupplierDisplay display;
+    protected SupplierDisplay display;
     // scheduler to execute tasks
     protected Scheduler scheduler;
     // atomic integers as Frame-, Flight- and Plane-counter
@@ -51,11 +51,8 @@ public abstract class Collector<S extends Supplier> {
      *                    when the 'X'-button is pressed
      */
     protected Collector(boolean exitOnClose, @NotNull S supplier) {
-        int closeOperation = (exitOnClose)
-                ? WindowConstants.EXIT_ON_CLOSE
-                : WindowConstants.DISPOSE_ON_CLOSE;
         this.supplier = supplier;
-        this.display = new SupplierDisplay(closeOperation, this);
+        this.display = null;
         this.insertedNow = new AtomicInteger(0);
         this.insertedFrames = new AtomicInteger(0);
         this.newPlanesNow = new AtomicInteger(0);

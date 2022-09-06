@@ -33,7 +33,7 @@ import java.util.stream.Stream;
  * @description
  * abstract class LiveData represents a Live-Data-Manager,
  * it is able to load live data directly from Fr24 into Flight Objects,
- * it contains a queue 'insertLater' where all the frames are added to,
+ * it contains a queue 'dataQueue' where all the frames are added to,
  * these frames get collected from there by another class.
  * @see planespotter.model.io.DBIn
  * @see planespotter.model.nio.Fr24Supplier
@@ -41,11 +41,11 @@ import java.util.stream.Stream;
  * @see planespotter.constants.Areas
  * @see java.util.concurrent.ConcurrentLinkedQueue
  */
-public class LiveLoader implements DataTask {
+public class DataLoader implements DataTask {
 
     private static final Object liveLock = new Object();
 
-    // max. size for insertLater queue
+    // max. size for data queue
     private final int maxQueueSize;
 
     /*
@@ -60,25 +60,25 @@ public class LiveLoader implements DataTask {
     /**
      * frames, which will be inserted later (first loaded into the view)
      */
-    @NotNull private final ConcurrentLinkedQueue<Fr24Frame> insertLater;
+    @NotNull private final ConcurrentLinkedQueue<Fr24Frame> dataQueue;
 
     /**
-     * default {@link LiveLoader} constructor, uses a maxQueueSize
+     * default {@link DataLoader} constructor, uses a maxQueueSize
      * of 20000 and a liveDataPeriod of 2 seconds
      */
-    public LiveLoader() {
+    public DataLoader() {
         this(20000, 2);
     }
 
     /**
-     * {@link LiveLoader} constructor with specific maxQueueSize and period
+     * {@link DataLoader} constructor with specific maxQueueSize and period
      *
-     * @param maxQueueSize is the max. size for the insertLater-{@link Queue}
+     * @param maxQueueSize is the max. size for the data-{@link Queue}
      * @param liveDataPeriodSec is the loading period in seconds
      */
-    public LiveLoader(int maxQueueSize, int liveDataPeriodSec) {
+    public DataLoader(int maxQueueSize, int liveDataPeriodSec) {
         this.maxQueueSize = maxQueueSize;
-        this.insertLater = new ConcurrentLinkedQueue<>();
+        this.dataQueue = new ConcurrentLinkedQueue<>();
         this.liveDataPeriodSec = liveDataPeriodSec;
     }
 
@@ -154,7 +154,7 @@ public class LiveLoader implements DataTask {
      * loads live-data directly from Fr24 by running suppliers
      * and turns them directly into Flight objects.
      * This method doesn't load the data into the DB, but adds it
-     * to the insertLater-queue where the data can be added from,
+     * to the data-queue where the data can be added from,
      * but we poll it directly after putting it into
      * and parse it to {@link Flight}s
      *
@@ -192,28 +192,28 @@ public class LiveLoader implements DataTask {
     @NotNull
     public Stream<Fr24Frame> pollFrames(@Range(from = 1, to = Integer.MAX_VALUE) int maxElements) {
         if (this.isEmpty()) { // checking for empty queue
-            throw new InvalidDataException("Insert-later-Queue is empty, make sure it is not empty!");
+            throw new InvalidDataException("Data-Queue is empty, make sure it is not empty!");
         }
-        // iterating over polled frames from insertLater-queue and limiting to size
+        // iterating over polled frames from data-queue and limiting to size
         int size = Math.min(maxElements, getQueueSize());
-        return Stream.iterate(insertLater.poll(), x -> insertLater.poll())
+        return Stream.iterate(dataQueue.poll(), x -> dataQueue.poll())
                 .limit(size);
     }
 
     /**
      * gets HttpResponse's for specific areas and deserializes its data to Frames,
-     * then directly adds the frames to the insertLater-{@link Queue}
+     * then directly adds the frames to the data-{@link Queue}
      *
      * @param areas are the Areas where data should be deserialized from
      * @param deserializer is the {@link Fr24Deserializer} which is used to deserialize the requested data
-     * @param ignoreMaxSize if it's true, allowed max size of insertLater-queue is ignored
+     * @param ignoreMaxSize if it's true, allowed max size of data-queue is ignored
      */
     public synchronized boolean collectData(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize) {
         System.out.println("[Supplier] Collecting Fr24-Data with parallel Stream...");
 
         AtomicInteger tNumber = new AtomicInteger(0);
         long startTime = Time.nowMillis();
-        try (Stream<@NotNull String> parallel = Arrays.stream(areas).parallel()) {
+        try (Stream<String> parallel = Arrays.stream(areas).parallel()) {
             parallel.forEach(area -> {
                 if (!ignoreMaxSize && maxSizeReached()) {
                     System.out.println("Max queue-size reached!");
@@ -221,11 +221,10 @@ public class LiveLoader implements DataTask {
                 }
                 Fr24Supplier supplier = new Fr24Supplier(tNumber.getAndIncrement(), area);
 
-                Deque<Fr24Frame> data;
                 try {
                     HttpResponse<String> response = supplier.sendRequest();
                     Utilities.checkStatusCode(response.statusCode());
-                    data = deserializer.deserialize(response);
+                    Stream<Fr24Frame> data = deserializer.deserialize(response);
                     insertLater(data);
                 } catch (IOException | InterruptedException e) {
                     if (e instanceof SSLHandshakeException ssl) {
@@ -241,32 +240,41 @@ public class LiveLoader implements DataTask {
     }
 
     /**
-     * adds a Collection of Frames to the insertLater-queue,
+     * adds a Collection of Frames to the data-queue,
      * from where the frames are inserted into DB later
      *
-     * @param data is the data to add to insert later
+     * @param data is the data to add to the data-{@link Queue}
      */
     public void insertLater(@NotNull final Collection<Fr24Frame> data) {
-        insertLater.addAll(data);
+        dataQueue.addAll(data);
     }
 
     /**
-     * indicates if a method may load frames into the insertLater-deque
+     * adds a {@link Stream} of {@link Fr24Frame}s to the data-queue
+     *
+     * @param data is the data to add to the data-{@link Queue}
+     */
+    public void insertLater(@NotNull final Stream<Fr24Frame> data) {
+        data.forEach(dataQueue::add);
+    }
+
+    /**
+     * indicates if a method may load frames into the data-deque
      * by checking if the max. Size (MAX_QUEUE_SIZE) is reached.
      *
-     * @return true if the insertLater-size is greater than MAX_QUEUE_SIZE, else false
+     * @return true if the data-size is greater than MAX_QUEUE_SIZE, else false
      */
     protected boolean maxSizeReached() {
-        return insertLater.size() >= getMaxQueueSize();
+        return dataQueue.size() >= getMaxQueueSize();
     }
 
     /**
-     * indicates if the insertLater-deque is empty
+     * indicates if the data-deque is empty
      *
      * @return true if the insert-later-deque is empty, else false
      */
     public boolean isEmpty() {
-        return insertLater.isEmpty();
+        return dataQueue.isEmpty();
     }
 
     /**
@@ -298,20 +306,20 @@ public class LiveLoader implements DataTask {
     }
 
     /**
-     * getter for the maximum size of the insertLater-queue
+     * getter for the maximum size of the data-queue
      *
-     * @return maximum queue size of insertLater-queue
+     * @return maximum queue size of data-queue
      */
     public int getMaxQueueSize() {
         return this.maxQueueSize;
     }
 
     /**
-     * getter for the current insertLater-queue size
+     * getter for the current data-queue size
      *
-     * @return current size of the insertLater-queue
+     * @return current size of the data-queue
      */
     public int getQueueSize() {
-        return this.insertLater.size();
+        return this.dataQueue.size();
     }
 }

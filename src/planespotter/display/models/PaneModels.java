@@ -25,9 +25,9 @@ import static planespotter.constants.Images.*;
 public final class PaneModels {
 
     @NotNull
-    public static JFrame windowFrame(@NotNull ActionHandler listener) {
+    public static JFrame windowFrame(@NotNull ActionHandler listener, @NotNull String title) {
         // getting main window object
-        JFrame window = new JFrame(Configuration.TITLE);
+        JFrame window = new JFrame(title);
         // setting window start size and preferred size
         Dimension size = new Dimension(1280, 720);
         window.setSize(size);

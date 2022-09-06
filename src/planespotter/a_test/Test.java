@@ -9,6 +9,7 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import planespotter.constants.*;
+import planespotter.controller.Controller;
 import planespotter.dataclasses.Flight;
 import planespotter.model.nio.ADSBSupplier;
 import planespotter.unused.ANSIColor;
@@ -64,7 +65,7 @@ public class Test {
         System.out.println(result);
 */
 
-        new ADSBSupplier().supply();
+        new ADSBSupplier((String) Controller.getInstance().getConfig().getProperty("adsbRequestUri")).supply();
 
     }
 
@@ -346,14 +347,13 @@ public class Test {
         System.out.println();
 
         var statistics = new Statistics();
-        Vector<DataPoint> liveTrackingBetween = null;
+        Vector<Position> positions;
         try {
-            liveTrackingBetween = DBOut.getDBOut().getLiveTrackingBetween(0, 25000);
+            positions = DBOut.getDBOut().getAllTrackingPositions();
         } catch (DataNotFoundException e) {
             e.printStackTrace();
+            return;
         }
-        assert liveTrackingBetween != null;
-        var positions = Utilities.parsePositionVector(liveTrackingBetween);
         var positionHeatMap = statistics.positionHeatMap(positions);
 
         Arrays.stream(positionHeatMap.toString().split(",")).forEach(System.out::println);

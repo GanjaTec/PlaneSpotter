@@ -3,6 +3,7 @@ package planespotter.util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 
+import org.jetbrains.annotations.TestOnly;
 import planespotter.dataclasses.Position;
 import planespotter.throwables.InvalidArrayException;
 import planespotter.throwables.InvalidDataException;
@@ -70,7 +71,7 @@ public class Bitmap {
      *                 (should be 0.05 or higher to prevent memory problems)
      * @return Bitmap instance, created by pos-vector under a certain grid size
      */
-    @HighMemory(msg = "Huge 2D-arrays (with gridSize about 0.025 and lower) cause OutOfMemoryError")
+    @HighMemory(msg = "Huge 2D-arrays (with gridSize about 0.025 and lower) can cause OutOfMemoryError")
     @NotNull
     public static Bitmap fromPosVector(@NotNull Vector<Position> positions, @Range(from = 0, to = 2) float gridSize) {
         if (gridSize < 0.025) {
@@ -84,12 +85,16 @@ public class Bitmap {
         Arrays.stream(ints2d)
                 .forEach(arr -> Arrays.fill(arr, 0));
 
-        int posX, posY;
-        for (Position pos : positions) {
-            posX = (int) divide(pos.lon() + 180, gridSize); // FIXME: 26.06.2022
-            posY = (int) divide(pos.lat() + 90, gridSize); // FIXME: 26.06.2022
-            ints2d[posX][posY]++;
-        }
+        // the parallel stream performs much better than
+        // a normal for-loop, 3s against 12s, we can use
+        // it because positions is a Vector (thread safe)
+        positions.parallelStream()
+                .forEach(pos -> {
+                    int posX, posY;
+                    posX = (int) divide(pos.lon() + 180, gridSize);
+                    posY = (int) divide(pos.lat() + 90, gridSize);
+                    ints2d[posX][posY]++;
+                });
         return Bitmap.fromInt2d(ints2d);
     }
 
