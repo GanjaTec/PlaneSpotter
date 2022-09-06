@@ -18,6 +18,7 @@ import planespotter.constants.*;
 import planespotter.display.models.PaneModels;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.FileWizard;
+import planespotter.model.nio.ADSBSupplier;
 import planespotter.model.nio.Filters;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.nio.DataLoader;
@@ -121,6 +122,9 @@ public abstract class Controller {
     // configuration instance
     @NotNull private final Configuration config;
 
+    // 'ADSBSupplier enabled' flag
+    private boolean adsbEnabled;
+
     /**
      * private constructor for Controller main instance,
      * get instance with Controller.getInstance()
@@ -136,6 +140,7 @@ public abstract class Controller {
                                     (String) config.getProperty("title"));
         this.clicking = false;
         this.terminated = false;
+        this.adsbEnabled = false;
     }
 
     /**
@@ -233,6 +238,7 @@ public abstract class Controller {
             }
             // starting tasks and finishing
             boolean onlyMilitary = false;
+            setAdsbEnabled(false);
             liveThread = scheduler.runThread(() -> dataLoader.runTask(this, onlyMilitary), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
             this.initialized = true;
             show(MAP_LIVE);
@@ -848,6 +854,17 @@ public abstract class Controller {
     }
 
     /**
+     *
+     *
+     *
+     * @return
+     */
+    @NotNull
+    public DataLoader getDataLoader() {
+        return dataLoader;
+    }
+
+    /**
      * sets the loadedData-{@link Vector}
      *
      * @param loadedData is the loaded data, a {@link Vector} of {@link DataPoint}s
@@ -949,6 +966,24 @@ public abstract class Controller {
      */
     public boolean isTerminated() {
         return this.terminated;
+    }
+
+    /**
+     * getter for 'adsb enabled' flag
+     *
+     * @return true if adsb supplier is enabled, else false
+     */
+    public boolean isAdsbEnabled() {
+        return this.adsbEnabled;
+    }
+
+    /**
+     * sets the 'adsb enabled' flag to true
+     *
+     * @param adsbEnabled indicates if the {@link ADSBSupplier} should be enabled
+     */
+    public void setAdsbEnabled(boolean adsbEnabled) {
+        this.adsbEnabled = adsbEnabled;
     }
 
     /**

@@ -65,7 +65,10 @@ public class Test {
         System.out.println(result);
 */
 
-        new ADSBSupplier((String) Controller.getInstance().getConfig().getProperty("adsbRequestUri")).supply();
+        Controller ctrl = Controller.getInstance();
+        String adsbRequestUri = (String) ctrl.getConfig().getProperty("adsbRequestUri");
+
+        new ADSBSupplier(adsbRequestUri, ctrl.getDataLoader()).supply();
 
     }
 

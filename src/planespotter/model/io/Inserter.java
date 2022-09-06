@@ -1,10 +1,14 @@
 package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
+import planespotter.dataclasses.ADSBFrame;
+import planespotter.dataclasses.Frame;
 import planespotter.model.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.nio.DataLoader;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Queue;
 import java.util.stream.Stream;
 
@@ -40,11 +44,22 @@ public class Inserter implements Runnable {
      */
     @Override
     public void run() {
+        Deque<Fr24Frame> fr24Frames = new ArrayDeque<>();
+        Deque<ADSBFrame> adsbFrames = new ArrayDeque<>();
         while (!terminated) {
             synchronized (INSERT_LOCK) {
                     Scheduler.sleep(500);
-                try (Stream<Fr24Frame> fr24Frames = dataLoader.pollFrames(MIN_INSERT_COUNT)) { // try to change to Integer.MAX_VALUE
-                    DBIn.getDBIn().writeFr24(fr24Frames);
+                try (Stream<? extends Frame> frames = dataLoader.pollFrames(MIN_INSERT_COUNT)) { // try to change to Integer.MAX_VALUE
+                    frames.forEach(frame -> {
+                        if (frame instanceof Fr24Frame fr24) {
+                            fr24Frames.add(fr24);
+                        } else if (frame instanceof ADSBFrame adsb) {
+                            adsbFrames.add(adsb);
+                        }
+                    });
+                    DBIn dbIn = DBIn.getDBIn();
+                    dbIn.writeFr24(fr24Frames);
+                    dbIn.writeADSB(adsbFrames);
                 } catch (final Throwable ex) {
                     Thread.onSpinWait();
                     if (!ex.getMessage().startsWith("Data-Queue is empty")) {

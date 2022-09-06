@@ -19,7 +19,6 @@ import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.nio.DataLoader;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.NoAccessException;
-import planespotter.util.LRUCache;
 
 import static planespotter.util.Time.elapsedSeconds;
 import static planespotter.util.Time.nowMillis;
@@ -72,8 +71,12 @@ public final class DBIn extends DBConnector {
 
 	}
 
+	public void writeADSB(@NotNull final Deque<ADSBFrame> adsbFrames) {
+
+	}
+
 	public void writeFr24(@NotNull final Stream<Fr24Frame> fr24frames) {
-		write(fr24frames.collect(Collectors.toCollection(ArrayDeque::new)));
+		writeFr24((Deque<Fr24Frame>) fr24frames.collect(Collectors.toCollection(ArrayDeque::new)));
 	}
 
 	/**
@@ -84,7 +87,7 @@ public final class DBIn extends DBConnector {
 	 * @param fr24Frames are the Fr24Frames to write, could be extended to '<? extends Frame>'
 	 */
 	// TODO: 31.08.2022 use stream instead of deque
-	public synchronized void write(@NotNull final Deque<Fr24Frame> fr24Frames) {
+	public synchronized void writeFr24(@NotNull final Deque<Fr24Frame> fr24Frames) {
 		if (!enabled || fr24Frames.isEmpty()) {
 			return;
 		}
