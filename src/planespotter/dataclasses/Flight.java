@@ -1,4 +1,7 @@
 package planespotter.dataclasses;
+import org.jetbrains.annotations.NotNull;
+import planespotter.util.Utilities;
+
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -19,27 +22,36 @@ public record Flight(int id,
                      HashMap<Integer, DataPoint> dataPoints)
         implements Serializable {
 
-    public static Flight parseFlight(final Fr24Frame fr24Frame, final int id) {
+    public static Flight parseFlight(final Frame frame, final int id) {
         var dataPoints = new HashMap<Integer, DataPoint>();
         // putting first data point to map
         dataPoints.put(0, new DataPoint(0, id,
-                new Position(fr24Frame.getLat(),
-                        fr24Frame.getLon()),
-                fr24Frame.getTimestamp(),
-                fr24Frame.getSquawk(),
-                fr24Frame.getGroundspeed(),
-                fr24Frame.getHeading(),
-                fr24Frame.getAltitude()));
+                new Position(frame.getLat(),
+                        frame.getLon()),
+                frame.getTimestamp(),
+                frame.getSquawk(),
+                frame.getGroundspeed(),
+                frame.getHeading(),
+                frame.getAltitude()));
         // returning new flight object
-        return new Flight(id,
-                new Airport(-1, fr24Frame.getSrcAirport(), null, null),
-                new Airport(-1, fr24Frame.getDestAirport(), null, null),
-                fr24Frame.getCallsign(),
-                new Plane(-1, fr24Frame.getIcaoAddr(), fr24Frame.getTailnr(),
-                        fr24Frame.getPlanetype(), fr24Frame.getRegistration(),
-                        new Airline(-1, fr24Frame.getAirline(), null,  null)),
-                fr24Frame.getFlightnumber(),
-                dataPoints);
+        if (frame instanceof Fr24Frame fr24) {
+            return new Flight(id,
+                    new Airport(-1, fr24.getSrcAirport(), null, null),
+                    new Airport(-1, fr24.getDestAirport(), null, null),
+                    fr24.getCallsign(),
+                    new Plane(-1, fr24.getIcaoAddr(), fr24.getTailnr(),
+                            fr24.getPlanetype(), fr24.getRegistration(),
+                            new Airline(-1, fr24.getAirline(), null, null)),
+                    fr24.getFlightnumber(),
+                    dataPoints);
+        } else {
+            return new Flight(id,
+                    new Airport(-1, null, null, null),
+                    new Airport(-1, null, null, null),
+                    frame.getCallsign(),
+                    new Plane(-1, frame.getIcaoAddr(), "None", "None", "None", new Airline(-1, null, null, null)),
+                    "None", dataPoints);
+        }
     }
 
 }
