@@ -13,6 +13,7 @@ package planespotter.dataclasses;
 // TODO: 13.06.2022 change to record
 public class Fr24Frame extends Frame {
 
+	private final String icaoAddr;
 	private final String tailnumber;
 	private final String planetype;
 	private final String registration;
@@ -20,6 +21,7 @@ public class Fr24Frame extends Frame {
 	private final String destairport;
 	private final String flightnumber;
 	private final String unknown1;
+	private final String callsign;
 	private final String unknown2;
 	private final String unknown3;
 	private final String airline;
@@ -29,7 +31,8 @@ public class Fr24Frame extends Frame {
 					 String src, String dest, String flight, String unk1, String unk2,
 					 String callsign, String unk3, String airline) {
 
-		super(icao, lat, lon, heading, alt, speed, squawk, callsign, time);
+		super(lat, lon, heading, alt, speed, squawk, time);
+		this.icaoAddr = icao;
 		this.tailnumber = tail;
 		this.planetype = type;
 		this.registration = registration;
@@ -37,12 +40,17 @@ public class Fr24Frame extends Frame {
 		this.destairport = dest;
 		this.flightnumber = flight;
 		this.unknown1 = unk1;
+		this.callsign = callsign;
 		this.unknown2 = unk2;
 		this .unknown3 = unk3;
 		this.airline = airline;
 
 	}
-	
+
+	public String getIcaoAddr() {
+		return this.icaoAddr;
+	}
+
 	public String getTailnr() {
 		return this.tailnumber;
 	}
@@ -71,7 +79,11 @@ public class Fr24Frame extends Frame {
 	public String getUnknown1() {
 		return this.unknown1;
 	}
-	
+
+	public String getCallsign() {
+		return this.callsign;
+	}
+
 	public String getUnknown2() {
 		return this.unknown2;
 	}

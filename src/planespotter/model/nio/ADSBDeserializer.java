@@ -27,15 +27,18 @@ public class ADSBDeserializer implements AbstractDeserializer<HttpResponse<Strin
             JsonArray jsonArray = jsonObject.getAsJsonArray("aircraft");
             int size = jsonArray.size();
             Iterator<JsonElement> aircrafts = jsonArray.iterator();
-
+            // iterating over jsonArray objects
             return Stream.iterate(aircrafts.next(), element -> aircrafts.next())
-                    .map(element -> {
-                        element.getAsJsonObject().addProperty("timestamp", now);
-                        return gson.fromJson(element, ADSBFrame.class);
-                    })
+                    .map(element -> parseElement(gson, element, now))
                     .limit(size);
 
         }
         throw new InvalidDataException("request data is invalid, please check input!");
+    }
+
+    @NotNull
+    private ADSBFrame parseElement(@NotNull Gson gson, @NotNull JsonElement element, long now) {
+        element.getAsJsonObject().addProperty("timestamp", now);
+        return gson.fromJson(element, ADSBFrame.class);
     }
 }

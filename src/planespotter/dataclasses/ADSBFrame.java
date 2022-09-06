@@ -13,7 +13,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ADSBFrame extends Frame {
 
-    protected ADSBFrame(@NotNull String icao, double lat, double lon, int heading, int alt, int speed, int squawk, String flight, int now) {
-        super(icao, lat, lon, heading, alt, speed, squawk, flight, now);
+    private final String hex, flight;
+
+    public ADSBFrame(@NotNull String hex, double lat, double lon, int heading, int alt, int speed, int squawk, @NotNull String flight, int now) {
+        super(lat, lon, heading, alt, speed, squawk, now);
+        this.hex = hex;
+        this.flight = flight;
+    }
+
+    public String getIcaoAddr() {
+        return hex;
+    }
+
+    public String getCallsign() {
+        return flight;
     }
 }
