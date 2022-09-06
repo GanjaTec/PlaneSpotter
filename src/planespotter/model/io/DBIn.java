@@ -108,7 +108,7 @@ public final class DBIn extends DBConnector {
 			frame = fr24Frames.poll();
 			// insert into planes
 			airlineID = airlineTagsIDs.getOrDefault(frame.getAirline(), 1);
-			planeID = planeIcaoIDs.getOrDefault(frame.getIcaoAdr(), -1);
+			planeID = planeIcaoIDs.getOrDefault(frame.getIcaoAddr(), -1);
 
 			if (planeID <= -1) {
 				planeID = insertPlane(frame, airlineID);
@@ -238,7 +238,7 @@ public final class DBIn extends DBConnector {
 			// insert into planes
 			try (Connection conn = DBConnector.getConnection(false);
 				 PreparedStatement pstmt = conn.prepareStatement(SQLQueries.PLANEQUERRY, Statement.RETURN_GENERATED_KEYS)) {
-				pstmt.setString(1, f.getIcaoAdr());
+				pstmt.setString(1, f.getIcaoAddr());
 				pstmt.setString(2, f.getTailnr());
 				pstmt.setString(3, f.getRegistration());
 				pstmt.setString(4, f.getPlanetype());
