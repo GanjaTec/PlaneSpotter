@@ -17,30 +17,22 @@ import java.io.Serializable;
 // TODO: 15.08.2022 move default fields here
 public abstract class Frame implements Serializable {
 
-    private final String icaoaddr;
     private final double lat;
     private final double lon;
     private final int heading;
     private final int altitude;
     private final int groundspeed;
     private final int squawk;
-    private final String callsign;
     private final long timestamp;
 
-    protected Frame(@NotNull String icao, double lat, double lon, int heading, int alt, int speed, int squawk, String callsign, long timestamp) {
-        this.icaoaddr = icao;
+    protected Frame(double lat, double lon, int heading, int alt, int speed, int squawk, long timestamp) {
         this.lat = lat;
         this.lon = lon;
         this.heading = heading;
         this.altitude = alt;
         this.groundspeed = speed;
         this.squawk = squawk;
-        this.callsign = callsign;
         this.timestamp = timestamp;
-    }
-
-    public String getIcaoAddr() {
-        return icaoaddr;
     }
 
     public double getLat() {
@@ -65,10 +57,6 @@ public abstract class Frame implements Serializable {
 
     public int getSquawk() {
         return squawk;
-    }
-
-    public String getCallsign() {
-        return callsign;
     }
 
     public long getTimestamp() {

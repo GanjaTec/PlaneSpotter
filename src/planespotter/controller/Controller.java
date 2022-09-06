@@ -238,7 +238,7 @@ public abstract class Controller {
             }
             // starting tasks and finishing
             boolean onlyMilitary = false;
-            setAdsbEnabled(false);
+            setAdsbEnabled(true);
             liveThread = scheduler.runThread(() -> dataLoader.runTask(this, onlyMilitary), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
             this.initialized = true;
             show(MAP_LIVE);
