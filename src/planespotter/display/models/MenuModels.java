@@ -103,15 +103,17 @@ public final class MenuModels {
      * @return file chooser for file dialog
      */
     public static JFileChooser fileSaver(JFrame parent, String... extensions) {
-        var home = FileSystemView.getFileSystemView().getHomeDirectory();
-        var fileChooser = new JFileChooser(home);
+        File home = FileSystemView.getFileSystemView().getHomeDirectory();
+        JFileChooser fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);
-        var pls = new FileNameExtensionFilter(
-                "allowed types: " + Arrays.toString(extensions),
+        FileNameExtensionFilter fileFilter = new FileNameExtensionFilter(
+                Arrays.toString(extensions)
+                        .replaceAll("\\[", "")
+                        .replaceAll("]", ""),
                 Arrays.stream(extensions)
                         .map(s -> s.replaceAll("\\.", ""))
                         .toArray(String[]::new));
-        fileChooser.setFileFilter(pls);
+        fileChooser.setFileFilter(fileFilter);
         fileChooser.showSaveDialog(parent);
 
         return fileChooser;
@@ -124,8 +126,8 @@ public final class MenuModels {
         File home = FileSystemView.getFileSystemView().getHomeDirectory();
         JFileChooser fileChooser = new JFileChooser(home);
         fileChooser.setAcceptAllFileFilterUsed(false);
-        FileNameExtensionFilter pls = new FileNameExtensionFilter("only .pls-Files", "pls", ".pls"); // which is the right one?
-        fileChooser.setFileFilter(pls);
+        FileNameExtensionFilter fileFilter = new FileNameExtensionFilter(".pls, .bmp", "pls", "bmp");
+        fileChooser.setFileFilter(fileFilter);
         fileChooser.showOpenDialog(parent);
 
         return fileChooser;

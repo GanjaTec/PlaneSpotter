@@ -2,22 +2,28 @@ package planespotter.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.jetbrains.annotations.Range;
+
 import planespotter.constants.Areas;
-import planespotter.constants.UserSettings;
+import planespotter.controller.Controller;
 import planespotter.dataclasses.Fr24Frame;
+import planespotter.display.models.SupplierDisplay;
 import planespotter.model.io.*;
 import planespotter.model.nio.Filters;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
-import planespotter.model.nio.LiveLoader;
+import planespotter.model.nio.DataLoader;
+import planespotter.util.math.MathUtils;
+
+import javax.swing.*;
+import java.awt.event.ActionListener;
 
 /**
  * @name Fr24Collector
  * @author jml04
  * @version 1.0
  *
+ * @description
  * Class Fr24Collector is a Collector subclass for Fr24-Data
  * @see planespotter.model.Collector
  * @see planespotter.model.ADSBCollector
@@ -48,7 +54,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
 
     @Nullable private final Filters filters;
 
-    @NotNull private final LiveLoader liveLoader;
+    @NotNull private final DataLoader dataLoader;
 
     @NotNull private final Inserter inserter;
 
@@ -65,9 +71,15 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
                          @Range(from = 2, to = 180) int gridSizeLat,
                          @Range(from = 2, to = 360) int gridSizeLon) {
         super(exitOnClose, new Fr24Supplier());
-        this.filters = withFilters ? UserSettings.getCollectorFilters() : null;
-        this.liveLoader = new LiveLoader();
-        this.inserter = new Inserter(this.liveLoader, super.getErrorQueue());
+        int closeOperation = (exitOnClose)
+                ? WindowConstants.EXIT_ON_CLOSE
+                : WindowConstants.DISPOSE_ON_CLOSE;
+        super.display = new SupplierDisplay(closeOperation, this, onPause(), onStartStop());
+        this.filters = withFilters
+                ? (Filters) Controller.getInstance().getConfig().getProperty("collectorFilters")
+                : null;
+        this.dataLoader = new DataLoader();
+        this.inserter = new Inserter(this.dataLoader, super.getErrorQueue());
         this.worldAreaRaster1D = Areas.getWorldAreaRaster1D(gridSizeLat, gridSizeLon);
     }
 
@@ -90,40 +102,66 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
     /**
      * collecting task for the collector
      */
-    private synchronized void collect(final Fr24Deserializer deserializer, final Keeper keeper, @Nullable String... extAreas) {
+    private synchronized void collect(@NotNull final Fr24Deserializer deserializer, @NotNull final Keeper keeper, @NotNull String @Nullable ... extAreas) {
 
-        super.scheduler.schedule(() -> super.scheduler.exec(() -> {
+        scheduler.schedule(() -> scheduler.exec(() -> {
             // executing suppliers to collect Fr24-Data
-            this.liveLoader.collectData(extAreas, deserializer, true);
+            dataLoader.collectData(extAreas, deserializer, true);
             // adding all deserialized world-raster-areas to frames deque
-            this.liveLoader.collectData(this.worldAreaRaster1D, deserializer, true);
+            dataLoader.collectData(worldAreaRaster1D, deserializer, true);
             
         }, "Data Collector Thread", false, Scheduler.HIGH_PRIO, true),
                 "Collect Data", 0, REQUEST_PERIOD);
 
-        super.scheduler.runThread(this.inserter, "Inserter Thread", true, Scheduler.MID_PRIO);
+        scheduler.runThread(inserter, "Inserter Thread", true, Scheduler.MID_PRIO);
         // executing the keeper every 400 seconds
-        super.scheduler.schedule(() -> super.scheduler.exec(keeper, "Keeper Thread", true, Scheduler.LOW_PRIO, false),
+        scheduler.schedule(() -> scheduler.exec(keeper, "Keeper Thread", true, Scheduler.LOW_PRIO, false),
                 100, 400);
         // updating display
-        super.scheduler.schedule(() -> {
-            super.insertedNow.set(DBIn.getFrameCount() - super.insertedFrames.get());
-            super.newPlanesNow.set(DBIn.getPlaneCount() - super.newPlanesAll.get());
-            super.newFlightsNow.set(DBIn.getFlightCount() - super.newFlightsAll.get());
+        DBIn dbIn = DBIn.getDBIn();
+        scheduler.schedule(() -> {
+            insertedNow.set(dbIn.getFrameCount() - insertedFrames.get());
+            newPlanesNow.set(dbIn.getPlaneCount() - newPlanesAll.get());
+            newFlightsNow.set(dbIn.getFlightCount() - newFlightsAll.get());
 
-            super.insertedFrames.set(DBIn.getFrameCount());
-            super.newPlanesAll.set(DBIn.getPlaneCount());
-            super.newFlightsAll.set(DBIn.getFlightCount());
+            insertedFrames.set(dbIn.getFrameCount());
+            newPlanesAll.set(dbIn.getPlaneCount());
+            newFlightsAll.set(dbIn.getFlightCount());
 
-            Fr24Frame lastFrame = DBIn.getLastFrame();
-            super.display.update(super.insertedNow.get(), super.newPlanesNow.get(), super.newFlightsNow.get(),
-                                 (lastFrame != null) ? lastFrame.toShortString() : "None",
-                                 this.liveLoader.getQueueSize(), super.errorQueue.poll());
+            Fr24Frame lastFrame = dbIn.getLastFrame();
+            Throwable nextError = errorQueue.poll();
+            Controller.getInstance().handleException(nextError);
+            display.update(insertedNow.get(), newPlanesNow.get(), newFlightsNow.get(),
+                           (lastFrame != null) ? lastFrame.toShortString() : "None",
+                           dataLoader.getQueueSize(), nextError);
         }, 0, 1);
     }
 
     public boolean filtersEnabled() {
-        return this.filters != null;
+        return filters != null;
+    }
+
+    @NotNull
+    public ActionListener onStartStop() {
+        return e -> {
+            DBIn.getDBIn().setEnabled(setEnabled(!isEnabled()));
+            setPaused(isEnabled());
+            switch (MathUtils.toBinary(isEnabled())) {
+                case 0 -> startCollecting();
+                case 1 -> System.out.println(stopCollecting() ? "Interrupted successfully!" : "Couldn't stop the Collector!");
+            }
+            display.setStatus((isEnabled() ? "enabled, " : "disabled, ") +
+                              (isPaused() ? "paused" : "running"));
+        };
+    }
+
+    @NotNull
+    public ActionListener onPause() {
+        return e -> {
+            DBIn.getDBIn().setEnabled(setPaused(!isPaused()));
+            display.setStatus((isEnabled() ? "enabled, " : "disabled, ") +
+                              (isPaused() ? "paused" : "running"));
+        };
     }
 
 }

@@ -52,6 +52,13 @@ public final class SQLQueries {
 	// all callsigns
 	public static final String GET_ALL_CALLSIGNS = "SELECT DISTINCT callsign FROM flights WHERE callsign IS NOT NULL";
 
+	// airline search queries
+	public static final String GET_FLIGHT_IDS_BY_AIRL_ID = "SELECT f.ID FROM flights f JOIN planes p ON p.ID = f.plane AND p.airline = (?)";
+	public static final String GET_FLIGHT_IDS_BY_AIRL_TAG = "SELECT f.ID FROM flights f JOIN planes p ON p.ID = f.plane JOIN airlines a ON a.ID = p.airline AND a.icaotag IS (?)";
+	public static final String GET_FLIGHT_IDS_BY_AIRL_NAME = "SELECT f.ID FROM flights f JOIN planes p ON p.ID = f.plane JOIN airlines a ON a.ID = p.airline AND a.name IS (?)";
+	public static final String GET_FLIGHT_IDS_BY_AIRL_COUNTRY = "SELECT f.ID FROM flights f JOIN planes p ON p.ID = f.plane JOIN airlines a ON a.ID = p.airline AND a.country IS (?)";
+
+
 	/** @unused */
 	public static final String GET_FLIGHTS_FROM_ID = "SELECT * FROM flights WHERE ID >= (?) AND ID > (?)";
 	// alle flüge ab einer bestimmten id, wird direkt in DBOut gemacht, da ich nicht weiß
@@ -64,9 +71,9 @@ public final class SQLQueries {
 	 *
 	 * @param inThis
 	 * @return
-	 */ // TODO zu einer Methode machen mit Wildcards
+	 */ // TODO zu einer Methode machen mit Wildcards & instanceof
 	public static <I> String IN_INT(final I inThis) {
-		var out = new StringBuilder("IN (");
+		StringBuilder out = new StringBuilder("IN (");
 		if (inThis instanceof Deque<?> deq && deq.getFirst() instanceof Integer) {
 			for (int i : (Deque<Integer>) deq) {
 				out.append(i).append(",");
@@ -80,26 +87,24 @@ public final class SQLQueries {
 	}
 
 	public static String IN_STR(final Deque<String> inThis) {
-		var out = new StringBuilder("IN (");
+		StringBuilder out = new StringBuilder("IN (");
 		int counter = 0;
 		int last = inThis.size() - 1;
-		for (var s : inThis) {
-			var packedStr = Utilities.packString(s);
-			out.append(packedStr);
-			if (counter != last) {
+		for (String s : inThis) {
+			out.append(Utilities.packString(s));
+			if (counter++ != last) {
 				out.append(",");
 			}
-			counter++;
 		}
 		return out + ")";
 	}
 
 	public static String IS (String isWhat) {
-		return "IS '" + isWhat + "'";
+		return "IS " + Utilities.packString(isWhat);
 	}
 
 	public static String SELECT(boolean distinct, String... fields) {
-		var sbl = new StringBuilder("SELECT ");
+		StringBuilder sbl = new StringBuilder("SELECT ");
 		if (distinct) {
 			sbl.append("DISTINCT ");
 		}
@@ -116,7 +121,7 @@ public final class SQLQueries {
 	}
 
 	public static String FROM(String... tables) {
-		var sbl = new StringBuilder("FROM ");
+		StringBuilder sbl = new StringBuilder("FROM ");
 		int length = tables.length;
 		int lm1 = length - 1;
 		for (int i = 0; i < length; i++) {

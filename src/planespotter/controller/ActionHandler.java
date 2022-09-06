@@ -210,11 +210,11 @@ public abstract class ActionHandler
             searchPanel.clearSearch();
             ui.showSearch(SearchType.byItemString(item));
         } else if (source == ui.getSettings().getMapTypeCmbBox()) {
-            switch (item) {
+            /*switch (item) {
                 case "Bing Map" -> UserSettings.setCurrentMapSource(UserSettings.BING_MAP);
-                case "Default Map" -> UserSettings.setCurrentMapSource(UserSettings.DEFAULT_MAP);
+                case "Open Street Map" -> UserSettings.setCurrentMapSource(UserSettings.DEFAULT_MAP);
                 case "Transport Map" -> UserSettings.setCurrentMapSource(UserSettings.TRANSPORT_MAP);
-            }
+            }*/
         }
     }
 
@@ -384,7 +384,11 @@ public abstract class ActionHandler
     }
 
 
-    private static class HotkeyManager {
+    /**
+     *
+     *
+     */
+    public static class HotkeyManager {
 
         // map for all global hotkeys,
         // key is the Hotkey object with the key data

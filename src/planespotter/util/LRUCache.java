@@ -6,13 +6,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import planespotter.util.math.MathUtils;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -64,7 +61,7 @@ public class LRUCache<K, V> {
      *              max element count, else false
      */
     public boolean isFull() {
-        return this.cache.size() == this.maxSize;
+        return cache.size() == maxSize;
     }
 
     /**
@@ -73,7 +70,7 @@ public class LRUCache<K, V> {
      * @return true if the cache size is bigger than (max size - (max size / 5))
      */
     public boolean isAlmostFull() {
-        return this.cache.size() > this.maxSize - MathUtils.divide(maxSize, 5);
+        return cache.size() > maxSize - MathUtils.divide(maxSize, 5);
     }
 
     /**
@@ -85,12 +82,12 @@ public class LRUCache<K, V> {
      */
     public synchronized boolean put(@NotNull K key, @NotNull V source) {
         if ((onlyRemoveIfFull && isFull()) || (!onlyRemoveIfFull && isAlmostFull())) {
-            if (!removeLeastRecentlyUsed1(false)) {
+            if (!removeLeastRecentlyUsed()) {
                 System.out.println("Cache is full of Seniors!");
                 return false;
             }
         }
-        this.cache.put(key, new CacheElement<>(source));
+        cache.put(key, new CacheElement<>(source));
         return true;
     }
 
@@ -102,14 +99,14 @@ public class LRUCache<K, V> {
      */
     @Nullable
     public synchronized V get(@NotNull K key) {
-        CacheElement<V> cacheElement = this.cache.getOrDefault(key, null);
+        CacheElement<V> cacheElement = cache.getOrDefault(key, null);
         if (cacheElement != null) {
             if (++cacheElement.useCount % 4 == 0) {
                 cacheElement.incrementGeneration();
             }
             cacheElement.timestamp = Time.nowMillis();
-            this.cache.replace(key, cacheElement);
-            return cacheElement.getSource();
+            cache.replace(key, cacheElement);
+            return cacheElement.source;
         }
         return null;
     }
@@ -123,8 +120,26 @@ public class LRUCache<K, V> {
      */
     @NotNull
     public V getOrDefault(@NotNull K key, @NotNull V orElse) {
-        V get = this.get(key);
+        V get = get(key);
         return (get != null) ? get : orElse;
+    }
+
+    /**
+     * returns a value from the {@link LRUCache} by key, of one exists,
+     * else, the given default value is put into the cache
+     *
+     * @param key is the key paired with the value
+     * @param defaultValue is the default value which is returned and put when the key was not found
+     * @return the value paired with the key or the default value, if the key was not found5
+     */
+    @NotNull
+    public V getOrDefaultSet(@NotNull K key, @NotNull V defaultValue) {
+        V get = get(key);
+        if (get == null) {
+            put(key, defaultValue);
+            return defaultValue;
+        }
+        return get;
     }
 
     /**
@@ -133,13 +148,13 @@ public class LRUCache<K, V> {
      * a low use-count, then removing the oldest unused {@link CacheElement},
      * if there is one
      *
-     * @return true if an element was removed, else false
+     * @return true if an LRU-element could be removed, else false (only removed some generations)
      */
-    private synchronized boolean removeLeastRecentlyUsed1(boolean secondTry) {
-        if (this.cache.isEmpty()) {
+    private synchronized boolean removeLeastRecentlyUsed() {
+        if (cache.isEmpty()) {
             return false;
         }
-        Set<Map.Entry<K, CacheElement<V>>> entrySet = this.cache.entrySet();
+        Set<Map.Entry<K, CacheElement<V>>> entrySet = cache.entrySet();
         long lruTimestamp = Long.MAX_VALUE,
              currentTimestamp;
         K key = null;
@@ -158,46 +173,10 @@ public class LRUCache<K, V> {
             }
         }
         if (key == null) {
-            if (secondTry) {
-                return this.removeLeastRecentlyUsed0();
-            }
-            this.remove(false, CacheElement.BABY, CacheElement.CHILD);
+            remove(false, CacheElement.BABY, CacheElement.CHILD);
             return false;
         }
-        this.remove(key);
-        return true;
-    }
-
-    /**
-     * removes the least recently used {@link CacheElement} from
-     * the cache, if there is one. Goes just by use count and
-     * not by timestamp
-     *
-     * @return true if an element was removed, else false
-     */
-    private synchronized boolean removeLeastRecentlyUsed0() {
-        Set<Map.Entry<K, CacheElement<V>>> entrySet = this.cache.entrySet();
-        if (entrySet.isEmpty()) {
-            return false;
-        }
-        AtomicInteger minUseCount = new AtomicInteger(Integer.MAX_VALUE);
-        AtomicReference<K> key = new AtomicReference<>();
-
-        // TODO: 22.06.2022 test if parallelStream is needed!!
-        // replaced for with parallelStream.forEach
-        entrySet.parallelStream()
-                .forEach(entry -> {
-                    CacheElement<V> value = entry.getValue();
-                    int useCount = value.getUseCount();
-                    if (useCount < minUseCount.get() /*&& value.getGeneration() < 4*/) {
-                        minUseCount.set(useCount);
-                        key.set(entry.getKey());
-                    }
-        });
-        if (key.get() == null) {
-            return false;
-        }
-        this.remove(key.get());
+        remove(key);
         return true;
     }
 
@@ -207,7 +186,7 @@ public class LRUCache<K, V> {
      * @param key is the key for the {@link CacheElement} to remove
      */
     public synchronized void remove(@NotNull K key) {
-        this.cache.remove(key);
+        cache.remove(key);
     }
 
     /**
@@ -217,7 +196,7 @@ public class LRUCache<K, V> {
      * @param generations are the generations to be removed
      */
     public synchronized void remove(boolean parallel, @Range(from = 0, to = 4) byte... generations) {
-        Set<Map.Entry<K, CacheElement<V>>> entrySet = this.cache.entrySet();
+        Set<Map.Entry<K, CacheElement<V>>> entrySet = cache.entrySet();
         if (entrySet.isEmpty()) {
             return;
         }
@@ -274,40 +253,12 @@ public class LRUCache<K, V> {
         }
 
         /**
-         * getter for the source / value object of this {@link CacheElement}
-         *
-         * @return the source / value object
-         */
-        @NotNull
-        private V getSource() {
-            return this.source;
-        }
-
-        /**
-         * getter for the use-count of this {@link CacheElement}
-         *
-         * @return the use-count as an int
-         */
-        public int getUseCount() {
-            return this.useCount;
-        }
-
-        /**
-         * getter for the last-use timestamp of this {@link CacheElement}
-         *
-         * @return last timestamp as long
-         */
-        public long getTimestamp() {
-            return this.timestamp;
-        }
-
-        /**
          * increments the generation of this {@link CacheElement},
          * if it is not already SENIOR
          */
         private void incrementGeneration() {
-            if (this.generation < SENIOR) {
-                this.generation++;
+            if (generation < SENIOR) {
+                generation++;
             }
         }
     }

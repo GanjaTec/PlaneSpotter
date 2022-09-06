@@ -1,5 +1,7 @@
 package planespotter.dataclasses;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @name ADSBFrame
  * @author
@@ -10,4 +12,8 @@ package planespotter.dataclasses;
  * are collected with the ADSBSupplier (with Antenna).
  */
 public class ADSBFrame extends Frame {
+
+    protected ADSBFrame(@NotNull String icao, double lat, double lon, int heading, int alt, int speed, int squawk) {
+        super(icao, lat, lon, heading, alt, speed, squawk);
+    }
 }

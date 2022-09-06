@@ -12,14 +12,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Deque;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @name Supplier
@@ -74,9 +73,9 @@ public class Fr24Supplier implements HttpSupplier {
 			HttpResponse<String> response = this.sendRequest();
 
 			Utilities.checkStatusCode(response.statusCode());
-			Deque<Fr24Frame> fr24Frames = deserializer.deserialize(response);
+			Stream<Fr24Frame> fr24Frames = deserializer.deserialize(response);
 			// writing frames to DB
-			DBIn.write(fr24Frames);
+			DBIn.getDBIn().writeFr24(fr24Frames);
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}

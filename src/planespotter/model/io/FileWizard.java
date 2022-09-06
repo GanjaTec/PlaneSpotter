@@ -3,10 +3,13 @@ package planespotter.model.io;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
 import planespotter.constants.Configuration;
+import planespotter.controller.Controller;
 import planespotter.dataclasses.MapData;
-import planespotter.constants.UserSettings;
+import planespotter.display.TreasureMap;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.ExtensionException;
 import planespotter.throwables.InvalidDataException;
 import planespotter.util.Time;
 import planespotter.util.Utilities;
@@ -15,6 +18,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.*;
 import java.nio.file.FileAlreadyExistsException;
+import java.util.Map;
 
 /**
  * @name FileWizard
@@ -48,23 +52,92 @@ public class FileWizard {
         ImageIO.write(Utilities.createBufferedImage(img, imgType), "BMP", file);
     }
 
-    /**
-     * saves the config as a .psc file using
-     * UserSettings.write() for writing the configuration values.
-     * Only non-final User-Settings are saved, static final fields
-     * are ignored, because they are never updated
-     */
-    public synchronized boolean saveConfig() {
-        File config = new File(Configuration.CONFIG_FILENAME);
-        if (!config.exists()) { // creating new file if there is no existing one
-            try {
-                config.createNewFile();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                return false;
+    public void writeConfig(@NotNull Configuration config, @NotNull String filename) throws IOException {
+        if (filename.isBlank()) {
+            throw new InvalidDataException("File name must not be blank!");
+        }
+        File file = new File(filename);
+        if (!file.exists() && !file.createNewFile()) {
+            file.createNewFile(); // result ignored
+        }
+        try (FileWriter fw = new FileWriter(file);
+             BufferedWriter bw = new BufferedWriter(fw)) {
+            String key; Object val;
+            for (Map.Entry<String, Object> property : config.getUserProperties()) {
+                key = property.getKey();
+                val = property.getValue();
+                if (!val.getClass().isPrimitive() && !(val instanceof String)) {
+                    throw new NotSerializableException("Cannot serialize the current value: " + val);
+                }
+                bw.write(key + ": " + val);
             }
         }
-        return UserSettings.write(Configuration.CONFIG_FILENAME);
+    }
+
+    /**
+     *
+     *
+     * @param filename
+     * @return
+     * @throws ExtensionException
+     * @throws FileNotFoundException
+     */
+    @NotNull
+    public Object[] readConfig(@NotNull String filename)
+            throws ExtensionException, FileNotFoundException, InvalidDataException {
+
+        System.out.println("Reading configuration file...");
+        if (!filename.endsWith(".psc")) {
+            throw new ExtensionException("File must end with '.psc'");
+        }
+        File file = new File(filename);
+        if (!file.exists()) {
+            throw new FileNotFoundException("Configuration file not found!");
+        }
+        try (Reader fileReader = new FileReader(file);
+             BufferedReader buf = new BufferedReader(fileReader)) {
+            return buf.lines()
+                    .filter(line -> !line.startsWith("#") && line.contains(":"))
+                    .map(line -> line.split(": "))
+                    .filter(vals -> vals.length > 1)
+                    .map(entry -> {
+                        String key = entry[0],
+                                value = entry[1];
+                        switch (key) {
+                            case "dataLimit", "gridSizeLat", "gridSizeLon" -> {
+                                try {
+                                    return Integer.parseInt(value);
+                                } catch (NumberFormatException nfe) {
+                                    throw new InvalidDataException("Couldn't parse String to Int!");
+                                }
+                            }
+                            case "currentMapSource" -> {
+                                return translateSource(value);
+                            }
+                            default -> throw new InvalidDataException("Couldn't read settings data!");
+                        }
+                    })
+                    .toArray(Object[]::new);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        throw new InvalidDataException("Couldn't read settings data!");
+    }
+
+    /**
+     *
+     *
+     * @param name
+     * @return
+     */
+    @NotNull
+    public TileSource translateSource(@NotNull String name) {
+        return switch (name) {
+            case "OSM" -> TreasureMap.OPEN_STREET_MAP;
+            case "Public Transport" -> TreasureMap.TRANSPORT_MAP;
+            case "Bing" -> TreasureMap.BING_MAP;
+            default -> throw new InvalidDataException("Couldn't read map source data!");
+        };
     }
 
     /**

@@ -3,6 +3,8 @@ package planespotter.display;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
+import planespotter.constants.Configuration;
 import planespotter.constants.SearchType;
 import planespotter.constants.ViewType;
 import planespotter.constants.Warning;
@@ -14,6 +16,8 @@ import planespotter.display.models.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @name UserInterface
@@ -62,11 +66,11 @@ public class UserInterface {
      *
      * @param actionHandler is the {@link ActionHandler} which handles all the actions
      */
-    public UserInterface(@NotNull ActionHandler actionHandler) {
+    public UserInterface(@NotNull ActionHandler actionHandler, @NotNull TileSource defaultMapSource, @NotNull String title) {
 
-        this.window = PaneModels.windowFrame(actionHandler);
+        this.window = PaneModels.windowFrame(actionHandler, title);
         this.layerPane = new LayerPane(window.getSize());
-        this.mapManager = new MapManager(this, actionHandler);
+        this.mapManager = new MapManager(this, actionHandler, defaultMapSource);
         this.searchPanel = new SearchPane(this.layerPane, actionHandler);
         this.settings = new SettingsPane(this.window, actionHandler);
         this.window.add(this.layerPane);
@@ -88,7 +92,8 @@ public class UserInterface {
         int x = 0, y = 0, width = 270, height = layerPane.getHeight();
         InfoPane infoPane = InfoPane.of(layerPane, flight, dataPoint);
         layerPane.addTop(infoPane, x, y, width, height);
-        //this.layerPane.moveTop(x - width, y, width, height, x, y, 1000);
+        // component animation
+        layerPane.move(infoPane, LayerPane.MoveDirection.RIGHT, x-200, y, 200);
     }
 
     /**
@@ -97,15 +102,15 @@ public class UserInterface {
      * @param type is the {@link SearchType}
      */
     public void showSearch(@NotNull SearchType type) {
-        int x = searchPanel.getX(),
-            y = searchPanel.getY(),
-            width = searchPanel.getWidth(),
+        int x      = 10,
+            y      = 175,
+            width  = 250,
             height = searchPanel.getHeight();
         layerPane.addTop(searchPanel, x, y, width, height);
         searchPanel.setVisible(!searchPanel.isVisible());
         searchPanel.showSearch(type);
-        // trying to animate components
-        //this.layerPane.moveTop(x-100, y-100, width, height, x, y, 2000);
+        // component animation
+        layerPane.move(searchPanel, LayerPane.MoveDirection.RIGHT, x-200, y, 200);
     }
 
     /**

@@ -23,7 +23,7 @@ public class DataNotFoundException extends Exception {
         super(msg);
     }
 
-    public DataNotFoundException(DataNotFoundException cause) {
+    public DataNotFoundException(Throwable cause) {
         super(cause);
     }
 

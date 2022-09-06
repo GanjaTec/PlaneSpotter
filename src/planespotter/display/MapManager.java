@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.*;
+import planespotter.constants.Configuration;
 import planespotter.constants.UserSettings;
 import planespotter.controller.ActionHandler;
 import planespotter.dataclasses.*;
@@ -41,9 +42,9 @@ public final class MapManager {
      * @param listener is the {@link ActionHandler} which implements
      *                 some listeners and handles user-interactions
      */
-    public MapManager(@NotNull UserInterface ui, @NotNull ActionHandler listener) {
+    public MapManager(@NotNull UserInterface ui, @NotNull ActionHandler listener, @NotNull TileSource defaultMapSource) {
         this.ui = ui;
-        this.mapViewer = this.defaultMapViewer(ui.getLayerPane());
+        this.mapViewer = this.defaultMapViewer(ui.getLayerPane(), defaultMapSource);
         this.mapViewer.addMouseListener(listener);
         this.selectedICAO = null;
     }
@@ -83,10 +84,9 @@ public final class MapManager {
      * @return the default map viewer component ({@link TreasureMap})
      */
     @NotNull
-    public TreasureMap defaultMapViewer(@Nullable Component parent) {
+    public TreasureMap defaultMapViewer(@Nullable Component parent, @NotNull TileSource mapType) {
         TreasureMap viewer = new TreasureMap();
         DefaultMapController mapController = new DefaultMapController(viewer);
-        TileSource mapType = UserSettings.getCurrentMapSource();
 
         mapController.setMovementMouseButton(1);
         if (parent != null) {

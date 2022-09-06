@@ -9,6 +9,7 @@ import planespotter.model.nio.Fr24Supplier;
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.util.Deque;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,8 +39,8 @@ class Fr24DeserializerTest {
                 throw new Error("Assertion failed because of the HttpResponse!", e);
             }
             Fr24Deserializer deserializer = new Fr24Deserializer();
-            Deque<Fr24Frame> data = deserializer.deserialize(response);
-            if (data.isEmpty()) {
+            Stream<Fr24Frame> data = deserializer.deserialize(response);
+            if (data.findAny().isEmpty()) {
                 throw new Error("Assertion failed because of empty data Deque!");
             }
         });

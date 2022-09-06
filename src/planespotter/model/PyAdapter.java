@@ -1,6 +1,7 @@
 package planespotter.model;
 
 import org.jetbrains.annotations.Nullable;
+import org.python.core.PyComplex;
 import org.python.core.PyString;
 import org.python.util.PythonInterpreter;
 import planespotter.constants.Paths;

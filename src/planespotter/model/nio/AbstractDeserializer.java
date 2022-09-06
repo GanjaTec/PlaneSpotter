@@ -5,6 +5,7 @@ import planespotter.dataclasses.Frame;
 import planespotter.unused.Deserializer;
 
 import java.util.Collection;
+import java.util.stream.Stream;
 
 /**
  * @name AbstractDeserializer
@@ -34,5 +35,5 @@ public interface AbstractDeserializer<D> {
      * @return a collection of Frame-extending objects
      */
     @NotNull
-    Collection<? extends Frame> deserialize(@NotNull D data);
+    Stream<? extends Frame> deserialize(@NotNull D data);
 }
