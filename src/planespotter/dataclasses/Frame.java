@@ -24,8 +24,10 @@ public abstract class Frame implements Serializable {
     private final int altitude;
     private final int groundspeed;
     private final int squawk;
+    private final String callsign;
+    private final long timestamp;
 
-    protected Frame(@NotNull String icao, double lat, double lon, int heading, int alt, int speed, int squawk) {
+    protected Frame(@NotNull String icao, double lat, double lon, int heading, int alt, int speed, int squawk, String callsign, long timestamp) {
         this.icaoaddr = icao;
         this.lat = lat;
         this.lon = lon;
@@ -33,34 +35,43 @@ public abstract class Frame implements Serializable {
         this.altitude = alt;
         this.groundspeed = speed;
         this.squawk = squawk;
+        this.callsign = callsign;
+        this.timestamp = timestamp;
     }
 
-    public String getIcaoAdr() {
-        return this.icaoaddr;
+    public String getIcaoAddr() {
+        return icaoaddr;
     }
 
     public double getLat() {
-        return this.lat;
+        return lat;
     }
 
     public double getLon() {
-        return this.lon;
+        return lon;
     }
 
     public int getHeading() {
-        return this.heading;
+        return heading;
     }
 
     public int getAltitude() {
-        return this.altitude;
+        return altitude;
     }
 
     public int getGroundspeed() {
-        return this.groundspeed;
+        return groundspeed;
     }
 
     public int getSquawk() {
-        return this.squawk;
+        return squawk;
     }
 
+    public String getCallsign() {
+        return callsign;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
 }

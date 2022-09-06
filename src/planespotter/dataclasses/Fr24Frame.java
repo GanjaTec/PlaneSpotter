@@ -16,13 +16,11 @@ public class Fr24Frame extends Frame {
 	private final String tailnumber;
 	private final String planetype;
 	private final String registration;
-	private final int timestamp;
 	private final String srcairport;
 	private final String destairport;
 	private final String flightnumber;
 	private final String unknown1;
 	private final String unknown2;
-	private final String callsign;
 	private final String unknown3;
 	private final String airline;
 
@@ -31,17 +29,15 @@ public class Fr24Frame extends Frame {
 					 String src, String dest, String flight, String unk1, String unk2,
 					 String callsign, String unk3, String airline) {
 
-		super(icao, lat, lon, heading, alt, speed, squawk);
+		super(icao, lat, lon, heading, alt, speed, squawk, callsign, time);
 		this.tailnumber = tail;
 		this.planetype = type;
 		this.registration = registration;
-		this.timestamp = time;
 		this.srcairport = src;
 		this.destairport = dest;
 		this.flightnumber = flight;
 		this.unknown1 = unk1;
 		this.unknown2 = unk2;
-		this.callsign = callsign;
 		this .unknown3 = unk3;
 		this.airline = airline;
 
@@ -58,10 +54,7 @@ public class Fr24Frame extends Frame {
 	public String getRegistration() {
 		return this.registration;
 	}
-	
-	public int getTimestamp() {
-		return this.timestamp;
-	}
+
 	
 	public String getSrcAirport() {
 		return this.srcairport;
@@ -82,10 +75,7 @@ public class Fr24Frame extends Frame {
 	public String getUnknown2() {
 		return this.unknown2;
 	}
-	
-	public String getCallsign() {
-		return this.callsign;
-	}
+
 	
 	public String getUnknown3() {
 		return this.unknown3;
@@ -96,13 +86,13 @@ public class Fr24Frame extends Frame {
 	}
 
 	public String toShortString() {
-		return this.getIcaoAdr() + ";" + this.getCallsign() + ";" + this.getPlanetype() + ";" +
+		return this.getIcaoAddr() + ";" + this.getCallsign() + ";" + this.getPlanetype() + ";" +
 				this.getAirline() + ";" + this.getSrcAirport() + ";" + this.getDestAirport();
 	}
 
 	@Override
 	public String toString() {
-		return  "ICAO: " + this.getIcaoAdr() + ',' +
+		return  "ICAO: " + this.getIcaoAddr() + ',' +
 				" Lat: " + this.getLat() + ',' +
 				" Lon: " + this.getLon() + ',' +
 				" Heading: " + this.getHeading() + ',' +
