@@ -9,6 +9,7 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import planespotter.constants.*;
+import planespotter.controller.Controller;
 import planespotter.dataclasses.Flight;
 import planespotter.model.nio.ADSBSupplier;
 import planespotter.unused.ANSIColor;
@@ -64,10 +65,7 @@ public class Test {
         System.out.println(result);
 */
 
-
-        System.out.println(null instanceof Object);
-
-        //new ADSBSupplier().supply();
+        new ADSBSupplier((String) Controller.getInstance().getConfig().getProperty("adsbRequestUri")).supply();
 
     }
 

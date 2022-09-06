@@ -25,19 +25,8 @@ public class ADSBSupplier implements HttpSupplier {
         new Scheduler().schedule(() -> {
             try {
                 HttpResponse<String> response = sendRequest();
-                JsonElement requestElement = JsonParser.parseString(response.body());
-                if (requestElement instanceof JsonObject jsonObject) {
-                    Gson gson = new Gson();
-                    long now = jsonObject.getAsJsonPrimitive("now").getAsLong();
-                    System.out.println("Timestamp: " + now + "\nData:");
-                    jsonObject.getAsJsonArray("aircraft")
-                            .iterator()
-                            .forEachRemaining(e -> {
-                                System.out.println(e.toString());
-                                ADSBFrame adsbFrame = gson.fromJson(e, ADSBFrame.class);
-                                Utilities.printCurrentFields(adsbFrame);
-                            });
-                }
+                new ADSBDeserializer().deserialize(response);
+                System.out.println();
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }
