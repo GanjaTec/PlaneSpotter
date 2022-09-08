@@ -1,5 +1,6 @@
 package planespotter.dataclasses;
 import org.jetbrains.annotations.NotNull;
+import planespotter.throwables.InvalidDataException;
 import planespotter.util.Utilities;
 
 import java.io.Serializable;
@@ -44,14 +45,15 @@ public record Flight(int id,
                             new Airline(-1, fr24.getAirline(), null, null)),
                     fr24.getFlightnumber(),
                     dataPoints);
-        } else {
+        } else if (frame instanceof ADSBFrame adsb) {
             return new Flight(id,
                     new Airport(-1, null, null, null),
                     new Airport(-1, null, null, null),
-                    frame.getCallsign(),
-                    new Plane(-1, frame.getIcaoAddr(), "None", "None", "None", new Airline(-1, null, null, null)),
+                    adsb.getCallsign(),
+                    new Plane(-1, adsb.getIcaoAddr(), "None", "None", "None", new Airline(-1, null, null, null)),
                     "None", dataPoints);
         }
+        throw new InvalidDataException("Couldn't parse flight!");
     }
 
 }

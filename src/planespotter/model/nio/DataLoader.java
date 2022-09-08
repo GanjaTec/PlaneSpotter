@@ -6,11 +6,14 @@ import org.jetbrains.annotations.Range;
 
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import planespotter.constants.Areas;
+import planespotter.constants.Configuration;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
 import planespotter.display.TreasureMap;
 import planespotter.model.DataTask;
+import planespotter.model.ExceptionHandler;
 import planespotter.model.Scheduler;
+import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.InvalidArrayException;
 import planespotter.throwables.InvalidDataException;
 import planespotter.util.Time;
@@ -18,6 +21,7 @@ import planespotter.util.Utilities;
 
 import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
+import java.net.URI;
 import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -140,7 +144,12 @@ public class DataLoader implements DataTask {
                         map = ctrl.getUI().getMap();
                         // transforming liveData-flight-Vector into list of MapMarkers
                         // after loading it directly from fr24
-                        Vector<Flight> liveFlights = getLiveFlights(map, onlyMilitary, useAdsbSupplier);
+                        Vector<Flight> liveFlights;
+                        try {
+                            liveFlights = getLiveFlights(map, onlyMilitary, useAdsbSupplier);
+                        } catch (DataNotFoundException e) {
+                            return;
+                        }
                         ctrl.setLiveDataList(liveFlights);
                         markerList = ctrl.getLiveDataList()
                                 .stream()
@@ -168,7 +177,9 @@ public class DataLoader implements DataTask {
      * @return Vector of {@link Flight} objects, loaded directly with {@link Supplier}s
      */
     @NotNull
-    public Vector<Flight> getLiveFlights(@NotNull final TreasureMap map, boolean onlyMilitary, boolean useAdsbSupplier) {
+    public Vector<Flight> getLiveFlights(@NotNull final TreasureMap map, boolean onlyMilitary, boolean useAdsbSupplier)
+            throws DataNotFoundException {
+
         Fr24Deserializer deserializer = new Fr24Deserializer();
         if (onlyMilitary) {
             deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF", "VIVI", "CASA", "K35R", "Q4");
@@ -177,7 +188,10 @@ public class DataLoader implements DataTask {
         String[] currentArea = Areas.getCurrentArea(map);
         if (useAdsbSupplier) {
             if (adsbSupplier == null) {
-                adsbSupplier = new ADSBSupplier((String) Controller.getInstance().getConfig().getProperty("adsbRequestUri"), this);
+                Controller ctrl = Controller.getInstance();
+                Configuration config = ctrl.getConfig();
+                adsbSupplier = new ADSBSupplier(config.getProperty("adsbRequestUri").toString(), this);
+                adsbSupplier.setExceptionHandler(ctrl);
             }
             adsbSupplier.supply();
         } else {
@@ -208,9 +222,11 @@ public class DataLoader implements DataTask {
      * @return Stream of Frames with @param maxElements (or queue size) as length
      */
     @NotNull
-    public Stream<? extends Frame> pollFrames(@Range(from = 1, to = Integer.MAX_VALUE) int maxElements) {
+    public Stream<? extends Frame> pollFrames(@Range(from = 1, to = Integer.MAX_VALUE) int maxElements)
+            throws DataNotFoundException {
+
         if (this.isEmpty()) { // checking for empty queue
-            throw new InvalidDataException("Data-Queue is empty, make sure it is not empty!");
+            throw new DataNotFoundException("Data-Queue is empty, make sure it is not empty!");
         }
         // iterating over polled frames from data-queue and limiting to size
         int size = Math.min(maxElements, getQueueSize());
@@ -238,15 +254,17 @@ public class DataLoader implements DataTask {
                     return;
                 }
                 Fr24Supplier supplier = new Fr24Supplier(tNumber.getAndIncrement(), area);
+                supplier.setExceptionHandler(Controller.getInstance());
 
                 try {
-                    HttpResponse<String> response = supplier.sendRequest();
+                    HttpResponse<String> response = supplier.sendRequest(2);
                     Utilities.checkStatusCode(response.statusCode());
                     Stream<Fr24Frame> data = deserializer.deserialize(response);
                     insertLater(data);
                 } catch (IOException | InterruptedException e) {
-                    if (e instanceof SSLHandshakeException ssl) {
-                        Controller.getInstance().handleException(ssl);
+                    ExceptionHandler onError = supplier.getExceptionHandler();
+                    if (onError != null && e instanceof SSLHandshakeException ssl) {
+                        onError.handleException(ssl);
                     } else {
                         e.printStackTrace();
                     }

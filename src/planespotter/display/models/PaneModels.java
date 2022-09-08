@@ -22,6 +22,7 @@ import static planespotter.constants.Images.*;
  *
  * contains panel models for GUI
  */
+@Deprecated(since = "move to UserInterface and others")
 public final class PaneModels {
 
     @NotNull

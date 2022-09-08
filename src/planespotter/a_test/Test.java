@@ -65,11 +65,6 @@ public class Test {
         System.out.println(result);
 */
 
-        Controller ctrl = Controller.getInstance();
-        String adsbRequestUri = (String) ctrl.getConfig().getProperty("adsbRequestUri");
-
-        new ADSBSupplier(adsbRequestUri, ctrl.getDataLoader()).supply();
-
     }
 
     private static void printTest(PrinterJob printer) throws PrinterException {

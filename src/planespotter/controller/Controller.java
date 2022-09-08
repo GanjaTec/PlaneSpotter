@@ -15,6 +15,7 @@ import org.openstreetmap.gui.jmapviewer.tilesources.TMSTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 
 import planespotter.constants.*;
+import planespotter.display.models.ConnectionPane;
 import planespotter.display.models.PaneModels;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.FileWizard;
@@ -36,11 +37,16 @@ import planespotter.util.Utilities;
 import javax.imageio.ImageIO;
 import javax.net.ssl.SSLHandshakeException;
 import javax.swing.*;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ConnectException;
+import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpTimeoutException;
 import java.nio.file.FileAlreadyExistsException;
 import java.sql.SQLException;
 import java.util.*;
@@ -69,7 +75,7 @@ import static planespotter.constants.ViewType.*;
  * the view with the model and holds some important instances,
  * also a static instance of itself and of the VM ({@link Runtime})
  */
-public abstract class Controller {
+public abstract class Controller implements ExceptionHandler {
 
     // static fields
 
@@ -122,6 +128,9 @@ public abstract class Controller {
     // configuration instance
     @NotNull private final Configuration config;
 
+    // connection manager, manages user-input connections
+    @NotNull private final ConnectionManager connectionManager;
+
     // 'ADSBSupplier enabled' flag
     private boolean adsbEnabled;
 
@@ -135,9 +144,11 @@ public abstract class Controller {
         initConfig();
         this.scheduler = new Scheduler();
         this.dataLoader = new DataLoader();
+        this.connectionManager = new ConnectionManager(Configuration.CONNECTIONS_FILENAME);
         this.ui = new UserInterface(ActionHandler.getActionHandler(),
                                     (TileSource) config.getProperty("currentMapSource"),
-                                    (String) config.getProperty("title"));
+                                    (String) config.getProperty("title"),
+                                    this.connectionManager);
         this.clicking = false;
         this.terminated = false;
         this.adsbEnabled = false;
@@ -182,7 +193,7 @@ public abstract class Controller {
         config.setProperty("saveLogs", false);
         config.setProperty("mapBaseUrl", "https://a.tile.openstreetmap.de");
         config.setProperty("fr24RequestUri", "https://data-live.flightradar24.com/");
-        config.setProperty("adsbRequestUri", "http://192.168.178.47:8080/data/aircraft.json");
+        //config.setProperty("adsbRequestUri", "http://192.168.178.47:8080/data/aircraft.json");
         config.setProperty("bingMap", new BingAerialTileSource());
         config.setProperty("transportMap", new OsmTileSource.TransportMap());
         config.setProperty("openStreetMap", new TMSTileSource(new TileSourceInfo("OSM", (String) config.getProperty("mapBaseUrl"), "0")));
@@ -230,7 +241,7 @@ public abstract class Controller {
                 URL[] urls = new URL[] {
                         new URL((String) config.getProperty("fr24RequestUri")),
                         new URL((String) config.getProperty("mapBaseUrl")),
-                        new URL((String) config.getProperty("adsbRequestUri"))
+                       // new URL((String) config.getProperty("adsbRequestUri"))
                 };
                 Utilities.connectionPreCheck(2000, urls);
             } catch (IOException | Fr24Exception e) {
@@ -275,8 +286,13 @@ public abstract class Controller {
         } catch (IOException ioe) {
             handleException(ioe);
         }
+        try {
+            fileWizard.writeConnections(Configuration.CONNECTIONS_FILENAME, getConnectionManager());
+        } catch (IOException ioe) {
+            handleException(ioe);
+        }
         // saving log, if option is enabled
-        if (!((boolean) getConfig().getProperty("saveLogs"))) {
+        if ((boolean) getConfig().getProperty("saveLogs")) {
             fileWizard.saveLogFile("a_log", "[DEBUG] No output text yet...");
         }
         // inserting remaining frames, if option is enabled
@@ -284,7 +300,7 @@ public abstract class Controller {
         if (insertRemainingFrames && dbIn.isEnabled()) {
             try {
                 dbIn.insertRemaining(scheduler, dataLoader);
-            } catch (NoAccessException ignored) {
+            } catch (NoAccessException | DataNotFoundException ignored) {
             }
         }
         // busy-waiting for remaining tasks
@@ -401,7 +417,7 @@ public abstract class Controller {
             setLoading(true);
 
             search = new Search();
-            SearchType currentSearchType = getUI().getSearchPanel().getCurrentSearchType();
+            SearchType currentSearchType = getUI().getSearchPane().getCurrentSearchType();
             ViewType showType;
             try {
                 showType = switch (currentSearchType) {
@@ -637,6 +653,94 @@ public abstract class Controller {
         return markerHit;
     }
 
+    public void setConnection(boolean connect) {
+        ActionHandler onAction = ActionHandler.getActionHandler();
+        ConnectionManager cmg = getConnectionManager();
+        ConnectionManager.Connection selectedConn = cmg.getSelectedConn();
+        try {
+            setAdsbEnabled(connect);
+            if (selectedConn != null) {
+                selectedConn.setConnected(connect);
+                cmg.setSelectedConn(selectedConn.name);
+            }
+            if (connect) {
+                if (selectedConn == null) {
+                    return;
+                }
+                URI uri = selectedConn.uri;
+                System.out.println("Connecting to " + uri + "...");
+
+                getConfig().setProperty("adsbRequestUri", uri);
+                show(MAP_LIVE);
+            }
+        } finally {
+            getUI().getConnectionPane().showConnection(selectedConn, onAction);
+        }
+    }
+
+    public void addConnection(@NotNull ConnectionPane connPane, @NotNull JList<String> connList, @NotNull ListModel<String> model) {
+        String[] input = connPane.getInput();
+        int size = model.getSize();
+        Vector<String> listData = new Vector<>(size);
+        for (int i = 0; i < size; i++) {
+            listData.add(model.getElementAt(i));
+        }
+        ConnectionManager connMngr = getConnectionManager();
+        String key = input[0];
+        if (key == null || key.isBlank()) {
+            ui.showWarning(Warning.FIELDS_NOT_FILLED);
+            return;
+        }
+        try {
+            if (input.length == 2) {
+                String uri = input[1];
+                if (uri == null || uri.isBlank()) {
+                    ui.showWarning(Warning.FIELDS_NOT_FILLED);
+                    return;
+                }
+                connMngr.add(key, uri);
+            } else if (input.length == 4) {
+                String  host = input[1],
+                        port = input[2],
+                        path = input[3];
+
+                if (    host == null   || port == null
+                     || host.isBlank() || port.isBlank()) {
+                    ui.showWarning(Warning.FIELDS_NOT_FILLED);
+                    return;
+                }
+                if (path == null || path.isBlank()) {
+                    path = null;
+                }
+                connMngr.add(key, host, port, path);
+            }
+            listData.add(key);
+            connList.setListData(listData);
+        } catch (KeyCheckFailedException ex) {
+            ui.showWarning(Warning.NAME_NOT_UNIQUE);
+        } catch (IllegalInputException e) {
+            ui.showWarning(Warning.ILLEGAL_INPUT, "URI contains illegal expressions!");
+        }
+        connPane.closeAddDialog();
+    }
+
+    public void removeConnection(@NotNull JList<String> connList, @NotNull List<String> selectedValues, @NotNull ListModel<String> model) {
+        int size = model.getSize();
+        Vector<String> listData = new Vector<>(size);
+        String val;
+        for (int i = 0; i < size; i++) {
+            val = model.getElementAt(i);
+            if (!selectedValues.contains(val)) {
+                listData.add(val);
+            }
+        }
+        connList.setListData(listData);
+
+        ConnectionManager connMngr = getConnectionManager();
+        connMngr.setSelectedConn(null);
+        selectedValues.forEach(connMngr::remove);
+    }
+
     public void saveFile() {
         getUI().showLoadingScreen(true);
         setLoading(true);
@@ -716,6 +820,7 @@ public abstract class Controller {
      * @param thr is the throwable (usually an exception)
      *            which is thrown and going to be handled
      */
+    @Override
     public void handleException(final Throwable thr) {
 
         if (thr instanceof OutOfMemoryError oom) {
@@ -744,6 +849,9 @@ public abstract class Controller {
                 Scheduler.sleepSec(60);
                 dbIn.setEnabled(true);
                 dataLoader.setLive(true);
+
+            } else if (ioe instanceof HttpTimeoutException) {
+                getUI().showWarning(Warning.TIMEOUT, "Http Connection timed out!");
 
             } else if (ioe instanceof ConnectException cex) {
                 getUI().showWarning(Warning.NO_CONNECTION, cex.getMessage());
@@ -853,11 +961,15 @@ public abstract class Controller {
         }
     }
 
+    public void showConnectionManager() {
+        ConnectionPane pane = getUI().getConnectionPane();
+        pane.setVisible(true);
+    }
+
     /**
+     * getter for the {@link DataLoader} instance
      *
-     *
-     *
-     * @return
+     * @return the {@link DataLoader} instance
      */
     @NotNull
     public DataLoader getDataLoader() {
@@ -984,6 +1096,16 @@ public abstract class Controller {
      */
     public void setAdsbEnabled(boolean adsbEnabled) {
         this.adsbEnabled = adsbEnabled;
+    }
+
+    /**
+     * getter for the {@link ConnectionManager} instance
+     *
+     * @return the {@link ConnectionManager}
+     */
+    @NotNull
+    public ConnectionManager getConnectionManager() {
+        return this.connectionManager;
     }
 
     /**

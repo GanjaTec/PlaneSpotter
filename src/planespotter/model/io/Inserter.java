@@ -59,7 +59,7 @@ public class Inserter implements Runnable {
                     });
                     DBIn dbIn = DBIn.getDBIn();
                     dbIn.writeFr24(fr24Frames);
-                    dbIn.writeADSB(adsbFrames);
+                    //dbIn.writeADSB(adsbFrames);
                 } catch (final Throwable ex) {
                     Thread.onSpinWait();
                     if (!ex.getMessage().startsWith("Data-Queue is empty")) {

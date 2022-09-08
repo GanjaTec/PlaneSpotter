@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @see java.util.concurrent.ScheduledExecutorService
  */
 public class Scheduler {
+
     /**
      * Thread priority constants:
      *  LOW_PRIO is 2,

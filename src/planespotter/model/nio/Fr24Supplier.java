@@ -2,6 +2,7 @@ package planespotter.model.nio;
 
 import org.jetbrains.annotations.NotNull;
 
+import planespotter.model.ExceptionHandler;
 import planespotter.model.Fr24Collector;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
@@ -16,6 +17,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
@@ -32,7 +34,7 @@ import java.util.stream.Stream;
  * @see Fr24Collector
  * @see planespotter.a_test.TestMain
  */
-public class Fr24Supplier implements HttpSupplier {
+public class Fr24Supplier extends HttpSupplier {
 
 	// class instance fields
 	private final int threadNumber;
@@ -67,17 +69,22 @@ public class Fr24Supplier implements HttpSupplier {
 	@Override
 	public void supply() {
 		try {
-			System.out.println("Thread '" + this.getThreadName() + "' is starting...");
+			System.out.println("Thread '" + getThreadName() + "' is starting...");
 			// use Proto-deserializer for correct frame data
 			Fr24Deserializer deserializer = new Fr24Deserializer();
-			HttpResponse<String> response = this.sendRequest();
+			HttpResponse<String> response = sendRequest(3);
 
 			Utilities.checkStatusCode(response.statusCode());
 			Stream<Fr24Frame> fr24Frames = deserializer.deserialize(response);
 			// writing frames to DB
 			DBIn.getDBIn().writeFr24(fr24Frames);
-		} catch (IOException | InterruptedException e) {
-			e.printStackTrace();
+		} catch (IOException | InterruptedException | IllegalArgumentException e) {
+			ExceptionHandler onError = getExceptionHandler();
+			if (onError != null) {
+				onError.handleException(e);
+			} else {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -113,7 +120,7 @@ public class Fr24Supplier implements HttpSupplier {
 	 */
 	@Override
 	@NotNull
-	public HttpResponse<String> sendRequest() throws IOException, InterruptedException {
+	public HttpResponse<String> sendRequest(int timeoutSec) throws IOException, InterruptedException {
 
 		HttpRequest request = HttpRequest.newBuilder(URI.create("https://data-live.flightradar24.com/zones/fcgi/feed.js?faa=1&"
 				// bounds defines the visible area on the live map, directly linked to planes in the response
@@ -132,6 +139,7 @@ public class Fr24Supplier implements HttpSupplier {
 				+ "gliders=0&"
 				+ "stats=0"))
 				.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0")
+				.timeout(Duration.ofSeconds(timeoutSec))
 				.build();
 		return HTTP_CLIENT.send(request, BodyHandlers.ofString());
 	}

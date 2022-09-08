@@ -8,6 +8,7 @@ import planespotter.constants.Configuration;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.MapData;
 import planespotter.display.TreasureMap;
+import planespotter.model.ConnectionManager;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.ExtensionException;
 import planespotter.throwables.InvalidDataException;
@@ -18,7 +19,9 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.*;
 import java.nio.file.FileAlreadyExistsException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @name FileWizard
@@ -38,6 +41,37 @@ public class FileWizard {
      * used for static instance
      */
     private FileWizard() {
+    }
+
+    public void writeConnections(@NotNull String filename, @NotNull ConnectionManager cManager) throws IOException {
+        writeConnections(new File(filename), cManager);
+    }
+
+    public void writeConnections(@NotNull File file, @NotNull ConnectionManager cManager) throws IOException {
+        try (Writer fw = new FileWriter(file);
+             BufferedWriter buf = new BufferedWriter(fw)) {
+            for (ConnectionManager.Connection conn : cManager.getConnections()) {
+                buf.write(conn.name + ": " + conn.uri + "\n");
+            }
+        }
+    }
+
+    public Map<String, ConnectionManager.Connection> readConnections(@NotNull String filename) throws IOException {
+        return readConnections(new File(filename));
+    }
+
+    public Map<String, ConnectionManager.Connection> readConnections(@NotNull File file) throws IOException {
+        if (!file.exists()) {
+            throw new FileNotFoundException("File '" + file.getName() + "' not found!");
+        }
+        try (Reader fr = new FileReader(file);
+             BufferedReader buf = new BufferedReader(fr)) {
+            return buf.lines()
+                    .filter(line -> !line.isBlank() && line.contains(": "))
+                    .map(line -> line.split(": "))
+                    .filter(arr -> arr.length == 2)
+                    .collect(Collectors.toMap(arr -> arr[0], arr -> new ConnectionManager.Connection(arr[0], arr[1])));
+        }
     }
 
     /**

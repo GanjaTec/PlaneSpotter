@@ -23,6 +23,8 @@ public final class Configuration {
 
     public static final String FILTERS_FILENAME = Paths.RESOURCE_PATH + "filters.psc";
 
+    public static final String CONNECTIONS_FILENAME = Paths.RESOURCE_PATH + "connections.psc";
+
     @NotNull private final Map<String, Object> props = new HashMap<>();
 
     @NotNull
@@ -38,6 +40,7 @@ public final class Configuration {
         props.put(key, value);
     }
 
+    @NotNull
     public List<Map.Entry<String, Object>> getUserProperties() {
         Set<String> userKeys = Set.of("dataLimit", "currentMapSource", "gridSizeLat", "gridSizeLon");
         return props.entrySet()
