@@ -241,16 +241,19 @@ public final class DBIn extends DBConnector {
 			// insert into planes
 			try (Connection conn = DBConnector.getConnection(false)) {
 
-				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.PLANEQUERRY, Statement.RETURN_GENERATED_KEYS);
-				pstmt.setString(1, f.getIcaoAddr());
-				pstmt.setString(2, f.getTailnr());
-				pstmt.setString(3, f.getRegistration());
-				pstmt.setString(4, f.getPlanetype());
-				pstmt.setInt(5, airlineID);
-				pstmt.executeUpdate();
+				String icao = f.getIcaoAddr();
+				if(icao != null){
+					PreparedStatement pstmt = conn.prepareStatement(SQLQueries.PLANEQUERRY, Statement.RETURN_GENERATED_KEYS);
+					pstmt.setString(1, icao);
+					pstmt.setString(2, f.getTailnr());
+					pstmt.setString(3, f.getRegistration());
+					pstmt.setString(4, f.getPlanetype());
+					pstmt.setInt(5, airlineID);
+					pstmt.executeUpdate();
 
-				ResultSet rs = pstmt.getGeneratedKeys();
-				return rs.next() ? rs.getInt(1) : -1;
+					ResultSet rs = pstmt.getGeneratedKeys();
+					return rs.next() ? rs.getInt(1) : -1;
+				}
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
