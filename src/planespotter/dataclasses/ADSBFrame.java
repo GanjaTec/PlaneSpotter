@@ -15,10 +15,14 @@ public class ADSBFrame extends Frame {
 
     private final String hex, flight;
 
-    public ADSBFrame(@NotNull String hex, double lat, double lon, int heading, int alt, int speed, int squawk, @NotNull String flight, int now) {
+    private final int track, gs;
+
+    public ADSBFrame(@NotNull String hex, double lat, double lon, int heading, int alt, int speed, int squawk, @NotNull String flight, int now, int track, int trueAirSpeed) {
         super(lat, lon, heading, alt, speed, squawk, now);
         this.hex = hex;
         this.flight = flight;
+        this.track = track;
+        this.gs = trueAirSpeed;
     }
 
     public String getIcaoAddr() {
@@ -27,5 +31,13 @@ public class ADSBFrame extends Frame {
 
     public String getCallsign() {
         return flight;
+    }
+
+    public int getHeading() {
+        return track;
+    }
+
+    public int getGroundspeed() {
+        return gs;
     }
 }

@@ -23,6 +23,7 @@ import static planespotter.constants.DefaultColor.*;
  *
  * class SearchModels contains different (gui-menu) search models
  */
+@Deprecated(since = "move to SearchPane")
 public final class SearchModels {
 
     /**
@@ -116,26 +117,23 @@ public final class SearchModels {
      * @return list of JLabels (the search field names)
      */
     public List<JComponent> flightSearch(SearchPane pane, ActionHandler listener) {
-        var components = new ArrayList<JComponent>();
+        ArrayList<JComponent> components = new ArrayList<>();
         components.add(new JLabel("ID:"));
-        var id = new JTextField();
+        JTextField id = new JTextField();
         pane.searchFields.put("flight.id", id);
         components.add(id);
         components.add(new JLabel("Callsign.:"));
-        var callsign = new JTextField();
+        JTextField callsign = new JTextField();
         pane.searchFields.put("flight.callsign", callsign);
         components.add(callsign);
         // TODO: 09.08.2022 FlightNr
 
-        var loadList = new UWPButton();
-        loadList.setText("Load List");
-        components.add(loadList);
-        var loadMap = new UWPButton();
-        loadMap.setText("Load Map");
-        components.add(loadMap);
+        UWPButton searchBt = new UWPButton();
+        searchBt.setText("Search");
+        components.add(searchBt);
         int width = (pane.getWidth()-20)/2;
         int y = 55;
-        for (var c : components) {
+        for (JComponent c : components) {
             if (c instanceof JLabel) {
                 c.setBounds(10, y, width, 25);
                 c.setBackground(DEFAULT_BG_COLOR.get());
@@ -150,12 +148,8 @@ public final class SearchModels {
                 y += 35;
             } else if (c instanceof JButton bt) {
                 var buttonText = bt.getText();
-                if (buttonText.equals("Load List")) {
-                    bt.setBounds(10, pane.getHeight()-35, width-5, 25);
-                    bt.setName("loadList");
-                } else if (buttonText.equals("Load Map")) {
-                    bt.setBounds((pane.getWidth()/2)+5, pane.getHeight()-35, width-5, 25);
-                    bt.setName("loadMap");
+                if (buttonText.equals("Search")) {
+                    bt.setBounds(10, pane.getHeight()-35, pane.getWidth()-20, 25);
                 }
                 bt.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
                 bt.setForeground(DEFAULT_FONT_COLOR.get());
@@ -173,32 +167,29 @@ public final class SearchModels {
      * @return list of JLabels (the search field names)
      */
     public List<JComponent> planeSearch(SearchPane pane, ActionHandler listener) {
-        var components = new ArrayList<JComponent>();
+        ArrayList<JComponent> components = new ArrayList<>();
         components.add(new JLabel("ID:"));
-        var id = new JTextField();
+        JTextField id = new JTextField();
         pane.searchFields.put("plane.id", id);
         components.add(id);
         components.add(new JLabel("Planetype:"));
-        var planetype = new JTextField();
+        JTextField planetype = new JTextField();
         pane.searchFields.put("plane.type", planetype);
         components.add(planetype);
         components.add(new JLabel("ICAO:"));
-        var icao = new JTextField();
+        JTextField icao = new JTextField();
         pane.searchFields.put("plane.icao", icao);
         components.add(icao);
         components.add(new JLabel("Tail-Nr.:"));
-        var tailNr = new JTextField();
+        JTextField tailNr = new JTextField();
         pane.searchFields.put("plane.tailnr", tailNr);
         components.add(tailNr);
-        var loadList = new UWPButton();
-        loadList.setText("Load List");
-        components.add(loadList);
-        var loadMap = new UWPButton();
-        loadMap.setText("Load Map");
-        components.add(loadMap);
+        UWPButton searchBt = new UWPButton();
+        searchBt.setText("Search");
+        components.add(searchBt);
         int width = (pane.getWidth()-20)/2;
         int y = 55;
-        for (var c : components) {
+        for (JComponent c : components) {
             if (c instanceof JLabel) {
                 c.setBounds(10, y, width, 25);
                 c.setBackground(DEFAULT_BG_COLOR.get());
@@ -212,13 +203,9 @@ public final class SearchModels {
                 c.addKeyListener(listener);
                 y += 35;
             } else if (c instanceof JButton bt) {
-                var buttonText = bt.getText();
-                if (buttonText.equals("Load List")) {
-                    bt.setBounds(10, pane.getHeight()-35, width-5, 25);
-                    bt.setName("loadList");
-                } else if (buttonText.equals("Load Map")) {
-                    bt.setBounds((pane.getWidth()/2)+5, pane.getHeight()-35, width-5, 25);
-                    bt.setName("loadMap");
+                String buttonText = bt.getText();
+                if (buttonText.equals("Search")) {
+                    bt.setBounds(10, pane.getHeight()-35, pane.getWidth()-20, 25);
                 }
                 bt.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
                 bt.setForeground(DEFAULT_FONT_COLOR.get());
@@ -232,28 +219,26 @@ public final class SearchModels {
     }
 
     public ArrayList<JComponent> airportSearch(SearchPane pane, ActionHandler listener) {
-        var components = new ArrayList<JComponent>();
+        ArrayList<JComponent> components = new ArrayList<>();
         components.add(new JLabel("ID:"));
-        var id = new JTextField();
+        JTextField id = new JTextField();
         pane.searchFields.put("airport.id", id);
         components.add(id);
         components.add(new JLabel("Tag:"));
-        var tag = new JTextField();
+        JTextField tag = new JTextField();
         pane.searchFields.put("airport.tag", tag);
         components.add(tag);
         components.add(new JLabel("Name:"));
-        var name = new JTextField();
+        JTextField name = new JTextField();
         pane.searchFields.put("airport.name", name);
         components.add(name);
-        var loadList = new UWPButton();
-        loadList.setText("Load List");
-        components.add(loadList);
-        var loadMap = new UWPButton();
-        loadMap.setText("Load Map");
-        components.add(loadMap);
+        UWPButton searchBt = new UWPButton();
+        searchBt.setText("Search");
+        components.add(searchBt);
+
         int width = (pane.getWidth()-20)/2;
         int y = 55;
-        for (var c : components) {
+        for (JComponent c : components) {
             if (c instanceof JLabel) {
                 c.setBounds(10, y, width, 25);
                 c.setBackground(DEFAULT_BG_COLOR.get());
@@ -267,13 +252,9 @@ public final class SearchModels {
                 c.addKeyListener(listener);
                 y += 35;
             } else if (c instanceof JButton bt) {
-                var buttonText = bt.getText();
-                if (buttonText.equals("Load List")) {
-                    bt.setBounds(10, pane.getHeight()-35, width-5, 25);
-                    bt.setName("loadList");
-                } else if (buttonText.equals("Load Map")) {
-                    bt.setBounds((pane.getWidth()/2)+5, pane.getHeight()-35, width-5, 25);
-                    bt.setName("loadMap");
+                String buttonText = bt.getText();
+                if (buttonText.equals("Search")) {
+                    bt.setBounds(10, pane.getHeight()-35, pane.getWidth()-20, 25);
                 }
                 bt.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
                 bt.setForeground(DEFAULT_FONT_COLOR.get());
@@ -287,32 +268,29 @@ public final class SearchModels {
     }
 
     public List<JComponent> airlineSearch(@NotNull SearchPane pane, @NotNull ActionHandler listener) {
-        var components = new ArrayList<JComponent>();
+        ArrayList<JComponent> components = new ArrayList<JComponent>();
         components.add(new JLabel("ID:"));
-        var id = new JTextField();
+        JTextField id = new JTextField();
         pane.searchFields.put("airline.id", id);
         components.add(id);
         components.add(new JLabel("Tag:"));
-        var tag = new JTextField();
+        JTextField tag = new JTextField();
         pane.searchFields.put("airline.tag", tag);
         components.add(tag);
         components.add(new JLabel("Name:"));
-        var name = new JTextField();
+        JTextField name = new JTextField();
         pane.searchFields.put("airline.name", name);
         components.add(name);
         components.add(new JLabel("Country:"));
-        var country = new JTextField();
+        JTextField country = new JTextField();
         pane.searchFields.put("airline.country", country);
         components.add(country);
-        var loadList = new UWPButton();
-        loadList.setText("Load List");
-        components.add(loadList);
-        var loadMap = new UWPButton();
-        loadMap.setText("Load Map");
-        components.add(loadMap);
+        UWPButton searchBt = new UWPButton();
+        searchBt.setText("Search");
+        components.add(searchBt);
         int width = (pane.getWidth()-20)/2;
         int y = 55;
-        for (var c : components) {
+        for (JComponent c : components) {
             if (c instanceof JLabel) {
                 c.setBounds(10, y, width, 25);
                 c.setBackground(DEFAULT_BG_COLOR.get());
@@ -326,13 +304,9 @@ public final class SearchModels {
                 c.addKeyListener(listener);
                 y += 35;
             } else if (c instanceof JButton bt) {
-                var buttonText = bt.getText();
-                if (buttonText.equals("Load List")) {
-                    bt.setBounds(10, pane.getHeight()-35, width-5, 25);
-                    bt.setName("loadList");
-                } else if (buttonText.equals("Load Map")) {
-                    bt.setBounds((pane.getWidth()/2)+5, pane.getHeight()-35, width-5, 25);
-                    bt.setName("loadMap");
+                String buttonText = bt.getText();
+                if (buttonText.equals("Search")) {
+                    bt.setBounds(10, pane.getHeight()-35, pane.getWidth()-20, 25);
                 }
                 bt.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
                 bt.setForeground(DEFAULT_FONT_COLOR.get());

@@ -547,6 +547,20 @@ public abstract class Utilities {
         return inputs;
     }
 
+    /**
+     * checks an {@link URI} for illegal expressions
+     *
+     * @param uri is the {@link URI} to check
+     * @throws IllegalInputException if an illegal expression was found
+     */
+    public static void checkUri(@NotNull URI uri) throws IllegalInputException {
+        String scheme = uri.getScheme();
+        if (scheme == null || (!scheme.equals("http") && !scheme.equals("https"))) {
+            throw new IllegalInputException("Wrong scheme, URI must begin with 'http' or 'https'!");
+        }
+        // TODO: 08.09.2022 weitere checks
+    }
+
 
     // image utilities
 

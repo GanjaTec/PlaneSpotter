@@ -19,6 +19,7 @@ import java.util.Arrays;
  *
  * MenuModels class contains different menu component models
  */
+@Deprecated(since = "move to UserInterface")
 public final class MenuModels {
 
     @NotNull

@@ -144,7 +144,7 @@ public final class DBIn extends DBConnector {
 	 */
 	@NotNull
 	public synchronized CompletableFuture<Void> insertRemaining(@NotNull final Scheduler scheduler, @NotNull DataLoader dataLoader)
-			throws NoAccessException {
+			throws NoAccessException, DataNotFoundException {
 		if (!enabled) {
 			throw new NoAccessException("DB-Writer is disabled!");
 		}
@@ -239,8 +239,9 @@ public final class DBIn extends DBConnector {
 	public int insertPlane(@NotNull Fr24Frame f, int airlineID) {
 		synchronized (DB_SYNC) {
 			// insert into planes
-			try (Connection conn = DBConnector.getConnection(false);
-				 PreparedStatement pstmt = conn.prepareStatement(SQLQueries.PLANEQUERRY, Statement.RETURN_GENERATED_KEYS)) {
+			try (Connection conn = DBConnector.getConnection(false)) {
+
+				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.PLANEQUERRY, Statement.RETURN_GENERATED_KEYS);
 				pstmt.setString(1, f.getIcaoAddr());
 				pstmt.setString(2, f.getTailnr());
 				pstmt.setString(3, f.getRegistration());
