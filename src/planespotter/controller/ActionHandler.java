@@ -8,21 +8,22 @@ import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import planespotter.constants.*;
 import planespotter.dataclasses.Hotkey;
 import planespotter.display.Diagrams;
+import planespotter.display.models.*;
+import planespotter.model.ConnectionManager;
 import planespotter.model.Scheduler;
 import planespotter.display.UserInterface;
-import planespotter.display.models.InfoPane;
-import planespotter.display.models.LayerPane;
-import planespotter.display.models.SearchPane;
-import planespotter.display.models.SettingsPane;
 import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.KeyCheckFailedException;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.net.URI;
+import java.util.*;
+import java.util.List;
 
 import static java.awt.event.KeyEvent.*;
 import static planespotter.constants.ViewType.MAP_LIVE;
@@ -41,7 +42,7 @@ import static planespotter.constants.ViewType.MAP_LIVE;
 public abstract class ActionHandler
         implements  ActionListener, KeyListener,
                     ComponentListener, MouseListener,
-                    ItemListener, WindowListener {
+                    ItemListener, WindowListener, ListSelectionListener {
 
     // ActionHandler instance, we need only one instance here,
     // because we don't want parallel listeners who listen to the same actions
@@ -103,23 +104,33 @@ public abstract class ActionHandler
     public synchronized void buttonClicked(@NotNull JButton button, @NotNull Controller ctrl, @NotNull UserInterface ui) {
         ctrl.getScheduler().exec(() -> {
 
-            if (button.getText().equals("Cancel")) {
-                ui.getSettings().setVisible(false);
-
-            } else if (button.getText().equals("Confirm")) {
-                SettingsPane settings = ui.getSettings();
-                ctrl.confirmSettings(settings.getValues());
-                ui.showSettings(false);
-
-            } else if (button.getName().equals("loadList")) {
-                // future
-                ctrl.show(ViewType.MAP_HEATMAP);
-
-            } else if (button.getName().equals("loadMap")) {
-                String[] inputs;
-                if ((inputs = ctrl.getUI().getSearchPanel().searchInput()) != null) {
-                    ctrl.search(inputs, 1);
+            String text = button.getText();
+            switch (text) {
+                case "Cancel" -> ui.getSettings().setVisible(false);
+                case "Confirm" -> {
+                    SettingsPane settings = ui.getSettings();
+                    ctrl.confirmSettings(settings.getValues());
+                    ui.showSettings(false);
                 }
+                case "Search" -> {
+                    String[] inputs;
+                    if ((inputs = ctrl.getUI().getSearchPane().searchInput()) != null) {
+                        ctrl.search(inputs, 1);
+                    }
+                }
+                case "Add" -> {
+                    ConnectionPane connPane = ctrl.getUI().getConnectionPane();
+                    JList<String> connList = connPane.getConnectionList();
+                    connPane.showAddDialog(e -> ctrl.addConnection(connPane, connList, connList.getModel()));
+                }
+                case "Remove" -> {
+                    ConnectionPane connPane = ctrl.getUI().getConnectionPane();
+                    JList<String> connList = connPane.getConnectionList();
+                    ctrl.removeConnection(connList, connList.getSelectedValuesList(), connList.getModel());
+                    connPane.showConnection(null, e -> {});
+                }
+                case "Connect" -> ctrl.setConnection(true);
+                case "Disconnect" -> ctrl.setConnection(false);
             }
         }, "Action Handler", false, Scheduler.MID_PRIO, true);
     }
@@ -160,8 +171,7 @@ public abstract class ActionHandler
         int key = event.getKeyCode();
         try {
             if (source instanceof JTextField && key == VK_ENTER) {
-                JButton jButton = new JButton();
-                jButton.setName("loadMap");
+                JButton jButton = new JButton("Search");
                 buttonClicked(jButton, Controller.getInstance(), ui);
             }
         } catch (NumberFormatException ex) {
@@ -202,19 +212,14 @@ public abstract class ActionHandler
      *
      * @param source is the source component, on which the change occurred
      * @param item is the item String
-     * @param ui is the GUI instance
+     * @param ctrl is the Controller instance
      */
-    private void itemChanged(@NotNull Object source, @NotNull String item, @NotNull UserInterface ui) {
-        SearchPane searchPanel = ui.getSearchPanel();
+    private void itemChanged(@NotNull Object source, @NotNull String item, @NotNull Controller ctrl) {
+        UserInterface ui = ctrl.getUI();
+        SearchPane searchPanel = ui.getSearchPane();
         if (source == searchPanel.getSearchCmbBox()) {
             searchPanel.clearSearch();
             ui.showSearch(SearchType.byItemString(item));
-        } else if (source == ui.getSettings().getMapTypeCmbBox()) {
-            /*switch (item) {
-                case "Bing Map" -> UserSettings.setCurrentMapSource(UserSettings.BING_MAP);
-                case "Open Street Map" -> UserSettings.setCurrentMapSource(UserSettings.DEFAULT_MAP);
-                case "Transport Map" -> UserSettings.setCurrentMapSource(UserSettings.TRANSPORT_MAP);
-            }*/
         }
     }
 
@@ -227,6 +232,7 @@ public abstract class ActionHandler
             case "Fullscreen" -> ui.setFullScreen(!ui.isFullscreen());
             case "Exit" -> ctrl.shutdown(false);
             case "Fr24-Supplier" -> ctrl.runFr24Collector();
+            case "ADSB-Supplier" -> ctrl.showConnectionManager();
             // TODO: 25.08.2022 ctrl.showStats(ViewType type)
             case "Top-Airports" -> {
                 try {
@@ -244,7 +250,7 @@ public abstract class ActionHandler
             }
             case "Position-HeatMap" -> ctrl.show(ViewType.MAP_HEATMAP);
 
-            case "ADSB-Supplier", "Antenna" -> ui.showWarning(Warning.NOT_SUPPORTED_YET);
+            case "Antenna" -> ui.showWarning(Warning.NOT_SUPPORTED_YET);
         }
     }
 
@@ -253,10 +259,14 @@ public abstract class ActionHandler
         Controller ctrl = Controller.getInstance();
         UserInterface ui = ctrl.getUI();
         switch (text) {
-            case "Live-Map" -> ctrl.show(MAP_LIVE);
+            case "Live-Map" -> {
+                ctrl.setAdsbEnabled(false);
+                ctrl.show(MAP_LIVE);
+            }
             case "Search" -> ui.showSearch(SearchType.FLIGHT);
             case "Settings" -> ui.showSettings(true);
             case "Close View" -> {
+                ctrl.setAdsbEnabled(false);
                 ctrl.setDataList(null);
                 ctrl.getLiveLoader().setLive(false);
                 ui.clearView();
@@ -353,8 +363,27 @@ public abstract class ActionHandler
     public void itemStateChanged(ItemEvent e) {
         Object src = e.getSource();
         String item = (String) e.getItem();
-        UserInterface ui = Controller.getInstance().getUI();
-        itemChanged(src, item, ui);
+        Controller ctrl = Controller.getInstance();
+        itemChanged(src, item, ctrl);
+    }
+
+    /**
+     * executed when a JList-value changes, e.g. by selection or deselection
+     *
+     * @param e is the {@link ListSelectionEvent}
+     */
+    @Override
+    public synchronized void valueChanged(ListSelectionEvent e) {
+        Controller ctrl = Controller.getInstance();
+        ConnectionManager.Connection conn; ConnectionManager connMngr;
+        if (e.getSource() instanceof JList<?> jlist) {
+                String selectedItem = (String) jlist.getSelectedValue();
+                connMngr = ctrl.getConnectionManager();
+                connMngr.setSelectedConn(selectedItem);
+                if ((conn = connMngr.getSelectedConn()) != null) {
+                    ctrl.getUI().getConnectionPane().showConnection(conn, this);
+                }
+        }
     }
 
     /**

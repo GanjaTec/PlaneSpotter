@@ -4,7 +4,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
-import planespotter.constants.Configuration;
 import planespotter.constants.SearchType;
 import planespotter.constants.ViewType;
 import planespotter.constants.Warning;
@@ -12,12 +11,11 @@ import planespotter.controller.ActionHandler;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.display.models.*;
+import planespotter.model.ConnectionManager;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @name UserInterface
@@ -34,28 +32,25 @@ public class UserInterface {
     @NotNull public static final Font DEFAULT_FONT = new Font("DialogInput", Font.BOLD, 16);
 
     // main window, contains all components
-    @NotNull
-    private final JFrame window;
+    @NotNull private final JFrame window;
 
     // layer pane, contains all view layers and layer-operations
-    @NotNull
-    private final LayerPane layerPane;
+    @NotNull private final LayerPane layerPane;
 
     // search panel for data search
-    @NotNull
-    private final SearchPane searchPanel;
+    @NotNull private final SearchPane searchPane;
 
     // settings panel, contains all settings
-    @NotNull
-    private final SettingsPane settings;
+    @NotNull private final SettingsPane settings;
+
+    // connection pane, for connection managing
+    @NotNull private final ConnectionPane connectionPane;
 
     // map manager, manages map operations
-    @NotNull
-    private final MapManager mapManager;
+    @NotNull private final MapManager mapManager;
 
     // the current view type
-    @NotNull
-    private ViewType currentViewType;
+    @NotNull private ViewType currentViewType;
 
     // indicates if a warning is shown at the moment
     private boolean warningShown;
@@ -66,13 +61,14 @@ public class UserInterface {
      *
      * @param actionHandler is the {@link ActionHandler} which handles all the actions
      */
-    public UserInterface(@NotNull ActionHandler actionHandler, @NotNull TileSource defaultMapSource, @NotNull String title) {
+    public UserInterface(@NotNull ActionHandler actionHandler, @NotNull TileSource defaultMapSource, @NotNull String title, @NotNull ConnectionManager connectionManager) {
 
         this.window = PaneModels.windowFrame(actionHandler, title);
         this.layerPane = new LayerPane(window.getSize());
         this.mapManager = new MapManager(this, actionHandler, defaultMapSource);
-        this.searchPanel = new SearchPane(this.layerPane, actionHandler);
+        this.searchPane = new SearchPane(this.layerPane, actionHandler);
         this.settings = new SettingsPane(this.window, actionHandler);
+        this.connectionPane = new ConnectionPane(window, actionHandler, actionHandler, actionHandler, connectionManager);
         this.window.add(this.layerPane);
 
         this.layerPane.setDefaultBottomComponent(this.getMap());
@@ -105,12 +101,12 @@ public class UserInterface {
         int x      = 10,
             y      = 175,
             width  = 250,
-            height = searchPanel.getHeight();
-        layerPane.addTop(searchPanel, x, y, width, height);
-        searchPanel.setVisible(!searchPanel.isVisible());
-        searchPanel.showSearch(type);
+            height = searchPane.getHeight();
+        layerPane.addTop(searchPane, x, y, width, height);
+        searchPane.setVisible(!searchPane.isVisible());
+        searchPane.showSearch(type);
         // component animation
-        layerPane.move(searchPanel, LayerPane.MoveDirection.RIGHT, x-200, y, 200);
+        layerPane.move(searchPane, LayerPane.MoveDirection.RIGHT, x-200, y, 200);
     }
 
     /**
@@ -272,8 +268,8 @@ public class UserInterface {
      * @return the UI-{@link SearchPane}
      */
     @NotNull
-    public SearchPane getSearchPanel() {
-        return this.searchPanel;
+    public SearchPane getSearchPane() {
+        return this.searchPane;
     }
 
     /**
@@ -314,5 +310,15 @@ public class UserInterface {
     @NotNull
     public SettingsPane getSettings() {
         return settings;
+    }
+
+    /**
+     * getter for {@link ConnectionPane}
+     *
+     * @return the UI-{@link ConnectionPane}
+     */
+    @NotNull
+    public ConnectionPane getConnectionPane() {
+        return connectionPane;
     }
 }

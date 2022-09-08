@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public enum Warning {
     LIVE_DATA_NOT_FOUND("No Live-Data found!"),
     NO_DATA_FOUND("Couldn't find any data!"),
+    FIELDS_NOT_FILLED("Some fields are not filled, please fill them and try again!"),
     SQL_ERROR("Seems like there is a problem with the database, please contact an admin!"),
     UNKNOWN_ERROR("Unknown error occurred, please contact an admin!"),
     TIMEOUT("Timeout! Task takes more time than expected! \nIf the Program is lagging, try to restart it!"),
@@ -27,6 +28,7 @@ public enum Warning {
     HANDSHAKE("Handshake Exception, pausing Collector for 1 minute!"),
     NO_CONNECTION("Connection failed, please check internet connection and try again!"),
     URL_NOT_REACHABLE("a data cloud URL is not reachable, please check your internet connection!"),
+    NAME_NOT_UNIQUE("Name must be unique, please change the name and try again!"),
     OUT_OF_MEMORY("OutOfMemoryError, please restart the program!");
 
     // warning string instance field
