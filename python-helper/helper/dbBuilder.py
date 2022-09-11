@@ -8,7 +8,7 @@ import csv
 import time
 
 buildt1= time.time()
-conn = sqlite3.connect('../../plane.db')
+conn = sqlite3.connect('../../planeTest.db')
 
 cursor = conn.cursor()
 print ("Created database successfully!")
@@ -45,7 +45,8 @@ conn.execute('''CREATE TABLE airports
          iatatag          CHAR(50) NOT NULL,
          name             CHAR(50),
          country          CHAR(50),
-         coords           CHAR(50)
+         lat              REAL,
+         lon              REAL
          );''')
 print("Table \"airports\" successfully created!")
 print("    Populating table \"airports\"...")
@@ -57,9 +58,10 @@ with open('airport-codes.csv', newline='\n') as csvfile:
         if row["iata_code"] in (None, ""):
             pass
         else:
-            values = (None, row["iata_code"],row["name"],row["iso_country"],row["coordinates"])
+            cords = row["coordinates"].split(", ")
+            values = (None, row["iata_code"],row["name"],row["iso_country"], coords[1], coords[2])
             #print("| {} | {} | {} | {} | {} |".format(*values))
-            sql = '''INSERT INTO airports VALUES (?, ?, ?, ?, ?)'''
+            sql = '''INSERT INTO airports VALUES (?, ?, ?, ?, ?, ?)'''
             cursor.execute(sql, values)
             i = i+1
     t2 = time.time()
