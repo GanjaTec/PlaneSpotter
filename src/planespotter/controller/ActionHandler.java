@@ -2,16 +2,16 @@ package planespotter.controller;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
-
-import planespotter.constants.*;
+import planespotter.constants.SearchType;
+import planespotter.constants.ViewType;
+import planespotter.constants.Warning;
 import planespotter.dataclasses.Hotkey;
-import planespotter.display.Diagrams;
+import planespotter.display.StatsView;
+import planespotter.display.UserInterface;
 import planespotter.display.models.*;
 import planespotter.model.ConnectionManager;
 import planespotter.model.Scheduler;
-import planespotter.display.UserInterface;
 import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
 
@@ -20,7 +20,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import static java.awt.event.KeyEvent.*;
 import static planespotter.constants.ViewType.MAP_LIVE;
@@ -258,14 +260,14 @@ public abstract class ActionHandler
             // TODO: 25.08.2022 ctrl.showStats(ViewType type)
             case "Top-Airports" -> {
                 try {
-                    Diagrams.showTopAirports(ui, new Statistics());
+                    StatsView.showTopAirports(ui, new Statistics());
                 } catch (DataNotFoundException e) {
                     ctrl.handleException(e);
                 }
             }
             case "Top-Airlines" -> {
                 try {
-                    Diagrams.showTopAirlines(ui, new Statistics());
+                    StatsView.showTopAirlines(ui, new Statistics());
                 } catch (DataNotFoundException e) {
                     ctrl.handleException(e);
                 }

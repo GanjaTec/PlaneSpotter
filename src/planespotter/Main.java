@@ -1,11 +1,6 @@
 package planespotter;
 
-import planespotter.controller.ActionHandler;
 import planespotter.controller.Controller;
-import planespotter.dataclasses.Hotkey;
-
-import java.awt.event.KeyEvent;
-import java.io.IOException;
 
 /**
  * @name Main

@@ -1,10 +1,8 @@
 package planespotter.controller;
 
 import libs.ZoomPane;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
@@ -13,39 +11,43 @@ import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.TMSTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
-
 import planespotter.constants.*;
+import planespotter.dataclasses.*;
+import planespotter.display.MapManager;
+import planespotter.display.StatsView;
+import planespotter.display.TreasureMap;
+import planespotter.display.UserInterface;
 import planespotter.display.models.ConnectionPane;
+import planespotter.model.*;
 import planespotter.model.io.DBIn;
+import planespotter.model.io.DBOut;
 import planespotter.model.io.FileWizard;
 import planespotter.model.nio.ADSBSupplier;
+import planespotter.model.nio.DataLoader;
 import planespotter.model.nio.FilterManager;
 import planespotter.model.nio.Fr24Supplier;
-import planespotter.model.nio.DataLoader;
-import planespotter.throwables.*;
-import planespotter.dataclasses.*;
-import planespotter.display.*;
-import planespotter.model.*;
-import planespotter.model.io.DBOut;
 import planespotter.statistics.Statistics;
+import planespotter.throwables.*;
 import planespotter.util.Bitmap;
-import planespotter.util.math.MathUtils;
 import planespotter.util.Utilities;
+import planespotter.util.math.MathUtils;
 
 import javax.imageio.ImageIO;
 import javax.net.ssl.SSLHandshakeException;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.URL;
 import java.net.http.HttpTimeoutException;
 import java.nio.file.FileAlreadyExistsException;
 import java.sql.SQLException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -1014,7 +1016,7 @@ public abstract class Controller implements ExceptionHandler {
                         return;
                     }
                     Bitmap bmp = new Statistics().globalPositionBitmap(gridSize);
-                    Diagrams.showPosHeatMap(getUI(), bmp);
+                    StatsView.showPosHeatMap(getUI(), bmp);
                 } catch (NumberFormatException nfe) {
                     getUI().showWarning(Warning.NUMBER_EXPECTED, "Please enter a float value (0.025 - 2.0)");
                 } catch (DataNotFoundException | OutOfMemoryError e) {
@@ -1024,9 +1026,9 @@ public abstract class Controller implements ExceptionHandler {
                 }
             }, "Loading Data", false, Scheduler.MID_PRIO, true);
         } else if (bitmap != null) {
-            Diagrams.showPosHeatMap(getUI(), bitmap);
+            StatsView.showPosHeatMap(getUI(), bitmap);
         } else {
-            Diagrams.showPosHeatMap(getUI(), buf);
+            StatsView.showPosHeatMap(getUI(), buf);
         }
     }
 

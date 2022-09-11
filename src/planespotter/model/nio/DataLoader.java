@@ -3,13 +3,14 @@ package planespotter.model.nio;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
-
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
-
 import planespotter.constants.Areas;
 import planespotter.constants.Configuration;
 import planespotter.controller.Controller;
-import planespotter.dataclasses.*;
+import planespotter.dataclasses.Flight;
+import planespotter.dataclasses.Fr24Frame;
+import planespotter.dataclasses.Frame;
+import planespotter.dataclasses.PlaneMarker;
 import planespotter.display.TreasureMap;
 import planespotter.model.ExceptionHandler;
 import planespotter.model.Scheduler;
@@ -20,8 +21,8 @@ import planespotter.util.Time;
 import planespotter.util.Utilities;
 
 import javax.net.ssl.SSLHandshakeException;
-import java.net.http.HttpResponse;
 import java.io.IOException;
+import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;

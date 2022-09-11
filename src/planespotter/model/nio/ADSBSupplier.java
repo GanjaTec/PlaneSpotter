@@ -1,18 +1,13 @@
 package planespotter.model.nio;
 
 import org.jetbrains.annotations.NotNull;
-
-import planespotter.dataclasses.ADSBFrame;
 import planespotter.dataclasses.Frame;
 import planespotter.model.ExceptionHandler;
-import planespotter.model.Scheduler;
-import planespotter.util.Utilities;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.util.stream.Stream;
 

@@ -1,10 +1,9 @@
 package planespotter.model.nio;
 
 import org.jetbrains.annotations.NotNull;
-
+import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.ExceptionHandler;
 import planespotter.model.Fr24Collector;
-import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
 import planespotter.util.Time;
 import planespotter.util.Utilities;

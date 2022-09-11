@@ -3,12 +3,9 @@ package planespotter.util.math;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import planespotter.util.Utilities;
-import planespotter.util.math.Vector2D;
-import planespotter.util.math.Vector3D;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.concurrent.TimeUnit;
 
 import static java.lang.StrictMath.*;
 

@@ -1,17 +1,14 @@
 package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
-
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteDataSource;
-
 import planespotter.controller.Controller;
 import planespotter.dataclasses.DBResult;
 import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.NoAccessException;
 
 import java.sql.*;
-import java.util.Arrays;
 
 /**
  * @name DBConnector

@@ -1,14 +1,11 @@
 package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
-import planespotter.dataclasses.ADSBFrame;
+import planespotter.dataclasses.Fr24Frame;
 import planespotter.dataclasses.Frame;
 import planespotter.model.Scheduler;
-import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.nio.DataLoader;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.Queue;
 import java.util.stream.Stream;
 

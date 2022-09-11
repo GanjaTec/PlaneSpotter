@@ -1,16 +1,15 @@
 package planespotter.model.nio;
 
 import com.google.gson.*;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.throwables.Fr24Exception;
 import planespotter.throwables.InvalidDataException;
 
 import java.net.http.HttpResponse;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**

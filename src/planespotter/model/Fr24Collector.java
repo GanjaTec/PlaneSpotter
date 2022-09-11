@@ -3,16 +3,18 @@ package planespotter.model;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
-
 import planespotter.constants.Areas;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.Frame;
 import planespotter.display.models.SupplierDisplay;
-import planespotter.model.io.*;
+import planespotter.model.io.DBIn;
+import planespotter.model.io.Inserter;
+import planespotter.model.io.Keeper;
+import planespotter.model.io.KeeperOfTheArchives;
+import planespotter.model.nio.DataLoader;
 import planespotter.model.nio.FilterManager;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
-import planespotter.model.nio.DataLoader;
 import planespotter.util.math.MathUtils;
 
 import javax.swing.*;

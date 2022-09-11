@@ -6,21 +6,21 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
-import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
+import planespotter.model.io.DBOut;
+import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.InvalidDataException;
 import planespotter.util.Bitmap;
 import planespotter.util.Time;
-import planespotter.util.math.Vector2D;
-import planespotter.model.io.DBOut;
-import planespotter.throwables.DataNotFoundException;
 import planespotter.util.Utilities;
+import planespotter.util.math.Vector2D;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static planespotter.util.math.MathUtils.*;
+import static planespotter.util.math.MathUtils.abs;
+import static planespotter.util.math.MathUtils.divide;
 
 /**
  * @name Statistics

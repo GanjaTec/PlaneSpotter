@@ -1,50 +1,40 @@
 package planespotter.a_test;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
-
-import planespotter.constants.*;
-import planespotter.controller.Controller;
-import planespotter.dataclasses.Flight;
-import planespotter.model.nio.ADSBSupplier;
+import planespotter.constants.Images;
+import planespotter.constants.Paths;
+import planespotter.dataclasses.Position;
+import planespotter.model.io.DBOut;
+import planespotter.statistics.Statistics;
+import planespotter.throwables.DataNotFoundException;
 import planespotter.unused.ANSIColor;
 import planespotter.util.Bitmap;
-import planespotter.dataclasses.DataPoint;
-import planespotter.dataclasses.Position;
-import planespotter.statistics.Statistics;
-import planespotter.model.io.DBOut;
-import planespotter.throwables.DataNotFoundException;
-import planespotter.util.Time;
 import planespotter.util.Utilities;
 import sun.misc.Unsafe;
 
 import javax.imageio.ImageIO;
-import javax.print.DocFlavor;
-import javax.print.DocPrintJob;
-import javax.print.PrintService;
-import javax.print.SimpleDoc;
 import javax.swing.*;
-import javax.swing.Timer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.http.WebSocket;
-import java.util.*;
-import java.util.List;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Random;
+import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @TestOnly

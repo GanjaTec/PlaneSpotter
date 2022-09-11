@@ -8,15 +8,14 @@ import planespotter.display.UserInterface;
 import planespotter.throwables.NoSuchComponentException;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-
 import java.awt.*;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static planespotter.constants.DefaultColor.*;
-import static planespotter.constants.DefaultColor.DEFAULT_FONT_COLOR;
 
 public class SearchPane extends JPanel {
 
