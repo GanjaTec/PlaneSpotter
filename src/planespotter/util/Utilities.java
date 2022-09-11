@@ -14,6 +14,8 @@ import planespotter.util.math.MathUtils;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.Array;
@@ -109,6 +111,38 @@ public abstract class Utilities {
                 throw new Fr24Exception("address " + hostName + "is not reachable!");
             }
         }
+    }
+
+    /**
+     * creates an {@link URI} part-by-part
+     *
+     * @param scheme is the URI scheme (e.g. http or https)
+     * @param host is the URI hostname
+     * @param port os the URI port
+     * @param path is the URI path
+     * @param query is the URI query
+     * @param fragment is the URI fragment
+     * @return a new {@link URI} object, composed of these parts
+     */
+    @NotNull
+    public static URI createURI(@Nullable String scheme, @NotNull String host, @Nullable String port,
+                                @Nullable String path, @Nullable String query, @Nullable String fragment) {
+
+        if (host.isBlank()) {
+            throw new InvalidDataException("Host may not be blank");
+        }
+        String uriStr = (scheme == null ? "" : scheme + "://") + host +
+                        (port == null ? "" : ":" + port + "/") +
+                        (path == null ? "" : path) +
+                        (query == null ? "" : "?" + query) +
+                        (fragment == null ? "" : "#" + fragment);
+
+        try {
+            return URI.create(uriStr);
+        } catch (IllegalArgumentException iae) {
+            throw new InvalidDataException("URI string is invalid!", iae);
+        }
+
     }
 
     /**

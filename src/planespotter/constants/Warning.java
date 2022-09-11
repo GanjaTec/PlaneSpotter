@@ -29,6 +29,7 @@ public enum Warning {
     NO_CONNECTION("Connection failed, please check internet connection and try again!"),
     URL_NOT_REACHABLE("a data cloud URL is not reachable, please check your internet connection!"),
     NAME_NOT_UNIQUE("Name must be unique, please change the name and try again!"),
+    WRONG_FILE_EXTENSION("Please use the right file extension!"),
     OUT_OF_MEMORY("OutOfMemoryError, please restart the program!");
 
     // warning string instance field

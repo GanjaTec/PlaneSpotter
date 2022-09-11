@@ -77,7 +77,7 @@ public class Fr24Supplier extends HttpSupplier {
 			Utilities.checkStatusCode(response.statusCode());
 			Stream<Fr24Frame> fr24Frames = deserializer.deserialize(response);
 			// writing frames to DB
-			DBIn.getDBIn().writeFr24(fr24Frames);
+			DBIn.getDBIn().write(fr24Frames);
 		} catch (IOException | InterruptedException | IllegalArgumentException e) {
 			ExceptionHandler onError = getExceptionHandler();
 			if (onError != null) {
@@ -173,6 +173,7 @@ public class Fr24Supplier extends HttpSupplier {
 
 	/**
 	 * getter for threadnumber
+	 *
 	 * @return int threadnumber
 	 */
 	public int getThreadNumber() {
@@ -181,6 +182,7 @@ public class Fr24Supplier extends HttpSupplier {
 
 	/**
 	 * getter for threadname
+	 *
 	 * @return String threadname
 	 */
 	public String getThreadName() {

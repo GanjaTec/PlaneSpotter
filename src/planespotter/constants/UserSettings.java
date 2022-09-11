@@ -1,18 +1,6 @@
 package planespotter.constants;
 
-import org.jetbrains.annotations.NotNull;
-
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
-import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
-import org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource;
-import org.openstreetmap.gui.jmapviewer.tilesources.TMSTileSource;
-import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
-
-import planespotter.model.nio.Filters;
-import planespotter.throwables.ExtensionException;
-import planespotter.throwables.InvalidDataException;
-
-import java.io.*;
 
 /**
  * @name UserSettings

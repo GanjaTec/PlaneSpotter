@@ -2,13 +2,13 @@ package planespotter.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import planespotter.model.io.FileWizard;
 import planespotter.throwables.IllegalInputException;
 import planespotter.throwables.KeyCheckFailedException;
 import planespotter.util.Utilities;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,7 +16,7 @@ import java.util.Map;
 
 /**
  * @name ConnectionManager
- * @author jml04
+ * @autho r jml04
  * @version 1.0
  *
  * @description
@@ -28,6 +28,7 @@ public class ConnectionManager {
     // map for all connections with custom as key
     @NotNull private final Map<String, Connection> connections;
 
+    // current selected conn
     @Nullable private Connection selectedConn;
 
     /**
@@ -103,6 +104,10 @@ public class ConnectionManager {
         }
     }
 
+    public void disconnectAll() {
+        getConnections().forEach(conn -> conn.setConnected(false));
+    }
+
     @NotNull
     public Collection<Connection> getConnections() {
         return connections.values();
@@ -126,16 +131,23 @@ public class ConnectionManager {
 
         @NotNull public final URI uri;
 
+        private boolean mixWithFr24;
+
         private transient boolean connected;
 
-        public Connection(@NotNull String name, @NotNull String uri) {
-            this(name, URI.create(uri), false);
+        public Connection(@NotNull String name, @NotNull String uri, boolean mixWithFr24) {
+            this(name, URI.create(uri), false, mixWithFr24);
         }
 
-        public Connection(@NotNull String name, @NotNull URI uri, boolean connected) {
+        public Connection(@NotNull String name, @NotNull URI uri, boolean mixWithFr24) {
+            this(name, uri, false, mixWithFr24);
+        }
+
+        public Connection(@NotNull String name, @NotNull URI uri, boolean connected, boolean mixWithFr24) {
             this.name = name;
             this.uri = uri;
             this.connected = connected;
+            this.mixWithFr24 = mixWithFr24;
         }
 
         public void setConnected(boolean c) {
@@ -145,5 +157,14 @@ public class ConnectionManager {
         public boolean isConnected() {
             return connected;
         }
+
+        public boolean isMixWithFr24() {
+            return mixWithFr24;
+        }
+
+        public void setMixWithFr24(boolean mixWithFr24) {
+            this.mixWithFr24 = mixWithFr24;
+        }
+
     }
 }

@@ -6,10 +6,10 @@ import org.jetbrains.annotations.Range;
 
 import planespotter.constants.Areas;
 import planespotter.controller.Controller;
-import planespotter.dataclasses.Fr24Frame;
+import planespotter.dataclasses.Frame;
 import planespotter.display.models.SupplierDisplay;
 import planespotter.model.io.*;
-import planespotter.model.nio.Filters;
+import planespotter.model.nio.FilterManager;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.nio.DataLoader;
@@ -52,7 +52,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         new Fr24Collector(true, true, sLat, sLon).start();
     }
 
-    @Nullable private final Filters filters;
+    @Nullable private final FilterManager filterManager;
 
     @NotNull private final DataLoader dataLoader;
 
@@ -75,8 +75,8 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
                 ? WindowConstants.EXIT_ON_CLOSE
                 : WindowConstants.DISPOSE_ON_CLOSE;
         super.display = new SupplierDisplay(closeOperation, this, onPause(), onStartStop());
-        this.filters = withFilters
-                ? (Filters) Controller.getInstance().getConfig().getProperty("collectorFilters")
+        this.filterManager = withFilters
+                ? (FilterManager) Controller.getInstance().getConfig().getProperty("collectorFilters")
                 : null;
         this.dataLoader = new DataLoader();
         this.inserter = new Inserter(this.dataLoader, super.getErrorQueue());
@@ -128,7 +128,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
             newPlanesAll.set(dbIn.getPlaneCount());
             newFlightsAll.set(dbIn.getFlightCount());
 
-            Fr24Frame lastFrame = dbIn.getLastFrame();
+            Frame lastFrame = dbIn.getLastFrame();
             Throwable nextError = errorQueue.poll();
             Controller.getInstance().handleException(nextError);
             display.update(insertedNow.get(), newPlanesNow.get(), newFlightsNow.get(),
@@ -138,7 +138,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
     }
 
     public boolean filtersEnabled() {
-        return filters != null;
+        return filterManager != null;
     }
 
     @NotNull

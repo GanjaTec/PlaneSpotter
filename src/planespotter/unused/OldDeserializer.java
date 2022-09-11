@@ -3,7 +3,7 @@ package planespotter.unused;
 import com.google.gson.Gson;
 import org.jetbrains.annotations.NotNull;
 import planespotter.dataclasses.Fr24Frame;
-import planespotter.model.nio.AbstractDeserializer;
+import planespotter.model.nio.Deserializer;
 
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
@@ -13,9 +13,9 @@ import java.util.stream.Stream;
 
 @Deprecated(since = "new Deserializer with correct data")
 /* @unused */												// could be turned into ADSBDeserializer
-public class Deserializer implements AbstractDeserializer<HttpResponse<String>> {
+public class OldDeserializer implements Deserializer<HttpResponse<String>> {
 	
-	public Deserializer() {
+	public OldDeserializer() {
 	}
 	
 	

@@ -7,9 +7,6 @@ import planespotter.dataclasses.Frame;
 import planespotter.throwables.InvalidDataException;
 
 import java.net.http.HttpResponse;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Deque;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
@@ -26,7 +23,7 @@ import java.util.stream.Stream;
  * @see HttpResponse
  * @see JsonParser
  */
-public class ADSBDeserializer implements AbstractDeserializer<HttpResponse<String>> {
+public class ADSBDeserializer implements Deserializer<HttpResponse<String>> {
 
     /**
      * deserializes a {@link HttpResponse} to a {@link Stream} of {@link ADSBFrame}s
@@ -75,7 +72,6 @@ public class ADSBDeserializer implements AbstractDeserializer<HttpResponse<Strin
             now -= seen;
         }
         jsonObj.addProperty("timestamp", now);
-        System.out.println(element.toString());
         return gson.fromJson(element, ADSBFrame.class);
     }
 }

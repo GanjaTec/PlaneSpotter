@@ -44,7 +44,7 @@ public final class MapManager {
      */
     public MapManager(@NotNull UserInterface ui, @NotNull ActionHandler listener, @NotNull TileSource defaultMapSource) {
         this.ui = ui;
-        this.mapViewer = this.defaultMapViewer(ui.getLayerPane(), defaultMapSource);
+        this.mapViewer = defaultMapViewer(ui.getLayerPane(), defaultMapSource);
         this.mapViewer.addMouseListener(listener);
         this.selectedICAO = null;
     }
@@ -84,14 +84,12 @@ public final class MapManager {
      * @return the default map viewer component ({@link TreasureMap})
      */
     @NotNull
-    public TreasureMap defaultMapViewer(@Nullable Component parent, @NotNull TileSource mapType) {
+    public TreasureMap defaultMapViewer(@NotNull Component parent, @NotNull TileSource mapType) {
         TreasureMap viewer = new TreasureMap();
         DefaultMapController mapController = new DefaultMapController(viewer);
 
         mapController.setMovementMouseButton(1);
-        if (parent != null) {
-            viewer.setBounds(parent.getBounds());
-        }
+        viewer.setBounds(parent.getBounds());
         viewer.setBorder(BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR.get()));
         viewer.setZoomControlsVisible(false);
         viewer.setTileSource(mapType);
@@ -106,7 +104,7 @@ public final class MapManager {
      * @return true, if clicked coord is equals marker coord, with tolarance
      */
     public boolean isMarkerHit(Coordinate marker, ICoordinate clicked) {
-        int zoom = this.ui.getMap().getZoom(),
+        int zoom = this.ui.getMap().getZoom(), // current zoom
             maxZoom = TreasureMap.MAX_ZOOM; // = 22
         double tolerance = 0.005 * (maxZoom - zoom); // could be a bit too high
         return (clicked.getLat() < marker.getLat() + tolerance &&
@@ -144,19 +142,11 @@ public final class MapManager {
         return mapMarkers;
     }
 
-    @NotNull
-    public TreasureMap getMapViewer() {
-        return this.mapViewer;
-    }
-
-    public void createTrackingMap(@NotNull Vector<DataPoint> dataPoints, @Nullable Flight flight, boolean showPoints) {
-        if (dataPoints.isEmpty()) {
+    public void createTrackingMap(Vector<DataPoint> dataPoints, @Nullable Flight flight, boolean showPoints) {
+        if (dataPoints == null || dataPoints.isEmpty()) {
             return;
         }
-        int size = dataPoints.size(),
-                counter = 0,
-                altitude,
-                heading;
+        int size = dataPoints.size(), counter = 0, altitude;
         Position dpPos;
         DataPoint lastdp = null;
         PlaneMarker newMarker;
@@ -168,18 +158,15 @@ public final class MapManager {
         for (DataPoint dp : dataPoints) {
             dpPos = dp.pos();
             altitude = dp.altitude();
-            heading = dp.heading();
             markerColor = Utilities.colorByAltitude(altitude);
+            System.out.println(dp.flightID() + ", " + dp.timestamp());
             if (counter++ > 0) {
-                double lon0 = lastdp.pos().lon();
-                double lon1 = dp.pos().lon();
-                boolean lonJump = (lon0 < -90 && lon1 > 90) || (lon0 > 90 && lon1 < -90);
                 // checking if the data points belong to the same flight,
                 //          if they are in correct order and
                 //          if they make a lon-jump
                 if (       dp.flightID() == lastdp.flightID()
                         && dp.timestamp() >= lastdp.timestamp()
-                        && !lonJump) {
+                        && !lonJump(lastdp, dp)) {
 
                     coord1 = dpPos.toCoordinate();
                     coord2 = lastdp.pos().toCoordinate();
@@ -189,7 +176,7 @@ public final class MapManager {
                 }
             }
             if (showPoints) {
-                newMarker = new PlaneMarker(new Coordinate(dpPos.lat(), dpPos.lon()), heading, false, false);
+                newMarker = PlaneMarker.fromDataPoint(dp, false, false);
                 newMarker.setBackColor(markerColor);
                 markers.add(newMarker);
             }
@@ -197,12 +184,57 @@ public final class MapManager {
         }
 
         if (showPoints) {
-            this.mapViewer.setMapMarkerList(markers);
+            mapViewer.setMapMarkerList(markers);
         }
-        this.mapViewer.setMapPolygonList(polys);
+        mapViewer.setMapPolygonList(polys);
         if (dataPoints.size() == 1 && flight != null) {
-            this.ui.showInfo(flight, dataPoints.get(0));
+            ui.showInfo(flight, dataPoints.get(0));
         }
+    }
+
+    public void createSearchMap(Vector<DataPoint> dataPoints, boolean showAllPoints) {
+        if (dataPoints == null || dataPoints.isEmpty()) {
+            return;
+        }
+        DataPoint lastDp = null;
+        List<Integer> paintedFlights = new ArrayList<>();
+        List<MapMarker> mapMarkers = new ArrayList<>();
+        List<MapPolygon> mapPolys = new ArrayList<>();
+        Color color; PlaneMarker marker; MapPolygonImpl poly;
+        Coordinate currCoord, lastCoord; int flightID;
+        for (DataPoint dp : dataPoints) {
+            currCoord = dp.pos().toCoordinate();
+            color = Utilities.colorByAltitude(dp.altitude());
+            flightID = dp.flightID();
+            if (lastDp != null) {
+                lastCoord = lastDp.pos().toCoordinate();
+
+                if (   lastDp.flightID() == flightID
+                    && lastDp.timestamp() < dp.timestamp()
+                    && !lonJump(lastDp, dp)) {
+
+                    poly = new MapPolygonImpl(lastCoord, currCoord, lastCoord);
+                    poly.setColor(color);
+                    mapPolys.add(poly);
+                }
+            }
+            if (showAllPoints || !paintedFlights.contains(flightID)) {
+                marker = PlaneMarker.fromDataPoint(dp, true, false);
+                marker.setBackColor(color);
+                mapMarkers.add(marker);
+                if (!showAllPoints) {
+                    paintedFlights.add(flightID);
+                }
+            }
+            lastDp = dp;
+        }
+        mapViewer.setMapMarkerList(mapMarkers);
+        mapViewer.setMapPolygonList(mapPolys);
+    }
+
+    @NotNull
+    public TreasureMap getMapViewer() {
+        return this.mapViewer;
     }
 
     @Nullable
@@ -212,5 +244,11 @@ public final class MapManager {
 
     public void setSelectedICAO(@Nullable String selectedICAO) {
         this.selectedICAO = selectedICAO;
+    }
+
+    private boolean lonJump(@NotNull DataPoint a, @NotNull DataPoint b) {
+        double lon0 = a.pos().lon();
+        double lon1 = b.pos().lon();
+        return  (lon0 < -90 && lon1 > 90) || (lon0 > 90 && lon1 < -90);
     }
 }

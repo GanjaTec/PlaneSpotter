@@ -1,7 +1,6 @@
 package planespotter.dataclasses;
 import org.jetbrains.annotations.NotNull;
 import planespotter.throwables.InvalidDataException;
-import planespotter.util.Utilities;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -23,8 +22,15 @@ public record Flight(int id,
                      HashMap<Integer, DataPoint> dataPoints)
         implements Serializable {
 
-    public static Flight parseFlight(final Frame frame, final int id) {
-        var dataPoints = new HashMap<Integer, DataPoint>();
+    /**
+     * parses a {@link Frame} to {@link Flight} object
+     *
+     * @param frame is the {@link Frame} to be parsed, can be {@link Fr24Frame} or {@link ADSBFrame}
+     * @param id is the {@link Flight} ID, that the flight gets
+     * @return new {@link Flight} object, parsed from {@link Frame}
+     */
+    public static Flight parseFlight(@NotNull final Frame frame, final int id) {
+        HashMap<Integer, DataPoint> dataPoints = new HashMap<>();
         // putting first data point to map
         dataPoints.put(0, new DataPoint(0, id,
                 new Position(frame.getLat(),

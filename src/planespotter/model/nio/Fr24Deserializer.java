@@ -2,18 +2,15 @@ package planespotter.model.nio;
 
 import com.google.gson.*;
 
-import com.google.gson.stream.MalformedJsonException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.throwables.Fr24Exception;
 import planespotter.throwables.InvalidDataException;
-import planespotter.util.Utilities;
 
 import java.net.http.HttpResponse;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -26,19 +23,18 @@ import java.util.stream.Stream;
  * It converts a HttpResponse to a Collection of Frames,
  * which can be used to create further dataclasses like flights, planes, etc...
  */
-// TODO: 31.08.2022 always reuse the same deserializer
-public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<String>> {
+public class Fr24Deserializer implements Deserializer<HttpResponse<String>> {
 
     @NotNull private static final Gson gson = new Gson();
 
-    // filter expressions, may be null or empty
-    @NotNull private Filters filters;
+    // filter manager, contains all data filters
+    @NotNull private FilterManager filterManager;
 
     /**
      * Fr24-Deserializer-constructor
      */
     public Fr24Deserializer() {
-        this.filters = new Filters();
+        this.filterManager = new FilterManager();
     }
 
     /**
@@ -47,17 +43,17 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
      * @param filter are the expressions to set as filters
      */
     public void setFilter(@NotNull String... filter) {
-        this.filters.set(filter);
+        filterManager.set(filter);
     }
 
     /**
-     * getter for {@link Filters} object which contains filters and filter-functions
+     * getter for {@link FilterManager} object which contains filters and filter-functions
      *
-     * @return the deserializer's {@link Filters} object
+     * @return the deserializer's {@link FilterManager} object
      */
     @NotNull
-    public Filters getFilters() {
-        return this.filters;
+    public FilterManager getFilters() {
+        return filterManager;
     }
 
     /**
@@ -81,7 +77,7 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
                         String key = e.getKey();
                         JsonElement value = e.getValue();
                         boolean unnecessary = key.equals("full_count") || key.equals("version");
-                        return !unnecessary && filterBy(value.toString(), filters.getFilters());
+                        return !unnecessary && filterBy(value.toString(), filterManager.getFilters());
                     })
                     // Fr24 is using a JsonArray of values here instead of a JsonObject so we have to
                     // parse the weird JsonArray to JsonObject here to make it readable for Gson.fromJsonm,
@@ -140,17 +136,17 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
         String[] cols = line.split(",");
         JsonObject o = new JsonObject();
         try {
-            o.addProperty("icaoaddr", cols[0]);
-            o.addProperty("lat", this.parseOrElse(cols[1], 0.0));
-            o.addProperty("lon", this.parseOrElse(cols[2], 0.0));
-            o.addProperty("heading", this.parseOrElse(cols[3], -1));
-            o.addProperty("altitude", this.parseOrElse(cols[4], -1));
-            o.addProperty("groundspeed", this.parseOrElse(cols[5], -1));
-            o.addProperty("squawk", this.parseOrElse(cols[6], 40401));
+            o.addProperty("icaoaddr", cols[0] == null ? "NONE" : cols[0]);
+            o.addProperty("lat", parseOrElse(cols[1], 0.0));
+            o.addProperty("lon", parseOrElse(cols[2], 0.0));
+            o.addProperty("heading", parseOrElse(cols[3], -1));
+            o.addProperty("altitude", parseOrElse(cols[4], -1));
+            o.addProperty("groundspeed", parseOrElse(cols[5], -1));
+            o.addProperty("squawk", parseOrElse(cols[6], 40401));
             o.addProperty("tailnumber", cols[7]);
             o.addProperty("planetype", cols[8]);
             o.addProperty("registration", cols[9]);
-            o.addProperty("timestamp", this.parseOrElse(cols[10], -1));
+            o.addProperty("timestamp", parseOrElse(cols[10], -1L));
             o.addProperty("srcairport", cols[11]);
             o.addProperty("destairport", cols[12]);
             o.addProperty("flightnumber", cols[13]);
@@ -181,6 +177,8 @@ public class Fr24Deserializer implements AbstractDeserializer<HttpResponse<Strin
         try {
             if (orElse instanceof Integer) {
                 return notBlank ? Integer.parseInt(toParse) : orElse;
+            } else if (orElse instanceof Long) {
+                return notBlank ? Long.parseLong(toParse) : orElse;
             } else if (orElse instanceof Double) {
                 return notBlank ? Double.parseDouble(toParse) : orElse;
             }
