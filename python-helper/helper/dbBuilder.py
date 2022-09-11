@@ -113,7 +113,7 @@ conn.execute('''CREATE TABLE flights
          flightnr         TEXT,
          callsign         TEXT,
          start            TEXT,
-         end              TEXT
+         endTime          TEXT
          );''')
 print("Table \"flights\" successfully created!")
 
