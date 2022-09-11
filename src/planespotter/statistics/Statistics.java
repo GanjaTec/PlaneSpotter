@@ -275,6 +275,14 @@ public class Statistics {
         return map;
     }
 
+    /**
+     *
+     *
+     * @param topLeft
+     * @param bottomRight
+     * @param dataPoints
+     * @return
+     */
     @Deprecated(since = "?", forRemoval = true)
     @SafeVarargs
     public final Map<String, Map<Long, Integer>> windSpeed(final Position topLeft, final Position bottomRight, Deque<DataPoint>... dataPoints) {
@@ -300,6 +308,13 @@ public class Statistics {
         return maps;
     }
 
+    /**
+     *
+     *
+     * @param minCount
+     * @return
+     * @throws DataNotFoundException
+     */
     public JFreeChart airlineSignificance(int minCount)
             throws DataNotFoundException {
 
@@ -311,6 +326,13 @@ public class Statistics {
                                             dataset, PlotOrientation.HORIZONTAL, true, true, false);
     }
 
+    /**
+     *
+     *
+     * @param minCount
+     * @return
+     * @throws DataNotFoundException
+     */
     public JFreeChart airportSignificance(int minCount)
             throws DataNotFoundException {
 
@@ -345,6 +367,12 @@ public class Statistics {
         return asignf;
     }
 
+    /**
+     *
+     *
+     * @param positions
+     * @return
+     */
     // TODO change name
     public final HashMap<Position, Integer> positionHeatMap(@NotNull final Vector<Position> positions) {
         int size = Utilities.asInt(positions.stream()
@@ -356,7 +384,7 @@ public class Statistics {
         for (Position pos : positions) {
             for (int i = 0; i < size; i++) {
                 keySet = heatMap.keySet();
-                Position nearOf = this.containsKeyNearOf(keySet, pos);
+                Position nearOf = containsKeyNearOf(keySet, pos);
                 if (nearOf == null) {
                     heatMap.put(pos, 1);
                 } else {
@@ -375,6 +403,13 @@ public class Statistics {
         return heatMap;
     }
 
+    /**
+     *
+     *
+     * @param positionSet
+     * @param key
+     * @return
+     */
     private Position containsKeyNearOf(@NotNull Set<Position> positionSet, @NotNull Position key) {
         for (Position pos : positionSet) {
             double tolerance = 0.03;

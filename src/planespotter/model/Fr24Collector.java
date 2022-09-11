@@ -41,6 +41,15 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         REQUEST_PERIOD = 60;
     }
 
+    @Nullable private final FilterManager filterManager;
+
+    @NotNull private final DataLoader dataLoader;
+
+    @NotNull private final Inserter inserter;
+
+    // raster of areas (whole world) in 1D-Array
+    @NotNull private final String[] worldAreaRaster1D;
+
     /**
      * Fr24-Collector Main-method
      *
@@ -51,15 +60,6 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         int sLat = 2, sLon = 4;
         new Fr24Collector(true, true, sLat, sLon).start();
     }
-
-    @Nullable private final FilterManager filterManager;
-
-    @NotNull private final DataLoader dataLoader;
-
-    @NotNull private final Inserter inserter;
-
-    // raster of areas (whole world) in 1D-Array
-    @NotNull private final String[] worldAreaRaster1D;
 
     /**
      * Fr24Collector constructor, creates a new Collector for Fr24-Data
@@ -137,10 +137,20 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         }, 0, 1);
     }
 
+    /**
+     * getter for 'filters enabled' flag
+     *
+     * @return 'filters enabled' flag
+     */
     public boolean filtersEnabled() {
         return filterManager != null;
     }
 
+    /**
+     * {@link ActionListener} for start / stop button
+     *
+     * @return the {@link ActionListener}, called on start / stop click
+     */
     @NotNull
     public ActionListener onStartStop() {
         return e -> {
@@ -155,6 +165,11 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         };
     }
 
+    /**
+     * {@link ActionListener} for pause click
+     *
+     * @return ActionListener that is called on pause click
+     */
     @NotNull
     public ActionListener onPause() {
         return e -> {

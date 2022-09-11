@@ -88,6 +88,12 @@ public class PyAdapter {
         return getResult();
     }
 
+    /**
+     * returns the result of a function called before
+     *
+     * @param <R> is the result class type
+     * @return the result of the function called before
+     */
     @Nullable
     private static <R> R getResult() {
         try {
