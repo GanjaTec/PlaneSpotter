@@ -14,41 +14,65 @@ package planespotter.dataclasses;
 public class Fr24Frame extends Frame {
 
 	// additional fields
+
+	// Icao Address
 	private final String icaoaddr;
+
+	// tailnumber
 	private final String tailnumber;
+
+	// Planetype
 	private final String planetype;
+
+	// Aircraft Registration
 	private final String registration;
+
+	// Source Airport Tag
 	private final String srcairport;
+
+	// Destination Airport Tag
 	private final String destairport;
+
+	// Flightnumber
 	private final String flightnumber;
+
+	// Unknown String 1
 	private final String unknown1;
+
+	// Callsign
 	private final String callsign;
+
+	// Unknown String 2
 	private final String unknown2;
+
+	// Unknown String 3
 	private final String unknown3;
+
+	// Airline Tag
 	private final String airline;
 
 	/**
+	 * Constructor
 	 *
-	 *
-	 * @param icao
-	 * @param lat
-	 * @param lon
-	 * @param heading
-	 * @param alt
-	 * @param speed
-	 * @param squawk
-	 * @param tail
-	 * @param type
-	 * @param registration
-	 * @param time
-	 * @param src
-	 * @param dest
-	 * @param flight
-	 * @param unk1
-	 * @param unk2
-	 * @param callsign
-	 * @param unk3
-	 * @param airline
+	 * @param icao String ICAO-Address
+	 * @param lat double latitude
+	 * @param lon double longitude
+	 * @param heading int compass heading
+	 * @param alt int altitude
+	 * @param speed int groundspeed in knots
+	 * @param squawk int squawkcode
+	 * @param tail String tailnumber
+	 * @param type String planetype
+	 * @param registration String aircraft registration
+	 * @param time int timestamp
+	 * @param src String source airport
+	 * @param dest String destination airport
+	 * @param flight String flightnumber
+	 * @param unk1 String unknown
+	 * @param unk2 String unknown
+	 * @param callsign String callsign
+	 * @param unk3 String unknown
+	 * @param airline String airline identifier
 	 */
 	public Fr24Frame(String icao, double lat, double lon, int heading, int alt, int speed,
 					 int squawk, String tail, String type, String registration, int time,
@@ -71,62 +95,116 @@ public class Fr24Frame extends Frame {
 
 	}
 
+	/**
+	 * Getter for ICAO-Address
+	 * @return String icaoaddr
+	 */
 	public String getIcaoAddr() {
 		return this.icaoaddr;
 	}
 
+	/**
+	 * Getter for Tailnumber
+	 * @return String tailnumber
+	 */
 	public String getTailnr() {
 		return this.tailnumber;
 	}
-	
+
+	/**
+	 * Getter for Planetype
+	 * @return String planetype
+	 */
 	public String getPlanetype() {
 		return this.planetype;
 	}
-	
+
+	/**
+	 * Getter for Aircraft Registration
+	 * @return String registration
+	 */
 	public String getRegistration() {
 		return this.registration;
 	}
 
-	
+	/**
+	 * Getter for Source Airport Tag
+	 * @return String srcairport
+	 */
 	public String getSrcAirport() {
 		return this.srcairport;
 	}
-	
+
+	/**
+	 * Getter for Destination Airport Tag
+	 * @return String destairport
+	 */
 	public String getDestAirport() {
 		return this.destairport;
 	}
-	
+
+	/**
+	 * Getter for Flightnumber
+	 * @return String flightnumber
+	 */
 	public String getFlightnumber() {
 		return this.flightnumber;
 	}
-	
+
+	/**
+	 * Getter for unknown String 1
+	 * @return String unknown1
+	 */
 	public String getUnknown1() {
 		return this.unknown1;
 	}
 
+	/**
+	 * Getter for Callsign
+	 * @return String callsign
+	 */
 	public String getCallsign() {
 		return this.callsign;
 	}
 
+	/**
+	 * Getter for unknown String 2
+	 * @return String unknown2
+	 */
 	public String getUnknown2() {
 		return this.unknown2;
 	}
 
-	
+	/**
+	 * Getter for unknown String 3
+	 * @return String unknown3
+	 */
 	public String getUnknown3() {
 		return this.unknown3;
 	}
-	
+
+	/**
+	 * Getter for Airline Tag
+	 * @return String airline
+	 */
 	public String getAirline() {
 		return this.airline;
 	}
 
+	/**
+	 * prepares a String with a short summary of the Frame, just values, no bloat
+	 * @return String containing ICAO, Callsign, Planetype, Airline, Source and Destination
+	 */
 	@Override
 	public String toShortString() {
 		return getIcaoAddr() + ";" + getCallsign() + ";" + getPlanetype() + ";" +
 				getAirline() + ";" + getSrcAirport() + ";" + getDestAirport();
 	}
 
+	/**
+	 * Returns a list of the attributes and their values, basically prettyPrint without new lines
+	 * @return String containing all values of the Frame
+	 */
 	@Override
 	public String toString() {
 		return  "ICAO: " + getIcaoAddr() + ',' +
