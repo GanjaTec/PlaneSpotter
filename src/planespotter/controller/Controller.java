@@ -984,7 +984,7 @@ public abstract class Controller implements ExceptionHandler {
         try {
             aps = dbOut.getAllAirports();
             signifMap = stats.airportSignificance(aps);
-            mapManager.createSignificanceMap(signifMap, getUI().getMap());
+            mapManager.createSignificanceMap(signifMap);
         } catch (DataNotFoundException dnf) {
             handleException(dnf);
         }

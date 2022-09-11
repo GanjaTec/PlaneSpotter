@@ -75,6 +75,11 @@ public class TreasureMap extends JMapViewer {
         return this.heatMap;
     }
 
+    /**
+     * sets the current Bitmap {@link BufferedImage}
+     *
+     * @param heatMap is the bitmap {@link BufferedImage}
+     */
     public void setHeatMap(BufferedImage heatMap) {
         this.heatMap = heatMap;
     }

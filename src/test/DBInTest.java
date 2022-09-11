@@ -7,18 +7,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class DBInTest {
 
     @Test
-    void getConnection() {
-    }
-
-    @Test
-    void createPreparedStatement() {
-    }
-
-    @Test
-    void queryDB() {
-    }
-
-    @Test
     void write() {
     }
 

@@ -4,8 +4,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.*;
-import planespotter.constants.Configuration;
-import planespotter.constants.UserSettings;
 import planespotter.controller.ActionHandler;
 import planespotter.dataclasses.*;
 import planespotter.util.Utilities;
@@ -29,10 +27,13 @@ import static planespotter.constants.DefaultColor.DEFAULT_BORDER_COLOR;
  */
 public final class MapManager {
 
+    // reference to the UserInterface
     @NotNull private final UserInterface ui;
 
+    // map viewer
     @NotNull private final TreasureMap mapViewer;
 
+    // current selected (clicked) ICAO
     @Nullable private String selectedICAO;
 
     /**
@@ -61,7 +62,12 @@ public final class MapManager {
         this.mapViewer.removeAllMapRectangles();
     }
 
-    public void createSignificanceMap(@NotNull final Map<Airport, Integer> significanceMap, @NotNull final TreasureMap viewer) {
+    /**
+     * creates a 'significance-map' from a significance-{@link HashMap}
+     *
+     * @param significanceMap is the significance {@link HashMap} with airports, paired with airport reference count
+     */
+    public void createSignificanceMap(@NotNull final Map<Airport, Integer> significanceMap) {
         List<MapMarker> markers = new ArrayList<>();
         var atomRadius = new AtomicInteger();
         var atomCoord = new AtomicReference<Coordinate>();
@@ -77,7 +83,7 @@ public final class MapManager {
                         markers.add(mark);
                     }
                 });
-        viewer.setMapMarkerList(markers);
+        getMapViewer().setMapMarkerList(markers);
     }
 
     /**
@@ -142,6 +148,13 @@ public final class MapManager {
         return mapMarkers;
     }
 
+    /**
+     *
+     *
+     * @param dataPoints
+     * @param flight
+     * @param showPoints
+     */
     public void createTrackingMap(Vector<DataPoint> dataPoints, @Nullable Flight flight, boolean showPoints) {
         if (dataPoints == null || dataPoints.isEmpty()) {
             return;
@@ -166,7 +179,7 @@ public final class MapManager {
                 //          if they make a lon-jump
                 if (       dp.flightID() == lastdp.flightID()
                         && dp.timestamp() >= lastdp.timestamp()
-                        && !lonJump(lastdp, dp)) {
+                        && noLonJump(lastdp, dp)) {
 
                     coord1 = dpPos.toCoordinate();
                     coord2 = lastdp.pos().toCoordinate();
@@ -211,7 +224,7 @@ public final class MapManager {
 
                 if (   lastDp.flightID() == flightID
                     && lastDp.timestamp() < dp.timestamp()
-                    && !lonJump(lastDp, dp)) {
+                    && noLonJump(lastDp, dp)) {
 
                     poly = new MapPolygonImpl(lastCoord, currCoord, lastCoord);
                     poly.setColor(color);
@@ -232,23 +245,47 @@ public final class MapManager {
         mapViewer.setMapPolygonList(mapPolys);
     }
 
+    /**
+     * getter for the map viewer ({@link TreasureMap})
+     *
+     * @return the map viewer ({@link TreasureMap})
+     */
     @NotNull
     public TreasureMap getMapViewer() {
         return this.mapViewer;
     }
 
+    /**
+     * getter for the current selected ICAO
+     *
+     * @return the current selected ICAO or null, if there is no
+     */
     @Nullable
     public String getSelectedICAO() {
         return this.selectedICAO;
     }
 
+    /**
+     * sets the current selected ICAO
+     *
+     * @param selectedICAO is the current selected ICAO, may be null
+     */
     public void setSelectedICAO(@Nullable String selectedICAO) {
         this.selectedICAO = selectedICAO;
     }
 
-    private boolean lonJump(@NotNull DataPoint a, @NotNull DataPoint b) {
+    /**
+     * indicator for a 'lon-jump' (e.g. when the plane goes off the map on the right
+     * side and goes further on the left side), would create an ugly line between the points
+     * over the whole map
+     *
+     * @param a is the first {@link DataPoint}
+     * @param b is the second {@link DataPoint}
+     * @return true if the {@link DataPoint}s do not make such a 'lon-jump', else false
+     */
+    private boolean noLonJump(@NotNull DataPoint a, @NotNull DataPoint b) {
         double lon0 = a.pos().lon();
         double lon1 = b.pos().lon();
-        return  (lon0 < -90 && lon1 > 90) || (lon0 > 90 && lon1 < -90);
+        return (!(lon0 < -90) || !(lon1 > 90)) && (!(lon0 > 90) || !(lon1 < -90));
     }
 }
