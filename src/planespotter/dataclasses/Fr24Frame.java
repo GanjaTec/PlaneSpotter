@@ -8,12 +8,13 @@ package planespotter.dataclasses;
  * @description
  * class Fr24Frame is a Frame-class-child which represents
  * a Frame with additional FlightRadar24-Data
+ * We cannot use camel case to name our instance fields here, because the
+ * Gson-fromJson needs equals field names in both, Class and JSON to deserialize right
  */
-// TODO: 13.06.2022 move fields to superclass Frame
-// TODO: 13.06.2022 change to record
 public class Fr24Frame extends Frame {
 
-	private final String icaoAddr;
+	// additional fields
+	private final String icaoaddr;
 	private final String tailnumber;
 	private final String planetype;
 	private final String registration;
@@ -26,13 +27,36 @@ public class Fr24Frame extends Frame {
 	private final String unknown3;
 	private final String airline;
 
+	/**
+	 *
+	 *
+	 * @param icao
+	 * @param lat
+	 * @param lon
+	 * @param heading
+	 * @param alt
+	 * @param speed
+	 * @param squawk
+	 * @param tail
+	 * @param type
+	 * @param registration
+	 * @param time
+	 * @param src
+	 * @param dest
+	 * @param flight
+	 * @param unk1
+	 * @param unk2
+	 * @param callsign
+	 * @param unk3
+	 * @param airline
+	 */
 	public Fr24Frame(String icao, double lat, double lon, int heading, int alt, int speed,
 					 int squawk, String tail, String type, String registration, int time,
 					 String src, String dest, String flight, String unk1, String unk2,
 					 String callsign, String unk3, String airline) {
 
 		super(lat, lon, heading, alt, speed, squawk, time);
-		this.icaoAddr = icao;
+		this.icaoaddr = icao;
 		this.tailnumber = tail;
 		this.planetype = type;
 		this.registration = registration;
@@ -48,7 +72,7 @@ public class Fr24Frame extends Frame {
 	}
 
 	public String getIcaoAddr() {
-		return this.icaoAddr;
+		return this.icaoaddr;
 	}
 
 	public String getTailnr() {
@@ -97,40 +121,33 @@ public class Fr24Frame extends Frame {
 		return this.airline;
 	}
 
+	@Override
 	public String toShortString() {
-		return this.getIcaoAddr() + ";" + this.getCallsign() + ";" + this.getPlanetype() + ";" +
-				this.getAirline() + ";" + this.getSrcAirport() + ";" + this.getDestAirport();
+		return getIcaoAddr() + ";" + getCallsign() + ";" + getPlanetype() + ";" +
+				getAirline() + ";" + getSrcAirport() + ";" + getDestAirport();
 	}
 
 	@Override
 	public String toString() {
-		return  "ICAO: " + this.getIcaoAddr() + ',' +
-				" Lat: " + this.getLat() + ',' +
-				" Lon: " + this.getLon() + ',' +
-				" Heading: " + this.getHeading() + ',' +
-				" Altitude: " + this.getAltitude() + ',' +
-				" Registration: " + this.getRegistration() + ',' +
-				" Squawk: " + this.getSquawk() + ',' +
-				" TailNr.: " + this.getTailnr() + ',' +
-				" Planetype: " + this.getPlanetype() + ',' +
-				" Registration: " + this.getRegistration() + ',' +
-				" TailNr.: " + this.getTailnr() + ',' +
-				" SrcAirport: " + this.getSrcAirport() + ',' +
-				" DestAirport: " + this.getDestAirport() + ',' +
-				" FlightNr.: " + this.getFlightnumber() + ',' +
-				" Unkwn1: " + this.getUnknown1() + ',' +
-				" Unkwn2: " + this.getUnknown2() + ',' +
-				" Callsign: " + this.getCallsign() + ',' +
-				" Unkwn3: " + this.getUnknown3() + ',' +
-				" Airline: " + this.getAirline();
-	}
-
-	/**
-	 * prints all values of this class, using toString method
-	 */
-	public void printValues() {
-		System.out.println(this);
-		
+		return  "ICAO: " + getIcaoAddr() + ',' +
+				" Lat: " + getLat() + ',' +
+				" Lon: " + getLon() + ',' +
+				" Heading: " + getHeading() + ',' +
+				" Altitude: " + getAltitude() + ',' +
+				" Registration: " + getRegistration() + ',' +
+				" Squawk: " + getSquawk() + ',' +
+				" TailNr.: " + getTailnr() + ',' +
+				" Planetype: " + getPlanetype() + ',' +
+				" Registration: " + getRegistration() + ',' +
+				" TailNr.: " + getTailnr() + ',' +
+				" SrcAirport: " + getSrcAirport() + ',' +
+				" DestAirport: " + getDestAirport() + ',' +
+				" FlightNr.: " + getFlightnumber() + ',' +
+				" Unkwn1: " + getUnknown1() + ',' +
+				" Unkwn2: " + getUnknown2() + ',' +
+				" Callsign: " + getCallsign() + ',' +
+				" Unkwn3: " + getUnknown3() + ',' +
+				" Airline: " + getAirline();
 	}
 	
 }

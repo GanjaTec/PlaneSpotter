@@ -13,11 +13,10 @@ import static planespotter.util.Time.*;
 /**
  * @name ProtoKeeper
  * @author jml04
- * @ideaFrom Lukas
  * @version 1.0
  *
  * @description
- * Class ProtoKeeper represents an improved KeeperOfTheArchivesSenior,
+ * Class ProtoKeeper represents an improved KeeperOfTheArchivesSenior (idea of Lukas),
  * which runs faster and uses less memory.
  * The code is build after the idea of the KeeperOfTheArchivesSenior,
  * but with a second look on efficiency.

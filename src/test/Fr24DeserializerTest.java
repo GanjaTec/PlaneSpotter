@@ -8,7 +8,6 @@ import planespotter.model.nio.Fr24Supplier;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
-import java.util.Deque;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;

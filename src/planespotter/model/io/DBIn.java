@@ -1,18 +1,16 @@
 package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
-import planespotter.constants.SQLQueries;
 
 import java.sql.*;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import planespotter.dataclasses.ADSBFrame;
+import planespotter.constants.SQLQueries;
 import planespotter.dataclasses.Frame;
 import planespotter.model.Scheduler;
 import planespotter.dataclasses.Fr24Frame;
@@ -36,7 +34,7 @@ public final class DBIn extends DBConnector {
 	private boolean enabled;
 
 	// last inserted frame
-	private Fr24Frame lastFrame;
+	private Frame lastFrame;
 
 	// inserted frames counter for all writeToDB inserts
 	private int frameCount, planeCount, flightCount;
@@ -66,31 +64,31 @@ public final class DBIn extends DBConnector {
 		return INSTANCE;
 	}
 
-
-	public void writeADSB(@NotNull final Stream<ADSBFrame> adsbFrames) {
-
-	}
-
-	public void writeADSB(@NotNull final Deque<ADSBFrame> adsbFrames) {
-
-	}
-
-	public void writeFr24(@NotNull final Stream<Fr24Frame> fr24frames) {
-		writeFr24((Deque<Fr24Frame>) fr24frames.collect(Collectors.toCollection(ArrayDeque::new)));
+	/**
+	 * writes frames to the database,
+	 * old strategy from @Lukas, but revised (fixed the memory problem by
+	 * getting all dbOut-data before instead of in the loop)
+	 *
+	 * @param frames is a {@link Stream} of {@link Frame}s to write, can be {@link Fr24Frame}s
+	 *               and {@link planespotter.dataclasses.ADSBFrame}s
+	 */
+	public <E extends Frame> void write(@NotNull final Stream<E> frames) {
+		write((Deque<E>) frames.collect(Collectors.toCollection(ArrayDeque::new)));
 	}
 
 	/**
 	 * writes frames to the database,
 	 * old strategy from @Lukas, but revised (fixed the memory problem by
-	 * getting all dbOut-data before the loop instead of in it)
+	 * getting all dbOut-data before instead of in the loop)
 	 *
-	 * @param fr24Frames are the Fr24Frames to write, could be extended to '<? extends Frame>'
+	 * @param frames is a {@link Deque} of {@link Frame}s to write, can be {@link Fr24Frame}s
+	 *               and {@link planespotter.dataclasses.ADSBFrame}s
 	 */
-	// TODO: 31.08.2022 use stream instead of deque
-	public synchronized void writeFr24(@NotNull final Deque<Fr24Frame> fr24Frames) {
-		if (!enabled || fr24Frames.isEmpty()) {
+	public synchronized <E extends Frame> void write(@NotNull final Deque<E> frames) {
+		if (!enabled || frames.isEmpty()) {
 			return;
 		}
+		Exception ex = null;
 		long startTime = nowMillis();
 		DBOut dbo = DBOut.getDBOut();
 		HashMap<String, Integer> airlineTagsIDs = new HashMap<>(),
@@ -105,21 +103,25 @@ public final class DBIn extends DBConnector {
 			// this usually happens when the DB has empty tables.
 			// ( For example when the DB gets cleared )
 		}
-		Fr24Frame frame;
+		E frame;
 		 int airlineID, planeID, flightID;
-		while (!fr24Frames.isEmpty() && enabled) {
-			frame = fr24Frames.poll();
+		while (!frames.isEmpty() && enabled) {
+			frame = frames.poll();
 			// insert into planes
-			airlineID = airlineTagsIDs.getOrDefault(frame.getAirline(), 1);
+			airlineID = airlineTagsIDs.getOrDefault(frame instanceof Fr24Frame fr24 ? fr24.getAirline() : "None", 1);
 			planeID = planeIcaoIDs.getOrDefault(frame.getIcaoAddr(), -1);
 
 			if (planeID <= -1) {
-				planeID = insertPlane(frame, airlineID);
-				// increasing inserted planes value
-				increasePlaneCount();
+				try {
+					planeID = insertPlane(frame, airlineID);
+					// increasing inserted planes value
+					increasePlaneCount();
+				} catch (DataNotFoundException e) {
+					ex = e;
+				}
 			}
 			// insert into flights
-			flightID = flightNRsIDs.getOrDefault(frame.getFlightnumber(), -1);
+			flightID = flightNRsIDs.getOrDefault(frame instanceof Fr24Frame fr24 ? fr24.getFlightnumber() : "None", -1);
 
 			if (flightID <= -1) {
 				flightID = insertFlight(frame, planeID);
@@ -134,6 +136,9 @@ public final class DBIn extends DBConnector {
 			lastFrame = frame;
 		}
 		System.out.println("[DBWriter] filled DB in " + elapsedSeconds(startTime) + " seconds!");
+		if (ex != null) {
+			ex.printStackTrace();
+		}
 	}
 
 	/**
@@ -150,15 +155,7 @@ public final class DBIn extends DBConnector {
 		}
 		Stream<? extends Frame> frames = dataLoader.pollFrames(Integer.MAX_VALUE);
 
-		return scheduler.exec(() -> {
-			writeFr24(frames.map(frame -> {
-						if (frame instanceof Fr24Frame fr24) {
-							return fr24;
-						}
-						return null;
-					})
-					.filter(Objects::nonNull));
-		}, "Inserter", false, Scheduler.HIGH_PRIO, false);
+		return scheduler.exec(() -> write(frames), "Inserter", false, Scheduler.HIGH_PRIO, false);
 
 	}
 
@@ -167,7 +164,7 @@ public final class DBIn extends DBConnector {
 	 *
 	 * @return last inserted frame, or null if there is no last frame
 	 */
-	public Fr24Frame getLastFrame() {
+	public Frame getLastFrame() {
 		return lastFrame;
 	}
 
@@ -230,22 +227,33 @@ public final class DBIn extends DBConnector {
 	}
 
 	/**
+	 * inserts a {@link planespotter.dataclasses.Plane} into the database,
+	 * gets the plane data from the given {@link Fr24Frame} or {@link planespotter.dataclasses.ADSBFrame}
 	 *
-	 *
-	 * @param f
-	 * @param airlineID
-	 * @return
+	 * @param frame is the {@link Frame} where the {@link planespotter.dataclasses.Plane} data is inserted from
+	 * @param airlineID is the airline ID of the {@link planespotter.dataclasses.Plane}
+	 * @return inserted {@link planespotter.dataclasses.Plane} ID or -1 if nothing was inserted
 	 */
-	public int insertPlane(@NotNull Fr24Frame f, int airlineID) {
+	public <E extends Frame> int insertPlane(@NotNull E frame, int airlineID) throws DataNotFoundException {
 		synchronized (DB_SYNC) {
 			// insert into planes
-			try (Connection conn = DBConnector.getConnection(false)) {
-
-				PreparedStatement pstmt = conn.prepareStatement(SQLQueries.PLANEQUERRY, Statement.RETURN_GENERATED_KEYS);
-				pstmt.setString(1, f.getIcaoAddr());
-				pstmt.setString(2, f.getTailnr());
-				pstmt.setString(3, f.getRegistration());
-				pstmt.setString(4, f.getPlanetype());
+			String icao, tailNr, reg, type;
+			if ((icao = frame.getIcaoAddr()) == null) {
+				throw new DataNotFoundException("Frame has no ICAO!");
+			}
+			if (frame instanceof Fr24Frame fr24) {
+				tailNr = fr24.getTailnr();
+				reg = fr24.getRegistration();
+				type = fr24.getPlanetype();
+			} else {
+				tailNr = reg = type = "None";
+			}
+			try (Connection conn = DBConnector.getConnection(false);
+				 PreparedStatement pstmt = conn.prepareStatement(SQLQueries.PLANEQUERRY, Statement.RETURN_GENERATED_KEYS)) {
+				pstmt.setString(1, icao);
+				pstmt.setString(2, tailNr);
+				pstmt.setString(3, reg);
+				pstmt.setString(4, type);
 				pstmt.setInt(5, airlineID);
 				pstmt.executeUpdate();
 
@@ -259,23 +267,37 @@ public final class DBIn extends DBConnector {
 	}
 
 	/**
+	 * inserts a {@link planespotter.dataclasses.Flight} into the database,
+	 * gets the flight data from the given {@link Fr24Frame} or {@link planespotter.dataclasses.ADSBFrame}
 	 *
-	 *
-	 * @param f
-	 * @param planeID
-	 * @return
+	 * @param frame is the {@link Frame} where the {@link planespotter.dataclasses.Flight} data is inserted from
+	 * @param planeID is the {@link planespotter.dataclasses.Plane} ID of the {@link planespotter.dataclasses.Flight}
+	 * @return inserted {@link planespotter.dataclasses.Flight} ID or -1 if nothing was inserted
 	 */
-	public int insertFlight(@NotNull Fr24Frame f, int planeID) {
+	public <E extends Frame> int insertFlight(@NotNull E frame, int planeID) {
+		String src, dest, flightNr, callsign;
+
+		if (frame instanceof Fr24Frame fr24) {
+			src = fr24.getSrcAirport();
+			dest = fr24.getDestAirport();
+			flightNr = fr24.getFlightnumber();
+			callsign = fr24.getCallsign();
+		} else {
+			src = dest = flightNr = "None";
+			if ((callsign = frame.getCallsign()) == null) {
+				callsign = src;
+			}
+		}
 		synchronized (DB_SYNC) {
 			try (Connection conn = getConnection(false);
 				 PreparedStatement pstmt = conn.prepareStatement(SQLQueries.FLIGHTQUERRY, Statement.RETURN_GENERATED_KEYS)) {
 
 				pstmt.setInt(1, planeID);
-				pstmt.setString(2, f.getSrcAirport());
-				pstmt.setString(3, f.getDestAirport());
-				pstmt.setString(4, f.getFlightnumber());
-				pstmt.setString(5, f.getCallsign());
-				pstmt.setLong(6, f.getTimestamp());
+				pstmt.setString(2, src);
+				pstmt.setString(3, dest);
+				pstmt.setString(4, flightNr);
+				pstmt.setString(5, callsign);
+				pstmt.setLong(6, frame.getTimestamp());
 				pstmt.executeUpdate();
 
 				ResultSet rs = pstmt.getGeneratedKeys();
@@ -288,24 +310,26 @@ public final class DBIn extends DBConnector {
 	}
 
 	/**
+	 * inserts a {@link planespotter.dataclasses.DataPoint} (tracking data) into the database,
+	 * gets the tracking data from the given {@link Fr24Frame} or {@link planespotter.dataclasses.ADSBFrame}
 	 *
-	 *
-	 * @param f
-	 * @param id
+	 * @param frame is the {@link Frame} where the tracking data is inserted from
+	 * @param flightID is the {@link planespotter.dataclasses.Flight} from
+	 *                 the corresponding {@link planespotter.dataclasses.Flight}
 	 */
-	public void insertTracking(@NotNull Fr24Frame f, int id) {
+	public <E extends Frame> void insertTracking(@NotNull E frame, int flightID) {
 		synchronized (DB_SYNC) {
 			// insert into tracking
 			try (Connection conn = DBConnector.getConnection(false);
 				 PreparedStatement pstmt = conn.prepareStatement(SQLQueries.TRACKINGQUERRY)) {
-				pstmt.setInt(1, id);
-				pstmt.setDouble(2, f.getLat());
-				pstmt.setDouble(3, f.getLon());
-				pstmt.setInt(4, f.getAltitude());
-				pstmt.setInt(5, f.getGroundspeed());
-				pstmt.setInt(6, f.getHeading());
-				pstmt.setInt(7, f.getSquawk());
-				pstmt.setLong(8, f.getTimestamp());
+				pstmt.setInt(1, flightID);
+				pstmt.setDouble(2, frame.getLat());
+				pstmt.setDouble(3, frame.getLon());
+				pstmt.setInt(4, frame.getAltitude());
+				pstmt.setInt(5, frame.getGroundspeed());
+				pstmt.setInt(6, frame.getHeading());
+				pstmt.setInt(7, frame.getSquawk());
+				pstmt.setLong(8, frame.getTimestamp());
 				pstmt.executeUpdate();
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -314,10 +338,11 @@ public final class DBIn extends DBConnector {
 	}
 
 	/**
+	 * updates a specific {@link planespotter.dataclasses.Flight} regarding the last timestamp,
+	 * if a timestamp was null before, the {@link planespotter.dataclasses.Flight} has ended
 	 *
-	 *
-	 * @param id
-	 * @param timestamp
+	 * @param id is the {@link planespotter.dataclasses.Flight} ID to be updated
+	 * @param timestamp is the new timestamp which replaces the old one
 	 */
 	public void updateFlightEnd(int id, long timestamp) {
 		synchronized (DB_SYNC) {

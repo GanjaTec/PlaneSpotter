@@ -1,7 +1,6 @@
 package planespotter.constants;
 
 import org.jetbrains.annotations.NotNull;
-import planespotter.model.nio.Filters;
 
 import java.util.HashMap;
 import java.util.List;

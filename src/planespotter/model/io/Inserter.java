@@ -29,6 +29,12 @@ public class Inserter implements Runnable {
     // reference to the error queue, where all errors are added to and displayed from
     private final Queue<Throwable> errorQueue;
 
+    /**
+     * constructs a new {@link Inserter} instance with {@link DataLoader} and error {@link Queue}
+     *
+     * @param dataLoader is the {@link DataLoader} which is used to load the data to be inserted
+     * @param errorQueue is the error {@link Queue} where errors are collected and handled by the {@link planespotter.controller.Controller}
+     */
     public Inserter(@NotNull DataLoader dataLoader, @NotNull Queue<Throwable> errorQueue) {
         this.terminated = false;
         this.dataLoader = dataLoader;
@@ -44,22 +50,12 @@ public class Inserter implements Runnable {
      */
     @Override
     public void run() {
-        Deque<Fr24Frame> fr24Frames = new ArrayDeque<>();
-        Deque<ADSBFrame> adsbFrames = new ArrayDeque<>();
         while (!terminated) {
             synchronized (INSERT_LOCK) {
                     Scheduler.sleep(500);
                 try (Stream<? extends Frame> frames = dataLoader.pollFrames(MIN_INSERT_COUNT)) { // try to change to Integer.MAX_VALUE
-                    frames.forEach(frame -> {
-                        if (frame instanceof Fr24Frame fr24) {
-                            fr24Frames.add(fr24);
-                        } else if (frame instanceof ADSBFrame adsb) {
-                            adsbFrames.add(adsb);
-                        }
-                    });
-                    DBIn dbIn = DBIn.getDBIn();
-                    dbIn.writeFr24(fr24Frames);
-                    //dbIn.writeADSB(adsbFrames);
+                    // writing frames to DB
+                    DBIn.getDBIn().write(frames);
                 } catch (final Throwable ex) {
                     Thread.onSpinWait();
                     if (!ex.getMessage().startsWith("Data-Queue is empty")) {
@@ -70,6 +66,12 @@ public class Inserter implements Runnable {
         }
     }
 
+    /**
+     * restarts the {@link Inserter} by stopping it, waiting for
+     * 5 seconds and restarting it
+     *
+     * @return this {@link Inserter} instance
+     */
     @NotNull
     public synchronized Inserter restart() {
         if (!terminated) {
@@ -80,6 +82,9 @@ public class Inserter implements Runnable {
         return this;
     }
 
+    /**
+     * stops this {@link Inserter}
+     */
     public void stop() {
         terminated = true;
     }

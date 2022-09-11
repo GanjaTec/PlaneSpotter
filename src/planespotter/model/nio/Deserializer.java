@@ -2,9 +2,8 @@ package planespotter.model.nio;
 
 import org.jetbrains.annotations.NotNull;
 import planespotter.dataclasses.Frame;
-import planespotter.unused.Deserializer;
+import planespotter.unused.OldDeserializer;
 
-import java.util.Collection;
 import java.util.stream.Stream;
 
 /**
@@ -19,12 +18,12 @@ import java.util.stream.Stream;
  * @description
  * Interface AbstractDeserializer represents an abstract Deserializer which has one deserialize-Method
  * @see Fr24Deserializer
- * @see Deserializer
+ * @see ADSBDeserializer
+ * @see OldDeserializer
  * for implementations
- * @indev
  */
 @FunctionalInterface
-public interface AbstractDeserializer<D> {
+public interface Deserializer<D> {
 
     /**
      * This method deserializes data to a collection of Frame-extending objects.

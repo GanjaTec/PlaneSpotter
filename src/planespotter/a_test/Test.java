@@ -65,6 +65,7 @@ public class Test {
         System.out.println(result);
 */
 
+
     }
 
     private static void printTest(PrinterJob printer) throws PrinterException {
