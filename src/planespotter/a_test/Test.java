@@ -55,6 +55,8 @@ public class Test {
     // TEST-MAIN
     public static void main(String[] args) throws Exception {
 
+        bitmapTest();
+
         // testing python scripts and functions in java
 /*
         int a = 99, b = 111;
@@ -65,6 +67,17 @@ public class Test {
         System.out.println(result);
 */
 
+
+    }
+
+    public static void bitmapTest() throws DataNotFoundException, IOException {
+
+        DBOut dope = DBOut.getDBOut();
+        //int[] cgns = dope.getFlightIDsByAirportTag("LAX");
+        int[] cgns = dope.getFlightIDsByAirlineTag("RYR");
+        Vector<Position> positions = dope.getPositionsByFlightIDs(cgns);
+        Bitmap bitmap = Bitmap.fromPosVector(positions, 0.05f);
+        Bitmap.write(bitmap, "RYR.bmp");
 
     }
 
