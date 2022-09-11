@@ -8,7 +8,7 @@ import csv
 import time
 
 buildt1= time.time()
-conn = sqlite3.connect('../../planeTest.db')
+conn = sqlite3.connect('planeTest.db')
 
 cursor = conn.cursor()
 print ("Created database successfully!")
@@ -25,7 +25,7 @@ print("Table \"airlines\" successfully created!")
 print("    Populating table \"airlines\"")
 t1 = time.time()
 i = 0
-with open('airline-codes.csv', newline='\n') as csvfile:
+with open('airline-codes.csv', newline='\n', encoding="utf8") as csvfile:
     reader = csv.DictReader(csvfile, delimiter=',')
     for row in reader:
         if row["icao"] in (None, ""):
@@ -52,14 +52,14 @@ print("Table \"airports\" successfully created!")
 print("    Populating table \"airports\"...")
 t1 = time.time()
 i=0
-with open('airport-codes.csv', newline='\n') as csvfile:
+with open('airport-codes.csv', newline='\n', encoding="utf8") as csvfile:
     reader = csv.DictReader(csvfile, delimiter=',')
     for row in reader:
         if row["iata_code"] in (None, ""):
             pass
         else:
-            cords = row["coordinates"].split(", ")
-            values = (None, row["iata_code"],row["name"],row["iso_country"], coords[1], coords[2])
+            coords = row["coordinates"].split(", ")
+            values = (None, row["iata_code"],row["name"],row["iso_country"], coords[0], coords[1])
             #print("| {} | {} | {} | {} | {} |".format(*values))
             sql = '''INSERT INTO airports VALUES (?, ?, ?, ?, ?, ?)'''
             cursor.execute(sql, values)
@@ -80,7 +80,7 @@ print("Table \"type\" successfully created!")
 print("    Populating Table \"type\"")
 t1 = time.time()
 i = 0
-with open('airplane-types.csv', newline='\n') as csvfile:
+with open('airplane-types.csv', newline='\n', encoding="utf8") as csvfile:
     reader = csv.DictReader(csvfile, delimiter=',')
     for row in reader:
         if row["shortn"] in (None, ""):
@@ -113,7 +113,7 @@ conn.execute('''CREATE TABLE flights
          flightnr         TEXT,
          callsign         TEXT,
          start            TEXT,
-         end              TEXT
+         endTime          TEXT
          );''')
 print("Table \"flights\" successfully created!")
 
