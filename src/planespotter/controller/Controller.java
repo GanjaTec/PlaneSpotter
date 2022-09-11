@@ -16,7 +16,6 @@ import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 
 import planespotter.constants.*;
 import planespotter.display.models.ConnectionPane;
-import planespotter.display.models.PaneModels;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.FileWizard;
 import planespotter.model.nio.ADSBSupplier;
@@ -26,7 +25,6 @@ import planespotter.model.nio.DataLoader;
 import planespotter.throwables.*;
 import planespotter.dataclasses.*;
 import planespotter.display.*;
-import planespotter.display.models.MenuModels;
 import planespotter.model.*;
 import planespotter.model.io.DBOut;
 import planespotter.statistics.Statistics;
@@ -166,7 +164,7 @@ public abstract class Controller implements ExceptionHandler {
      * and opening an {@link UserInterface} (window)
      */
     public synchronized void start() {
-        Thread animation = scheduler.shortTask(() -> PaneModels.startScreenAnimation(2));
+        Thread animation = scheduler.shortTask(() -> getUI().startScreenAnimation(2));
         initialize();
         try {
             scheduler.await(animation);
@@ -816,7 +814,7 @@ public abstract class Controller implements ExceptionHandler {
         try {
             ViewType currentViewType = getUI().getCurrentViewType();
             String extensions = currentViewType == MAP_HEATMAP ? ".bmp" : ".pls";
-            JFileChooser fileChooser = MenuModels.fileSaver(getUI().getWindow(), extensions);
+            JFileChooser fileChooser = getUI().showFileSaver(getUI().getWindow(), extensions);
             Rectangle rect = /*(gui.getCurrentVisibleRect() != null) ? gui.getCurrentVisibleRect() :*/ null;
             File selected = fileChooser.getSelectedFile();
             if (selected == null) {

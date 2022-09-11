@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
+@Deprecated()
 public class ProtoSupplierADSB implements Supplier {
 
     private final String host;

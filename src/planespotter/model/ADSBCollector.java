@@ -1,19 +1,26 @@
 package planespotter.model;
 
+import org.jetbrains.annotations.TestOnly;
+import planespotter.model.nio.ADSBSupplier;
+import planespotter.model.nio.DataLoader;
 import planespotter.unused.ProtoSupplierADSB;
+
+import java.net.URI;
 
 /**
  * @name ADSBCollector
- * @author
+ * @author -
  * @version 1.0
+ *
  * @description
  * ADSBCollector is a Collector-subclass for
  * collecting ADSB data with custom antenna
  */
-public class ADSBCollector extends Collector<ProtoSupplierADSB> {
+@TestOnly
+public class ADSBCollector extends Collector<ADSBSupplier> {
 
     public static void main(String[] args) {
-        new ADSBCollector(true).start();
+        new ADSBCollector("http://192.168.178.47:8080/data/aircraft.json", true).start();
     }
 
     /**
@@ -22,8 +29,8 @@ public class ADSBCollector extends Collector<ProtoSupplierADSB> {
      * @param exitOnClose indicates if the whole program should exit
      *                    when the 'X'-button is pressed
      */
-    protected ADSBCollector(boolean exitOnClose) {
-        super(exitOnClose, new ProtoSupplierADSB(null, 0, false)); // example
+    protected ADSBCollector(String requestUri, boolean exitOnClose) {
+        super(exitOnClose, new ADSBSupplier(requestUri, new DataLoader())); // example
     }
 
     /**

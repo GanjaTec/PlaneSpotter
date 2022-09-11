@@ -114,7 +114,7 @@ public abstract class Utilities {
     }
 
     /**
-     * creates an {@link URI} part-by-part
+     * creates an URI-{@link String} by its parts
      *
      * @param scheme is the URI scheme (e.g. http or https)
      * @param host is the URI hostname
@@ -122,26 +122,21 @@ public abstract class Utilities {
      * @param path is the URI path
      * @param query is the URI query
      * @param fragment is the URI fragment
-     * @return a new {@link URI} object, composed of these parts
+     * @return a new URI-{@link String}, composed of these parts
      */
     @NotNull
-    public static URI createURI(@Nullable String scheme, @NotNull String host, @Nullable String port,
+    public static String createURI(@Nullable String scheme, @NotNull String host, @Nullable String port,
                                 @Nullable String path, @Nullable String query, @Nullable String fragment) {
 
         if (host.isBlank()) {
             throw new InvalidDataException("Host may not be blank");
         }
-        String uriStr = (scheme == null ? "" : scheme + "://") + host +
-                        (port == null ? "" : ":" + port + "/") +
-                        (path == null ? "" : path) +
-                        (query == null ? "" : "?" + query) +
-                        (fragment == null ? "" : "#" + fragment);
+        return  (scheme == null ? "" : scheme + "://") + host +
+                (port == null ? "" : ":" + port + "/") +
+                (path == null ? "" : path) +
+                (query == null ? "" : "?" + query) +
+                (fragment == null ? "" : "#" + fragment);
 
-        try {
-            return URI.create(uriStr);
-        } catch (IllegalArgumentException iae) {
-            throw new InvalidDataException("URI string is invalid!", iae);
-        }
 
     }
 
