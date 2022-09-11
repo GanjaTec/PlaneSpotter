@@ -18,14 +18,18 @@ import java.awt.image.BufferedImage;
  * @author jml04
  * @version 1.0
  *
- * class TreasureMap represents a Map which extends from JMapViewer
+ * @description
+ * class TreasureMap represents a custom Map which extends from JMapViewer
  */
 public class TreasureMap extends JMapViewer {
 
-    @NotNull public static final Object PAINT_LOCK = new Object();
+    // monitor object for synchronized painting
+    @NotNull private static final Object PAINT_LOCK = new Object();
 
+    // map tile sources
     @NotNull public static final TileSource OPEN_STREET_MAP, BING_MAP, TRANSPORT_MAP;
 
+    // initializing map sources
     static {
         // setting tile sources
         OPEN_STREET_MAP = new TMSTileSource(new TileSourceInfo("OSM", "https://a.tile.openstreetmap.de", "0"));
@@ -62,10 +66,20 @@ public class TreasureMap extends JMapViewer {
         }*/
     }
 
+    /**
+     * getter for the bitmap {@link BufferedImage}
+     *
+     * @return the current bitmap
+     */
     public final BufferedImage getHeatMap() {
         return this.heatMap;
     }
 
+    /**
+     * sets the current Bitmap {@link BufferedImage}
+     *
+     * @param heatMap is the bitmap {@link BufferedImage}
+     */
     public void setHeatMap(BufferedImage heatMap) {
         this.heatMap = heatMap;
     }

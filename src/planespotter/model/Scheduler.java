@@ -318,8 +318,10 @@ public class Scheduler {
 
         // thread name
         private volatile String name;
+
         // daemon thread?
         private volatile boolean daemon = false;
+
         // thread priority
         private volatile int priority = -1;
 

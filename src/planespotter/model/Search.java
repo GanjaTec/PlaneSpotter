@@ -15,6 +15,7 @@ import java.util.*;
  * @author jml04
  * @version 1.0
  *
+ * @description
  * class search contains search methods for flights, planes, airports, airlines and areas
  * it gets its parameters from other classes like Controller and tries to return search results.
  */
@@ -86,7 +87,7 @@ public class Search {
     }
 
     /**
-     * verifies a plane from the plane search
+     * starts a DB-search for a specific {@link planespotter.dataclasses.Plane}
      *
      * @param inputs are the input strings
      */
@@ -116,13 +117,14 @@ public class Search {
     }
 
     /**
-     * verifies an airport by input strings
+     * starts a DB-search for an {@link planespotter.dataclasses.Airport}
      *
      * @param inputs are the input strings [id,tag,name]
      * @return Vector of all DataPoints containing a flight with the input airport
      * @throws DataNotFoundException if no airport or no flights where found
      */
     // TODO: 25.05.2022 Airport suche mit Start und Ziel Airport
+    @NotNull
     public Vector<DataPoint> forAirport(String[] inputs) throws DataNotFoundException {
 
         String id = inputs[0];
@@ -157,6 +159,15 @@ public class Search {
         return data;
     }
 
+    /**
+     * starts a DB-search for an {@link planespotter.dataclasses.Airline}
+     *
+     * @param inputs are the input {@link String}s to search for
+     * @return {@link Vector} of {@link DataPoint}s, all tracking points with that airlines
+     * @throws DataNotFoundException if no {@link planespotter.dataclasses.Airline} or
+     *                               {@link planespotter.dataclasses.Flight} was found
+     */
+    @NotNull
     public Vector<DataPoint> forAirline(@NotNull String[] inputs) throws DataNotFoundException {
 
         if (inputs.length != 4) {
@@ -193,7 +204,7 @@ public class Search {
     }
 
     /**
-     * finds a callsign
+     * finds a callsign with a LIKE statement
      *
      * @param input is the callsign to search for
      * @return Deque of all callsigns found for the input string

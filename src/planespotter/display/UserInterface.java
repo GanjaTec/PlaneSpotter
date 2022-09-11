@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
+import planespotter.constants.Images;
 import planespotter.constants.SearchType;
 import planespotter.constants.ViewType;
 import planespotter.constants.Warning;
@@ -12,10 +13,19 @@ import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.display.models.*;
 import planespotter.model.ConnectionManager;
+import planespotter.model.Scheduler;
+import planespotter.util.Utilities;
+import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.io.File;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+
+import static planespotter.constants.Images.*;
 
 /**
  * @name UserInterface
@@ -63,7 +73,7 @@ public class UserInterface {
      */
     public UserInterface(@NotNull ActionHandler actionHandler, @NotNull TileSource defaultMapSource, @NotNull String title, @NotNull ConnectionManager connectionManager) {
 
-        this.window = PaneModels.windowFrame(actionHandler, title);
+        this.window = windowFrame(actionHandler, title);
         this.layerPane = new LayerPane(window.getSize());
         this.mapManager = new MapManager(this, actionHandler, defaultMapSource);
         this.searchPane = new SearchPane(this.layerPane, actionHandler);
@@ -71,8 +81,8 @@ public class UserInterface {
         this.connectionPane = new ConnectionPane(window, actionHandler, actionHandler, actionHandler, connectionManager);
         this.window.add(this.layerPane);
 
-        this.layerPane.setDefaultBottomComponent(this.getMap());
-        this.layerPane.setDefaultOverTopComponent(PaneModels.loadingScreen());
+        this.layerPane.setDefaultBottomComponent(getMap());
+        this.layerPane.setDefaultOverTopComponent(loadingScreen());
         this.layerPane.setBottomDefault();
 
         this.currentViewType = ViewType.MAP_LIVE;
@@ -279,7 +289,7 @@ public class UserInterface {
      */
     @Nullable
     public File getSelectedFile() {
-        JFileChooser fileChooser = MenuModels.fileLoader(getWindow());
+        JFileChooser fileChooser = showFileLoader(getWindow());
         return fileChooser.getSelectedFile();
     }
 
@@ -320,5 +330,210 @@ public class UserInterface {
     @NotNull
     public ConnectionPane getConnectionPane() {
         return connectionPane;
+    }
+
+    /**
+     * constructs the window-{@link JFrame} with all its components
+     *
+     * @param listener is the {@link ActionHandler} that handles all UI-interactions
+     * @param title is the window title
+     * @return the main UI window
+     */
+    @NotNull
+    private JFrame windowFrame(@NotNull ActionHandler listener, @NotNull String title) {
+        // getting main window object
+        JFrame window = new JFrame(title);
+        // setting window start size and preferred size
+        Dimension size = new Dimension(1280, 720);
+        window.setSize(size);
+        window.setPreferredSize(size);
+        // setting default close operation, do nothing for external exit action
+        window.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        // setting window location relative to null
+        window.setLocationRelativeTo(null);
+        // component listener for component resize
+        window.addComponentListener(listener);
+        // window listener for window actions like open/close
+        window.addWindowListener(listener);
+        // setting plane icon as window-icon
+        window.setIconImage(FLYING_PLANE_ICON.get().getImage());
+        // first setting to not-visible
+        window.setVisible(false);
+        // returning window
+        window.setJMenuBar(topMenuBar(listener));
+
+        return window;
+    }
+
+    /**
+     * creates the top menu bar for the UI window
+     *
+     * @param actionHandler is the {@link ActionHandler} which handles all click actions
+     * @return the top menu bar
+     */
+    @NotNull
+    private JMenuBar topMenuBar(@NotNull final ActionHandler actionHandler) {
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File"),
+                liveMapMenu = new JMenu("Live-Map"),
+                searchMenu = new JMenu("Search"),
+                statsMenu = new JMenu("Statistics"),
+                supplierMenu = new JMenu("Supplier"),
+                settingsMenu = new JMenu("Settings"),
+                closeMenu = new JMenu("Close View"),
+                helpMenu = new JMenu("Help");
+        liveMapMenu.addMouseListener(actionHandler);
+        searchMenu.addMouseListener(actionHandler);
+        settingsMenu.addMouseListener(actionHandler);
+        closeMenu.addMouseListener(actionHandler);
+
+        JMenuItem[] fileItems = new JMenuItem[] {
+                new JMenuItem("Open", Images.OPEN_FILE_ICON_16x.get()),
+                new JMenuItem("Save As", Images.SAVE_FILE_ICON_16x.get()),
+                new JMenuItem("Fullscreen", Images.FULLSCREEN_ICON_16x.get()),
+                new JMenuItem("Exit", Images.EXIT_ICON_16x.get())
+        };
+        JMenu heatMapMenu = new JMenu("Heat-Map");
+        heatMapMenu.setIcon(Images.HEATMAP_ICON_16x.get());
+        JMenuItem[] statsItems = new JMenuItem[] {
+                new JMenuItem("Top-Airports", Images.STATS_ICON_16x.get()),
+                new JMenuItem("Top-Airlines", Images.STATS_ICON_16x.get()),
+                heatMapMenu
+        };
+        JMenuItem[] heatMapItems = new JMenuItem[] {
+                new JMenuItem("Position-HeatMap"),
+                new JMenuItem("coming soon...")
+        };
+        JMenuItem[] supplierItems = new JMenuItem[] {
+                new JMenuItem("Fr24-Supplier", Images.PLANE_ICON_16x.get()),
+                new JMenuItem("ADSB-Supplier", Images.PLANE_ICON_16x.get()),
+                new JMenuItem("Antenna", Images.ANTENNA_ICON_16x.get())
+        };
+        Font font = UserInterface.DEFAULT_FONT.deriveFont(13f);
+
+        Arrays.stream(fileItems).forEach(item -> {
+            item.addMouseListener(actionHandler);
+            item.setFont(font);
+            fileMenu.add(item);
+            fileMenu.addSeparator();
+        });
+        Arrays.stream(statsItems).forEach(item -> {
+            if (item instanceof JMenu menu) {
+                Arrays.stream(heatMapItems).forEach(i -> {
+                    i.addMouseListener(actionHandler);
+                    i.setFont(font);
+                    menu.add(i);
+                    menu.addSeparator();
+                });
+            } else {
+                item.addMouseListener(actionHandler);
+            }
+            item.setFont(font);
+            statsMenu.add(item);
+            statsMenu.addSeparator();
+
+        });
+        Arrays.stream(supplierItems).forEach(item -> {
+            item.addMouseListener(actionHandler);
+            item.setFont(font);
+            supplierMenu.add(item);
+            supplierMenu.addSeparator();
+        });
+        JMenu[] menus = new JMenu[] {
+                fileMenu, liveMapMenu, searchMenu, statsMenu, supplierMenu, settingsMenu, closeMenu, helpMenu
+        };
+        Arrays.stream(menus).forEach(m -> {
+            m.setFont(font);
+            menuBar.add(m);
+        });
+        return menuBar;
+    }
+
+    /**
+     * start screen animation, shows the start screen and increases its opacity
+     *
+     * @param sec is the animation time
+     */
+    public synchronized void startScreenAnimation(int sec) {
+        ImageIcon img = Utilities.scale(START_SCREEN.get(), 800, 100);
+        JLabel label = new JLabel(img);
+        label.setSize(img.getIconWidth(), img.getIconHeight());
+        label.setOpaque(false);
+        label.setLayout(null);
+
+        JDialog dialog = new JDialog();
+        dialog.add(label);
+        dialog.setSize(label.getSize());
+        dialog.setLocationRelativeTo(null);
+        dialog.setUndecorated(true);
+        dialog.setOpacity(0.0f);
+        dialog.setVisible(true);
+        // easy animation
+        long millis = TimeUnit.SECONDS.toMillis(sec);
+        long vel = MathUtils.divide(millis, 100L);
+        float opc;
+        for (int s = 0; s < millis; s += vel) {
+            opc = dialog.getOpacity();
+            dialog.setOpacity(opc + 0.01f);
+            Scheduler.sleep(vel);
+        }
+        dialog.setVisible(false);
+    }
+
+    /**
+     * the default UI-loading screen
+     *
+     * @return UI loading screen as {@link JLabel}
+     */
+    @NotNull
+    private JLabel loadingScreen() {
+        ImageIcon img = LOADING_CYCLE_GIF.get();
+        JLabel label = new JLabel(img);
+        label.setSize(img.getIconWidth(), img.getIconHeight());
+        label.setOpaque(false);
+        label.setLayout(null);
+
+        return label;
+    }
+
+    /**
+     * opens a {@link JFileChooser} with save dialog and returns it
+     *
+     * @param parent is the parent component
+     * @param extensions are the allowed file extensions
+     * @return created {@link JFileChooser}
+     */
+    public JFileChooser showFileSaver(JFrame parent, String... extensions) {
+        File home = FileSystemView.getFileSystemView().getHomeDirectory();
+        JFileChooser fileChooser = new JFileChooser(home);
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        FileNameExtensionFilter fileFilter = new FileNameExtensionFilter(
+                Arrays.toString(extensions)
+                        .replaceAll("\\[", "")
+                        .replaceAll("]", ""),
+                Arrays.stream(extensions)
+                        .map(s -> s.replaceAll("\\.", ""))
+                        .toArray(String[]::new));
+        fileChooser.setFileFilter(fileFilter);
+        fileChooser.showSaveDialog(parent);
+
+        return fileChooser;
+    }
+
+    /**
+     * opens a {@link JFileChooser} window and returns the {@link JFileChooser} for load dialog
+     *
+     * @param parent is the parent component
+     * @return created {@link JFileChooser}
+     */
+    public JFileChooser showFileLoader(JFrame parent) {
+        File home = FileSystemView.getFileSystemView().getHomeDirectory();
+        JFileChooser fileChooser = new JFileChooser(home);
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        FileNameExtensionFilter fileFilter = new FileNameExtensionFilter(".pls, .bmp", "pls", "bmp");
+        fileChooser.setFileFilter(fileFilter);
+        fileChooser.showOpenDialog(parent);
+
+        return fileChooser;
     }
 }
