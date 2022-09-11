@@ -2,7 +2,6 @@ package planespotter.constants;
 
 import planespotter.util.Utilities;
 
-import java.sql.PreparedStatement;
 import java.util.Deque;
 
 /**
@@ -35,7 +34,7 @@ public final class SQLQueries {
 	public static final String GET_PLANE_BY_ID = "SELECT * FROM planes WHERE ID == ";
 	public static final String GET_AIRLINE_BY_TAG = "SELECT * FROM airlines WHERE icaotag == ";
 	public static final String GET_AIRLINE_ID_BY_TAG = "SELECT ID FROM airlines WHERE icaotag == ";
-	public static final String GET_PLANE_IDS_BY_ICAO = "SELECT ID FROM planes WHERE icaonr IS ";
+	public static final String GET_FLIGHT_IDS_BY_ICAO_LIKE = "SELECT f.ID FROM flights f JOIN planes p ON p.ID = f.plane AND p.icaonr LIKE ";
 	// all flights IDs with a specific callsign
 	public static final String GET_FLIGHT_IDS_BY_CALLSIGN = "SELECT ID FROM flights WHERE callsign IS ";
 	public static final String CHECK_END_OF_FLIGHT = "SELECT ID FROM flights WHERE endTime IS NULL";
@@ -46,7 +45,7 @@ public final class SQLQueries {
 	// plane id by planetype
 	public static final String GET_PLANE_IDS_BY_TYPE = "SELECT ID FROM planes WHERE type IS ";
 	// plane by tailnumber
-	public static final String GET_PLANE_ID_BY_TAIL_NR = "SELECT ID FROM planes WHERE tailnr = ";
+	public static final String GET_FLIGHT_IDS_BY_TAILNR_LIKE = "SELECT f.ID FROM flights f JOIN planes p ON p.ID = f.plane AND p.tailnr LIKE ";
 	// all planetypes
 	public static final String GET_ALL_PLANETYPES = 	"SELECT DISTINCT type FROM planes WHERE type IS NOT NULL";
 	// all callsigns

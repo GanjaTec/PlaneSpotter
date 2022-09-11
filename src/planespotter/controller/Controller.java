@@ -20,7 +20,7 @@ import planespotter.display.models.PaneModels;
 import planespotter.model.io.DBIn;
 import planespotter.model.io.FileWizard;
 import planespotter.model.nio.ADSBSupplier;
-import planespotter.model.nio.Filters;
+import planespotter.model.nio.FilterManager;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.nio.DataLoader;
 import planespotter.throwables.*;
@@ -37,10 +37,7 @@ import planespotter.util.Utilities;
 import javax.imageio.ImageIO;
 import javax.net.ssl.SSLHandshakeException;
 import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ConnectException;
@@ -58,11 +55,6 @@ import static planespotter.constants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
 import static planespotter.constants.Sound.SOUND_DEFAULT;
 import static planespotter.constants.ViewType.*;
 
-/*
- * TIP: use Thread.onSpinWait() while busy-waiting (each iteration in while loop),
- *      improves the performance
- */
-
 /**
  * @name Controller
  * @author jml04
@@ -77,7 +69,7 @@ import static planespotter.constants.ViewType.*;
  */
 public abstract class Controller implements ExceptionHandler {
 
-    // static fields
+    // -- static fields --
 
     // runtime instance
     public static final Runtime RUNTIME;
@@ -131,8 +123,11 @@ public abstract class Controller implements ExceptionHandler {
     // connection manager, manages user-input connections
     @NotNull private final ConnectionManager connectionManager;
 
-    // 'ADSBSupplier enabled' flag
-    private boolean adsbEnabled;
+    // search object for DB-search operations
+    @NotNull private final Search search;
+
+    // 'ADSBSupplier / Fr24Supplier enabled' flag
+    private boolean adsbEnabled, fr24Enabled;
 
     /**
      * private constructor for Controller main instance,
@@ -144,6 +139,7 @@ public abstract class Controller implements ExceptionHandler {
         initConfig();
         this.scheduler = new Scheduler();
         this.dataLoader = new DataLoader();
+        this.search = new Search();
         this.connectionManager = new ConnectionManager(Configuration.CONNECTIONS_FILENAME);
         this.ui = new UserInterface(ActionHandler.getActionHandler(),
                                     (TileSource) config.getProperty("currentMapSource"),
@@ -152,6 +148,7 @@ public abstract class Controller implements ExceptionHandler {
         this.clicking = false;
         this.terminated = false;
         this.adsbEnabled = false;
+        this.fr24Enabled = true;
     }
 
     /**
@@ -163,9 +160,10 @@ public abstract class Controller implements ExceptionHandler {
     public static Controller getInstance() {
         return INSTANCE;
     }
+
     /**
      * starts the program by initializing the controller
-     * and opening a UI-window
+     * and opening an {@link UserInterface} (window)
      */
     public synchronized void start() {
         Thread animation = scheduler.shortTask(() -> PaneModels.startScreenAnimation(2));
@@ -193,7 +191,6 @@ public abstract class Controller implements ExceptionHandler {
         config.setProperty("saveLogs", false);
         config.setProperty("mapBaseUrl", "https://a.tile.openstreetmap.de");
         config.setProperty("fr24RequestUri", "https://data-live.flightradar24.com/");
-        //config.setProperty("adsbRequestUri", "http://192.168.178.47:8080/data/aircraft.json");
         config.setProperty("bingMap", new BingAerialTileSource());
         config.setProperty("transportMap", new OsmTileSource.TransportMap());
         config.setProperty("openStreetMap", new TMSTileSource(new TileSourceInfo("OSM", (String) config.getProperty("mapBaseUrl"), "0")));
@@ -219,10 +216,11 @@ public abstract class Controller implements ExceptionHandler {
         }
 
         // should also be saved in 'filters.psc', not static
-        Filters collectorFilters = new Filters().add("RCH").add("DUKE").add("FORTE").add("CASA").add("VIVI")
-                                                .add("EYE").add("NCR").add("LAGR").add("SNIPER").add("VALOR")
-                                                .add("MMF").add("HOIS").add("K35R").add("SONIC").add("Q4");
-        config.setProperty("collectorFilters", collectorFilters);
+        FilterManager collectorFilterManager = new FilterManager()
+                .add("RCH").add("DUKE").add("FORTE").add("CASA").add("VIVI")
+                .add("EYE").add("NCR").add("LAGR").add("SNIPER").add("VALOR")
+                .add("MMF").add("HOIS").add("K35R").add("SONIC").add("Q4");
+        config.setProperty("collectorFilters", collectorFilterManager);
     }
 
     /**
@@ -240,8 +238,7 @@ public abstract class Controller implements ExceptionHandler {
             try {
                 URL[] urls = new URL[] {
                         new URL((String) config.getProperty("fr24RequestUri")),
-                        new URL((String) config.getProperty("mapBaseUrl")),
-                       // new URL((String) config.getProperty("adsbRequestUri"))
+                        new URL((String) config.getProperty("mapBaseUrl"))
                 };
                 Utilities.connectionPreCheck(2000, urls);
             } catch (IOException | Fr24Exception e) {
@@ -288,8 +285,8 @@ public abstract class Controller implements ExceptionHandler {
         }
         try {
             fileWizard.writeConnections(Configuration.CONNECTIONS_FILENAME, getConnectionManager());
-        } catch (IOException ioe) {
-            handleException(ioe);
+        } catch (IOException | ExtensionException e) {
+            handleException(e);
         }
         // saving log, if option is enabled
         if ((boolean) getConfig().getProperty("saveLogs")) {
@@ -319,6 +316,14 @@ public abstract class Controller implements ExceptionHandler {
 
     }
 
+    /**
+     * shuts down the program directly, won't wait for any tasks or shutdown hooks,
+     * saves a log with the problematic error, if there is one.
+     *
+     * Note: Only use with caution, changes could be deleted!
+     *
+     * @param problem is the problematic error (may be null)
+     */
     private void emergencyShutdown(@Nullable Throwable problem) {
         // printing error stacktrace
         if (problem != null) {
@@ -350,9 +355,12 @@ public abstract class Controller implements ExceptionHandler {
     /**
      * starts a {@link Fr24Collector} to collect Fr24-Data
      * @see planespotter.model.Fr24Collector
+     * @see
+     *
+     * @param insertMode is the insert mode TODO ....
      */
-    // TODO: 08.08.2022 add filters
-    void runFr24Collector() {
+    // TODO: 08.08.2022 add filters, INSERT MODE
+    void runCollector(int insertMode) {
         Collector<Fr24Supplier> collector = new Fr24Collector(false, false, 6, 12);
         collector.start();
     }
@@ -375,17 +383,18 @@ public abstract class Controller implements ExceptionHandler {
             if (type != MAP_LIVE) {
                 dataLoader.setLive(false);
             }
+
             getUI().setViewType(type);
             getUI().getMapManager().clearMap();
 
             switch (type) {
                 case LIST_FLIGHT -> { /*removed Flight-List implementation*/ }
                 case MAP_LIVE -> dataLoader.setLive(true);
-                case MAP_FROMSEARCH,
-                        MAP_TRACKING -> showTrackingMap(mapManager, true);
-                case MAP_TRACKING_NP -> showTrackingMap(mapManager, false);
+                case MAP_TRACKING -> mapManager.createTrackingMap(getDataList(), null, true);
+                case MAP_TRACKING_NP -> mapManager.createTrackingMap(getDataList(), null, false);
+                case MAP_FROMSEARCH -> mapManager.createSearchMap(getDataList(), false);
                 // significance map should be improved
-                case MAP_SIGNIFICANCE -> showSignificanceMap(mapManager, dbOut);
+                //case MAP_SIGNIFICANCE -> showSignificanceMap(mapManager, dbOut);
                 // heatmap should be implemented
                 case MAP_HEATMAP -> showBitmap(null, null);
             }
@@ -411,12 +420,10 @@ public abstract class Controller implements ExceptionHandler {
             return;
         }
 
-        Search search;
         if (button == 1) {
             getUI().showLoadingScreen(true);
             setLoading(true);
 
-            search = new Search();
             SearchType currentSearchType = getUI().getSearchPane().getCurrentSearchType();
             ViewType showType;
             try {
@@ -451,10 +458,16 @@ public abstract class Controller implements ExceptionHandler {
     }
 
     /**
+     * confirms and saves the changed user settings
+     * in the 'configuration.psc' file
      *
-     * @param data [0] and [1] must be filled
+     * @param data are the settings values, [0], [1] and [2] must be filled
      */
     public void confirmSettings(@NotNull String... data) {
+
+        if (data.length != 3) {
+            throw new InvalidDataException("Settings data is invalid!");
+        }
 
         int dataLimit, livePeriodSec; TileSource currentMapSource;
 
@@ -485,6 +498,13 @@ public abstract class Controller implements ExceptionHandler {
         }
     }
 
+    /**
+     * executed when the live map is clicked, goes through all {@link MapMarker}s,
+     * chooses the clicked one, if there is one and does further action
+     *
+     * @param clickedCoord is the clicked {@link Coordinate}
+     * @return boolean if a {@link MapMarker} was hit
+     */
     // TODO: 14.08.2022 move to MapManager
     boolean onLiveClick(@NotNull ICoordinate clickedCoord) {
 
@@ -534,20 +554,17 @@ public abstract class Controller implements ExceptionHandler {
     }
 
     /**
-     * is executed when a map marker is clicked and the current is MAP_ALL
+     * is executed when a map marker is clicked and the current is MAP_ALL,
+     * chooses the clicked {@link MapMarker}, if there is one and does further action
      */
+    // TODO: 09.09.2022 debug, improve
     // TODO: 14.08.2022 move to mapManager
     boolean onClick_all(@NotNull ICoordinate clickedCoord) { // TODO aufteilen
 
-        List<MapMarker> mapMarkers;
-        List<MapMarker> newMarkerList;
-        Vector<DataPoint> data;
-        Coordinate markerCoord;
-        PlaneMarker newMarker;
-        MapManager mapManager;
-        DBOut dbOut;
+        List<MapMarker> mapMarkers; List<MapMarker> newMarkerList; Vector<DataPoint> data;
+        Coordinate markerCoord; PlaneMarker newMarker; MapManager mapManager; DBOut dbOut; Position pos;
         boolean markerHit = false;
-        int counter;
+        int counter, heading;
 
         if (!this.clicking) {
             try {
@@ -556,20 +573,23 @@ public abstract class Controller implements ExceptionHandler {
                 newMarkerList = new ArrayList<>();
                 mapManager = getUI().getMapManager();
                 counter = 0;
-                data = getDataList();
                 dbOut = DBOut.getDBOut();
-                // going though markers
+                if ((data = getDataList()) == null) {
+                    return false;
+                }
+                // going through markers
                 for (MapMarker m : mapMarkers) {
                     markerCoord = m.getCoordinate();
+                    pos = Position.parsePosition(markerCoord);
+                    heading = data.get(counter).heading();
                     if (mapManager.isMarkerHit(markerCoord, clickedCoord) && !markerHit) {
                         markerHit = true;
-                        newMarker = new PlaneMarker(markerCoord, 90, true, true);
+                        newMarker = PlaneMarker.fromPosition(pos, heading, true, true);
                         onMarkerHit(MAP_FROMSEARCH, newMarker, counter, data, dbOut);
                     } else {
-                        newMarker = new PlaneMarker(markerCoord, 90, true, false);
-                        newMarker.setBackColor(DEFAULT_MAP_ICON_COLOR.get());
+                        newMarker = PlaneMarker.fromPosition(pos, heading, true, false);
                     }
-                    newMarker.setName(m.getName());
+                    //newMarker.setName(m.getName());
                     newMarkerList.add(newMarker);
                     counter++;
                 }
@@ -583,6 +603,17 @@ public abstract class Controller implements ExceptionHandler {
         return markerHit;
     }
 
+    /**
+     * executed when a clicked {@link MapMarker} was found, further action is done here
+     * like changing the clicked {@link MapMarker} and showing information
+     *
+     * @param viewType is the current {@link ViewType}
+     * @param marker is the clicked {@link MapMarker}
+     * @param counter is the {@link MapMarker} index in the marker list (from {@link TreasureMap})
+     * @param dataPoints is the current {@link DataPoint} list
+     * @param dbOut is the {@link DBOut} instance
+     */
+    // TODO: 09.09.2022 improve
     public void onMarkerHit(ViewType viewType, @NotNull PlaneMarker marker,
                              int counter, Vector<DataPoint> dataPoints,
                              DBOut dbOut) {
@@ -615,8 +646,10 @@ public abstract class Controller implements ExceptionHandler {
     }
 
     /**
+     * executed when the tracking map is clicked,
+     * chooses the clicked {@link MapMarker}, if there is one and does further action
      *
-     * @param clickedCoord is the clicked coordinate
+     * @param clickedCoord is the clicked {@link Coordinate}
      */
     // TODO: 14.08.2022 move to MapManager
     boolean onTrackingClick(@NotNull ICoordinate clickedCoord) { // TODO aufteilen
@@ -653,15 +686,29 @@ public abstract class Controller implements ExceptionHandler {
         return markerHit;
     }
 
-    public void setConnection(boolean connect) {
+    /**
+     * Connects / disconnects a the current selected {@link planespotter.model.ConnectionManager.Connection}
+     *
+     * @param connect indicates if a {@link planespotter.model.ConnectionManager.Connection}
+     *                should be connected or disconnected
+     * @param mixWithFr24 indicates if the {@link planespotter.dataclasses.Frame}s, loaded by the
+     *                    {@link planespotter.model.ConnectionManager.Connection} should be
+     *                    mixed with {@link Fr24Frame}s
+     */
+    public void setConnection(boolean connect, boolean mixWithFr24) {
         ActionHandler onAction = ActionHandler.getActionHandler();
         ConnectionManager cmg = getConnectionManager();
         ConnectionManager.Connection selectedConn = cmg.getSelectedConn();
         try {
+            cmg.disconnectAll();
             setAdsbEnabled(connect);
+            setFr24Enabled(mixWithFr24);
             if (selectedConn != null) {
+                selectedConn.setMixWithFr24(mixWithFr24);
                 selectedConn.setConnected(connect);
                 cmg.setSelectedConn(selectedConn.name);
+            } else {
+                cmg.setSelectedConn(null);
             }
             if (connect) {
                 if (selectedConn == null) {
@@ -674,10 +721,17 @@ public abstract class Controller implements ExceptionHandler {
                 show(MAP_LIVE);
             }
         } finally {
-            getUI().getConnectionPane().showConnection(selectedConn, onAction);
+            getUI().getConnectionPane().showConnection(connect ? selectedConn : null, onAction);
         }
     }
 
+    /**
+     * adds a {@link planespotter.model.ConnectionManager.Connection} to the {@link ConnectionManager}
+     *
+     * @param connPane is the {@link ConnectionPane} instance
+     * @param connList is the {@link JList}, that contains all connections and also the selected one
+     * @param model is the {@link ListModel} of the {@link JList}
+     */
     public void addConnection(@NotNull ConnectionPane connPane, @NotNull JList<String> connList, @NotNull ListModel<String> model) {
         String[] input = connPane.getInput();
         int size = model.getSize();
@@ -724,6 +778,14 @@ public abstract class Controller implements ExceptionHandler {
         connPane.closeAddDialog();
     }
 
+    /**
+     * removes {@link planespotter.model.ConnectionManager.Connection}s from
+     * the {@link ConnectionPane} and the {@link ConnectionManager}
+     *
+     * @param connList is the {@link JList}, that contains all connections and also the selected one
+     * @param selectedValues are the selected {@link JList} values to be removed
+     * @param model is the {@link ListModel} of the {@link JList}
+     */
     public void removeConnection(@NotNull JList<String> connList, @NotNull List<String> selectedValues, @NotNull ListModel<String> model) {
         int size = model.getSize();
         Vector<String> listData = new Vector<>(size);
@@ -741,6 +803,10 @@ public abstract class Controller implements ExceptionHandler {
         selectedValues.forEach(connMngr::remove);
     }
 
+    /**
+     * tries to save the current view (bitmap or map viewer) in a file
+     * file types: ('.bmp' / '.pls')
+     */
     public void saveFile() {
         getUI().showLoadingScreen(true);
         setLoading(true);
@@ -787,6 +853,10 @@ public abstract class Controller implements ExceptionHandler {
         }
     }
 
+    /**
+     * loads a specific file, which the user selects in a file chooser,
+     * if the filename ends with '.bmp' or '.pls', the file is loaded into the view
+     */
     public void loadFile() {
 
         getUI().showLoadingScreen(true);
@@ -814,7 +884,8 @@ public abstract class Controller implements ExceptionHandler {
     }
 
     /**
-     * handles exceptions, if an exception occurs,
+     * Overwritten method from {@link ExceptionHandler} interface.
+     * Handles exceptions, if an exception occurs,
      * execute this method to handle it
      *
      * @param thr is the throwable (usually an exception)
@@ -867,6 +938,9 @@ public abstract class Controller implements ExceptionHandler {
         } else if (thr instanceof TimeoutException) {
             getUI().showWarning(Warning.TIMEOUT);
 
+        } else if (thr instanceof ExtensionException ext) {
+            getUI().showWarning(Warning.WRONG_FILE_EXTENSION, ext.getMessage());
+
         } else if (thr instanceof RejectedExecutionException) {
             boolean terminated = thr.getMessage().contains("TERMINATED");
             getUI().showWarning(Warning.REJECTED_EXECUTION, terminated ? "Executor is terminated!" : "");
@@ -896,7 +970,14 @@ public abstract class Controller implements ExceptionHandler {
         }
     }
 
-    private void showSignificanceMap(@NotNull MapManager bbn, @NotNull DBOut dbOut) {
+    /**
+     * shows the significance map for specific airports
+     *
+     * @param mapManager is the {@link MapManager} instance
+     * @param dbOut is the {@link DBOut} instance
+     */
+    @Deprecated(since = "Bitmap")
+    private void showSignificanceMap(@NotNull MapManager mapManager, @NotNull DBOut dbOut) {
 
         Deque<Airport> aps;
         Map<Airport, Integer> signifMap;
@@ -905,29 +986,19 @@ public abstract class Controller implements ExceptionHandler {
         try {
             aps = dbOut.getAllAirports();
             signifMap = stats.airportSignificance(aps);
-            bbn.createSignificanceMap(signifMap, getUI().getMap());
+            mapManager.createSignificanceMap(signifMap, getUI().getMap());
         } catch (DataNotFoundException dnf) {
             handleException(dnf);
         }
     }
 
-    private void showTrackingMap(@NotNull MapManager mapManager, boolean showPoints) {
-        Vector<DataPoint> dataList = getDataList();
-        if (dataList == null || dataList.isEmpty()) {
-            return;
-        }
-
-        DBOut dbOut = DBOut.getDBOut();
-        Flight flight = null;
-
-        int flightID = dataList.get(0).flightID();
-        try {
-            flight = (flightID != -1) ? dbOut.getFlightByID(flightID) : null;
-        } catch (DataNotFoundException ignored) {
-        }
-        mapManager.createTrackingMap(dataList, flight, showPoints);
-    }
-
+    /**
+     * shows a {@link Bitmap} in the view, {@link Bitmap} can be created new with
+     * gridSize and data {@link Vector} or can just be given as parameter ({@link Bitmap} or {@link BufferedImage})
+     *
+     * @param bitmap is the {@link Bitmap} object to be displayed, may be null
+     * @param buf is the {@link BufferedImage} to be displayed, may be null
+     */
     public void showBitmap(@Nullable Bitmap bitmap, @Nullable BufferedImage buf) {
         if (bitmap == null && buf == null) {
             String input = getUI().getUserInput("Please enter a grid size (0.025 - 2.0)", 0.5);
@@ -940,14 +1011,14 @@ public abstract class Controller implements ExceptionHandler {
                     getUI().showLoadingScreen(true);
                     getUI().setViewType(MAP_HEATMAP);
                     float gridSize = Float.parseFloat(input);
-                    if (gridSize < 0.025) {
-                        getUI().showWarning(Warning.OUT_OF_RANGE, "grid size must be 0.025 or higher!");
+                    if (gridSize < 0.025f || gridSize > 2.0f) {
+                        getUI().showWarning(Warning.OUT_OF_RANGE, "grid size must be between 0.025 and 2.0!");
                         return;
                     }
                     Bitmap bmp = new Statistics().globalPositionBitmap(gridSize);
                     Diagrams.showPosHeatMap(getUI(), bmp);
                 } catch (NumberFormatException nfe) {
-                    getUI().showWarning(Warning.NUMBER_EXPECTED, "Please enter a float value (0.025 - 10.0)");
+                    getUI().showWarning(Warning.NUMBER_EXPECTED, "Please enter a float value (0.025 - 2.0)");
                 } catch (DataNotFoundException | OutOfMemoryError e) {
                     handleException(e);
                 } finally {
@@ -961,6 +1032,9 @@ public abstract class Controller implements ExceptionHandler {
         }
     }
 
+    /**
+     * shows the {@link ConnectionPane}, where the {@link ConnectionManager} runs on
+     */
     public void showConnectionManager() {
         ConnectionPane pane = getUI().getConnectionPane();
         pane.setVisible(true);
@@ -1096,6 +1170,24 @@ public abstract class Controller implements ExceptionHandler {
      */
     public void setAdsbEnabled(boolean adsbEnabled) {
         this.adsbEnabled = adsbEnabled;
+    }
+
+    /**
+     * getter for 'Fr24Supplier enabled' flag
+     *
+     * @return the Fr24Suppplier enabled' flag
+     */
+    public boolean isFr24Enabled() {
+        return this.fr24Enabled;
+    }
+
+    /**
+     * sets the 'Fr24Supplier enabled' flag
+     *
+     * @param fr24Enabled indicates if the 'Fr24Supplier enabled' flag should be enabled/disabled
+     */
+    public void setFr24Enabled(boolean fr24Enabled) {
+        this.fr24Enabled = fr24Enabled;
     }
 
     /**

@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.constants.DefaultColor;
 import planespotter.model.ConnectionManager;
-import planespotter.model.Scheduler;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -23,6 +22,8 @@ public class ConnectionPane extends JDialog {
     private JTextField nameTextField, uriTextField, hostTextField, portTextField, pathTextField;
 
     @Nullable private JDialog addDialog;
+
+    private boolean mixWithFr24;
 
     @NotNull private final AtomicBoolean uriMode;
 
@@ -72,7 +73,7 @@ public class ConnectionPane extends JDialog {
         addDialog.setLocationRelativeTo(null);
 
         JLabel[] lbls = new JLabel[] {
-                new JLabel("Name:"), new JLabel("URI:"), new JLabel("Host:"), new JLabel("  Port:"), new JLabel("* Path:")
+                new JLabel("Name:"), new JLabel("URI:"), new JLabel("Host:"), new JLabel("  Port:"), new JLabel("Path: *")
         };
 
         JTextField[] tfs = new JTextField[] {
@@ -101,6 +102,7 @@ public class ConnectionPane extends JDialog {
         tfs[3].setVisible(false);
         tfs[4].setVisible(false);
 
+        tfs[1].setText("http://"); // initial uri value, must be completed
         tfs[3].setText("8080"); // initial default port
 
         this.nameTextField = tfs[0];
@@ -150,19 +152,19 @@ public class ConnectionPane extends JDialog {
 
     @NotNull
     private JPanel connectionPanel(int x, int y, int width, int height, @Nullable ConnectionManager.Connection conn, @NotNull ActionListener onConnectClick) {
+        mixWithFr24 = false;
+
         JPanel panel = new JPanel(null);
         panel.setBounds(x, y, width, height);
         Color foreground = DefaultColor.DEFAULT_SEARCH_ACCENT_COLOR.get();
         panel.setBorder(BorderFactory.createLineBorder(foreground));
 
-        JLabel nameLbl, uriLbl, noConnection; JSeparator[] sps; UWPButton connectButton;
+        JLabel nameLbl, uriLbl, noConnection; JSeparator[] sps; UWPButton connectButton; JCheckBox mixDataCheck;
         if (conn != null) {
-            sps = new JSeparator[] {
-                    new JSeparator(), new JSeparator()
-            };
+            sps = new JSeparator[] { new JSeparator(), new JSeparator(), new JSeparator() };
             int sY = 50;
             for (JSeparator s : sps) {
-                s.setForeground(DefaultColor.DEFAULT_SEARCH_ACCENT_COLOR.get());
+                s.setForeground(foreground);
                 s.setBounds(10, sY, width-20, 2);
                 sY += 40;
                 panel.add(s);
@@ -175,8 +177,13 @@ public class ConnectionPane extends JDialog {
             uriLbl.setBounds(10, 60, width-20, 20);
             uriLbl.setForeground(foreground);
 
+            mixDataCheck = new JCheckBox("Mix with Fr24-Data");
+            mixDataCheck.setBounds(10, 100, width-20, 20);
+            mixDataCheck.setForeground(foreground);
+            mixDataCheck.addChangeListener(e -> mixWithFr24 = !mixWithFr24);
+
             connectButton = new UWPButton(conn.isConnected() ? "Disconnect" : "Connect");
-            connectButton.setBackground(DefaultColor.DEFAULT_SEARCH_ACCENT_COLOR.get());
+            connectButton.setBackground(foreground);
             connectButton.setForeground(DefaultColor.DEFAULT_FONT_COLOR.get());
             connectButton.setEffectColor(DefaultColor.DEFAULT_FONT_COLOR.get());
             connectButton.setSelectedColor(DefaultColor.DEFAULT_MAP_ICON_COLOR.get());
@@ -185,6 +192,7 @@ public class ConnectionPane extends JDialog {
 
             panel.add(nameLbl);
             panel.add(uriLbl);
+            panel.add(mixDataCheck);
             panel.add(connectButton);
 
         } else {
@@ -205,6 +213,7 @@ public class ConnectionPane extends JDialog {
                 .map(con -> con.name)
                 .toArray(String[]::new));
         list.addListSelectionListener(onListChange);
+        UIManager.put("ToggleButton.select", DefaultColor.DEFAULT_SEARCH_ACCENT_COLOR.get());
         list.setBounds(x, y, width, height);
         ConnectionManager.Connection selected = cMngr.getSelectedConn();
         if (selected != null) {
@@ -258,4 +267,9 @@ public class ConnectionPane extends JDialog {
                     : new String[] { null, null, null, null };
         }
     };
+
+    public boolean getMixData() {
+        return mixWithFr24;
+    }
+
 }

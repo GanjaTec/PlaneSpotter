@@ -24,7 +24,7 @@ public interface Supplier extends Runnable {
      * supplier-method,
      * collects data, deserializes
      * and supplies it to the database
-     * @see ProtoSupplierADSB
+     * @see planespotter.model.nio.ADSBSupplier
      * @see planespotter.model.nio.Fr24Supplier
      * for examples
      *

@@ -5,24 +5,23 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
+
 import planespotter.constants.Areas;
 import planespotter.constants.Configuration;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
 import planespotter.display.TreasureMap;
-import planespotter.model.DataTask;
 import planespotter.model.ExceptionHandler;
 import planespotter.model.Scheduler;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.InvalidArrayException;
-import planespotter.throwables.InvalidDataException;
+import planespotter.throwables.NoAccessException;
 import planespotter.util.Time;
 import planespotter.util.Utilities;
 
 import javax.net.ssl.SSLHandshakeException;
-import java.io.IOException;
-import java.net.URI;
 import java.net.http.HttpResponse;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
@@ -46,9 +45,7 @@ import java.util.stream.Stream;
  * @see planespotter.constants.Areas
  * @see java.util.concurrent.ConcurrentLinkedQueue
  */
-public class DataLoader implements DataTask {
-
-    private static final Object liveLock = new Object();
+public class DataLoader {
 
     // max. size for data queue
     private final int maxQueueSize;
@@ -60,13 +57,11 @@ public class DataLoader implements DataTask {
     private boolean live;
 
     // live data loading period
-    private int liveDataPeriodSec;
+    private int liveDataPeriodSec, adsbDataPeriodSec;
 
     @Nullable private ADSBSupplier adsbSupplier;
 
-    /**
-     * frames, which will be inserted later (first loaded into the view)
-     */
+    // frames, which will be inserted later (first loaded into the view)
     @NotNull private final ConcurrentLinkedQueue<Frame> dataQueue;
 
     /**
@@ -87,6 +82,7 @@ public class DataLoader implements DataTask {
         this.maxQueueSize = maxQueueSize;
         this.dataQueue = new ConcurrentLinkedQueue<>();
         this.liveDataPeriodSec = liveDataPeriodSec;
+        this.adsbDataPeriodSec = 1;
     }
 
     /**
@@ -97,14 +93,63 @@ public class DataLoader implements DataTask {
      * @param flags are the flags where the task is initialized with, in this case the
      *              'onlyMilitary' flag, indicates if only military data should be loaded
      */
-    @Override
     public void runTask(@NotNull Controller ctrl, boolean... flags) {
         if (flags == null || flags.length == 0) {
             throw new InvalidArrayException("Flags array needs the onlyMilitary flag!");
         }
         boolean onlyMilitary = flags[0];
-        // loading init-live-data
-        loadLiveData(ctrl, onlyMilitary, ctrl.isAdsbEnabled());
+        Scheduler scheduler = new Scheduler(3, 4L);
+        Queue<Flight> mixedFrames = new ConcurrentLinkedQueue<>();
+        Queue<Flight> adsbFrames = new ConcurrentLinkedQueue<>();
+        boolean mixed = ctrl.isAdsbEnabled() && ctrl.isFr24Enabled();
+
+        scheduler.schedule(() -> {
+            if (ctrl.isAdsbEnabled() && isLive()) {
+                try {
+                    if (mixed) {
+                        mixedFrames.addAll(loadLiveData(ctrl, onlyMilitary, ctrl.isAdsbEnabled(), false));
+                    } else {
+                        adsbFrames.addAll(loadLiveData(ctrl, onlyMilitary, ctrl.isAdsbEnabled(), false));
+                    }
+                } catch (DataNotFoundException | NoAccessException ignored) {
+                }
+            }
+        }, 0, liveDataPeriodSec);
+        scheduler.schedule(() -> {
+            if (ctrl.isFr24Enabled() && isLive()) {
+                try {
+                    mixedFrames.addAll(loadLiveData(ctrl, onlyMilitary, false, ctrl.isFr24Enabled()));
+                } catch (DataNotFoundException | NoAccessException ignored) {
+                }
+            }
+        }, 0, adsbDataPeriodSec);
+
+        int updatePeriod = Math.min(liveDataPeriodSec, adsbDataPeriodSec);
+        scheduler.schedule(() -> scheduler.exec(() -> {
+                    if (mixedFrames.isEmpty() && adsbFrames.isEmpty()) {
+                        return;
+                    }
+                    List<MapMarker> markerList;
+                    ctrl.setLiveDataList(
+                            Stream.iterate(mixed || ctrl.isFr24Enabled() ? mixedFrames.poll() : adsbFrames.poll(),
+                                            f -> mixed || ctrl.isFr24Enabled() ? mixedFrames.poll() : adsbFrames.poll())
+                                    .limit(mixed || ctrl.isFr24Enabled() ? mixedFrames.size() : adsbFrames.size())
+                                    .collect(Collectors.toCollection(Vector::new)));
+                    markerList = ctrl.getLiveDataList()
+                            .stream()
+                            .map(flight -> PlaneMarker.fromFlight(flight, ctrl.getUI().getMapManager().getSelectedICAO(), true))
+                            .collect(Collectors.toList());
+                    // setting new map marker list on the map
+                    ctrl.getUI().getMap().setMapMarkerList(markerList);
+                    ctrl.done(false);
+                }, "Set Map Markers", true, Scheduler.HIGH_PRIO, false)
+                .orTimeout(updatePeriod, TimeUnit.SECONDS)
+                .exceptionally(e -> null)
+                .join(), 0, updatePeriod);
+
+
+        /*// loading init-live-data
+        loadLiveData(ctrl, onlyMilitary, ctrl.isAdsbEnabled(), ctrl.isFr24Enabled());
         // endless live-data task
         synchronized (liveLock) {
             while (!ctrl.isTerminated()) {
@@ -118,11 +163,11 @@ public class DataLoader implements DataTask {
                 }
                 // loading live-data, if live-map is enabled
                 if (isLive()) {
-                    loadLiveData(ctrl, onlyMilitary, ctrl.isAdsbEnabled());
+                    loadLiveData(ctrl, onlyMilitary, ctrl.isAdsbEnabled(), ctrl.isFr24Enabled());
 
                 }
             }
-        }
+        }*/
     }
 
     /**
@@ -132,35 +177,24 @@ public class DataLoader implements DataTask {
      * @param ctrl is the {@link Controller} instance
      * @param onlyMilitary indicates if only military data should be loaded
      */
-    private void loadLiveData(@NotNull Controller ctrl, boolean onlyMilitary, boolean useAdsbSupplier) {
+    private Vector<Flight> loadLiveData(@NotNull Controller ctrl, boolean onlyMilitary, boolean useAdsb, boolean useFr24)
+            throws DataNotFoundException, NoAccessException {
 
-        ctrl.getScheduler().exec(() -> {
-                    List<MapMarker> markerList;
-                    TreasureMap map;
-                    // checking for 'already loading' and setting controller loading
-                    if (!ctrl.isLoading()) {
-                        ctrl.setLoading(true);
+        TreasureMap map;
+        // checking for 'already loading' and setting controller loading
+        if (!ctrl.isLoading()) {
+            ctrl.setLoading(true);
 
-                        map = ctrl.getUI().getMap();
-                        // transforming liveData-flight-Vector into list of MapMarkers
-                        // after loading it directly from fr24
-                        Vector<Flight> liveFlights;
-                        try {
-                            liveFlights = getLiveFlights(map, onlyMilitary, useAdsbSupplier);
-                        } catch (DataNotFoundException e) {
-                            return;
-                        }
-                        ctrl.setLiveDataList(liveFlights);
-                        markerList = ctrl.getLiveDataList()
-                                .stream()
-                                .map(flight -> PlaneMarker.fromFlight(flight, ctrl.getUI().getMapManager().getSelectedICAO(), true))
-                                .collect(Collectors.toList());
-                        // setting new map marker list on the map
-                        map.setMapMarkerList(markerList);
-                        ctrl.done(false);
-                    }
-                }, "LiveData Loader", true, Scheduler.HIGH_PRIO, true)
-                .join();
+            map = ctrl.getUI().getMap();
+            // transforming liveData-flight-Vector into list of MapMarkers
+            // after loading it directly from fr24
+            try {
+                return getLiveFlights(map, onlyMilitary, useAdsb, useFr24);
+            } finally {
+                ctrl.done(false);
+            }
+        }
+        throw new NoAccessException("cannot access the Controller right now!");
     }
 
     /**
@@ -177,7 +211,7 @@ public class DataLoader implements DataTask {
      * @return Vector of {@link Flight} objects, loaded directly with {@link Supplier}s
      */
     @NotNull
-    public Vector<Flight> getLiveFlights(@NotNull final TreasureMap map, boolean onlyMilitary, boolean useAdsbSupplier)
+    public Vector<Flight> getLiveFlights(@NotNull final TreasureMap map, boolean onlyMilitary, boolean useAdsb, boolean useFr24)
             throws DataNotFoundException {
 
         Fr24Deserializer deserializer = new Fr24Deserializer();
@@ -186,7 +220,7 @@ public class DataLoader implements DataTask {
         }
 
         String[] currentArea = Areas.getCurrentArea(map);
-        if (useAdsbSupplier) {
+        if (useAdsb) {
             if (adsbSupplier == null) {
                 Controller ctrl = Controller.getInstance();
                 Configuration config = ctrl.getConfig();
@@ -194,22 +228,14 @@ public class DataLoader implements DataTask {
                 adsbSupplier.setExceptionHandler(ctrl);
             }
             adsbSupplier.supply();
-        } else {
+        }
+        if (useFr24) {
             collectData(currentArea, deserializer, false);
         }
 
         AtomicInteger pseudoID = new AtomicInteger(0);
         return pollFrames(Integer.MAX_VALUE)
-                .map(frame -> {
-                    int id = pseudoID.getAndIncrement();
-                    if (frame instanceof Fr24Frame fr24) {
-                        return Flight.parseFlight(fr24, id);
-                    } else if (frame instanceof ADSBFrame adsb) {
-                        return Flight.parseFlight(adsb, id);
-                    }
-                    return null;
-                })
-                .filter(Objects::nonNull)
+                .map(frame -> Flight.parseFlight(frame, pseudoID.getAndIncrement()))
                 .collect(Collectors.toCollection(Vector::new));
     }
 
@@ -342,6 +368,15 @@ public class DataLoader implements DataTask {
     }
 
     /**
+     * sets the {@link ADSBSupplier} request period in seconds
+     *
+     * @param adsbDataPeriodSec is the request period in seconds
+     */
+    public void setAdsbDataPeriodSec(int adsbDataPeriodSec) {
+        this.adsbDataPeriodSec = adsbDataPeriodSec;
+    }
+
+    /**
      * getter for the maximum size of the data-queue
      *
      * @return maximum queue size of data-queue
@@ -358,4 +393,5 @@ public class DataLoader implements DataTask {
     public int getQueueSize() {
         return this.dataQueue.size();
     }
+
 }

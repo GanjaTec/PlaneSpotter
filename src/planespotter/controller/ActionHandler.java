@@ -14,16 +14,13 @@ import planespotter.model.Scheduler;
 import planespotter.display.UserInterface;
 import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
-import planespotter.throwables.KeyCheckFailedException;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.net.URI;
 import java.util.*;
-import java.util.List;
 
 import static java.awt.event.KeyEvent.*;
 import static planespotter.constants.ViewType.MAP_LIVE;
@@ -34,14 +31,14 @@ import static planespotter.constants.ViewType.MAP_LIVE;
  * @author Bennet
  * @version 1.0
  *
- * record ActionHandler handles user interactions in the UI and does further action
+ * Singleton class {@link ActionHandler} handles user interactions in the UI and does further action
+ * (usually calls the {@link Controller} to do further action)
  * @see planespotter.display.UserInterface
  * @see planespotter.controller.Controller
  * @see planespotter.model.Scheduler
  */
 public abstract class ActionHandler
-        implements  ActionListener, KeyListener,
-                    ComponentListener, MouseListener,
+        implements  ActionListener, KeyListener, ComponentListener, MouseListener,
                     ItemListener, WindowListener, ListSelectionListener {
 
     // ActionHandler instance, we need only one instance here,
@@ -65,7 +62,7 @@ public abstract class ActionHandler
     // instance //
 
     /**
-     * private ActionHandler constructor for main instance
+     * private {@link ActionHandler} constructor for main instance
      */
     private ActionHandler() {
         Runnable shiftSAction, f11Action;
@@ -82,11 +79,21 @@ public abstract class ActionHandler
         this.hashCode = System.identityHashCode(this);
     }
 
+    /**
+     * static getter for singleton {@link ActionHandler} instance
+     *
+     * @return static {@link ActionHandler} singleton instance
+     */
     @NotNull
     public static ActionHandler getActionHandler() {
         return INSTANCE;
     }
 
+    /**
+     * getter for {@link HotkeyManager} instance
+     *
+     * @return {@link HotkeyManager} instance
+     */
     @NotNull
     public HotkeyManager getHotkeyManager() {
         return this.hotkeyManager;
@@ -98,8 +105,8 @@ public abstract class ActionHandler
      * buttons (in a new thread)
      *
      * @param button is the clicked button
-     * @param ctrl is the main controller instance
-     * @param ui is the main GUI instance
+     * @param ctrl is the main {@link Controller} instance
+     * @param ui is the main {@link UserInterface} instance
      */
     public synchronized void buttonClicked(@NotNull JButton button, @NotNull Controller ctrl, @NotNull UserInterface ui) {
         ctrl.getScheduler().exec(() -> {
@@ -129,8 +136,11 @@ public abstract class ActionHandler
                     ctrl.removeConnection(connList, connList.getSelectedValuesList(), connList.getModel());
                     connPane.showConnection(null, e -> {});
                 }
-                case "Connect" -> ctrl.setConnection(true);
-                case "Disconnect" -> ctrl.setConnection(false);
+                case "Connect", "Disconnect" -> {
+                    boolean connect = text.equals("Connect");
+                    ConnectionPane connPane = ctrl.getUI().getConnectionPane();
+                    ctrl.setConnection(connect, connect ? connPane.getMixData() : ctrl.isFr24Enabled());
+                }
             }
         }, "Action Handler", false, Scheduler.MID_PRIO, true);
     }
@@ -164,7 +174,7 @@ public abstract class ActionHandler
      * not executed when global hotkeys are pressed
      *
      * @param event is the KeyEvent
-     * @param ui is the GUI instance
+     * @param ui is the {@link UserInterface} instance
      */
     public void keyEntered(@NotNull KeyEvent event, @NotNull UserInterface ui) {
         Object source = event.getSource();
@@ -223,6 +233,12 @@ public abstract class ActionHandler
         }
     }
 
+    /**
+     * executed when a {@link JMenuItem} is clicked, action depends on the menu item text
+     *
+     * @param ctrl is the {@link Controller} instance
+     * @param item is the clicked {@link JMenuItem}
+     */
     private void menuItemClicked(@NotNull Controller ctrl, @NotNull JMenuItem item) {
         final String text = item.getText();
         final UserInterface ui = ctrl.getUI();
@@ -231,7 +247,13 @@ public abstract class ActionHandler
             case "Save As" -> ctrl.saveFile();
             case "Fullscreen" -> ui.setFullScreen(!ui.isFullscreen());
             case "Exit" -> ctrl.shutdown(false);
-            case "Fr24-Supplier" -> ctrl.runFr24Collector();
+            case "Fr24-Supplier" -> {
+                int mode = JOptionPane.showOptionDialog(ctrl.getUI().getWindow(),
+                        "Do you want insert custom Antenna-Data? \nClick YES for ADSB-Data and NO for Fr24-Data",
+                        "Insert Mode", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+                        null, new String[] {"ADSB-Data", "Fr24-Data", "Mixed-Data"}, null);
+                ctrl.runCollector(mode);
+            }
             case "ADSB-Supplier" -> ctrl.showConnectionManager();
             // TODO: 25.08.2022 ctrl.showStats(ViewType type)
             case "Top-Airports" -> {
@@ -254,6 +276,11 @@ public abstract class ActionHandler
         }
     }
 
+    /**
+     * executed when a {@link JMenu} is clicked, action depends on the menu text
+     *
+     * @param menu is the clicked {@link JMenu}
+     */
     public void menuClicked(@NotNull JMenu menu) {
         String text = menu.getText();
         Controller ctrl = Controller.getInstance();
@@ -261,6 +288,7 @@ public abstract class ActionHandler
         switch (text) {
             case "Live-Map" -> {
                 ctrl.setAdsbEnabled(false);
+                ctrl.setFr24Enabled(true);
                 ctrl.show(MAP_LIVE);
             }
             case "Search" -> ui.showSearch(SearchType.FLIGHT);
@@ -397,16 +425,33 @@ public abstract class ActionHandler
         Controller.getInstance().shutdown(false);
     }
 
+    /**
+     * overwritten equals method
+     *
+     * @param obj is the object to compare with this
+     * @return true if the object is equal with this {@link ActionHandler}
+     */
     @Override
     public boolean equals(Object obj) {
         return obj == this || obj != null && obj.getClass() == this.getClass();
     }
 
+
+    /**
+     * overwritten hash code method
+     *
+     * @return ActionHandler hash code
+     */
     @Override
     public int hashCode() {
         return this.hashCode;
     }
 
+    /**
+     * overwritten toString method
+     *
+     * @return 'ActionHandler' String
+     */
     @Override
     public String toString() {
         return "ActionHandler";
@@ -414,8 +459,12 @@ public abstract class ActionHandler
 
 
     /**
+     * @name HotkeyManager
+     * @version 1.0
      *
-     *
+     * @description
+     * The {@link HotkeyManager} represents a manager for all {@link Hotkey}s (initial- and user-hotkeys).
+     * Contains functions to add/remove {@link Hotkey}s + action
      */
     public static class HotkeyManager {
 
@@ -518,11 +567,6 @@ public abstract class ActionHandler
             return hotkeys.remove(hotkey) != null;
         }
 
-        /**
-         * getter for main instance of {@link ActionHandler}
-         *
-         * @return main ActionHandler
-         */
     }
 
 
