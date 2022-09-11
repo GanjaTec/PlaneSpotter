@@ -86,6 +86,9 @@ public abstract class Controller implements ExceptionHandler {
         RUNTIME = Runtime.getRuntime();
         INSTANCE = new Controller() {};
         ROOT_PATH = Utilities.getAbsoluteRootPath();
+
+        // initializing database file, recreating if invalid
+        initDB();
     }
 
     // -- instance fields --
@@ -149,6 +152,26 @@ public abstract class Controller implements ExceptionHandler {
         this.terminated = false;
         this.adsbEnabled = false;
         this.fr24Enabled = true;
+    }
+
+    /**
+     * initializes the database file named 'plane.db',
+     * replaces it if the file is invalid
+     */
+    private static void initDB() {
+        File dbFile = new File("plane.db");
+        if (dbFile.exists()) {
+            long space = dbFile.getTotalSpace();
+            if (space > 10) {
+                return;
+            }
+            if (!dbFile.delete()) {
+                return;
+            }
+        }
+        // building database
+        PyAdapter.runScript("python-helper\\helper\\dbBuilder.py");
+
     }
 
     /**

@@ -15,6 +15,15 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * @name ConnectionPane
+ * @author jml04
+ * @version 1.0
+ *
+ * @description
+ * The {@link ConnectionPane} class represents a Panel for the
+ * {@link ConnectionManager} with all its functions
+ */
 public class ConnectionPane extends JDialog {
 
     @NotNull private final JList<String> connectionList;
@@ -54,6 +63,9 @@ public class ConnectionPane extends JDialog {
     }
 
     public void showConnection(@Nullable ConnectionManager.Connection conn, @NotNull ActionListener onConnectClick) {
+        if (conn == null) {
+            connectionList.setSelectedIndices(new int[0]);
+        }
         remove(connectionPanel);
         repaint();
         connectionPanel = connectionPanel(0, 0, 200, 365, conn, onConnectClick);
