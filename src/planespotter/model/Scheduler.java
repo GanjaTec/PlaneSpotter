@@ -2,7 +2,6 @@ package planespotter.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
-import planespotter.constants.Configuration;
 import planespotter.controller.Controller;
 import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.OutOfRangeException;

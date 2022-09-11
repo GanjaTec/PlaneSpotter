@@ -4,7 +4,6 @@ import org.jetbrains.annotations.NotNull;
 import planespotter.display.models.SupplierDisplay;
 import planespotter.model.nio.Supplier;
 
-import javax.swing.*;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -1,6 +1,13 @@
 package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
+import planespotter.constants.SQLQueries;
+import planespotter.dataclasses.Fr24Frame;
+import planespotter.dataclasses.Frame;
+import planespotter.model.Scheduler;
+import planespotter.model.nio.DataLoader;
+import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.NoAccessException;
 
 import java.sql.*;
 import java.util.ArrayDeque;
@@ -9,14 +16,6 @@ import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import planespotter.constants.SQLQueries;
-import planespotter.dataclasses.Frame;
-import planespotter.model.Scheduler;
-import planespotter.dataclasses.Fr24Frame;
-import planespotter.model.nio.DataLoader;
-import planespotter.throwables.DataNotFoundException;
-import planespotter.throwables.NoAccessException;
 
 import static planespotter.util.Time.elapsedSeconds;
 import static planespotter.util.Time.nowMillis;

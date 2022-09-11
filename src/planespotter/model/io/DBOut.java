@@ -1,18 +1,18 @@
 package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
-
 import org.jetbrains.annotations.Range;
 import planespotter.constants.SQLQueries;
 import planespotter.dataclasses.*;
-import planespotter.dataclasses.DBResult;
+import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.NoAccessException;
 import planespotter.util.HighMemory;
 import planespotter.util.Utilities;
-import planespotter.throwables.DataNotFoundException;
 
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 /**

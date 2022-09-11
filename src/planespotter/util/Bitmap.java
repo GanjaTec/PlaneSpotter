@@ -2,8 +2,6 @@ package planespotter.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
-
-import org.jetbrains.annotations.TestOnly;
 import planespotter.dataclasses.Position;
 import planespotter.throwables.InvalidArrayException;
 import planespotter.throwables.InvalidDataException;

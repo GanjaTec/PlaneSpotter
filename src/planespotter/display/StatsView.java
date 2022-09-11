@@ -23,9 +23,23 @@ import java.io.IOException;
 
 import static org.jfree.chart.ChartFactory.createBarChart;
 
-/* probably not needed */
-public class Diagrams {
+/**
+ * @name StatsView
+ * @author jml04
+ * @version 1.0
+ *
+ * @description
+ * The {@link StatsView} class contains different utility methods for
+ * showing statistics like {@link Bitmap}s or charts
+ */
+public class StatsView {
 
+    /**
+     * shows the position
+     *
+     * @param ui
+     * @param bitmap
+     */
     public static void showPosHeatMap(@NotNull UserInterface ui, @NotNull Bitmap bitmap) {
         showPosHeatMap(ui, bitmap.toImage());
     }
@@ -45,7 +59,7 @@ public class Diagrams {
         LayerPane layerPane = ui.getLayerPane();
         try {
             int minCount = Integer.parseInt(input);
-            layerPane.replaceBottom(Diagrams.barChartPanel(layerPane, stats.airlineSignificance(minCount)));
+            layerPane.replaceBottom(StatsView.barChartPanel(layerPane, stats.airlineSignificance(minCount)));
         } catch (NumberFormatException nfe) {
             ui.showWarning(Warning.NUMBER_EXPECTED);
         }
@@ -61,7 +75,7 @@ public class Diagrams {
         LayerPane layerPane = ui.getLayerPane();
         try {
             int minCount = Integer.parseInt(input);
-            layerPane.replaceBottom(Diagrams.barChartPanel(layerPane, stats.airportSignificance(minCount)));
+            layerPane.replaceBottom(StatsView.barChartPanel(layerPane, stats.airportSignificance(minCount)));
         } catch (NumberFormatException nfe) {
             ui.showWarning(Warning.NUMBER_EXPECTED);
         }

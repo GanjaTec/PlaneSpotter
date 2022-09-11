@@ -2,7 +2,6 @@ package planespotter.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import planespotter.model.io.FileWizard;
 import planespotter.throwables.IllegalInputException;
 import planespotter.throwables.KeyCheckFailedException;

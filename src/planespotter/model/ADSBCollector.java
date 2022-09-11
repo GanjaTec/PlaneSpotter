@@ -3,9 +3,6 @@ package planespotter.model;
 import org.jetbrains.annotations.TestOnly;
 import planespotter.model.nio.ADSBSupplier;
 import planespotter.model.nio.DataLoader;
-import planespotter.unused.ProtoSupplierADSB;
-
-import java.net.URI;
 
 /**
  * @name ADSBCollector
