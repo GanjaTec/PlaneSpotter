@@ -208,7 +208,7 @@ public abstract class Controller implements ExceptionHandler {
      */
     private void initConfig() {
         // initializing static properties
-        config.setProperty("title", "PlaneSpotter v0.3");
+        config.setProperty("title", "PlaneSpotter v0.4-alpha");
         config.setProperty("threadKeepAliveTime", 4L);
         config.setProperty("maxThreads", 80);
         config.setProperty("saveLogs", false);
