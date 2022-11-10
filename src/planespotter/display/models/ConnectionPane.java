@@ -26,8 +26,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ConnectionPane extends JDialog {
 
+    // JList for connections
     @NotNull private final JList<String> connectionList;
 
+    // panel for current connection
     @NotNull private JPanel connectionPanel;
 
     private JTextField nameTextField, uriTextField, hostTextField, portTextField, pathTextField;

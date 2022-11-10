@@ -8,7 +8,7 @@ import csv
 import time
 
 buildt1= time.time()
-conn = sqlite3.connect('planeTest.db')
+conn = sqlite3.connect('plane.db')
 
 cursor = conn.cursor()
 print ("Created database successfully!")

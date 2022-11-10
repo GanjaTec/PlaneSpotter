@@ -24,7 +24,7 @@ import java.sql.*;
  *
  */
 public abstract sealed class DBConnector
-		permits DBIn, DBOut {
+        permits CSVAdapter, DBIn, DBOut {
 
 	// database monitor object
 	@NotNull protected static final Object DB_SYNC;

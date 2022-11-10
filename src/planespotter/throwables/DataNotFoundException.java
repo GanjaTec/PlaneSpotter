@@ -1,10 +1,9 @@
 package planespotter.throwables;
 
-// TODO neuen DIalog erstellen!! wenn kein flug oder so gefunden wurde // neuer Konstructor mit param dialog
 public class DataNotFoundException extends Exception {
 
     // exception message
-    private final String MESSAGE = "db-data couldn't be found!";
+    private static final String MESSAGE = "DB-data couldn't be found!";
 
     /**
      * constructor, is called when this exception is thrown
@@ -29,6 +28,6 @@ public class DataNotFoundException extends Exception {
 
     @Override
     public String getMessage() {
-        return this.MESSAGE;
+        return MESSAGE;
     }
 }

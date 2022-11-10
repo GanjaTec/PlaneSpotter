@@ -374,6 +374,7 @@ public class Statistics {
      * @return
      */
     // TODO change name
+    @Deprecated(since = "Slow and old", forRemoval = true)
     public final HashMap<Position, Integer> positionHeatMap(@NotNull final Vector<Position> positions) {
         int size = Utilities.asInt(positions.stream()
                             .distinct()
@@ -410,6 +411,7 @@ public class Statistics {
      * @param key
      * @return
      */
+    @Deprecated(since = "Slow and old", forRemoval = true)
     private Position containsKeyNearOf(@NotNull Set<Position> positionSet, @NotNull Position key) {
         for (Position pos : positionSet) {
             double tolerance = 0.03;

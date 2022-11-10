@@ -118,7 +118,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         scheduler.runThread(inserter, "Inserter Thread", true, Scheduler.MID_PRIO);
         // executing the keeper every 400 seconds
         scheduler.schedule(() -> scheduler.exec(keeper, "Keeper Thread", true, Scheduler.LOW_PRIO, false),
-                100, 400);
+                100 * 1000, 400 * 1000);
         // updating display
         DBIn dbIn = DBIn.getDBIn();
         scheduler.schedule(() -> {
@@ -136,7 +136,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
             display.update(insertedNow.get(), newPlanesNow.get(), newFlightsNow.get(),
                            (lastFrame != null) ? lastFrame.toShortString() : "None",
                            dataLoader.getQueueSize(), nextError);
-        }, 0, 1);
+        }, 0, 1000);
     }
 
     /**

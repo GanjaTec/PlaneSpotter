@@ -18,7 +18,8 @@ import static java.lang.StrictMath.*;
  */
 public abstract class MathUtils {
 
-    public static final double LAT_TO_KM_MULTIPLIER = 111.3;
+    public static final double LAT_TO_KM_MULTIPLIER = 110.574;
+    public static final double LON_TO_KM_MULTIPLIER = 111.320;
 
     public static double abs(Vector2D<Double> v2d) {
         return (v2d instanceof Vector3D<Double> v3d)
@@ -34,13 +35,21 @@ public abstract class MathUtils {
         return pow(number, 3);
     }
 
-    public static double latDegreeToKm(double lat) {
+    public static double latDegreesToKm(double lat) {
         return lat * LAT_TO_KM_MULTIPLIER;
     }
 
-    public static double lonDegreeToKm(double lat, double lon) {
+    public static double lonDegreesToKm(double lat, double lon) {
         double oneDegree = LAT_TO_KM_MULTIPLIER * cos(toRadians(lat));
         return lon * oneDegree;
+    }
+
+    public static double kmToLatDegrees(double km) {
+        return km / LAT_TO_KM_MULTIPLIER;
+    }
+
+    public static double kmToLonDegrees(double km, double lat) {
+        return km / (LON_TO_KM_MULTIPLIER * cos(toRadians(lat)));
     }
 
     public static int divide(int a, int divisor) {
