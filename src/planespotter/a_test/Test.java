@@ -1,5 +1,6 @@
 package planespotter.a_test;
 
+/*
 import jcuda.Pointer;
 import jcuda.Sizeof;
 import jcuda.jcurand.JCurand;
@@ -7,7 +8,7 @@ import jcuda.jcurand.curandGenerator;
 import jcuda.jcurand.curandRngType;
 import jcuda.runtime.JCuda;
 import jcuda.runtime.cudaMemcpyKind;
-import jdk.internal.misc.CDS;
+*/
 import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -86,12 +87,12 @@ public class Test {
 
     }
 
-    public static void gpuTest() {
+    /*public static void gpuTest() {
         Pointer ptr = Pointer.to(new int[] {1});
         JCuda.cudaMalloc(ptr, Sizeof.INT);
         System.out.println(ptr);
         JCuda.cudaFree(ptr);
-    }
+    }*/
 
     public static float[] randomCpu(int n, int seed) {
         Random rnd = new Random(seed);
@@ -102,7 +103,7 @@ public class Test {
         return data;
     }
 
-    public static float[] randomGpu(int n, int seed) {
+    /*public static float[] randomGpu(int n, int seed) {
         JCuda.setExceptionsEnabled(true);
         JCurand.setExceptionsEnabled(true);
 
@@ -123,7 +124,7 @@ public class Test {
 
         return hostData;
 
-    }
+    }*/
 
     public static void bitmapTest() throws DataNotFoundException, IOException {
 
