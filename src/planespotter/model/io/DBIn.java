@@ -7,6 +7,8 @@ import planespotter.dataclasses.Frame;
 import planespotter.model.Scheduler;
 import planespotter.model.nio.DataLoader;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.EmptyQueueException;
+import planespotter.throwables.MalformedFrameException;
 import planespotter.throwables.NoAccessException;
 
 import java.sql.*;
@@ -115,7 +117,7 @@ public final class DBIn extends DBConnector {
 					planeID = insertPlane(frame, airlineID);
 					// increasing inserted planes value
 					increasePlaneCount();
-				} catch (DataNotFoundException e) {
+				} catch (MalformedFrameException e) {
 					ex = e;
 				}
 			}
@@ -148,7 +150,7 @@ public final class DBIn extends DBConnector {
 	 */
 	@NotNull
 	public synchronized CompletableFuture<Void> insertRemaining(@NotNull final Scheduler scheduler, @NotNull DataLoader dataLoader)
-			throws NoAccessException, DataNotFoundException {
+			throws NoAccessException, EmptyQueueException {
 		if (!enabled) {
 			throw new NoAccessException("DB-Writer is disabled!");
 		}
@@ -233,12 +235,12 @@ public final class DBIn extends DBConnector {
 	 * @param airlineID is the airline ID of the {@link planespotter.dataclasses.Plane}
 	 * @return inserted {@link planespotter.dataclasses.Plane} ID or -1 if nothing was inserted
 	 */
-	public <E extends Frame> int insertPlane(@NotNull E frame, int airlineID) throws DataNotFoundException {
+	public <E extends Frame> int insertPlane(@NotNull E frame, int airlineID) throws MalformedFrameException {
 		synchronized (DB_SYNC) {
 			// insert into planes
 			String icao, tailNr, reg, type;
 			if ((icao = frame.getIcaoAddr()) == null) {
-				throw new DataNotFoundException("Frame has no ICAO!");
+				throw new MalformedFrameException("Frame has no ICAO!");
 			}
 			if (frame instanceof Fr24Frame fr24) {
 				tailNr = fr24.getTailnr();

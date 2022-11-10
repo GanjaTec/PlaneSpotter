@@ -85,7 +85,7 @@ public abstract class Utilities {
      */
     @NotNull
     public static String getAbsoluteRootPath() {
-        return (Controller.ROOT_PATH == null) ? System.getProperty("user.dir") : Controller.ROOT_PATH;
+        return System.getProperty("user.dir") + "\\";
     }
 
     /**
@@ -500,7 +500,7 @@ public abstract class Utilities {
         String invalidMsg = "CheckStatus: Status code '" + status + "' is invalid!";
         StatusException stex = switch (status) {
             case 200, 201 -> null; // status code is OK
-            case 403 -> new StatusException(status, invalidMsg + "\n Error 403, Forbidden");
+            case 403 -> new StatusException(status, invalidMsg + "\nError 403, Forbidden");
             case 451 -> new StatusException(status, invalidMsg + "\nSeems like there is a problem with the Http-header (User-Agent)!");
             default -> new StatusException(status, invalidMsg + "\nUnknown error!");
         };
@@ -576,6 +576,22 @@ public abstract class Utilities {
             inputs[i] = checkString(inputs[i]);
         }
         return inputs;
+    }
+
+    /**
+     *
+     *
+     * @param filename
+     * @param expectedFormat
+     * @return
+     */
+    @NotNull
+    public static String checkFileName(@NotNull String filename, @NotNull String expectedFormat) {
+        if (filename.isBlank() || expectedFormat.isBlank()) {
+            throw new InvalidDataException("No file name or format!");
+        }
+        expectedFormat = (expectedFormat.startsWith(".") ? "" : ".") + expectedFormat.toLowerCase();
+        return filename.endsWith(expectedFormat) ? filename : filename + expectedFormat;
     }
 
     /**

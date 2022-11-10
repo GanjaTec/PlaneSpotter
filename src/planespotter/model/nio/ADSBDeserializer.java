@@ -4,6 +4,7 @@ import com.google.gson.*;
 import org.jetbrains.annotations.NotNull;
 import planespotter.dataclasses.ADSBFrame;
 import planespotter.dataclasses.Frame;
+import planespotter.dataclasses.ReceiverFrame;
 import planespotter.throwables.InvalidDataException;
 
 import java.net.http.HttpResponse;
@@ -73,5 +74,13 @@ public class ADSBDeserializer implements Deserializer<HttpResponse<String>> {
         }
         jsonObj.addProperty("timestamp", now);
         return gson.fromJson(element, ADSBFrame.class);
+    }
+
+    @NotNull
+    public ReceiverFrame deserializeReceiverData(@NotNull HttpResponse<String> data) {
+        // parsing response body to java-JsonElement
+        JsonElement requestElement = JsonParser.parseString(data.body());
+        Gson gson = new Gson();
+        return gson.fromJson(requestElement, ReceiverFrame.class);
     }
 }

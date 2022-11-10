@@ -2,6 +2,7 @@ package planespotter.constants;
 
 import org.jetbrains.annotations.NotNull;
 import planespotter.controller.Controller;
+import planespotter.util.Utilities;
 
 /**
  * @name Paths
@@ -21,7 +22,7 @@ public final class Paths {
      * initialized with the working directory when the program is started
      */
     @SuppressWarnings(value = "Does not work yet")
-    public static final String ROOT_PATH = Controller.ROOT_PATH;
+    public static final String ROOT_PATH = (Controller.ROOT_PATH == null) ? Utilities.getAbsoluteRootPath() : Controller.ROOT_PATH;
 
     /**
      * src-path

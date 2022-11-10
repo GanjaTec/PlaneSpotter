@@ -218,6 +218,8 @@ public abstract class Controller implements ExceptionHandler {
         config.setProperty("transportMap", new OsmTileSource.TransportMap());
         config.setProperty("openStreetMap", new TMSTileSource(new TileSourceInfo("OSM", (String) config.getProperty("mapBaseUrl"), "0")));
 
+        config.setProperty("receiverRequestUri", "http://192.168.178.47:8080/data/receiver.json");
+
         // initializing user properties
         FileWizard fileWizard = FileWizard.getFileWizard();
         Object[] values = null;
@@ -320,7 +322,7 @@ public abstract class Controller implements ExceptionHandler {
         if (insertRemainingFrames && dbIn.isEnabled()) {
             try {
                 dbIn.insertRemaining(scheduler, dataLoader);
-            } catch (NoAccessException | DataNotFoundException ignored) {
+            } catch (NoAccessException | EmptyQueueException ignored) {
             }
         }
         // busy-waiting for remaining tasks
@@ -397,7 +399,6 @@ public abstract class Controller implements ExceptionHandler {
     public synchronized void show(@NotNull ViewType type) {
 
         MapManager mapManager = getUI().getMapManager();
-        DBOut dbOut = DBOut.getDBOut();
 
         try {
             setLoading(true);
@@ -492,7 +493,7 @@ public abstract class Controller implements ExceptionHandler {
             throw new InvalidDataException("Settings data is invalid!");
         }
 
-        int dataLimit, livePeriodSec; TileSource currentMapSource;
+        int dataLimit, livePeriod; TileSource currentMapSource;
 
         getUI().showLoadingScreen(true);
         try {
@@ -508,8 +509,8 @@ public abstract class Controller implements ExceptionHandler {
             getConfig().setProperty("currentMapSource", currentMapSource);
             getUI().getMap().setTileSource(currentMapSource);
             // data[2]
-            livePeriodSec = Integer.parseInt(data[2]);
-            dataLoader.setLiveDataPeriod(livePeriodSec);
+            livePeriod = Integer.parseInt(data[2]) * 1000;
+            dataLoader.setLiveDataPeriod(livePeriod);
         } finally {
             // saving config after reset
             try {

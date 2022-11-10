@@ -1,19 +1,30 @@
 package planespotter.a_test;
 
+import jcuda.Pointer;
+import jcuda.Sizeof;
+import jcuda.jcurand.JCurand;
+import jcuda.jcurand.curandGenerator;
+import jcuda.jcurand.curandRngType;
+import jcuda.runtime.JCuda;
+import jcuda.runtime.cudaMemcpyKind;
+import jdk.internal.misc.CDS;
 import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
-import planespotter.constants.Images;
 import planespotter.constants.Paths;
 import planespotter.dataclasses.Position;
+import planespotter.model.io.CSVAdapter;
 import planespotter.model.io.DBOut;
+import planespotter.statistics.BitmapCombiner;
 import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.unused.ANSIColor;
+import planespotter.util.SimpleBenchmark;
 import planespotter.util.Bitmap;
+import planespotter.util.Time;
 import planespotter.util.Utilities;
 import sun.misc.Unsafe;
 
@@ -25,17 +36,15 @@ import java.awt.print.PageFormat;
 import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.Vector;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.sql.PreparedStatement;
+import java.util.*;
 
 @TestOnly
 public class Test {
@@ -44,8 +53,6 @@ public class Test {
 
     // TEST-MAIN
     public static void main(String[] args) throws Exception {
-
-        bitmapTest();
 
         // testing python scripts and functions in java
 /*
@@ -56,18 +63,84 @@ public class Test {
         result = PyAdapter.runScript(Paths.PY_RUNTIME_HELPER + "testprint.py");
         System.out.println(result);
 */
+        File file = new File(Paths.RESOURCE_PATH + "testList.csv");
+        CSVAdapter adapter = new CSVAdapter("SELECT * FROM tracking");
 
+        String[] header = new String[] {"ID", "flightid", "latitude", "longitude", "altitude", "groundspeed", "heading", "squawk", "timestamp"};
+        String[] types = new String[] {"int", "int", "double", "double", "int", "int", "int", "int", "long"};
+        adapter.writeToCSV(file, header, types);
+
+/*
+
+        DBOut dbo = DBOut.getDBOut();
+        int[] aals = dbo.getFlightIDsByAirlineTag("AAL");
+        int[] dals = dbo.getFlightIDsByAirlineTag("DAL");
+        Vector<Position> apos = dbo.getAllTrackingPositions();
+        Vector<Position> bpos = dbo.getPositionsByFlightIDs(dals);
+        Bitmap a = Bitmap.fromPosVector(apos, 0.5f);
+        Bitmap b = Bitmap.fromPosVector(bpos, 0.5f);
+        SimpleBenchmark.benchmark(() -> {
+            Bitmap result = BitmapCombiner.combine(a, b);
+        });
+*/
+
+    }
+
+    public static void gpuTest() {
+        Pointer ptr = Pointer.to(new int[] {1});
+        JCuda.cudaMalloc(ptr, Sizeof.INT);
+        System.out.println(ptr);
+        JCuda.cudaFree(ptr);
+    }
+
+    public static float[] randomCpu(int n, int seed) {
+        Random rnd = new Random(seed);
+        float[] data = new float[n];
+        for (int i = 0; i < n; i++) {
+            data[i] = rnd.nextFloat();
+        }
+        return data;
+    }
+
+    public static float[] randomGpu(int n, int seed) {
+        JCuda.setExceptionsEnabled(true);
+        JCurand.setExceptionsEnabled(true);
+
+        float[] hostData = new float[n];
+
+        Pointer devData = new Pointer();
+        JCuda.cudaMalloc(devData, (long) n * Sizeof.FLOAT);
+
+        curandGenerator generator = new curandGenerator();
+
+        JCurand.curandCreateGenerator(generator, curandRngType.CURAND_RNG_PSEUDO_DEFAULT);
+        JCurand.curandSetPseudoRandomGeneratorSeed(generator, seed);
+        JCurand.curandGenerateUniform(generator, devData, n);
+        JCuda.cudaMemcpy(Pointer.to(hostData), devData, (long) n * Sizeof.FLOAT, cudaMemcpyKind.cudaMemcpyDeviceToHost);
+
+        JCurand.curandDestroyGenerator(generator);
+        JCuda.cudaFree(devData);
+
+        return hostData;
 
     }
 
     public static void bitmapTest() throws DataNotFoundException, IOException {
 
         DBOut dope = DBOut.getDBOut();
-        //int[] cgns = dope.getFlightIDsByAirportTag("LAX");
-        int[] cgns = dope.getFlightIDsByAirlineTag("RYR");
-        Vector<Position> positions = dope.getPositionsByFlightIDs(cgns);
-        Bitmap bitmap = Bitmap.fromPosVector(positions, 0.05f);
-        Bitmap.write(bitmap, "RYR.bmp");
+        Vector<Position> positions = dope.getAllTrackingPositions();
+        long start = Time.nowMillis();
+        Bitmap bitmap = Bitmap.fromPosVector(positions, 0.025f);
+        Bitmap b2 = Bitmap.fromPosVector(positions, 0.025f);
+        BitmapCombiner combiner = new BitmapCombiner(bitmap, b2);
+        Bitmap result = combiner
+                .combineAll()
+                .getResult();
+        System.out.println(result.equals(bitmap));
+        System.out.println(result.equals(b2));
+        /*Bitmap.writeToCSV(bitmap, "testCsvFile");*/
+        System.out.println(Time.elapsedMillis(start));
+        //Bitmap.write(bitmap, "RYR.bmp");
 
     }
 
@@ -238,45 +311,6 @@ public class Test {
         newChartFrame("Airport Significance", barChart);
     }
 
-    private void testAnimation(Test test) {
-        var size = new Dimension(800, 500);
-        ImageIcon bground = Images.BGROUND_IMG.get(); // doesn't work with every image (???)
-        ImageIcon enemy = Images.PAPER_PLANE_ICON.get();
-
-        AtomicInteger x = new AtomicInteger(10), y = new AtomicInteger(size.height-20);
-        final int[] xVelocity = {2};
-        final int[] yVelocity = {-1};
-
-        var myLabel = new JLabel() { // bground image?
-            @Override
-            public void paint(Graphics g) {
-                super.paint(g);
-                var g2d = (Graphics2D) g;
-                g2d.drawImage(enemy.getImage(), x.get(), y.get(), null);
-            }
-        };
-        myLabel.setSize(size);
-        var myPanel = new JPanel();
-        myPanel.add(myLabel);
-        myPanel.setSize(size);
-
-        Timer timer = new Timer(10, e -> {
-            if (x.get() >= size.width || x.get() <= 0) {
-                xVelocity[0] = xVelocity[0] * -1;
-            }
-            if (y.get() <= 0 || y.get() >= size.height) {
-                yVelocity[0] = yVelocity[0] * -1;
-            }
-            x.addAndGet(xVelocity[0]);
-            y.addAndGet(yVelocity[0]);
-
-            myLabel.repaint();
-        });
-
-        test.createTestJFrame(myPanel);
-        timer.start();
-    }
-
     private void processHandleTest() {
         ProcessHandle.allProcesses()
                 .forEach(p -> System.out.println(
@@ -356,9 +390,9 @@ public class Test {
             e.printStackTrace();
             return;
         }
-        var positionHeatMap = statistics.positionHeatMap(positions);
+        //var positionHeatMap = statistics.positionHeatMap(positions);
 
-        Arrays.stream(positionHeatMap.toString().split(",")).forEach(System.out::println);
+        //Arrays.stream(positionHeatMap.toString().split(",")).forEach(System.out::println);
 
         System.out.println();
         long elapsedMillis = System.currentTimeMillis() - startTime;

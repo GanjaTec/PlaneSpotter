@@ -47,8 +47,6 @@ public abstract class ActionHandler
     // because we don't want parallel listeners who listen to the same actions
     @NotNull private static final ActionHandler INSTANCE;
 
-    // TODO: 31.08.2022 class HotkeyManager
-
     // initializing all static members
     static {
         INSTANCE = new ActionHandler() {};

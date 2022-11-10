@@ -10,9 +10,7 @@ import planespotter.throwables.OutOfRangeException;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Vector;
 
@@ -104,7 +102,7 @@ public class Bitmap {
      * @param ints2d is the input 2D-int array, which is automatically converted to byte-array
      * @return Bitmap from 2D-int array
      */
-    @HighMemory(msg = "Huge 2D-arrays (with gridSize about 0.025 and lower) cause OutOfMemoryError")
+    @HighMemory(msg = "Huge 2D-arrays (with gridSize about 0.02 and lower) cause OutOfMemoryError")
     @NotNull
     public static Bitmap fromInt2d(int[][] ints2d) {
 
@@ -211,6 +209,30 @@ public class Bitmap {
     }
 
     /**
+     *
+     *
+     * @return
+     */
+    @NotNull
+    public static File writeToCSV(@NotNull Bitmap bitmap, @NotNull String filename) {
+        File file = new File(Utilities.checkFileName(filename, "csv"));
+        try (Writer fw = new FileWriter(file)) {
+
+            int c, len;
+            for (byte[] arr : bitmap.getBitmap()) {
+                c = 0;
+                len = arr.length - 1;
+                for (byte lvl : arr) {
+                    fw.write(lvl + (c++ == len ? "\n" : ","));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return file;
+    }
+
+    /**
      * reads a {@link Bitmap} from a specific {@link File}
      *
      * @param filename is the name of the {@link File} to read
@@ -297,13 +319,13 @@ public class Bitmap {
     }
 
     /**
-     * overwritten toString() method returns this {@link Bitmap }as a {@link String}
+     * overwritten toString() method returns this {@link Bitmap} as a {@link String}
      *
      * @return {@link String} of this {@link Bitmap} object
      */
     @Override
     public String toString() {
-        return String.valueOf(this);
+        return Arrays.deepToString(getBitmap());
     }
 
 }

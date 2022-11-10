@@ -115,7 +115,7 @@ public class Scheduler {
      */
     @NotNull
     public final ScheduledFuture<?> schedule(@NotNull Runnable task, @NotNull String tName, int initDelay, int period) {
-        return this.schedule(() -> {
+        return schedule(() -> {
             Thread.currentThread().setName(tName);
             task.run();
         }, initDelay, period);
@@ -125,8 +125,8 @@ public class Scheduler {
      * executes a task in a specific period
      *
      * @param task is the Runnable to execute in period
-     * @param initDelay is the src delay in seconds, must be 1 or higher
-     * @param period is the period in seconds, must be 0 or higher
+     * @param initDelay is the src delay in milliseconds, must be 1 or higher
+     * @param period is the period in milliseconds, must be 0 or higher
      */
     @NotNull
     public final ScheduledFuture<?> schedule(@NotNull Runnable task, int initDelay, int period) {
@@ -135,7 +135,7 @@ public class Scheduler {
         } if (period < 1) {
             throw new IllegalArgumentException("period out of range! must be 1 or higher!");
         }
-        return this.scheduled_exe.scheduleAtFixedRate(task, initDelay, period, TimeUnit.SECONDS);
+        return scheduled_exe.scheduleAtFixedRate(task, initDelay, period, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -147,7 +147,7 @@ public class Scheduler {
      */
     @NotNull
     public final CompletableFuture<Void> exec(@NotNull Runnable target, @NotNull String tName) {
-        return this.exec(target, tName, false, 5, true);
+        return exec(target, tName, false, 5, true);
     }
 
     /**
@@ -160,14 +160,14 @@ public class Scheduler {
      * @return the running task as {@link CompletableFuture}
      */
     @NotNull
-    public final CompletableFuture<Void> exec(@NotNull Runnable target, @NotNull String tName, boolean daemon, int prio, boolean withTimeout) {
+    public CompletableFuture<Void> exec(@NotNull Runnable target, @NotNull String tName, boolean daemon, int prio, boolean withTimeout) {
         if (prio < 1 || prio > 10) {
             throw new IllegalArgumentException("priority must be between 1 and 10!");
         }
         this.getThreadFactory().addThreadProperties(tName, daemon, prio);
         if (withTimeout) {
             AtomicReference<Thread> currentThread = new AtomicReference<>();
-            return CompletableFuture.runAsync(target, this.exe)
+            return CompletableFuture.runAsync(target, exe)
                     .orTimeout(15, TimeUnit.SECONDS)
                     .exceptionally(e -> {
                         Controller.getInstance().handleException(e);
@@ -177,8 +177,20 @@ public class Scheduler {
                         return null;
                     });
         } else {
-            return CompletableFuture.runAsync(target, this.exe);
+            return CompletableFuture.runAsync(target, exe);
         }
+    }
+
+    /**
+     *
+     *
+     * @param target
+     * @param delayMillis
+     * @return
+     */
+    @NotNull
+    public CompletableFuture<Void> delayed(@NotNull Runnable target, int delayMillis) {
+        return exec(() -> scheduled_exe.schedule(target, delayMillis, TimeUnit.MILLISECONDS), "Delayed Task", false, MID_PRIO, false);
     }
 
     /**

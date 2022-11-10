@@ -1,8 +1,11 @@
 package planespotter.model.nio;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import planespotter.dataclasses.Frame;
+import planespotter.dataclasses.ReceiverFrame;
 import planespotter.model.ExceptionHandler;
+import planespotter.throwables.URIException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -23,14 +26,21 @@ import java.util.stream.Stream;
  */
 public class ADSBSupplier extends HttpSupplier {
 
-    // the request URI for requests
-    private URI requestUri;
+    // the request URIs for data requests
+    @NotNull private URI requestUri;
+    @Nullable private URI receiverRequestUri;
 
     // DataLoader instance with data queue
-    private final DataLoader dataLoader;
+    @NotNull private final DataLoader dataLoader;
 
     // Deserializer for deserializing ADSB data (ADSBDeserializer)
-    private final Deserializer<HttpResponse<String>> deserializer;
+    @NotNull private final ADSBDeserializer deserializer;
+
+    // receiver data frame
+    @Nullable private ReceiverFrame currentReceiverData;
+
+    // 1 if initialized, 0 if not
+    private byte initialized = 0;
 
     /**
      * constructs a new {@link ADSBSupplier} with {@link URI} and {@link DataLoader}
@@ -38,8 +48,9 @@ public class ADSBSupplier extends HttpSupplier {
      * @param uri is the data request {@link URI}, can be changed later
      * @param dataLoader is a {@link DataLoader} which contains the data queue where data can be taken from
      */
-    public ADSBSupplier(@NotNull String uri, @NotNull DataLoader dataLoader) {
+    public ADSBSupplier(@NotNull String uri, @NotNull DataLoader dataLoader, @Nullable String receiverUri) {
         this.requestUri = URI.create(uri);
+        this.receiverRequestUri = receiverUri != null ? URI.create(receiverUri) : null;
         this.dataLoader = dataLoader;
         this.deserializer = new ADSBDeserializer();
     }
@@ -52,6 +63,10 @@ public class ADSBSupplier extends HttpSupplier {
     @Override
     public synchronized void supply() {
         try {
+            if (initialized == 0) {
+                supplyReceiverData();
+                initialized++;
+            }
             HttpResponse<String> response = sendRequest(2);
             Stream<? extends Frame> frames = deserializer.deserialize(response); // ADSB frames
             dataLoader.insertLater(frames);
@@ -84,6 +99,44 @@ public class ADSBSupplier extends HttpSupplier {
         return HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
+    private void supplyReceiverData() {
+        System.out.println("Supplying receiver data...");
+        try {
+            HttpResponse<String> response = sendReceiverRequest(2);
+            currentReceiverData = deserializer.deserializeReceiverData(response);
+            return;
+        } catch (URIException uriex) {
+            System.out.println(uriex.getMessage());
+        } catch (IOException | InterruptedException e) {
+            ExceptionHandler onError = getExceptionHandler();
+            if (onError != null) {
+                onError.handleException(e);
+            } else {
+                e.printStackTrace();
+            }
+        }
+        currentReceiverData = null;
+    }
+
+    /**
+     *
+     *
+     * @param timeoutSec
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    @NotNull
+    private HttpResponse<String> sendReceiverRequest(int timeoutSec) throws IOException, InterruptedException, URIException {
+        if (receiverRequestUri == null) {
+            throw new URIException("Receiver request URI not found!");
+        }
+        HttpRequest request = HttpRequest.newBuilder(receiverRequestUri)
+                .timeout(Duration.ofSeconds(timeoutSec))
+                .build();
+        return HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
     /**
      * sets the request {@link URI} to make it possible to send requests to different {@link URI}s
      *
@@ -91,5 +144,19 @@ public class ADSBSupplier extends HttpSupplier {
      */
     public void setRequestUri(@NotNull URI requestUri) {
         this.requestUri = requestUri;
+    }
+
+    /**
+     * sets the request {@link URI} for the receiver data request
+     *
+     * @param requestUri is the new request {@link URI}
+     */
+    public void setReceiverRequestUri(@NotNull URI requestUri) {
+        this.receiverRequestUri = requestUri;
+    }
+
+    @Nullable
+    public ReceiverFrame getReceiverData() {
+        return currentReceiverData;
     }
 }

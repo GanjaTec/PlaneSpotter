@@ -27,7 +27,7 @@ public class ADSBCollector extends Collector<ADSBSupplier> {
      *                    when the 'X'-button is pressed
      */
     protected ADSBCollector(String requestUri, boolean exitOnClose) {
-        super(exitOnClose, new ADSBSupplier(requestUri, new DataLoader())); // example
+        super(exitOnClose, new ADSBSupplier(requestUri, new DataLoader(), null)); // example
     }
 
     /**

@@ -81,7 +81,7 @@ public class LRUCache<K, V> {
     public synchronized boolean put(@NotNull K key, @NotNull V source) {
         if ((onlyRemoveIfFull && isFull()) || (!onlyRemoveIfFull && isAlmostFull())) {
             if (!removeLeastRecentlyUsed()) {
-                System.out.println("Cache is full of Seniors!");
+                System.out.println("Cache is full of Seniors, this shouldn't happen!");
                 return false;
             }
         }

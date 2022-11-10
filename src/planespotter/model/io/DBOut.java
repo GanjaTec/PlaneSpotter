@@ -221,7 +221,7 @@ public final class DBOut extends DBConnector {
 				"AND (p.ID = " + id + "))";
 		synchronized (DB_SYNC) {
 			try (DBResult result = queryDB(query);
-				 ResultSet rs = result.resultSet()){
+				 ResultSet rs = result.resultSet()) {
 
 				if (rs.next()) {
 					airlineID = rs.getInt("ID");

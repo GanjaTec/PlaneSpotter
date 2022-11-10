@@ -3,18 +3,15 @@ package planespotter.model.nio;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
-import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import planespotter.constants.Areas;
 import planespotter.constants.Configuration;
 import planespotter.controller.Controller;
-import planespotter.dataclasses.Flight;
-import planespotter.dataclasses.Fr24Frame;
+import planespotter.dataclasses.*;
 import planespotter.dataclasses.Frame;
-import planespotter.dataclasses.PlaneMarker;
 import planespotter.display.TreasureMap;
 import planespotter.model.ExceptionHandler;
 import planespotter.model.Scheduler;
-import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.EmptyQueueException;
 import planespotter.throwables.InvalidArrayException;
 import planespotter.throwables.NoAccessException;
 import planespotter.util.Time;
@@ -24,6 +21,7 @@ import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.util.*;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,8 +55,8 @@ public class DataLoader {
      */
     private boolean live;
 
-    // live data loading period
-    private int liveDataPeriodSec, adsbDataPeriodSec;
+    // live data loading period in milliseconds
+    private int liveDataPeriod, adsbDataPeriod;
 
     @Nullable private ADSBSupplier adsbSupplier;
 
@@ -76,14 +74,14 @@ public class DataLoader {
     /**
      * {@link DataLoader} constructor with specific maxQueueSize and period
      *
-     * @param maxQueueSize is the max. size for the data-{@link Queue}
+     * @param maxQueueSize is the max. size of the data-{@link Queue}
      * @param liveDataPeriodSec is the loading period in seconds
      */
     public DataLoader(int maxQueueSize, int liveDataPeriodSec) {
         this.maxQueueSize = maxQueueSize;
         this.dataQueue = new ConcurrentLinkedQueue<>();
-        this.liveDataPeriodSec = liveDataPeriodSec;
-        this.adsbDataPeriodSec = 1;
+        this.liveDataPeriod = liveDataPeriodSec * 1000;
+        this.adsbDataPeriod = 2000;
     }
 
     /**
@@ -112,63 +110,49 @@ public class DataLoader {
                     } else {
                         adsbFrames.addAll(loadLiveData(ctrl, onlyMilitary, ctrl.isAdsbEnabled(), false));
                     }
-                } catch (DataNotFoundException | NoAccessException ignored) {
+                } catch (EmptyQueueException | NoAccessException ignored) {
                 }
             }
-        }, 0, liveDataPeriodSec);
+        }, 0, liveDataPeriod);
         scheduler.schedule(() -> {
             if (ctrl.isFr24Enabled() && isLive()) {
                 try {
                     mixedFrames.addAll(loadLiveData(ctrl, onlyMilitary, false, ctrl.isFr24Enabled()));
-                } catch (DataNotFoundException | NoAccessException ignored) {
+                } catch (EmptyQueueException | NoAccessException ignored) {
                 }
             }
-        }, 0, adsbDataPeriodSec);
+        }, 0, adsbDataPeriod);
 
-        int updatePeriod = Math.min(liveDataPeriodSec, adsbDataPeriodSec);
+        int updatePeriod = Math.min(liveDataPeriod, adsbDataPeriod);
         scheduler.schedule(() -> scheduler.exec(() -> {
                     if (mixedFrames.isEmpty() && adsbFrames.isEmpty()) {
                         return;
                     }
-                    List<MapMarker> markerList;
                     ctrl.setLiveDataList(
                             Stream.iterate(mixed || ctrl.isFr24Enabled() ? mixedFrames.poll() : adsbFrames.poll(),
                                             f -> mixed || ctrl.isFr24Enabled() ? mixedFrames.poll() : adsbFrames.poll())
                                     .limit(mixed || ctrl.isFr24Enabled() ? mixedFrames.size() : adsbFrames.size())
                                     .collect(Collectors.toCollection(Vector::new)));
-                    markerList = ctrl.getLiveDataList()
-                            .stream()
-                            .map(flight -> PlaneMarker.fromFlight(flight, ctrl.getUI().getMapManager().getSelectedICAO(), true))
-                            .collect(Collectors.toList());
-                    // setting new map marker list on the map
-                    ctrl.getUI().getMap().setMapMarkerList(markerList);
+
+                    // TODO: 05.10.2022 do always when connecting to ADSBSupplier
+                    ReceiverFrame crdata = null;
+                    if (ctrl.isAdsbEnabled() && adsbSupplier != null) {
+                        // prototype receiver frame
+                        Position pos = new Position(51.664064, 9.373964);
+                        if ((crdata = adsbSupplier.getReceiverData()) != null) {
+                            adsbDataPeriod = crdata.getRefresh();
+                        } else {
+                            crdata = new ReceiverFrame("1.0", 2000, 100, pos);
+                        }
+                    }
+                    // calling the controller to update the map via MapManager
+                    ctrl.getUI().getMapManager().updateMap(ctrl.getLiveDataList(), crdata);
                     ctrl.done(false);
-                }, "Set Map Markers", true, Scheduler.HIGH_PRIO, false)
+
+                }, "Map Updater", true, Scheduler.HIGH_PRIO, false)
                 .orTimeout(updatePeriod, TimeUnit.SECONDS)
                 .exceptionally(e -> null)
                 .join(), 0, updatePeriod);
-
-
-        /*// loading init-live-data
-        loadLiveData(ctrl, onlyMilitary, ctrl.isAdsbEnabled(), ctrl.isFr24Enabled());
-        // endless live-data task
-        synchronized (liveLock) {
-            while (!ctrl.isTerminated()) {
-                // trying to await the live-data period
-                try {
-                    liveLock.wait(TimeUnit.SECONDS.toMillis(this.liveDataPeriodSec));
-                } catch (InterruptedException e) {
-                    ctrl.handleException(e);
-                } finally {
-                    liveLock.notify();
-                }
-                // loading live-data, if live-map is enabled
-                if (isLive()) {
-                    loadLiveData(ctrl, onlyMilitary, ctrl.isAdsbEnabled(), ctrl.isFr24Enabled());
-
-                }
-            }
-        }*/
     }
 
     /**
@@ -179,14 +163,13 @@ public class DataLoader {
      * @param onlyMilitary indicates if only military data should be loaded
      */
     private Vector<Flight> loadLiveData(@NotNull Controller ctrl, boolean onlyMilitary, boolean useAdsb, boolean useFr24)
-            throws DataNotFoundException, NoAccessException {
+            throws EmptyQueueException, NoAccessException {
 
-        TreasureMap map;
         // checking for 'already loading' and setting controller loading
         if (!ctrl.isLoading()) {
             ctrl.setLoading(true);
 
-            map = ctrl.getUI().getMap();
+            TreasureMap map = ctrl.getUI().getMap();
             // transforming liveData-flight-Vector into list of MapMarkers
             // after loading it directly from fr24
             try {
@@ -213,11 +196,11 @@ public class DataLoader {
      */
     @NotNull
     public Vector<Flight> getLiveFlights(@NotNull final TreasureMap map, boolean onlyMilitary, boolean useAdsb, boolean useFr24)
-            throws DataNotFoundException {
+            throws EmptyQueueException {
 
         Fr24Deserializer deserializer = new Fr24Deserializer();
         if (onlyMilitary) {
-            deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF", "VIVI", "CASA", "K35R", "Q4");
+            deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF", "VIVI", "CASA", "K35R", "Q4", "REDEYE", "UAV");
         }
 
         String[] currentArea = Areas.getCurrentArea(map);
@@ -225,7 +208,7 @@ public class DataLoader {
             if (adsbSupplier == null) {
                 Controller ctrl = Controller.getInstance();
                 Configuration config = ctrl.getConfig();
-                adsbSupplier = new ADSBSupplier(config.getProperty("adsbRequestUri").toString(), this);
+                adsbSupplier = new ADSBSupplier(config.getProperty("adsbRequestUri").toString(), this, config.getProperty("receiverRequestUri").toString());
                 adsbSupplier.setExceptionHandler(ctrl);
             }
             adsbSupplier.supply();
@@ -250,10 +233,10 @@ public class DataLoader {
      */
     @NotNull
     public Stream<? extends Frame> pollFrames(@Range(from = 1, to = Integer.MAX_VALUE) int maxElements)
-            throws DataNotFoundException {
+            throws EmptyQueueException {
 
         if (this.isEmpty()) { // checking for empty queue
-            throw new DataNotFoundException("Data-Queue is empty, make sure it is not empty!");
+            throw new EmptyQueueException("Data-Queue is empty, make sure it is not empty!");
         }
         // iterating over polled frames from data-queue and limiting to size
         int size = Math.min(maxElements, getQueueSize());
@@ -360,21 +343,21 @@ public class DataLoader {
     }
 
     /**
-     * sets the period for the live-data loader in seconds
+     * sets the period for the live-data loader in milliseconds
      *
-     * @param sec is the period in seconds
+     * @param millis is the period in milliseconds
      */
-    public void setLiveDataPeriod(@Range(from = 1, to = 10) int sec) {
-        this.liveDataPeriodSec = sec;
+    public void setLiveDataPeriod(@Range(from = 1, to = 10) int millis) {
+        this.liveDataPeriod = millis;
     }
 
     /**
-     * sets the {@link ADSBSupplier} request period in seconds
+     * sets the {@link ADSBSupplier} request period in milliseconds
      *
-     * @param adsbDataPeriodSec is the request period in seconds
+     * @param millis is the request period in milliseconds
      */
-    public void setAdsbDataPeriodSec(int adsbDataPeriodSec) {
-        this.adsbDataPeriodSec = adsbDataPeriodSec;
+    public void setAdsbDataPeriodSec(int millis) {
+        this.adsbDataPeriod = millis;
     }
 
     /**
