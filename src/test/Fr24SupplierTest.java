@@ -1,14 +1,29 @@
 package test;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.fail;
 
 class Fr24SupplierTest {
 
+	@BeforeEach
+	public void setUp() {
+
+	}
+
+	@AfterEach
+	public void tearDown() {
+
+	}
+
 	@Test
-	void test() {
-		fail("Not yet implemented");
+	void supply() {
+
+	}
+
+	@Test
+	void sendRequest() {
+
 	}
 
 }

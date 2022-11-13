@@ -6,21 +6,21 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
-import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
+import planespotter.model.io.DBOut;
+import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.InvalidDataException;
 import planespotter.util.Bitmap;
 import planespotter.util.Time;
-import planespotter.util.math.Vector2D;
-import planespotter.model.io.DBOut;
-import planespotter.throwables.DataNotFoundException;
 import planespotter.util.Utilities;
+import planespotter.util.math.Vector2D;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static planespotter.util.math.MathUtils.*;
+import static planespotter.util.math.MathUtils.abs;
+import static planespotter.util.math.MathUtils.divide;
 
 /**
  * @name Statistics
@@ -365,62 +365,6 @@ public class Statistics {
             }
         });
         return asignf;
-    }
-
-    /**
-     *
-     *
-     * @param positions
-     * @return
-     */
-    // TODO change name
-    public final HashMap<Position, Integer> positionHeatMap(@NotNull final Vector<Position> positions) {
-        int size = Utilities.asInt(positions.stream()
-                            .distinct()
-                            .count());
-        final HashMap<Position, Integer> heatMap = new HashMap<>(size);
-        Set<Position> keySet;
-        int currentLvl;
-        for (Position pos : positions) {
-            for (int i = 0; i < size; i++) {
-                keySet = heatMap.keySet();
-                Position nearOf = containsKeyNearOf(keySet, pos);
-                if (nearOf == null) {
-                    heatMap.put(pos, 1);
-                } else {
-                    currentLvl = heatMap.get(nearOf);
-                    heatMap.replace(nearOf, currentLvl + 1);
-                }
-            }
-        }
-        if (heatMap.isEmpty()) {
-            try {
-                throw new DataNotFoundException("heat map is empty, check the inputs!");
-            } catch (DataNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-        return heatMap;
-    }
-
-    /**
-     *
-     *
-     * @param positionSet
-     * @param key
-     * @return
-     */
-    private Position containsKeyNearOf(@NotNull Set<Position> positionSet, @NotNull Position key) {
-        for (Position pos : positionSet) {
-            double tolerance = 0.03;
-            if (       (key.lat() < pos.lat() + tolerance)
-                    && (key.lat() > pos.lat() - tolerance)
-                    && (key.lon() < pos.lon() + tolerance)
-                    && (key.lon() > pos.lon() - tolerance)) {
-                return pos;
-            }
-        }
-        return null;
     }
 
 }

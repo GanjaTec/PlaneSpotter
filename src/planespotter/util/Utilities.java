@@ -3,30 +3,33 @@ package planespotter.util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
-
 import org.jetbrains.annotations.TestOnly;
+import planespotter.constants.Areas;
 import planespotter.constants.UnicodeChar;
-import planespotter.controller.Controller;
-import planespotter.dataclasses.*;
+import planespotter.dataclasses.DataPoint;
+import planespotter.dataclasses.Flight;
+import planespotter.dataclasses.Position;
 import planespotter.throwables.*;
 import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.NoninvertibleTransformException;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -83,7 +86,7 @@ public abstract class Utilities {
      */
     @NotNull
     public static String getAbsoluteRootPath() {
-        return (Controller.ROOT_PATH == null) ? System.getProperty("user.dir") : Controller.ROOT_PATH;
+        return System.getProperty("user.dir") + "\\";
     }
 
     /**
@@ -190,6 +193,58 @@ public abstract class Utilities {
         }
         return max;
     }
+
+    /**
+     * parses a float to byte array
+     *
+     * @param f is the float to parse
+     * @return byte array (length of 4) containing the float value
+     */
+    public static byte[] floatToBytes(float f) {
+        return ByteBuffer.allocate(4).putFloat(f).array();
+    }
+
+    /**
+     * parses a byte array to float
+     *
+     * @param bytes is the byte array to parse, should be with length 4
+     * @return float, parsed from byte array
+     */
+    public static float bytesToFloat(byte[] bytes) {
+        if (bytes.length < 4) {
+            throw new InvalidDataException("byte array must at least contain 4 bytes");
+        }
+        return ByteBuffer.wrap(bytes).getFloat();
+    }
+
+    /**
+     *
+     * IMPORTANT: only use Bitmaps of gridSize 1.0 here
+     *
+     * @param bmp
+     * @param minLvl
+     * @return
+     */
+    public static Queue<String> calculateInterestingAreas1(@NotNull Bitmap bmp, byte minLvl) {
+        if (bmp.width > 361) {
+            throw new InvalidDataException("Bitmap is too huge, please use gridSize 1.0f here");
+        }
+        Queue<String> areas = new ArrayDeque<>();
+        byte[][] bytes = bmp.getBitmap();
+        for (int x = 0; x < bmp.width; x++) {
+            for (int y = 0; y < bmp.height; y++) {;
+                if (bytes[x][y] < minLvl) {
+                    continue;
+                }
+                areas.add(Areas.newArea(y, y + 1, x, x + 1));
+            }
+        }
+        return areas;
+    }
+
+    /*public static String[] calculateInterestingAreas2(double latGridSize, double lonGridSize) {
+        String[] worldRaster = Areas.getWorldAreaRaster1D(latGridSize, lonGridSize);
+    }*/
 
     /**
      * converts a decimal-int to hex-int,
@@ -498,7 +553,7 @@ public abstract class Utilities {
         String invalidMsg = "CheckStatus: Status code '" + status + "' is invalid!";
         StatusException stex = switch (status) {
             case 200, 201 -> null; // status code is OK
-            case 403 -> new StatusException(status, invalidMsg + "\n Error 403, Forbidden");
+            case 403 -> new StatusException(status, invalidMsg + "\nError 403, Forbidden");
             case 451 -> new StatusException(status, invalidMsg + "\nSeems like there is a problem with the Http-header (User-Agent)!");
             default -> new StatusException(status, invalidMsg + "\nUnknown error!");
         };
@@ -574,6 +629,22 @@ public abstract class Utilities {
             inputs[i] = checkString(inputs[i]);
         }
         return inputs;
+    }
+
+    /**
+     *
+     *
+     * @param filename
+     * @param expectedFormat
+     * @return
+     */
+    @NotNull
+    public static String checkFileName(@NotNull String filename, @NotNull String expectedFormat) {
+        if (filename.isBlank() || expectedFormat.isBlank()) {
+            throw new InvalidDataException("No file name or format!");
+        }
+        expectedFormat = (expectedFormat.startsWith(".") ? "" : ".") + expectedFormat.toLowerCase();
+        return filename.endsWith(expectedFormat) ? filename : filename + expectedFormat;
     }
 
     /**

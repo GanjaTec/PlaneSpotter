@@ -3,16 +3,18 @@ package planespotter.model;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
-
 import planespotter.constants.Areas;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.Frame;
 import planespotter.display.models.SupplierDisplay;
-import planespotter.model.io.*;
+import planespotter.model.io.DBIn;
+import planespotter.model.io.Inserter;
+import planespotter.model.io.Keeper;
+import planespotter.model.io.KeeperOfTheArchives;
+import planespotter.model.nio.DataLoader;
 import planespotter.model.nio.FilterManager;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
-import planespotter.model.nio.DataLoader;
 import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
@@ -106,9 +108,9 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
 
         scheduler.schedule(() -> scheduler.exec(() -> {
             // executing suppliers to collect Fr24-Data
-            dataLoader.collectData(extAreas, deserializer, true);
+            dataLoader.collectData(extAreas, deserializer, true, true);
             // adding all deserialized world-raster-areas to frames deque
-            dataLoader.collectData(worldAreaRaster1D, deserializer, true);
+            dataLoader.collectData(worldAreaRaster1D, deserializer, true, true);
             
         }, "Data Collector Thread", false, Scheduler.HIGH_PRIO, true),
                 "Collect Data", 0, REQUEST_PERIOD);
@@ -116,7 +118,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         scheduler.runThread(inserter, "Inserter Thread", true, Scheduler.MID_PRIO);
         // executing the keeper every 400 seconds
         scheduler.schedule(() -> scheduler.exec(keeper, "Keeper Thread", true, Scheduler.LOW_PRIO, false),
-                100, 400);
+                100 * 1000, 400 * 1000);
         // updating display
         DBIn dbIn = DBIn.getDBIn();
         scheduler.schedule(() -> {
@@ -134,7 +136,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
             display.update(insertedNow.get(), newPlanesNow.get(), newFlightsNow.get(),
                            (lastFrame != null) ? lastFrame.toShortString() : "None",
                            dataLoader.getQueueSize(), nextError);
-        }, 0, 1);
+        }, 0, 1000);
     }
 
     /**

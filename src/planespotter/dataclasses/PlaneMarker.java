@@ -3,12 +3,10 @@ package planespotter.dataclasses;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.Coordinate;
-import org.openstreetmap.gui.jmapviewer.MapMarkerCircle;
 import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
 import planespotter.constants.Images;
 import planespotter.display.MarkerPainter;
-import planespotter.throwables.OutOfRangeException;
 import planespotter.util.Utilities;
 
 import java.awt.*;

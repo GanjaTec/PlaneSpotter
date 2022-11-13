@@ -1,19 +1,9 @@
 package planespotter.model;
 
 import org.jetbrains.annotations.Nullable;
-import org.python.core.PyComplex;
 import org.python.core.PyString;
 import org.python.util.PythonInterpreter;
-import planespotter.constants.Paths;
-import planespotter.controller.Controller;
-import sun.misc.Unsafe;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.Reader;
 import java.util.Properties;
 
 /**

@@ -16,9 +16,6 @@ import static planespotter.constants.Paths.IMAGE_PATH;
  */
 public enum Images {
     TITLE(new ImageIcon(IMAGE_PATH + "newTitle.png")),
-    BGROUND_IMG(new ImageIcon(IMAGE_PATH + "background.png")),
-    MENU_BGROUND_IMG(new ImageIcon(IMAGE_PATH + "menu_background.png")),
-    TITLE_BGROUND_IMG(new ImageIcon(IMAGE_PATH + "title_background.jpg")),
     PAPER_PLANE_ICON(new ImageIcon(IMAGE_PATH + "planespotter_icon.png")),
     FLYING_PLANE_ICON(new ImageIcon(IMAGE_PATH + "flying_plane_icon.png")),
     START_SCREEN(new ImageIcon(IMAGE_PATH + "start_img.png")),

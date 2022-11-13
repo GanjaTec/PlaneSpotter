@@ -7,13 +7,15 @@ import org.openstreetmap.gui.jmapviewer.interfaces.*;
 import planespotter.controller.ActionHandler;
 import planespotter.dataclasses.*;
 import planespotter.util.Utilities;
+import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static planespotter.constants.DefaultColor.DEFAULT_BORDER_COLOR;
 
@@ -50,6 +52,58 @@ public final class MapManager {
         this.selectedICAO = null;
     }
 
+    public void updateMap(@Nullable Vector<Flight> flights, @Nullable ReceiverFrame receiverData) {
+        if (flights == null || flights.isEmpty()) {
+            clearMap();
+            return;
+        }
+        TreasureMap map = getMapViewer();
+        List<MapMarker> mapMarkers = flights.stream()
+                .map(flight -> PlaneMarker.fromFlight(flight, getSelectedICAO(), true))
+                .collect(Collectors.toList());
+
+        // testing receiver map position
+        // painting receiver position on the map
+        if (receiverData != null) {
+            MapMarkerDot here = new MapMarkerDot("Receiver", new Coordinate(receiverData.getLat(), receiverData.getLon()));
+            here.setBackColor(Color.RED);
+            here.setColor(Color.BLACK);
+            mapMarkers.add(here);
+            Coordinate coord = receiverData.getPosition().toCoordinate();
+            int cycleCount = 6;
+            int km = 20;
+            double ldeg = MathUtils.kmToLatDegrees(km);
+            MapMarkerCircle mmc;
+            for (int i = 0; i < cycleCount; i++) {
+                mmc = new MapMarkerCircle(String.valueOf(km * i), coord, ldeg * i);
+                mmc.setBackColor(null);
+                mmc.setColor(Color.BLACK);
+                mapMarkers.add(mmc);
+            }
+        }
+
+        // setting new map marker list on the map
+        map.setMapMarkerList(mapMarkers);
+    }
+
+    /**
+     * @return the default map viewer component ({@link TreasureMap})
+     */
+    @NotNull
+    public TreasureMap defaultMapViewer(@NotNull Component parent, @NotNull TileSource mapType) {
+        TreasureMap viewer = new TreasureMap();
+        DefaultMapController mapController = new DefaultMapController(viewer);
+
+        mapController.setMovementMouseButton(1);
+        viewer.setBounds(parent.getBounds());
+        viewer.setBorder(BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR.get()));
+        viewer.setZoomControlsVisible(false);
+        viewer.setTileSource(mapType);
+        viewer.setVisible(true);
+
+        return viewer;
+    }
+
     /**
      * clears the map from all
      *      {@link MapMarker}s,
@@ -84,24 +138,6 @@ public final class MapManager {
                     }
                 });
         getMapViewer().setMapMarkerList(markers);
-    }
-
-    /**
-     * @return the default map viewer component ({@link TreasureMap})
-     */
-    @NotNull
-    public TreasureMap defaultMapViewer(@NotNull Component parent, @NotNull TileSource mapType) {
-        TreasureMap viewer = new TreasureMap();
-        DefaultMapController mapController = new DefaultMapController(viewer);
-
-        mapController.setMovementMouseButton(1);
-        viewer.setBounds(parent.getBounds());
-        viewer.setBorder(BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR.get()));
-        viewer.setZoomControlsVisible(false);
-        viewer.setTileSource(mapType);
-        viewer.setVisible(true);
-
-        return viewer;
     }
 
     /**
@@ -168,11 +204,17 @@ public final class MapManager {
         Color markerColor;
         List<MapPolygon> polys = new ArrayList<>(size);
         List<MapMarker> markers = new ArrayList<>(size);
+        dataPoints = dataPoints.stream()
+                .peek(a -> System.out.println(a.flightID() + ", " + a.timestamp()))
+                .sorted((a, b) -> a.flightID() == b.flightID()
+                        ? Long.compare(a.timestamp(), b.timestamp())
+                        : Integer.compare(a.flightID(), b.flightID()))
+                .peek(a -> System.out.println(a.flightID() + ", " + a.timestamp()))
+                .collect(Collectors.toCollection(Vector::new));
         for (DataPoint dp : dataPoints) {
             dpPos = dp.pos();
             altitude = dp.altitude();
             markerColor = Utilities.colorByAltitude(altitude);
-            System.out.println(dp.flightID() + ", " + dp.timestamp());
             if (counter++ > 0) {
                 // checking if the data points belong to the same flight,
                 //          if they are in correct order and

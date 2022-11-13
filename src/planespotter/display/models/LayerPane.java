@@ -1,20 +1,24 @@
 package planespotter.display.models;
 
 import KentHipos.Kensoft;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import planespotter.model.Scheduler;
+
 import planespotter.throwables.OutOfRangeException;
-import planespotter.util.math.Vector2D;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import static planespotter.util.math.MathUtils.divide;
-
+/**
+ * @name LayerPane
+ * @author jml04
+ * @version 1.0
+ *
+ * @description
+ * The {@link LayerPane} class represents a {@link JLayeredPane} with extended functions
+ */
 public class LayerPane extends JLayeredPane {
 
     // layer constants

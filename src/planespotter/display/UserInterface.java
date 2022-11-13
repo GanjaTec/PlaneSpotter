@@ -2,7 +2,6 @@ package planespotter.display;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
 import planespotter.constants.Images;
 import planespotter.constants.SearchType;

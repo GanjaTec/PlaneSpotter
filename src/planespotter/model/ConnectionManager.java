@@ -2,7 +2,6 @@ package planespotter.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import planespotter.model.io.FileWizard;
 import planespotter.throwables.IllegalInputException;
 import planespotter.throwables.KeyCheckFailedException;
@@ -41,7 +40,7 @@ public class ConnectionManager {
         } else {
             try {
                 cons = FileWizard.getFileWizard().readConnections(filename);
-            } catch (IOException e) {
+            } catch (Throwable e) { // we don't want an exception in initializer
                 e.printStackTrace();
                 cons = new HashMap<>(0);
             }

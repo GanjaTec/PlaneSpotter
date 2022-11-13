@@ -1,9 +1,7 @@
 package planespotter.display.models;
 
 import libs.UWPButton;
-
 import org.jetbrains.annotations.NotNull;
-import planespotter.constants.UserSettings;
 import planespotter.controller.ActionHandler;
 import planespotter.display.UserInterface;
 

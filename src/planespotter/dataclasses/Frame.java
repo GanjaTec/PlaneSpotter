@@ -1,7 +1,5 @@
 package planespotter.dataclasses;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.Serializable;
 
 /**
@@ -14,7 +12,7 @@ import java.io.Serializable;
  * abstract class Frame is a frame-superclass which should
  * have all default frame fields e.g. latitude, longitude ,etc...
  */
-public abstract class Frame implements Serializable {
+public abstract class Frame implements DataFrame, Serializable {
 
     // default Frame fields
     private final double lat;

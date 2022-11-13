@@ -2,7 +2,6 @@ package planespotter.constants;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
-import org.jetbrains.annotations.TestOnly;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import planespotter.dataclasses.Position;
 import planespotter.display.TreasureMap;

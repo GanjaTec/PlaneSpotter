@@ -1,11 +1,11 @@
 package planespotter.model.nio;
 
 import org.jetbrains.annotations.NotNull;
-
+import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.ExceptionHandler;
 import planespotter.model.Fr24Collector;
-import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.io.DBIn;
+import planespotter.throwables.Fr24Exception;
 import planespotter.util.Time;
 import planespotter.util.Utilities;
 
@@ -78,7 +78,7 @@ public class Fr24Supplier extends HttpSupplier {
 			Stream<Fr24Frame> fr24Frames = deserializer.deserialize(response);
 			// writing frames to DB
 			DBIn.getDBIn().write(fr24Frames);
-		} catch (IOException | InterruptedException | IllegalArgumentException e) {
+		} catch (IOException | InterruptedException | IllegalArgumentException | Fr24Exception e) {
 			ExceptionHandler onError = getExceptionHandler();
 			if (onError != null) {
 				onError.handleException(e);
