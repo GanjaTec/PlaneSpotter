@@ -4,8 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.TestOnly;
+import planespotter.constants.Areas;
 import planespotter.constants.UnicodeChar;
-import planespotter.controller.Controller;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Position;
@@ -24,6 +24,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -192,6 +193,58 @@ public abstract class Utilities {
         }
         return max;
     }
+
+    /**
+     * parses a float to byte array
+     *
+     * @param f is the float to parse
+     * @return byte array (length of 4) containing the float value
+     */
+    public static byte[] floatToBytes(float f) {
+        return ByteBuffer.allocate(4).putFloat(f).array();
+    }
+
+    /**
+     * parses a byte array to float
+     *
+     * @param bytes is the byte array to parse, should be with length 4
+     * @return float, parsed from byte array
+     */
+    public static float bytesToFloat(byte[] bytes) {
+        if (bytes.length < 4) {
+            throw new InvalidDataException("byte array must at least contain 4 bytes");
+        }
+        return ByteBuffer.wrap(bytes).getFloat();
+    }
+
+    /**
+     *
+     * IMPORTANT: only use Bitmaps of gridSize 1.0 here
+     *
+     * @param bmp
+     * @param minLvl
+     * @return
+     */
+    public static Queue<String> calculateInterestingAreas1(@NotNull Bitmap bmp, byte minLvl) {
+        if (bmp.width > 361) {
+            throw new InvalidDataException("Bitmap is too huge, please use gridSize 1.0f here");
+        }
+        Queue<String> areas = new ArrayDeque<>();
+        byte[][] bytes = bmp.getBitmap();
+        for (int x = 0; x < bmp.width; x++) {
+            for (int y = 0; y < bmp.height; y++) {;
+                if (bytes[x][y] < minLvl) {
+                    continue;
+                }
+                areas.add(Areas.newArea(y, y + 1, x, x + 1));
+            }
+        }
+        return areas;
+    }
+
+    /*public static String[] calculateInterestingAreas2(double latGridSize, double lonGridSize) {
+        String[] worldRaster = Areas.getWorldAreaRaster1D(latGridSize, lonGridSize);
+    }*/
 
     /**
      * converts a decimal-int to hex-int,

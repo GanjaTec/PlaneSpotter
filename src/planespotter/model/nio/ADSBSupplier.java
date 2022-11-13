@@ -99,6 +99,9 @@ public class ADSBSupplier extends HttpSupplier {
         return HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
+    /**
+     * supplies the ADSB-receiver data
+     */
     private void supplyReceiverData() {
         System.out.println("Supplying receiver data...");
         try {

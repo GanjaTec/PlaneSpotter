@@ -8,15 +8,14 @@ import java.io.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
-import java.util.Set;
 
-public final class CSVAdapter extends DBConnector {
+public final class CSVWriter extends DBConnector {
 
+    private final StringBuilder rowBuffer = new StringBuilder();
     private PreparedStatement statement;
 
 
-    public CSVAdapter(@NotNull String sql) throws SQLException {
+    public CSVWriter(@NotNull String sql) throws SQLException {
         super();
         setStatement(sql);
     }
@@ -29,16 +28,16 @@ public final class CSVAdapter extends DBConnector {
         this.statement = createPreparedStatement(sql, true);
     }
 
-    public void writeToCSV(@NotNull File file, @NotNull String @NotNull [] columns, @NotNull String @NotNull [] types)
+    public void writeToCSV(@NotNull File file, @NotNull String @NotNull [] header, @NotNull String @NotNull [] types)
             throws DataNotFoundException {
 
         if (!file.getName().endsWith(".csv")) {
             throw new DataNotFoundException("Output file must be of type CSV");
         }
         if (statement == null) {
-            throw new DataNotFoundException("No statement to execute");
+            throw new DataNotFoundException("No statement to execute, must be set before");
         }
-        int len = columns.length;
+        int len = header.length;
         if (len == 0) {
             throw new DataNotFoundException("No given columns");
         }
@@ -46,22 +45,20 @@ public final class CSVAdapter extends DBConnector {
             throw new InvalidDataException("Invalid type array length, make sure it is as long as the header array");
         }
 
-        String col, type; Object next;
-        StringBuilder headBuilder = new StringBuilder(),
-                      rowBuilder  = new StringBuilder();
+        String type; Object next; int col;
 
         try (ResultSet rs = statement.executeQuery();
              FileOutputStream fos = new FileOutputStream(file);
              OutputStreamWriter osw = new OutputStreamWriter(fos);
              BufferedWriter buf = new BufferedWriter(osw)) {
 
-            for (String name : columns) {
-                headBuilder.append(name).append(',');
+            for (String name : header) {
+                append(name);
             }
-            buf.write(toRowString(headBuilder));
+            buf.write(nextRow());
             while (rs.next()) {
-                for (int i = 0; i < columns.length; i++) {
-                    col = columns[i];
+                for (int i = 0; i < header.length; i++) {
+                    col = i + 1;
                     type = types[i];
                     next = switch (type) {
                         case "int" -> rs.getInt(col);
@@ -74,22 +71,35 @@ public final class CSVAdapter extends DBConnector {
                         default -> null;
                     };
                     if (next != null) {
-                        rowBuilder.append(next).append(',');
+                        append(next);
                     }
                 }
-                buf.write(toRowString(rowBuilder));
-                rowBuilder.delete(0, rowBuilder.length());
+                buf.write(nextRow());
             }
         } catch (SQLException | IOException e) {
             throw new DataNotFoundException(e);
         }
     }
 
-    private static String toRowString(@NotNull StringBuilder sb) {
-        if (sb.length() == 0) {
+    private void reset() {
+        if (rowBuffer.length() > 0) {
+            rowBuffer.delete(0, rowBuffer.length());
+        }
+    }
+
+    private void append(@NotNull Object next) {
+        rowBuffer.append(next).append(',');
+    }
+
+    private String nextRow() {
+        int len = rowBuffer.length();
+        if (len == 0) {
             throw new InvalidDataException("StringBuilder must be longer than 0");
         }
-        return sb.deleteCharAt(sb.length() - 1).append('\n').toString();
+        int begin = len - 1;
+        String row = rowBuffer.replace(begin, len, "\n").toString();
+        reset();
+        return row;
     }
 
 }

@@ -70,12 +70,12 @@ public class Bitmap {
     @HighMemory(msg = "Huge 2D-arrays (with gridSize about 0.025 and lower) can cause OutOfMemoryError")
     @NotNull
     public static Bitmap fromPosVector(@NotNull Vector<Position> positions, @Range(from = 0, to = 2) float gridSize) {
-        if (gridSize < 0.025) {
-            throw new OutOfRangeException("grid size must be 0.025 or higher!");
+        if (gridSize < 0.02) {
+            throw new OutOfRangeException("grid size must be 0.02 or higher!");
         }
 
-        int width = (int) divide(360., gridSize) + 1;
-        int height = (int) divide(180., gridSize) + 1;
+        int width = (int) divide(360.0, gridSize) + 1;
+        int height = (int) divide(180.0, gridSize) + 1;
         int[][] ints2d = new int[width][height];
 
         Arrays.stream(ints2d)
@@ -91,6 +91,13 @@ public class Bitmap {
                     posY = (int) divide(pos.lat() + 90, gridSize);
                     ints2d[posX][posY]++;
                 });
+
+        // writing gridSize to the last 4 bytes
+        int last = width - 1;
+        byte[] gridSizeBytes = Utilities.floatToBytes(gridSize);
+        for (int y = height - 4, i = 0; y < height; y++, i++) {
+            ints2d[last][y] = gridSizeBytes[i] + 128;
+        }
         return Bitmap.fromInt2d(ints2d);
     }
 
@@ -160,15 +167,12 @@ public class Bitmap {
      */
     @NotNull
     public static Bitmap fromImage(@NotNull BufferedImage img) {
-        int width = img.getWidth();
-        int height = img.getHeight();
+        int width = img.getWidth(),
+            height = img.getHeight();
         byte[][] bmpBytes = new byte[width][height];
-        byte rgb;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                rgb = (byte) img.getRGB(x, y);
-                System.out.println(rgb);
-                bmpBytes[x][y] = rgb;
+                bmpBytes[x][y] = (byte) img.getRGB(x, y);
             }
         }
         return new Bitmap(bmpBytes);
@@ -272,7 +276,7 @@ public class Bitmap {
      *
      * @return 1D-array of this {@link Bitmap}
      */
-    public byte[] getByteArray() {
+    public byte[] toByteArray() {
         byte[] bytes = new byte[this.width * this.height];
         int i = 0;
         for (int x = 0; x < this.width; x++) {
@@ -281,6 +285,14 @@ public class Bitmap {
             }
         }
         return bytes;
+    }
+
+    public float getGridSize() {
+        int last = width - 1;
+        byte[] fBytes = new byte[] {
+                bitmap[last][height - 1], bitmap[last][height - 2], bitmap[last][height - 3], bitmap[last][height - 4]
+        };
+        return Utilities.bytesToFloat(fBytes);
     }
 
     /**
@@ -301,21 +313,7 @@ public class Bitmap {
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj == this) return true;
-        if (obj instanceof Bitmap bmp) {
-            return Arrays.deepEquals(this.bitmap, bmp.bitmap);
-        }
-        return false;
-    }
-
-    /**
-     * overwritten getter for the {@link Bitmap} hash code
-     *
-     * @return hash code of the {@link Bitmap} class
-     */
-    @Override
-    public int hashCode() {
-        return System.identityHashCode(this);
+        return obj == this || (obj instanceof Bitmap bmp && Arrays.deepEquals(this.bitmap, bmp.bitmap));
     }
 
     /**
