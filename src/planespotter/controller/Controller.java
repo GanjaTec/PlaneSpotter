@@ -67,7 +67,7 @@ import static planespotter.constants.ViewType.*;
  * the view with the model and holds some important instances,
  * also a static instance of itself and of the VM ({@link Runtime})
  */
-public abstract class Controller implements ExceptionHandler {
+public final class Controller implements ExceptionHandler {
 
     // -- static fields --
 
@@ -84,7 +84,7 @@ public abstract class Controller implements ExceptionHandler {
     static {
         // initializing 'root' members
         RUNTIME = Runtime.getRuntime();
-        INSTANCE = new Controller() {};
+        INSTANCE = new Controller();
         ROOT_PATH = Utilities.getAbsoluteRootPath();
 
         // initializing database file, recreating if invalid
@@ -129,8 +129,8 @@ public abstract class Controller implements ExceptionHandler {
     // search object for DB-search operations
     @NotNull private final Search search;
 
-    // 'ADSBSupplier / Fr24Supplier enabled' flag
-    private boolean adsbEnabled, fr24Enabled;
+    // DataLoader mask
+    private int mask;
 
     /**
      * private constructor for Controller main instance,
@@ -150,8 +150,7 @@ public abstract class Controller implements ExceptionHandler {
                                     this.connectionManager);
         this.clicking = false;
         this.terminated = false;
-        this.adsbEnabled = false;
-        this.fr24Enabled = true;
+        this.mask = DataLoader.FR24_MASK;
     }
 
     /**
@@ -270,9 +269,8 @@ public abstract class Controller implements ExceptionHandler {
                 handleException(e);
             }
             // starting tasks and finishing
-            boolean onlyMilitary = false;
             setAdsbEnabled(false);
-            liveThread = scheduler.runThread(() -> dataLoader.runTask(this, onlyMilitary), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
+            liveThread = scheduler.runThread(() -> dataLoader.run(this), "LiveData Loader", true, Scheduler.HIGH_PRIO);
             this.initialized = true;
             show(MAP_LIVE);
         }
@@ -479,6 +477,15 @@ public abstract class Controller implements ExceptionHandler {
                 done(false);
             }
         }
+    }
+
+    /**
+     * updates the {@link TreasureMap} with live {@link Flight}s and {@link ReceiverFrame} data
+     *
+     * @param receiverData is the receiver data
+     */
+    public void updateMap(@Nullable ReceiverFrame receiverData) {
+        getUI().getMapManager().updateMap(getLiveDataList(), receiverData);
     }
 
     /**
@@ -1133,16 +1140,6 @@ public abstract class Controller implements ExceptionHandler {
     }
 
     /**
-     * getter for {@link DataLoader} instance
-     *
-     * @return the {@link DataLoader} instance
-     */
-    @NotNull
-    public DataLoader getLiveLoader() {
-        return this.dataLoader;
-    }
-
-    /**
      * getter for the {@link Configuration} instance,
      * which contains all property constants
      *
@@ -1151,13 +1148,6 @@ public abstract class Controller implements ExceptionHandler {
     @NotNull
     public Configuration getConfig() {
         return config;
-    }
-
-    /**
-     * @return loading flag, true if Controller is loading something
-     */
-    public boolean isLoading() {
-        return this.loading;
     }
 
     /**
@@ -1184,7 +1174,7 @@ public abstract class Controller implements ExceptionHandler {
      * @return true if adsb supplier is enabled, else false
      */
     public boolean isAdsbEnabled() {
-        return this.adsbEnabled;
+        return (this.mask & DataLoader.ADSB_MASK) == DataLoader.ADSB_MASK;
     }
 
     /**
@@ -1193,7 +1183,11 @@ public abstract class Controller implements ExceptionHandler {
      * @param adsbEnabled indicates if the {@link ADSBSupplier} should be enabled
      */
     public void setAdsbEnabled(boolean adsbEnabled) {
-        this.adsbEnabled = adsbEnabled;
+        if (!adsbEnabled && isAdsbEnabled()) {
+            this.mask -= DataLoader.ADSB_MASK;
+        }else if (adsbEnabled && !isAdsbEnabled()) {
+            this.mask += DataLoader.ADSB_MASK;
+        }
     }
 
     /**
@@ -1202,7 +1196,7 @@ public abstract class Controller implements ExceptionHandler {
      * @return the Fr24Suppplier enabled' flag
      */
     public boolean isFr24Enabled() {
-        return this.fr24Enabled;
+        return (mask & DataLoader.FR24_MASK) == DataLoader.FR24_MASK;
     }
 
     /**
@@ -1211,7 +1205,21 @@ public abstract class Controller implements ExceptionHandler {
      * @param fr24Enabled indicates if the 'Fr24Supplier enabled' flag should be enabled/disabled
      */
     public void setFr24Enabled(boolean fr24Enabled) {
-        this.fr24Enabled = fr24Enabled;
+        if (!fr24Enabled && isFr24Enabled()) {
+            this.mask -= DataLoader.FR24_MASK;
+        }else if (fr24Enabled && !isFr24Enabled()) {
+            this.mask += DataLoader.FR24_MASK;
+        }
+    }
+
+    /**
+     * getter for {@link DataLoader} mask
+     *
+     * @return DataLoader mask
+     * @see planespotter.model.nio.DataLoader for mask constants
+     */
+    public int getMask() {
+        return mask;
     }
 
     /**

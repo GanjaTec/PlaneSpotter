@@ -11,9 +11,8 @@ import planespotter.dataclasses.Frame;
 import planespotter.display.TreasureMap;
 import planespotter.model.ExceptionHandler;
 import planespotter.model.Scheduler;
-import planespotter.throwables.EmptyQueueException;
 import planespotter.throwables.InvalidArrayException;
-import planespotter.throwables.NoAccessException;
+import planespotter.unused.ANSIColor;
 import planespotter.util.Time;
 import planespotter.util.Utilities;
 
@@ -27,6 +26,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static planespotter.util.Time.elapsedMillis;
+import static planespotter.util.Time.nowMillis;
 
 /**
  * @name LiveData
@@ -46,6 +48,14 @@ import java.util.stream.Stream;
  */
 public class DataLoader {
 
+    private static final Object LIVE_THREAD_LOCK = new Object();
+
+    public static final int NO_MASK   = 0,
+                            ADSB_MASK = 1,
+                            FR24_MASK = 2,
+                            MIXED_MASK = ADSB_MASK | FR24_MASK,
+                            ONLY_MILITARY_MASK =  4;
+
     // max. size for data queue
     private final int maxQueueSize;
 
@@ -61,7 +71,7 @@ public class DataLoader {
     @Nullable private ADSBSupplier adsbSupplier;
 
     // frames, which will be inserted later (first loaded into the view)
-    @NotNull private final ConcurrentLinkedQueue<Frame> dataQueue;
+    @NotNull private final Queue<Frame> dataQueue;
 
     /**
      * default {@link DataLoader} constructor, uses a maxQueueSize
@@ -84,101 +94,73 @@ public class DataLoader {
         this.adsbDataPeriod = 2000;
     }
 
-    /**
-     * The live-data-task, endless data loading, while the controller is alive.
-     * Waits on the liveLock object and tries to load live-data.
-     *
-     * @param ctrl is the {@link Controller} instance
-     * @param flags are the flags where the task is initialized with, in this case the
-     *              'onlyMilitary' flag, indicates if only military data should be loaded
-     */
-    public void runTask(@NotNull Controller ctrl, boolean... flags) {
-        if (flags == null || flags.length == 0) {
-            throw new InvalidArrayException("Flags array needs the onlyMilitary flag!");
+    public void run(@NotNull Controller ctrl) {
+        long waitTime;
+
+        while (true) {
+            waitTime = spin(ctrl);
+            if (waitTime <= 0) {
+                continue;
+            }
+            try {
+                synchronized (LIVE_THREAD_LOCK) {
+                    LIVE_THREAD_LOCK.wait(waitTime);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
         }
-        boolean onlyMilitary = flags[0];
-        Scheduler scheduler = new Scheduler(3, 4L);
-        Queue<Flight> mixedFrames = new ConcurrentLinkedQueue<>();
-        Queue<Flight> adsbFrames = new ConcurrentLinkedQueue<>();
-        boolean mixed = ctrl.isAdsbEnabled() && ctrl.isFr24Enabled();
 
-        scheduler.schedule(() -> {
-            if (ctrl.isAdsbEnabled() && isLive()) {
-                try {
-                    if (mixed) {
-                        mixedFrames.addAll(loadLiveData(ctrl, onlyMilitary, ctrl.isAdsbEnabled(), false));
-                    } else {
-                        adsbFrames.addAll(loadLiveData(ctrl, onlyMilitary, ctrl.isAdsbEnabled(), false));
-                    }
-                } catch (EmptyQueueException | NoAccessException ignored) {
-                }
-            }
-        }, 0, liveDataPeriod);
-        scheduler.schedule(() -> {
-            if (ctrl.isFr24Enabled() && isLive()) {
-                try {
-                    mixedFrames.addAll(loadLiveData(ctrl, onlyMilitary, false, ctrl.isFr24Enabled()));
-                } catch (EmptyQueueException | NoAccessException ignored) {
-                }
-            }
-        }, 0, adsbDataPeriod);
-
-        int updatePeriod = Math.min(liveDataPeriod, adsbDataPeriod);
-        scheduler.schedule(() -> scheduler.exec(() -> {
-                    if (mixedFrames.isEmpty() && adsbFrames.isEmpty()) {
-                        return;
-                    }
-                    ctrl.setLiveDataList(
-                            Stream.iterate(mixed || ctrl.isFr24Enabled() ? mixedFrames.poll() : adsbFrames.poll(),
-                                            f -> mixed || ctrl.isFr24Enabled() ? mixedFrames.poll() : adsbFrames.poll())
-                                    .limit(mixed || ctrl.isFr24Enabled() ? mixedFrames.size() : adsbFrames.size())
-                                    .collect(Collectors.toCollection(Vector::new)));
-
-                    // TODO: 05.10.2022 do always when connecting to ADSBSupplier
-                    ReceiverFrame crdata = null;
-                    if (ctrl.isAdsbEnabled() && adsbSupplier != null) {
-                        // prototype receiver frame
-                        Position pos = new Position(51.664064, 9.373964);
-                        if ((crdata = adsbSupplier.getReceiverData()) != null) {
-                            adsbDataPeriod = crdata.getRefresh();
-                        } else {
-                            crdata = new ReceiverFrame("1.0", 2000, 100, pos);
-                        }
-                    }
-                    // calling the controller to update the map via MapManager
-                    ctrl.getUI().getMapManager().updateMap(ctrl.getLiveDataList(), crdata);
-                    ctrl.done(false);
-
-                }, "Map Updater", true, Scheduler.HIGH_PRIO, false)
-                .orTimeout(updatePeriod, TimeUnit.SECONDS)
-                .exceptionally(e -> null)
-                .join(), 0, updatePeriod);
     }
 
-    /**
-     * loads Fr24-data directly into the liveData-Collection (ctrl.liveData)
-     * and into the {@link TreasureMap}, but not into the database.
-     *
-     * @param ctrl is the {@link Controller} instance
-     * @param onlyMilitary indicates if only military data should be loaded
-     */
-    private Vector<Flight> loadLiveData(@NotNull Controller ctrl, boolean onlyMilitary, boolean useAdsb, boolean useFr24)
-            throws EmptyQueueException, NoAccessException {
-
-        // checking for 'already loading' and setting controller loading
-        if (!ctrl.isLoading()) {
-            ctrl.setLoading(true);
-
-            TreasureMap map = ctrl.getUI().getMap();
-            // transforming liveData-flight-Vector into list of MapMarkers
-            // after loading it directly from fr24
-            try {
-                return getLiveFlights(map, onlyMilitary, useAdsb, useFr24);
-            } finally {
-                ctrl.done(false);
-            }
+    private long spin(@NotNull Controller ctrl) {
+        int updateMillis = Math.min(liveDataPeriod, adsbDataPeriod);
+        if (!isLive()) {
+            return updateMillis;
         }
-        throw new NoAccessException("cannot access the Controller right now!");
+
+        long startTime = nowMillis();
+        String[] area = Areas.getCurrentArea(ctrl.getUI().getMap());
+
+        // TODO: 05.10.2022 do always when connecting to ADSBSupplier
+        ReceiverFrame crdata = ctrl.isAdsbEnabled() ? getReceiverFrame() : null;
+
+        // updating live data list and map via Controller / MapManager
+        Vector<Flight> liveData = liveDataSpin(area, ctrl.getMask());
+        if (liveData != null) {
+            ctrl.setLiveDataList(liveData);
+            ctrl.updateMap(crdata);
+        }
+
+        // calculating wait time
+        return updateMillis - elapsedMillis(startTime);
+    }
+
+    private Vector<Flight> liveDataSpin(@NotNull String @NotNull[] area, int mask) {
+        boolean onlyMilitary = (mask & ONLY_MILITARY_MASK) == ONLY_MILITARY_MASK;
+        return switch (mask & MIXED_MASK) {
+            case MIXED_MASK -> getLiveFlights(area, onlyMilitary, true, true);
+            case FR24_MASK -> getLiveFlights(area, onlyMilitary, false, true);
+            case ADSB_MASK -> getLiveFlights(area, onlyMilitary, true, false);
+            default -> null;
+        };
+    }
+
+    @Nullable
+    private ReceiverFrame getReceiverFrame() {
+        if (adsbSupplier == null) {
+            return null;
+        }
+        ReceiverFrame crdata;
+        if ((crdata = adsbSupplier.getReceiverData()) != null) {
+            adsbDataPeriod = crdata.getRefresh();
+        } else {
+            // prototype receiver frame
+            Position pos = new Position(51.664064, 9.373964);
+            crdata = new ReceiverFrame("1.0", 2000, 100, pos);
+        }
+        return crdata;
     }
 
     /**
@@ -189,21 +171,19 @@ public class DataLoader {
      * but we poll it directly after putting it into
      * and parse it to {@link Flight}s
      *
-     * @param map is the {@link TreasureMap} where the area, in which the {@link Flight}s are loaded,
-     *            comes from, can be found in the {@link planespotter.display.UserInterface} class
+     * @param currentArea is a {@link String} array (length always 1 here) with the current area string
      * @param onlyMilitary indicates if only military data should be loaded
      * @return Vector of {@link Flight} objects, loaded directly with {@link Supplier}s
+     * @see planespotter.constants.Areas
      */
-    @NotNull
-    public Vector<Flight> getLiveFlights(@NotNull final TreasureMap map, boolean onlyMilitary, boolean useAdsb, boolean useFr24)
-            throws EmptyQueueException {
+    @Nullable
+    public Vector<Flight> getLiveFlights(@NotNull final String@NotNull[] currentArea, boolean onlyMilitary, boolean useAdsb, boolean useFr24) {
 
         Fr24Deserializer deserializer = new Fr24Deserializer();
         if (onlyMilitary) {
             deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF", "VIVI", "CASA", "K35R", "Q4", "REDEYE", "UAV");
         }
 
-        String[] currentArea = Areas.getCurrentArea(map);
         if (useAdsb) {
             if (adsbSupplier == null) {
                 Controller ctrl = Controller.getInstance();
@@ -214,11 +194,12 @@ public class DataLoader {
             adsbSupplier.supply();
         }
         if (useFr24) {
-            collectData(currentArea, deserializer, false);
+            collectData(currentArea, deserializer, false, false);
         }
 
         AtomicInteger pseudoID = new AtomicInteger(0);
-        return pollFrames(Integer.MAX_VALUE)
+        Stream<? extends Frame> frames = pollFrames(Integer.MAX_VALUE);
+        return frames == null ? null : frames
                 .map(frame -> Flight.parseFlight(frame, pseudoID.getAndIncrement()))
                 .collect(Collectors.toCollection(Vector::new));
     }
@@ -231,12 +212,11 @@ public class DataLoader {
      *                    queue size, it's decremented to the queue size
      * @return Stream of Frames with @param maxElements (or queue size) as length
      */
-    @NotNull
-    public Stream<? extends Frame> pollFrames(@Range(from = 1, to = Integer.MAX_VALUE) int maxElements)
-            throws EmptyQueueException {
+    @Nullable
+    public Stream<? extends Frame> pollFrames(@Range(from = 1, to = Integer.MAX_VALUE) int maxElements) {
 
         if (this.isEmpty()) { // checking for empty queue
-            throw new EmptyQueueException("Data-Queue is empty, make sure it is not empty!");
+            return null;
         }
         // iterating over polled frames from data-queue and limiting to size
         int size = Math.min(maxElements, getQueueSize());
@@ -252,36 +232,34 @@ public class DataLoader {
      * @param deserializer is the {@link Fr24Deserializer} which is used to deserialize the requested data
      * @param ignoreMaxSize if it's true, allowed max size of data-queue is ignored
      */
-    public synchronized boolean collectData(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize) {
-        System.out.println("[Supplier] Collecting Fr24-Data with parallel Stream...");
-
+    public synchronized boolean collectData(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize, boolean parallel) {
         AtomicInteger tNumber = new AtomicInteger(0);
-        long startTime = Time.nowMillis();
-        try (Stream<String> parallel = Arrays.stream(areas).parallel()) {
-            parallel.forEach(area -> {
-                if (!ignoreMaxSize && maxSizeReached()) {
-                    System.out.println("Max queue-size reached!");
-                    return;
-                }
-                Fr24Supplier supplier = new Fr24Supplier(tNumber.getAndIncrement(), area);
-                supplier.setExceptionHandler(Controller.getInstance());
-
-                try {
-                    HttpResponse<String> response = supplier.sendRequest(2);
-                    Utilities.checkStatusCode(response.statusCode());
-                    Stream<Fr24Frame> data = deserializer.deserialize(response);
-                    insertLater(data);
-                } catch (IOException | InterruptedException e) {
-                    ExceptionHandler onError = supplier.getExceptionHandler();
-                    if (onError != null && e instanceof SSLHandshakeException ssl) {
-                        onError.handleException(ssl);
-                    } else {
-                        e.printStackTrace();
-                    }
-                }
-            });
+        Stream<String> areaStream = Arrays.stream(areas);
+        if (parallel) {
+            areaStream = areaStream.parallel();
         }
-        System.out.println("[Supplier] Elapsed time: " + Time.elapsedMillis(startTime) + " ms");
+        areaStream.forEach(area -> {
+            if (!ignoreMaxSize && maxSizeReached()) {
+                System.out.println("Max queue-size reached!");
+                return;
+            }
+            Fr24Supplier supplier = new Fr24Supplier(tNumber.getAndIncrement(), area);
+            supplier.setExceptionHandler(Controller.getInstance());
+
+            try {
+                HttpResponse<String> response = supplier.sendRequest(2);
+                Utilities.checkStatusCode(response.statusCode());
+                Stream<Fr24Frame> data = deserializer.deserialize(response);
+                insertLater(data);
+            } catch (IOException | InterruptedException e) {
+                ExceptionHandler onError = supplier.getExceptionHandler();
+                if (onError != null && e instanceof SSLHandshakeException ssl) {
+                    onError.handleException(ssl);
+                } else {
+                    e.printStackTrace();
+                }
+            }
+        });
         return true;
     }
 

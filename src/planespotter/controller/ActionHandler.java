@@ -39,7 +39,7 @@ import static planespotter.constants.ViewType.MAP_LIVE;
  * @see planespotter.controller.Controller
  * @see planespotter.model.Scheduler
  */
-public abstract class ActionHandler
+public final class ActionHandler
         implements  ActionListener, KeyListener, ComponentListener, MouseListener,
                     ItemListener, WindowListener, ListSelectionListener {
 
@@ -49,7 +49,7 @@ public abstract class ActionHandler
 
     // initializing all static members
     static {
-        INSTANCE = new ActionHandler() {};
+        INSTANCE = new ActionHandler();
     }
 
     // hotkey manager instance
@@ -296,7 +296,7 @@ public abstract class ActionHandler
             case "Close View" -> {
                 ctrl.setAdsbEnabled(false);
                 ctrl.setDataList(null);
-                ctrl.getLiveLoader().setLive(false);
+                ctrl.getDataLoader().setLive(false);
                 ui.clearView();
             }
         }

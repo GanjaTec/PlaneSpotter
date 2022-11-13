@@ -17,13 +17,12 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 import planespotter.constants.Paths;
 import planespotter.dataclasses.Position;
-import planespotter.model.io.CSVAdapter;
+import planespotter.model.io.CSVWriter;
 import planespotter.model.io.DBOut;
 import planespotter.statistics.BitmapCombiner;
 import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.unused.ANSIColor;
-import planespotter.util.SimpleBenchmark;
 import planespotter.util.Bitmap;
 import planespotter.util.Time;
 import planespotter.util.Utilities;
@@ -37,14 +36,13 @@ import java.awt.print.PageFormat;
 import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
-import java.sql.PreparedStatement;
+import java.nio.ByteBuffer;
+import java.sql.SQLException;
 import java.util.*;
 
 @TestOnly
@@ -64,12 +62,11 @@ public class Test {
         result = PyAdapter.runScript(Paths.PY_RUNTIME_HELPER + "testprint.py");
         System.out.println(result);
 */
-        File file = new File(Paths.RESOURCE_PATH + "testList.csv");
-        CSVAdapter adapter = new CSVAdapter("SELECT * FROM tracking");
 
-        String[] header = new String[] {"ID", "flightid", "latitude", "longitude", "altitude", "groundspeed", "heading", "squawk", "timestamp"};
-        String[] types = new String[] {"int", "int", "double", "double", "int", "int", "int", "int", "long"};
-        adapter.writeToCSV(file, header, types);
+        byte[] bts = Utilities.floatToBytes(1.5f);
+        System.out.println(Arrays.toString(bts));
+        float f = ByteBuffer.wrap(bts).getFloat();
+        System.out.println(f);
 
 /*
 
@@ -85,6 +82,32 @@ public class Test {
         });
 */
 
+    }
+
+    private static void airportsToCSV() throws SQLException, DataNotFoundException {
+        CSVWriter csv = new CSVWriter("SELECT * FROM airports");
+        File file = new File(Paths.RESOURCE_PATH + "airports.csv");
+        String[] header = new String[] {"ID", "iatatag", "name", "country", "lat", "lon"},
+                 types  = new String[] {"int", "string", "string", "string", "double", "double"};
+        csv.writeToCSV(file, header, types);
+    }
+
+    private static void trackingToCSV() throws SQLException, DataNotFoundException {
+        File file = new File(Paths.RESOURCE_PATH + "tracking.csv");
+        CSVWriter csv = new CSVWriter("SELECT * FROM tracking");
+
+        String[] header = new String[] {"ID", "flightid", "latitude", "longitude", "altitude", "groundspeed", "heading", "squawk", "timestamp"};
+        String[] types = new String[] {"int", "int", "double", "double", "int", "int", "int", "int", "long"};
+        csv.writeToCSV(file, header, types);
+    }
+
+    private static void flightsToCSV() throws SQLException, DataNotFoundException {
+        File file = new File(Paths.RESOURCE_PATH + "flights.csv");
+        CSVWriter csv = new CSVWriter("SELECT * FROM flights");
+
+        String[] header = new String[] {"ID", "plane", "src", "dest", "flightnr", "callsign", "start", "endTime"},
+                 types  = new String[] {"int", "string", "string", "string", "string", "string", "string", "string"};
+        csv.writeToCSV(file, header, types);
     }
 
     /*public static void gpuTest() {

@@ -259,9 +259,9 @@ public class Scheduler {
      * @return true if the shutdown was successfully
      */
     public synchronized boolean shutdown(final int timeout) {
+        final TimeUnit sec = TimeUnit.SECONDS;
         try {
-            final TimeUnit sec = TimeUnit.SECONDS;
-            return this.exe.awaitTermination(timeout, sec) && this.scheduled_exe.awaitTermination(timeout, sec);
+            return exe.awaitTermination(timeout, sec) && scheduled_exe.awaitTermination(timeout, sec);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -275,7 +275,8 @@ public class Scheduler {
         this.exe.shutdownNow();
         this.scheduled_exe.shutdownNow();
         sleep(1000);
-        return (this.exe.isTerminated() || this.exe.isTerminating()) && this.scheduled_exe.isTerminated();
+        return     (exe.isShutdown() || exe.isTerminated() || exe.isTerminating())
+                && (scheduled_exe.isShutdown() || scheduled_exe.isTerminated());
     }
 
     /**
@@ -290,7 +291,7 @@ public class Scheduler {
      *         not from the scheduled executor
      */
     public int active() {
-        return this.exe.getActiveCount();
+        return exe.getActiveCount();
     }
 
     /**
@@ -298,7 +299,7 @@ public class Scheduler {
      *         not from the scheduled executor
      */
     public long completed() {
-        return this.exe.getCompletedTaskCount();
+        return exe.getCompletedTaskCount();
     }
 
     /**
@@ -306,7 +307,7 @@ public class Scheduler {
      *         not from the scheduled executor
      */
     public int largestPoolSize() {
-        return this.exe.getLargestPoolSize();
+        return exe.getLargestPoolSize();
     }
 
     /**
@@ -314,7 +315,7 @@ public class Scheduler {
      */
     @Override
     public int hashCode() {
-        return this.hashCode;
+        return hashCode;
     }
 
     /**
@@ -346,7 +347,7 @@ public class Scheduler {
         @Override
         public Thread newThread(@NotNull Runnable r) {
             Thread thread = new Thread(r);
-            this.setThreadProperties(thread);
+            setThreadProperties(thread);
             thread.setUncaughtExceptionHandler((t, e) -> { // t is the thread, e is the exception
                 e.printStackTrace();
                 Controller.getInstance().handleException(e);
@@ -376,12 +377,12 @@ public class Scheduler {
          * @param target is the target thread on which properties are set
          */
         private synchronized void setThreadProperties(@NotNull Thread target) {
-            if (this.name != null) {
-                target.setName(this.name);
-            } if (this.priority != -1) {
-                target.setPriority(this.priority);
+            if (name != null) {
+                target.setName(name);
+            } if (priority != -1) {
+                target.setPriority(priority);
             }
-            target.setDaemon(this.daemon);
+            target.setDaemon(daemon);
         }
 
     }
