@@ -2,12 +2,12 @@ package planespotter.unused;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import planespotter.constants.DefaultColor;
 import planespotter.model.io.FileWizard;
 
 import javax.swing.*;
-import javax.swing.text.*;
-
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
+import javax.swing.text.StyleConstants;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;

@@ -5,10 +5,10 @@ import planespotter.unused.KeeperOfTheArchivesSenior;
 import planespotter.util.math.MathUtils;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static planespotter.util.Time.*;
+import static planespotter.util.Time.elapsedSeconds;
+import static planespotter.util.Time.nowMillis;
 
 /**
  * @name ProtoKeeper

@@ -1,35 +1,35 @@
 package planespotter.a_test;
 
-import org.jetbrains.annotations.NotNull;
+/*
+import jcuda.Pointer;
+import jcuda.Sizeof;
+import jcuda.jcurand.JCurand;
+import jcuda.jcurand.curandGenerator;
+import jcuda.jcurand.curandRngType;
+import jcuda.runtime.JCuda;
+import jcuda.runtime.cudaMemcpyKind;
+*/
 import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
-
-import planespotter.constants.*;
-import planespotter.controller.Controller;
-import planespotter.dataclasses.Flight;
-import planespotter.model.nio.ADSBSupplier;
+import planespotter.constants.Paths;
+import planespotter.dataclasses.Position;
+import planespotter.model.io.CSVWriter;
+import planespotter.model.io.DBOut;
+import planespotter.statistics.BitmapCombiner;
+import planespotter.statistics.Statistics;
+import planespotter.throwables.DataNotFoundException;
 import planespotter.unused.ANSIColor;
 import planespotter.util.Bitmap;
-import planespotter.dataclasses.DataPoint;
-import planespotter.dataclasses.Position;
-import planespotter.statistics.Statistics;
-import planespotter.model.io.DBOut;
-import planespotter.throwables.DataNotFoundException;
 import planespotter.util.Time;
 import planespotter.util.Utilities;
 import sun.misc.Unsafe;
 
 import javax.imageio.ImageIO;
-import javax.print.DocFlavor;
-import javax.print.DocPrintJob;
-import javax.print.PrintService;
-import javax.print.SimpleDoc;
 import javax.swing.*;
-import javax.swing.Timer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
@@ -39,13 +39,11 @@ import java.awt.print.PrinterJob;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.http.WebSocket;
+import java.nio.ByteBuffer;
+import java.sql.SQLException;
 import java.util.*;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @TestOnly
 public class Test {
@@ -54,8 +52,6 @@ public class Test {
 
     // TEST-MAIN
     public static void main(String[] args) throws Exception {
-
-        bitmapTest();
 
         // testing python scripts and functions in java
 /*
@@ -67,17 +63,108 @@ public class Test {
         System.out.println(result);
 */
 
+        byte[] bts = Utilities.floatToBytes(1.5f);
+        System.out.println(Arrays.toString(bts));
+        float f = ByteBuffer.wrap(bts).getFloat();
+        System.out.println(f);
+
+/*
+
+        DBOut dbo = DBOut.getDBOut();
+        int[] aals = dbo.getFlightIDsByAirlineTag("AAL");
+        int[] dals = dbo.getFlightIDsByAirlineTag("DAL");
+        Vector<Position> apos = dbo.getAllTrackingPositions();
+        Vector<Position> bpos = dbo.getPositionsByFlightIDs(dals);
+        Bitmap a = Bitmap.fromPosVector(apos, 0.5f);
+        Bitmap b = Bitmap.fromPosVector(bpos, 0.5f);
+        SimpleBenchmark.benchmark(() -> {
+            Bitmap result = BitmapCombiner.combine(a, b);
+        });
+*/
 
     }
+
+    private static void airportsToCSV() throws SQLException, DataNotFoundException {
+        CSVWriter csv = new CSVWriter("SELECT * FROM airports");
+        File file = new File(Paths.RESOURCE_PATH + "airports.csv");
+        String[] header = new String[] {"ID", "iatatag", "name", "country", "lat", "lon"},
+                 types  = new String[] {"int", "string", "string", "string", "double", "double"};
+        csv.writeToCSV(file, header, types);
+    }
+
+    private static void trackingToCSV() throws SQLException, DataNotFoundException {
+        File file = new File(Paths.RESOURCE_PATH + "tracking.csv");
+        CSVWriter csv = new CSVWriter("SELECT * FROM tracking");
+
+        String[] header = new String[] {"ID", "flightid", "latitude", "longitude", "altitude", "groundspeed", "heading", "squawk", "timestamp"};
+        String[] types = new String[] {"int", "int", "double", "double", "int", "int", "int", "int", "long"};
+        csv.writeToCSV(file, header, types);
+    }
+
+    private static void flightsToCSV() throws SQLException, DataNotFoundException {
+        File file = new File(Paths.RESOURCE_PATH + "flights.csv");
+        CSVWriter csv = new CSVWriter("SELECT * FROM flights");
+
+        String[] header = new String[] {"ID", "plane", "src", "dest", "flightnr", "callsign", "start", "endTime"},
+                 types  = new String[] {"int", "string", "string", "string", "string", "string", "string", "string"};
+        csv.writeToCSV(file, header, types);
+    }
+
+    /*public static void gpuTest() {
+        Pointer ptr = Pointer.to(new int[] {1});
+        JCuda.cudaMalloc(ptr, Sizeof.INT);
+        System.out.println(ptr);
+        JCuda.cudaFree(ptr);
+    }*/
+
+    public static float[] randomCpu(int n, int seed) {
+        Random rnd = new Random(seed);
+        float[] data = new float[n];
+        for (int i = 0; i < n; i++) {
+            data[i] = rnd.nextFloat();
+        }
+        return data;
+    }
+
+    /*public static float[] randomGpu(int n, int seed) {
+        JCuda.setExceptionsEnabled(true);
+        JCurand.setExceptionsEnabled(true);
+
+        float[] hostData = new float[n];
+
+        Pointer devData = new Pointer();
+        JCuda.cudaMalloc(devData, (long) n * Sizeof.FLOAT);
+
+        curandGenerator generator = new curandGenerator();
+
+        JCurand.curandCreateGenerator(generator, curandRngType.CURAND_RNG_PSEUDO_DEFAULT);
+        JCurand.curandSetPseudoRandomGeneratorSeed(generator, seed);
+        JCurand.curandGenerateUniform(generator, devData, n);
+        JCuda.cudaMemcpy(Pointer.to(hostData), devData, (long) n * Sizeof.FLOAT, cudaMemcpyKind.cudaMemcpyDeviceToHost);
+
+        JCurand.curandDestroyGenerator(generator);
+        JCuda.cudaFree(devData);
+
+        return hostData;
+
+    }*/
 
     public static void bitmapTest() throws DataNotFoundException, IOException {
 
         DBOut dope = DBOut.getDBOut();
-        //int[] cgns = dope.getFlightIDsByAirportTag("LAX");
-        int[] cgns = dope.getFlightIDsByAirlineTag("RYR");
-        Vector<Position> positions = dope.getPositionsByFlightIDs(cgns);
-        Bitmap bitmap = Bitmap.fromPosVector(positions, 0.05f);
-        Bitmap.write(bitmap, "RYR.bmp");
+        Vector<Position> positions = dope.getAllTrackingPositions();
+        long start = Time.nowMillis();
+        Bitmap bitmap = Bitmap.fromPosVector(positions, 0.025f);
+        Bitmap b2 = Bitmap.fromPosVector(positions, 0.025f);
+        BitmapCombiner combiner = new BitmapCombiner(bitmap, b2);
+        Bitmap result = combiner
+                .combineAll()
+                .getResult();
+        System.out.println(result.equals(bitmap));
+        System.out.println(result.equals(b2));
+        /*Bitmap.writeToCSV(bitmap, "testCsvFile");*/
+        System.out.println(Time.elapsedMillis(start));
+        //Bitmap.write(bitmap, "RYR.bmp");
 
     }
 
@@ -248,45 +335,6 @@ public class Test {
         newChartFrame("Airport Significance", barChart);
     }
 
-    private void testAnimation(Test test) {
-        var size = new Dimension(800, 500);
-        ImageIcon bground = Images.BGROUND_IMG.get(); // doesn't work with every image (???)
-        ImageIcon enemy = Images.PAPER_PLANE_ICON.get();
-
-        AtomicInteger x = new AtomicInteger(10), y = new AtomicInteger(size.height-20);
-        final int[] xVelocity = {2};
-        final int[] yVelocity = {-1};
-
-        var myLabel = new JLabel() { // bground image?
-            @Override
-            public void paint(Graphics g) {
-                super.paint(g);
-                var g2d = (Graphics2D) g;
-                g2d.drawImage(enemy.getImage(), x.get(), y.get(), null);
-            }
-        };
-        myLabel.setSize(size);
-        var myPanel = new JPanel();
-        myPanel.add(myLabel);
-        myPanel.setSize(size);
-
-        Timer timer = new Timer(10, e -> {
-            if (x.get() >= size.width || x.get() <= 0) {
-                xVelocity[0] = xVelocity[0] * -1;
-            }
-            if (y.get() <= 0 || y.get() >= size.height) {
-                yVelocity[0] = yVelocity[0] * -1;
-            }
-            x.addAndGet(xVelocity[0]);
-            y.addAndGet(yVelocity[0]);
-
-            myLabel.repaint();
-        });
-
-        test.createTestJFrame(myPanel);
-        timer.start();
-    }
-
     private void processHandleTest() {
         ProcessHandle.allProcesses()
                 .forEach(p -> System.out.println(
@@ -366,9 +414,9 @@ public class Test {
             e.printStackTrace();
             return;
         }
-        var positionHeatMap = statistics.positionHeatMap(positions);
+        //var positionHeatMap = statistics.positionHeatMap(positions);
 
-        Arrays.stream(positionHeatMap.toString().split(",")).forEach(System.out::println);
+        //Arrays.stream(positionHeatMap.toString().split(",")).forEach(System.out::println);
 
         System.out.println();
         long elapsedMillis = System.currentTimeMillis() - startTime;

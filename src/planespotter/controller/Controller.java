@@ -1,10 +1,8 @@
 package planespotter.controller;
 
 import libs.ZoomPane;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.MapMarker;
@@ -13,39 +11,43 @@ import org.openstreetmap.gui.jmapviewer.tilesources.BingAerialTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.TMSTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
-
 import planespotter.constants.*;
+import planespotter.dataclasses.*;
+import planespotter.display.MapManager;
+import planespotter.display.StatsView;
+import planespotter.display.TreasureMap;
+import planespotter.display.UserInterface;
 import planespotter.display.models.ConnectionPane;
+import planespotter.model.*;
 import planespotter.model.io.DBIn;
+import planespotter.model.io.DBOut;
 import planespotter.model.io.FileWizard;
 import planespotter.model.nio.ADSBSupplier;
+import planespotter.model.nio.DataLoader;
 import planespotter.model.nio.FilterManager;
 import planespotter.model.nio.Fr24Supplier;
-import planespotter.model.nio.DataLoader;
-import planespotter.throwables.*;
-import planespotter.dataclasses.*;
-import planespotter.display.*;
-import planespotter.model.*;
-import planespotter.model.io.DBOut;
 import planespotter.statistics.Statistics;
+import planespotter.throwables.*;
 import planespotter.util.Bitmap;
-import planespotter.util.math.MathUtils;
 import planespotter.util.Utilities;
+import planespotter.util.math.MathUtils;
 
 import javax.imageio.ImageIO;
 import javax.net.ssl.SSLHandshakeException;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.URL;
 import java.net.http.HttpTimeoutException;
 import java.nio.file.FileAlreadyExistsException;
 import java.sql.SQLException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -65,7 +67,7 @@ import static planespotter.constants.ViewType.*;
  * the view with the model and holds some important instances,
  * also a static instance of itself and of the VM ({@link Runtime})
  */
-public abstract class Controller implements ExceptionHandler {
+public final class Controller implements ExceptionHandler {
 
     // -- static fields --
 
@@ -82,8 +84,11 @@ public abstract class Controller implements ExceptionHandler {
     static {
         // initializing 'root' members
         RUNTIME = Runtime.getRuntime();
-        INSTANCE = new Controller() {};
+        INSTANCE = new Controller();
         ROOT_PATH = Utilities.getAbsoluteRootPath();
+
+        // initializing database file, recreating if invalid
+        initDB();
     }
 
     // -- instance fields --
@@ -124,8 +129,8 @@ public abstract class Controller implements ExceptionHandler {
     // search object for DB-search operations
     @NotNull private final Search search;
 
-    // 'ADSBSupplier / Fr24Supplier enabled' flag
-    private boolean adsbEnabled, fr24Enabled;
+    // DataLoader mask
+    private int mask;
 
     /**
      * private constructor for Controller main instance,
@@ -145,8 +150,27 @@ public abstract class Controller implements ExceptionHandler {
                                     this.connectionManager);
         this.clicking = false;
         this.terminated = false;
-        this.adsbEnabled = false;
-        this.fr24Enabled = true;
+        this.mask = DataLoader.FR24_MASK;
+    }
+
+    /**
+     * initializes the database file named 'plane.db',
+     * replaces it if the file is invalid
+     */
+    private static void initDB() {
+        File dbFile = new File("plane.db");
+        if (dbFile.exists()) {
+            long space = dbFile.getTotalSpace();
+            if (space > 10) {
+                return;
+            }
+            if (!dbFile.delete()) {
+                return;
+            }
+        }
+        // building database
+        PyAdapter.runScript("python-helper\\helper\\dbBuilder.py");
+
     }
 
     /**
@@ -183,7 +207,7 @@ public abstract class Controller implements ExceptionHandler {
      */
     private void initConfig() {
         // initializing static properties
-        config.setProperty("title", "PlaneSpotter v0.3");
+        config.setProperty("title", "PlaneSpotter v0.4-alpha");
         config.setProperty("threadKeepAliveTime", 4L);
         config.setProperty("maxThreads", 80);
         config.setProperty("saveLogs", false);
@@ -192,6 +216,8 @@ public abstract class Controller implements ExceptionHandler {
         config.setProperty("bingMap", new BingAerialTileSource());
         config.setProperty("transportMap", new OsmTileSource.TransportMap());
         config.setProperty("openStreetMap", new TMSTileSource(new TileSourceInfo("OSM", (String) config.getProperty("mapBaseUrl"), "0")));
+
+        config.setProperty("receiverRequestUri", "http://192.168.178.47:8080/data/receiver.json");
 
         // initializing user properties
         FileWizard fileWizard = FileWizard.getFileWizard();
@@ -243,9 +269,8 @@ public abstract class Controller implements ExceptionHandler {
                 handleException(e);
             }
             // starting tasks and finishing
-            boolean onlyMilitary = false;
             setAdsbEnabled(false);
-            liveThread = scheduler.runThread(() -> dataLoader.runTask(this, onlyMilitary), "Live-Data Loader", true, Scheduler.HIGH_PRIO);
+            liveThread = scheduler.runThread(() -> dataLoader.run(this), "LiveData Loader", true, Scheduler.HIGH_PRIO);
             this.initialized = true;
             show(MAP_LIVE);
         }
@@ -295,7 +320,7 @@ public abstract class Controller implements ExceptionHandler {
         if (insertRemainingFrames && dbIn.isEnabled()) {
             try {
                 dbIn.insertRemaining(scheduler, dataLoader);
-            } catch (NoAccessException | DataNotFoundException ignored) {
+            } catch (NoAccessException | EmptyQueueException ignored) {
             }
         }
         // busy-waiting for remaining tasks
@@ -372,7 +397,6 @@ public abstract class Controller implements ExceptionHandler {
     public synchronized void show(@NotNull ViewType type) {
 
         MapManager mapManager = getUI().getMapManager();
-        DBOut dbOut = DBOut.getDBOut();
 
         try {
             setLoading(true);
@@ -456,6 +480,15 @@ public abstract class Controller implements ExceptionHandler {
     }
 
     /**
+     * updates the {@link TreasureMap} with live {@link Flight}s and {@link ReceiverFrame} data
+     *
+     * @param receiverData is the receiver data
+     */
+    public void updateMap(@Nullable ReceiverFrame receiverData) {
+        getUI().getMapManager().updateMap(getLiveDataList(), receiverData);
+    }
+
+    /**
      * confirms and saves the changed user settings
      * in the 'configuration.psc' file
      *
@@ -467,7 +500,7 @@ public abstract class Controller implements ExceptionHandler {
             throw new InvalidDataException("Settings data is invalid!");
         }
 
-        int dataLimit, livePeriodSec; TileSource currentMapSource;
+        int dataLimit, livePeriod; TileSource currentMapSource;
 
         getUI().showLoadingScreen(true);
         try {
@@ -483,8 +516,8 @@ public abstract class Controller implements ExceptionHandler {
             getConfig().setProperty("currentMapSource", currentMapSource);
             getUI().getMap().setTileSource(currentMapSource);
             // data[2]
-            livePeriodSec = Integer.parseInt(data[2]);
-            dataLoader.setLiveDataPeriod(livePeriodSec);
+            livePeriod = Integer.parseInt(data[2]) * 1000;
+            dataLoader.setLiveDataPeriod(livePeriod);
         } finally {
             // saving config after reset
             try {
@@ -1014,7 +1047,7 @@ public abstract class Controller implements ExceptionHandler {
                         return;
                     }
                     Bitmap bmp = new Statistics().globalPositionBitmap(gridSize);
-                    Diagrams.showPosHeatMap(getUI(), bmp);
+                    StatsView.showPosHeatMap(getUI(), bmp);
                 } catch (NumberFormatException nfe) {
                     getUI().showWarning(Warning.NUMBER_EXPECTED, "Please enter a float value (0.025 - 2.0)");
                 } catch (DataNotFoundException | OutOfMemoryError e) {
@@ -1024,9 +1057,9 @@ public abstract class Controller implements ExceptionHandler {
                 }
             }, "Loading Data", false, Scheduler.MID_PRIO, true);
         } else if (bitmap != null) {
-            Diagrams.showPosHeatMap(getUI(), bitmap);
+            StatsView.showPosHeatMap(getUI(), bitmap);
         } else {
-            Diagrams.showPosHeatMap(getUI(), buf);
+            StatsView.showPosHeatMap(getUI(), buf);
         }
     }
 
@@ -1107,16 +1140,6 @@ public abstract class Controller implements ExceptionHandler {
     }
 
     /**
-     * getter for {@link DataLoader} instance
-     *
-     * @return the {@link DataLoader} instance
-     */
-    @NotNull
-    public DataLoader getLiveLoader() {
-        return this.dataLoader;
-    }
-
-    /**
      * getter for the {@link Configuration} instance,
      * which contains all property constants
      *
@@ -1125,13 +1148,6 @@ public abstract class Controller implements ExceptionHandler {
     @NotNull
     public Configuration getConfig() {
         return config;
-    }
-
-    /**
-     * @return loading flag, true if Controller is loading something
-     */
-    public boolean isLoading() {
-        return this.loading;
     }
 
     /**
@@ -1158,7 +1174,7 @@ public abstract class Controller implements ExceptionHandler {
      * @return true if adsb supplier is enabled, else false
      */
     public boolean isAdsbEnabled() {
-        return this.adsbEnabled;
+        return (this.mask & DataLoader.ADSB_MASK) == DataLoader.ADSB_MASK;
     }
 
     /**
@@ -1167,7 +1183,11 @@ public abstract class Controller implements ExceptionHandler {
      * @param adsbEnabled indicates if the {@link ADSBSupplier} should be enabled
      */
     public void setAdsbEnabled(boolean adsbEnabled) {
-        this.adsbEnabled = adsbEnabled;
+        if (!adsbEnabled && isAdsbEnabled()) {
+            this.mask -= DataLoader.ADSB_MASK;
+        }else if (adsbEnabled && !isAdsbEnabled()) {
+            this.mask += DataLoader.ADSB_MASK;
+        }
     }
 
     /**
@@ -1176,7 +1196,7 @@ public abstract class Controller implements ExceptionHandler {
      * @return the Fr24Suppplier enabled' flag
      */
     public boolean isFr24Enabled() {
-        return this.fr24Enabled;
+        return (mask & DataLoader.FR24_MASK) == DataLoader.FR24_MASK;
     }
 
     /**
@@ -1185,7 +1205,21 @@ public abstract class Controller implements ExceptionHandler {
      * @param fr24Enabled indicates if the 'Fr24Supplier enabled' flag should be enabled/disabled
      */
     public void setFr24Enabled(boolean fr24Enabled) {
-        this.fr24Enabled = fr24Enabled;
+        if (!fr24Enabled && isFr24Enabled()) {
+            this.mask -= DataLoader.FR24_MASK;
+        }else if (fr24Enabled && !isFr24Enabled()) {
+            this.mask += DataLoader.FR24_MASK;
+        }
+    }
+
+    /**
+     * getter for {@link DataLoader} mask
+     *
+     * @return DataLoader mask
+     * @see planespotter.model.nio.DataLoader for mask constants
+     */
+    public int getMask() {
+        return mask;
     }
 
     /**

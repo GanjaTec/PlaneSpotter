@@ -3,10 +3,10 @@ package planespotter.display.models;
 import libs.UWPButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import planespotter.model.Fr24Collector;
 import planespotter.constants.Images;
 import planespotter.controller.Controller;
 import planespotter.model.Collector;
+import planespotter.model.Fr24Collector;
 import planespotter.model.nio.Supplier;
 import planespotter.util.Utilities;
 
