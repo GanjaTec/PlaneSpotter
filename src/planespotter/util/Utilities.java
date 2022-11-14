@@ -9,6 +9,9 @@ import planespotter.constants.UnicodeChar;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Position;
+import planespotter.model.Scheduler;
+import planespotter.model.nio.Fr24Deserializer;
+import planespotter.model.nio.Fr24Supplier;
 import planespotter.throwables.*;
 import planespotter.util.math.MathUtils;
 
@@ -24,6 +27,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -232,7 +236,7 @@ public abstract class Utilities {
         Queue<String> areas = new ArrayDeque<>();
         byte[][] bytes = bmp.getBitmap();
         for (int x = 0; x < bmp.width; x++) {
-            for (int y = 0; y < bmp.height; y++) {;
+            for (int y = 0; y < bmp.height; y++) {
                 if (bytes[x][y] < minLvl) {
                     continue;
                 }
@@ -242,9 +246,30 @@ public abstract class Utilities {
         return areas;
     }
 
-    /*public static String[] calculateInterestingAreas2(double latGridSize, double lonGridSize) {
+    @TestOnly
+    public static Queue<String> calculateInterestingAreas2(double latGridSize, double lonGridSize, int interestingCount) {
+        Queue<String> interesting = new ArrayDeque<>();
         String[] worldRaster = Areas.getWorldAreaRaster1D(latGridSize, lonGridSize);
-    }*/
+        HttpResponse<String> response;
+        Fr24Deserializer deserializer = new Fr24Deserializer();
+        int count, reqCount = 0;
+        for (String area : worldRaster) {
+            System.out.println("Sending request...");
+            try {
+                response = new Fr24Supplier(reqCount++, area).sendRequest(5);
+                count = (int) deserializer.deserialize(response).count();
+                if (count >= interestingCount) {
+                    interesting.add(area);
+                }
+                Scheduler.sleep(500L);
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("Requests sent: " + reqCount);
+        System.out.println("Interesting areas: " + interesting);
+        return interesting;
+    }
 
     /**
      * converts a decimal-int to hex-int,

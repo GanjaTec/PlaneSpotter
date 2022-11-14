@@ -63,10 +63,27 @@ public class Test {
         System.out.println(result);
 */
 
+        long millis = Time.nowMillis();
+        trackingToCSV();
+        System.out.println(Time.elapsedMillis(millis));
+
+        /*Queue<String> areas = Utilities.calculateInterestingAreas2(24, 12, 20);
+        System.out.println(areas.size());*/
+
+        /*DBOut dope = DBOut.getDBOut();
+        Vector<Position> positions = dope.getAllTrackingPositions();
+        Bitmap bmp = Bitmap.fromPosVector(positions, 1f);
+        Bitmap.write(bmp, new File(Paths.RESOURCE_PATH + "test.bmp"));
+        byte minLvl = 1;
+        Queue<String> areas = Utilities.calculateInterestingAreas1(bmp, minLvl);
+        System.out.println(areas.size());*/
+
+/*
         byte[] bts = Utilities.floatToBytes(1.5f);
         System.out.println(Arrays.toString(bts));
         float f = ByteBuffer.wrap(bts).getFloat();
         System.out.println(f);
+*/
 
 /*
 

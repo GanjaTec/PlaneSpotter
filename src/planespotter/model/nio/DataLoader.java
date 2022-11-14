@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -106,8 +107,7 @@ public class DataLoader {
                 synchronized (LIVE_THREAD_LOCK) {
                     LIVE_THREAD_LOCK.wait(waitTime);
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            } catch (InterruptedException ignored) {
             }
 
         }
