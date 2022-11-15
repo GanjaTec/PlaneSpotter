@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import planespotter.controller.Controller;
 import planespotter.model.Scheduler;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 class ControllerTest {
 

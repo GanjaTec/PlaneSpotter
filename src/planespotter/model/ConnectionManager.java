@@ -7,7 +7,6 @@ import planespotter.throwables.IllegalInputException;
 import planespotter.throwables.KeyCheckFailedException;
 import planespotter.util.Utilities;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;

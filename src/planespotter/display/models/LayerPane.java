@@ -1,10 +1,8 @@
 package planespotter.display.models;
 
 import KentHipos.Kensoft;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import planespotter.throwables.OutOfRangeException;
 
 import javax.swing.*;
