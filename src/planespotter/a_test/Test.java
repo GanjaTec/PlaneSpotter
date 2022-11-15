@@ -9,6 +9,7 @@ import jcuda.jcurand.curandRngType;
 import jcuda.runtime.JCuda;
 import jcuda.runtime.cudaMemcpyKind;
 */
+
 import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -36,14 +37,17 @@ import java.awt.print.PageFormat;
 import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.ByteBuffer;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Random;
+import java.util.Vector;
 
 @TestOnly
 public class Test {
@@ -63,10 +67,27 @@ public class Test {
         System.out.println(result);
 */
 
+        long millis = Time.nowMillis();
+        trackingToCSV();
+        System.out.println(Time.elapsedMillis(millis));
+
+        /*Queue<String> areas = Utilities.calculateInterestingAreas2(24, 12, 20);
+        System.out.println(areas.size());*/
+
+        /*DBOut dope = DBOut.getDBOut();
+        Vector<Position> positions = dope.getAllTrackingPositions();
+        Bitmap bmp = Bitmap.fromPosVector(positions, 1f);
+        Bitmap.write(bmp, new File(Paths.RESOURCE_PATH + "test.bmp"));
+        byte minLvl = 1;
+        Queue<String> areas = Utilities.calculateInterestingAreas1(bmp, minLvl);
+        System.out.println(areas.size());*/
+
+/*
         byte[] bts = Utilities.floatToBytes(1.5f);
         System.out.println(Arrays.toString(bts));
         float f = ByteBuffer.wrap(bts).getFloat();
         System.out.println(f);
+*/
 
 /*
 

@@ -5,9 +5,10 @@ import planespotter.throwables.InvalidArrayException;
 import planespotter.util.Bitmap;
 import planespotter.util.math.Vector2D;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 public class BitmapCombiner extends Combiner<Bitmap> {
 

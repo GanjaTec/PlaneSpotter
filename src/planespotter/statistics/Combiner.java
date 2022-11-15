@@ -2,16 +2,12 @@ package planespotter.statistics;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import planespotter.controller.Controller;
 import planespotter.model.ExceptionHandler;
-import planespotter.throwables.NoMatchException;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class Combiner<T> {

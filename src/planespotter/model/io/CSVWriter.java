@@ -50,12 +50,10 @@ public final class CSVWriter extends DBConnector {
         try (ResultSet rs = statement.executeQuery();
              FileOutputStream fos = new FileOutputStream(file);
              OutputStreamWriter osw = new OutputStreamWriter(fos);
-             BufferedWriter buf = new BufferedWriter(osw)) {
+             BufferedWriter buf = new BufferedWriter(osw);
+             RowWriter writer = new RowWriter(buf)) {
 
-            for (String name : header) {
-                append(name);
-            }
-            buf.write(nextRow());
+            writer.writeRow(header);
             while (rs.next()) {
                 for (int i = 0; i < header.length; i++) {
                     col = i + 1;
@@ -71,35 +69,97 @@ public final class CSVWriter extends DBConnector {
                         default -> null;
                     };
                     if (next != null) {
-                        append(next);
+                        writer.write(next).comma();
                     }
                 }
-                buf.write(nextRow());
+                writer.newLine();
             }
         } catch (SQLException | IOException e) {
             throw new DataNotFoundException(e);
         }
     }
 
-    private void reset() {
-        if (rowBuffer.length() > 0) {
-            rowBuffer.delete(0, rowBuffer.length());
+
+    /**
+     *
+     */
+    private static class RowWriter implements AutoCloseable {
+
+        static final int MAX_LENGTH = 60000;
+
+        // TODO try primitive array
+        StringBuilder buffer;
+        final BufferedWriter writer;
+
+        RowWriter(BufferedWriter writer) {
+            this.buffer = new StringBuilder();
+            this.writer = writer;
+        }
+
+        int size() {
+            return buffer.length();
+        }
+
+        RowWriter write(Object o) throws IOException {
+            return write(o.toString());
+        }
+
+
+        RowWriter write(char c) throws IOException {
+            int len = buffer.length();
+            if (size() + len > MAX_LENGTH) {
+                write0();
+                clearBuffer();
+            }
+            buffer.append(c);
+            return this;
+        }
+
+        RowWriter comma() throws IOException {
+            return write(',');
+        }
+
+        RowWriter newLine() {
+            int len = size(),
+                begin = len - 1;
+            buffer.replace(begin, len, "\n");
+            return this;
+        }
+
+        RowWriter writeRow(String... row) throws IOException {
+            for (String s : row) {
+                write(s).comma();
+            }
+            return newLine();
+        }
+
+        RowWriter write(String str) throws IOException {
+            int len = str.length();
+            if (size() + len > MAX_LENGTH) {
+                write0();
+                clearBuffer();
+            }
+            buffer.append(str);
+            return this;
+        }
+
+        void write0() throws IOException {
+            writer.write(buffer.toString());
+        }
+
+        void clearBuffer() {
+            buffer = new StringBuilder();
+        }
+
+        @Override
+        public void close() {
+            if (size() > 0) {
+                try {
+                    write0();
+                } catch (IOException ioe) {
+                    System.err.println("Could not close CSVWriter correctly!");
+                }
+            }
         }
     }
-
-    private void append(@NotNull Object next) {
-        rowBuffer.append(next).append(',');
-    }
-
-    private String nextRow() {
-        int len = rowBuffer.length();
-        if (len == 0) {
-            throw new InvalidDataException("StringBuilder must be longer than 0");
-        }
-        int begin = len - 1;
-        String row = rowBuffer.replace(begin, len, "\n").toString();
-        reset();
-        return row;
-    }
-
 }

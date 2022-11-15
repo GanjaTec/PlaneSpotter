@@ -2,7 +2,6 @@ package planespotter.display.models;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import planespotter.dataclasses.*;
 import planespotter.display.UserInterface;
 import planespotter.util.Utilities;

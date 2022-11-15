@@ -10,7 +10,8 @@ import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 class Fr24DeserializerTest {
 
