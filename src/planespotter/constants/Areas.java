@@ -3,6 +3,7 @@ package planespotter.constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
+import planespotter.dataclasses.Area;
 import planespotter.dataclasses.Position;
 import planespotter.display.TreasureMap;
 
@@ -27,12 +28,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Example.: "86.0%2C-45.8%2C-120.1%2C150.5"
  *
  */
-public abstract class Areas {
+@Deprecated(since = "new Area class")
+public final class Areas {
 
 	/**
 	 * Area-Separator-String, used to separate the doubles in an Area-String
 	 */
-	private static final String SEPARATOR = "%2C";
+	private static final String SEPARATOR = Area.SEPARATOR;
 
 	//Ukraine War
 	public static final String UKRAINE = "52.567%2C45.909%2C17.843%2C45.967";
@@ -110,11 +112,12 @@ public abstract class Areas {
 	 *
 	 * @return Array of Areas (whole world)
 	 */
+	@Deprecated(since = "slow, overhead")
 	@NotNull
 	public static synchronized String[] getWorldAreaRaster1D(@Range(from = 1, to = 180) double latSize,
 															 @Range(from = 1, to = 360) double lonSize) {
 
-		double lat, lon = -180.;
+		double lat, lon = -180.0;
 		short xLength = (short) (360 / lonSize),
 			  yLength = (short) (180 / latSize);
 
@@ -123,7 +126,7 @@ public abstract class Areas {
 		final AtomicInteger index = new AtomicInteger(0);
 
 		for (short x = 0; x < xLength; x++) {
-			lat = 90.;
+			lat = 90.0;
 			for (short y = 0; y < yLength; y++) {
 				areaRaster2D[x][y] = newArea(new Position(lat, lon), new Position(lat - latSize, lon + lonSize));
 				lat -= latSize;

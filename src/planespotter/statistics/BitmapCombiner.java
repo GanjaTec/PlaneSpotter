@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class BitmapCombiner extends Combiner<Bitmap> {
 
-    private static final Object CLOCK = new Object();
+    private static final Object C_LOCK = new Object();
 
     public BitmapCombiner(Bitmap... initElements) {
         super(initElements);
@@ -52,7 +52,7 @@ public class BitmapCombiner extends Combiner<Bitmap> {
                     CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                         for (int x = 0; x < size.x; x++) {
                             for (int y = 0; y < size.y; y++) {
-                                synchronized (CLOCK) {
+                                synchronized (C_LOCK) {
                                     newBytes[x][y] = (byte) ((newBytes[x][y] + bitmap[x][y]) / 2);
                                 }
                             }
@@ -70,8 +70,7 @@ public class BitmapCombiner extends Combiner<Bitmap> {
     }
 
     public BitmapCombiner addReCalc(@NotNull Bitmap... bmps) {
-        addNoCalc(bmps);
-        return combineAll();
+        return addNoCalc(bmps).combineAll();
     }
 
     public BitmapCombiner addNoCalc(@NotNull Bitmap... bmps) {

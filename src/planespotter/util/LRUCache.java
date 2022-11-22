@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 public class LRUCache<K, V> {
 
     // LinkedHashMap as cache collection
-    @NotNull private final Map<K, CacheElement<V>> cache;
+    private final Map<K, CacheElement<V>> cache;
 
     // max cache elements
     private final int maxSize;
@@ -68,7 +68,7 @@ public class LRUCache<K, V> {
      * @return true if the cache size is bigger than (max size - (max size / 5))
      */
     public boolean isAlmostFull() {
-        return cache.size() > maxSize - MathUtils.divide(maxSize, 5);
+        return cache.size() > maxSize - (maxSize / 5);
     }
 
     /**
@@ -98,15 +98,15 @@ public class LRUCache<K, V> {
     @Nullable
     public synchronized V get(@NotNull K key) {
         CacheElement<V> cacheElement = cache.getOrDefault(key, null);
-        if (cacheElement != null) {
-            if (++cacheElement.useCount % 4 == 0) {
-                cacheElement.incrementGeneration();
-            }
-            cacheElement.timestamp = Time.nowMillis();
-            cache.replace(key, cacheElement);
-            return cacheElement.source;
+        if (cacheElement == null) {
+            return null;
         }
-        return null;
+        if (++cacheElement.useCount % 4 == 0) {
+            cacheElement.incrementGeneration();
+        }
+        cacheElement.timestamp = Time.nowMillis();
+        cache.replace(key, cacheElement);
+        return cacheElement.source;
     }
 
     /**
@@ -158,12 +158,12 @@ public class LRUCache<K, V> {
         K key = null;
         CacheElement<V> value;
 
-        int avgUseCount = 0, // testing 0 as start value
-                counter = 1; // is the divisor, starts at 1, not 0
+        int avgUseCount = 0, // 0 as start value
+                  count = 1; // is the divisor, starts at 1, not 0
 
         for (Map.Entry<K, CacheElement<V>> entry : entrySet) {
             value = entry.getValue();
-            avgUseCount = MathUtils.divide(avgUseCount + value.useCount, counter++); //
+            avgUseCount = (avgUseCount + value.useCount) / count++;
             currentTimestamp = value.timestamp;
             if (currentTimestamp < lruTimestamp && value.useCount < avgUseCount) {
                 lruTimestamp = currentTimestamp;

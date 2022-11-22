@@ -12,7 +12,7 @@ import java.io.Serializable;
  * abstract class Frame is a frame-superclass which should
  * have all default frame fields e.g. latitude, longitude ,etc...
  */
-public abstract class Frame implements DataFrame, Serializable {
+public abstract class Frame implements DataFrame {
 
     // default Frame fields
     private final double lat;

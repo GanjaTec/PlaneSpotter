@@ -52,16 +52,45 @@ public abstract class MathUtils {
         return km / (LON_TO_KM_MULTIPLIER * cos(toRadians(lat)));
     }
 
+    /**
+     * Note: this method is slower than a simple a / b
+     *
+     * @param a
+     * @param divisor
+     * @return
+     */
     public static int divide(int a, int divisor) {
         zeroCheck(divisor);
         return StrictMath.floorDiv(a, divisor);
     }
 
+    /**
+     * Note: this method is slower than a simple a / b
+     *
+     * @param a
+     * @param divisor
+     * @return
+     */
     public static long divide(long a, long divisor) {
         zeroCheck(divisor);
         return StrictMath.floorDiv(a, divisor);
     }
 
+    /**
+     * Note: this method is very slow, uses BigDecimal instead of primitive double
+     *
+     *  -> Testing this method against the "default division" with two arrays with length of 1000000:
+     *          [Benchmark] Benchmark 'Default Division' successfully done!
+     *          [Benchmark] Elapsed Time: 6 ms / 0 s
+     *          [Benchmark] Benchmark 'MathUtils Division' successfully done!
+     *          [Benchmark] Elapsed Time: 2968 ms / 2 s
+     *     @see planespotter.a_test.Test for this benchmark
+     *
+     * @param a
+     * @param divisor
+     * @return
+     */
+    @Deprecated(since = "too slow", forRemoval = true)
     public static double divide(double a, double divisor) {
         zeroCheck(divisor);
         return new BigDecimal(a)

@@ -47,12 +47,15 @@ public class Inserter implements Runnable {
      */
     @Override
     public void run() {
+        DBIn dbIn = DBIn.getDBIn();
         while (!terminated) {
             synchronized (INSERT_LOCK) {
                     Scheduler.sleep(500);
                 try (Stream<? extends Frame> frames = dataLoader.pollFrames(MIN_INSERT_COUNT)) { // try to change to Integer.MAX_VALUE
                     // writing frames to DB
-                    DBIn.getDBIn().write(frames);
+                    if (frames != null) {
+                        dbIn.write(frames);
+                    }
                 } catch (final Throwable ex) {
                     Thread.onSpinWait();
                     if (!ex.getMessage().startsWith("Data-Queue is empty")) {

@@ -1,6 +1,7 @@
 package planespotter.model.nio;
 
 import org.jetbrains.annotations.NotNull;
+import planespotter.dataclasses.Area;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.ExceptionHandler;
 import planespotter.model.Fr24Collector;
@@ -37,8 +38,7 @@ import java.util.stream.Stream;
 public class Fr24Supplier extends HttpSupplier {
 
 	// class instance fields
-	private final int threadNumber;
-	private final String ThreadName;
+	private final String threadName;
 	private final String area;
 
 	/**
@@ -47,18 +47,20 @@ public class Fr24Supplier extends HttpSupplier {
 	 * WARNING: this supplier is not able to collect data
 	 */
 	public Fr24Supplier() {
-		this(0, "");
+		this("");
+	}
+
+	public Fr24Supplier(@NotNull Area area) {
+		this(area.toString());
 	}
 
 	/**
 	 * constructs a custom {@link Fr24Supplier} with thread number and area
 	 *
-	 * @param threadNumber is the thread number
 	 * @param area is the area String
 	 */
-	public Fr24Supplier(int threadNumber, @NotNull String area) {
-		this.threadNumber = threadNumber;
-		this.ThreadName = "SupplierThread-" + threadNumber;
+	public Fr24Supplier(@NotNull String area) {
+		this.threadName = "Supplier Thread";
 		this.area = area;
 	}
 
@@ -172,21 +174,12 @@ public class Fr24Supplier extends HttpSupplier {
 	}
 
 	/**
-	 * getter for threadnumber
-	 *
-	 * @return int threadnumber
-	 */
-	public int getThreadNumber() {
-		return this.threadNumber;
-	}
-
-	/**
 	 * getter for threadname
 	 *
 	 * @return String threadname
 	 */
 	public String getThreadName() {
-		return this.ThreadName;
+		return this.threadName;
 	}
 
 }

@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 
 import static planespotter.constants.DefaultColor.*;
 import static planespotter.constants.Images.FLYING_PLANE_ICON;
-import static planespotter.util.math.MathUtils.divide;
 
 /**
  * @name SupplierDisplay
@@ -37,8 +36,7 @@ public class SupplierDisplay implements WindowListener {
                                 QUEUE_SIZE_TXT = "Queued Frames: ";
     // inserted values indexes:   0 = allFrames,   1 = newPlanes,   2 = newFlights
     private final int[] inserted = {0, 0, 0};
-    private final Collector<? extends Supplier> collector;
-    private int totalMemory = divide((int) Controller.RUNTIME.totalMemory(), 10_000);
+    private int totalMemory = (int) Controller.RUNTIME.totalMemory() / 10_000;
     // swing components
     private final UWPButton pauseButton = new UWPButton(),
                             startStopButton = new UWPButton();
@@ -54,9 +52,8 @@ public class SupplierDisplay implements WindowListener {
     private final JLabel[] labels = {insertedLabel, newPlanesLabel, newFlightsLabel, memoryLabel, lastFrameLabel, queueSizeLabel, errorLabel, statusLabel};
     private final JFrame frame;
 
-    public SupplierDisplay(int defaultCloseOperation, Collector<? extends Supplier> collector, @NotNull ActionListener onPauseClick, @NotNull ActionListener onStartStopClick) {
+    public SupplierDisplay(int defaultCloseOperation, @NotNull ActionListener onPauseClick, @NotNull ActionListener onStartStopClick) {
         this.frame = this.frame(defaultCloseOperation, onPauseClick, onStartStopClick);
-        this.collector = collector;
 
     }
 
@@ -155,8 +152,8 @@ public class SupplierDisplay implements WindowListener {
         inserted[0] += insertedNow;
         inserted[1] += newPlanesNow;
         inserted[2] += newFlightsNow;
-        totalMemory = divide((int) Controller.RUNTIME.totalMemory(), 10_000);
-        int freeMemory = divide((int) Controller.RUNTIME.freeMemory(), 10_000);
+        totalMemory = (int) Controller.RUNTIME.totalMemory() / 10_000;
+        int freeMemory = (int) Controller.RUNTIME.freeMemory() / 10_000;
         int memoryUsage = totalMemory - freeMemory;
 
         insertedLabel.setText("Inserted Frames: " + inserted[0] + ", " + insertedNow + " per Sec.");

@@ -76,7 +76,7 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         int closeOperation = (exitOnClose)
                 ? WindowConstants.EXIT_ON_CLOSE
                 : WindowConstants.DISPOSE_ON_CLOSE;
-        super.display = new SupplierDisplay(closeOperation, this, onPause(), onStartStop());
+        super.display = new SupplierDisplay(closeOperation, onPause(), onStartStop());
         this.filterManager = withFilters
                 ? (FilterManager) Controller.getInstance().getConfig().getProperty("collectorFilters")
                 : null;
@@ -108,9 +108,9 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
 
         scheduler.schedule(() -> scheduler.exec(() -> {
             // executing suppliers to collect Fr24-Data
-            dataLoader.collectData(extAreas, deserializer, true, true);
+            dataLoader.collectFr24(extAreas, deserializer, true, true);
             // adding all deserialized world-raster-areas to frames deque
-            dataLoader.collectData(worldAreaRaster1D, deserializer, true, true);
+            dataLoader.collectFr24(worldAreaRaster1D, deserializer, true, true);
             
         }, "Data Collector Thread", false, Scheduler.HIGH_PRIO, true),
                 "Collect Data", 0, REQUEST_PERIOD);

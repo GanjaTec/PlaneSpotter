@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public class FileWizard {
 
     // static FileWizard singleton instance
-    @NotNull private static final FileWizard fileWizard = new FileWizard();
+    private static final FileWizard fileWizard = new FileWizard();
 
     /**
      * private constructor,

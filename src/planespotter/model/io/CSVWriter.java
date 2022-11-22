@@ -2,6 +2,7 @@ package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.ExtensionException;
 import planespotter.throwables.InvalidDataException;
 
 import java.io.*;
@@ -29,17 +30,17 @@ public final class CSVWriter extends DBConnector {
     }
 
     public void writeToCSV(@NotNull File file, @NotNull String @NotNull [] header, @NotNull String @NotNull [] types)
-            throws DataNotFoundException {
+            throws DataNotFoundException, IOException {
 
         if (!file.getName().endsWith(".csv")) {
-            throw new DataNotFoundException("Output file must be of type CSV");
+            throw new InvalidDataException("Output file must be of type CSV");
         }
         if (statement == null) {
             throw new DataNotFoundException("No statement to execute, must be set before");
         }
         int len = header.length;
         if (len == 0) {
-            throw new DataNotFoundException("No given columns");
+            throw new InvalidDataException("No given columns");
         }
         if (len != types.length) {
             throw new InvalidDataException("Invalid type array length, make sure it is as long as the header array");
@@ -47,11 +48,13 @@ public final class CSVWriter extends DBConnector {
 
         String type; Object next; int col;
 
-        try (ResultSet rs = statement.executeQuery();
-             FileOutputStream fos = new FileOutputStream(file);
-             OutputStreamWriter osw = new OutputStreamWriter(fos);
-             BufferedWriter buf = new BufferedWriter(osw);
-             RowWriter writer = new RowWriter(buf)) {
+        RowWriter writer = null;
+        try (ResultSet rs = statement.executeQuery()) {
+            // stream resources
+            FileOutputStream fos = new FileOutputStream(file);
+            OutputStreamWriter osw = new OutputStreamWriter(fos);
+            BufferedWriter buf = new BufferedWriter(osw);
+            writer = new RowWriter(buf);
 
             writer.writeRow(header);
             while (rs.next()) {
@@ -74,8 +77,12 @@ public final class CSVWriter extends DBConnector {
                 }
                 writer.newLine();
             }
-        } catch (SQLException | IOException e) {
-            throw new DataNotFoundException(e);
+        } catch (SQLException sql) {
+            throw new DataNotFoundException(sql);
+        } finally {
+            if (writer != null) {
+                writer.close();
+            }
         }
     }
 
@@ -85,7 +92,7 @@ public final class CSVWriter extends DBConnector {
      */
     private static class RowWriter implements AutoCloseable {
 
-        static final int MAX_LENGTH = 60000;
+        static final int MAX_LENGTH = 65000;
 
         // TODO try primitive array
         StringBuilder buffer;
@@ -115,6 +122,7 @@ public final class CSVWriter extends DBConnector {
             return this;
         }
 
+        @SuppressWarnings("all")
         RowWriter comma() throws IOException {
             return write(',');
         }
@@ -126,6 +134,7 @@ public final class CSVWriter extends DBConnector {
             return this;
         }
 
+        @SuppressWarnings("all")
         RowWriter writeRow(String... row) throws IOException {
             for (String s : row) {
                 write(s).comma();
@@ -136,8 +145,11 @@ public final class CSVWriter extends DBConnector {
         RowWriter write(String str) throws IOException {
             int len = str.length();
             if (size() + len > MAX_LENGTH) {
-                write0();
-                clearBuffer();
+                try {
+                    write0();
+                } finally {
+                    clearBuffer();
+                }
             }
             buffer.append(str);
             return this;
@@ -152,12 +164,12 @@ public final class CSVWriter extends DBConnector {
         }
 
         @Override
-        public void close() {
+        public void close() throws IOException {
             if (size() > 0) {
                 try {
                     write0();
-                } catch (IOException ioe) {
-                    System.err.println("Could not close CSVWriter correctly!");
+                } finally {
+                    writer.close();
                 }
             }
         }

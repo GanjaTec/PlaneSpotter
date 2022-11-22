@@ -188,6 +188,9 @@ public final class Controller implements ExceptionHandler {
      * and opening an {@link UserInterface} (window)
      */
     public synchronized void start() {
+        if (initialized) {
+            return;
+        }
         Thread animation = scheduler.shortTask(() -> getUI().startScreenAnimation(2));
         initialize();
         try {
@@ -1218,7 +1221,7 @@ public final class Controller implements ExceptionHandler {
      * @return DataLoader mask
      * @see planespotter.model.nio.DataLoader for mask constants
      */
-    public int getMask() {
+    public int getDataMask() {
         return mask;
     }
 

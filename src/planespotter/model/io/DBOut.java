@@ -35,20 +35,12 @@ import java.util.*;
 public final class DBOut extends DBConnector {
 
 	// (ONE and ONLY) DBOut instance
-	@NotNull private static final DBOut INSTANCE;
-
-	// initializing DBOut instance
-	static {
-		INSTANCE = new DBOut();
-	}
-
-	//private final LRUCache<String, PreparedStatement> outputCache;
+	private static final DBOut INSTANCE = new DBOut();
 
 	/**
 	 * private constructor for main instance
 	 */
 	private DBOut() {
-		//this.outputCache = new LRUCache<>(100, true);
 	}
 
 	/**

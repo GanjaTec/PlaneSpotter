@@ -33,7 +33,7 @@ class Fr24DeserializerTest {
             // testing deserialize of a HttpResponse
             HttpResponse<String> response;
             try {
-                response = new Fr24Supplier(0, Areas.CGN_LANDESCHNEISE).sendRequest(2);
+                response = new Fr24Supplier(Areas.CGN_LANDESCHNEISE).sendRequest(2);
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
                 throw new Error("Assertion failed because of the HttpResponse!", e);
