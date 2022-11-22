@@ -3,6 +3,7 @@ package planespotter.util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.TestOnly;
+import planespotter.dataclasses.Area;
 import planespotter.dataclasses.Position;
 import planespotter.throwables.InvalidArrayException;
 import planespotter.throwables.InvalidDataException;
@@ -26,6 +27,9 @@ import java.util.Vector;
  * The 2D-array represents a 2D-map with lat and lon values
  */
 public class Bitmap {
+
+    // minimum grid size to prevent OutOfMemoryErrors
+    private static final float MIN_GRID_SIZE = 0.01f;
 
     // bitmap as 2D-byte array (memory-efficient),
     // it is not possible to use short- or int-arrays here
@@ -69,16 +73,13 @@ public class Bitmap {
     @HighMemory(msg = "Huge 2D-arrays (with gridSize about 0.025 and lower) can cause OutOfMemoryError")
     @NotNull
     public static Bitmap fromPosVector(@NotNull Vector<Position> positions, @Range(from = 0, to = 2) float gridSize) {
-        if (gridSize < 0.02) {
-            throw new OutOfRangeException("grid size must be 0.02 or higher!");
-        }
+        checkGridSize(gridSize);
 
         int width = (int) (360.0 / gridSize) + 1;
         int height = (int) (180.0 / gridSize) + 1;
         int[][] ints2d = new int[width][height];
 
-        Arrays.stream(ints2d)
-                .forEach(arr -> Arrays.fill(arr, 0));
+        fillZeros(ints2d);
 
         // the parallel stream performs much better than
         // a normal for-loop, 3s against 12s, we can use
@@ -91,13 +92,74 @@ public class Bitmap {
                     ints2d[posX][posY]++;
                 });
 
+        writeGridSize(ints2d, gridSize, width, height);
+        return Bitmap.fromInt2d(ints2d);
+    }
+
+    private static void writeGridSize(int[][] ints2d, float gridSize, int width, int height) {
         // writing gridSize to the last 4 bytes
         int last = width - 1;
         byte[] gridSizeBytes = Utilities.floatToBytes(gridSize);
         for (int y = height - 4, i = 0; y < height; y++, i++) {
             ints2d[last][y] = gridSizeBytes[i] + 128;
         }
+    }
+
+    /**
+     * creates a Bitmap from position-vector,
+     * the higher a field value, the more positions in this field
+     *
+     * @param positions is the position vector, where each bitmap field
+     *                  represents specific coordinates and each value stands
+     *                  for the number of positions in a certain field
+     * @param gridSize is the bitmap grid size, 1 is normal (360x180), 0.5 is the double (720x360)
+     *                 (should be 0.05 or higher to prevent memory problems)
+     * @param area is the {@link Area} or: the Bitmap region on the map
+     * @return Bitmap instance, created by pos-vector under a certain grid size, but only a certain {@link planespotter.dataclasses.Area}
+     */
+    public static Bitmap fromPosVector(@NotNull Vector<Position> positions, @Range(from = 0, to = 2) float gridSize, @NotNull Area area) {
+        checkGridSize(gridSize);
+
+        // TODO: 22.11.2022 adjust 2D array size with area (sowas wie " 0 - (area.y-area.x) ")
+
+        int width = (int) (360.0 / gridSize) + 1;
+        int height = (int) (180.0 / gridSize) + 1;
+        int[][] ints2d = new int[width][height];
+
+        fillZeros(ints2d);
+
+        positions.parallelStream()
+                .forEach(pos -> {
+                    int posX, posY;
+                    double lat = pos.lat(), lon = pos.lon();
+                    if (   lat > area.getTopLeft().lat() || lat < area.getBottomRight().lat()
+                        || lon < area.getTopLeft().lon() || lon > area.getBottomRight().lon()) {
+                        return;
+                    }
+                    posX = (int) ((lon + 180) / gridSize);
+                    posY = (int) ((lat + 90) / gridSize);
+                    ints2d[posX][posY]++;
+                });
+
+        writeGridSize(ints2d, gridSize, width, height);
         return Bitmap.fromInt2d(ints2d);
+    }
+
+    /**
+     * fills a 2D-array with zeros
+     *
+     * @param ints2d is the 2D-array to fill
+     */
+    private static void fillZeros(int[][] ints2d) {
+        for (int[] arr : ints2d) {
+            Arrays.fill(arr, 0);
+        }
+    }
+
+    private static void checkGridSize(float gridSize) {
+        if (gridSize < MIN_GRID_SIZE) {
+            throw new OutOfRangeException("grid size must be 0.02 or higher!");
+        }
     }
 
 

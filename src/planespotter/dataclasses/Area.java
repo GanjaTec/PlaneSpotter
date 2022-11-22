@@ -5,6 +5,11 @@ import org.jetbrains.annotations.Range;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import planespotter.constants.Areas;
 import planespotter.display.TreasureMap;
+import planespotter.throwables.InvalidDataException;
+import planespotter.throwables.MalformedAreaException;
+
+import java.util.Arrays;
+import java.util.regex.Pattern;
 
 /**
  * @name Area
@@ -20,6 +25,7 @@ public class Area {
 
     // value separator string
     public static final String SEPARATOR = "%2C";
+    private static final Pattern AREA_PATTERN = Pattern.compile("([0-9]*\\.[0-9]+(%[0-9A-Fa-f][0-9A-Fa-f][0-9]*\\.[0-9]+)+)");
 
     //
     private final float latTopLeft, latBottomRight, lonTopLeft, lonBottomRight;
@@ -40,8 +46,17 @@ public class Area {
      * @param topLeft is the bottom-left-position
      * @param bottomRight is the top-right-position
      */
-    public Area(final Position topLeft, final Position bottomRight) {
+    public Area(@NotNull final Position topLeft, @NotNull final Position bottomRight) {
         this((float) topLeft.lat(), (float) bottomRight.lat(), (float) topLeft.lon(), (float) bottomRight.lon());
+    }
+
+    /**
+     * private Area constructor for Area.fromString()
+     *
+     * @param coords is the coordinate array with a length of 4
+     */
+    private Area(final double[] coords) {
+        this((float) coords[0], (float) coords[1], (float) coords[2], (float) coords[3]);
     }
 
     /**
@@ -52,6 +67,23 @@ public class Area {
      */
     public Area(final ICoordinate topLeft, final ICoordinate bottomRight) {
         this((float) topLeft.getLat(), (float) bottomRight.getLat(), (float) topLeft.getLon(), (float) bottomRight.getLon());
+    }
+
+    public static Area fromString(@NotNull String area) throws MalformedAreaException {
+        checkAreaString(area);
+        double[] coords = Arrays.stream(area.split(SEPARATOR))
+                .mapToDouble(Double::parseDouble)
+                .toArray();
+
+        return new Area(coords);
+
+    }
+
+    private static void checkAreaString(@NotNull String area) throws MalformedAreaException {
+        // TODO: 22.11.2022 check area string with regex
+        if (!AREA_PATTERN.matcher(area).matches()) {
+            throw new MalformedAreaException();
+        }
     }
 
     /**

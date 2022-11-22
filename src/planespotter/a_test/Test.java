@@ -26,7 +26,9 @@ import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
+import planespotter.constants.Areas;
 import planespotter.constants.Paths;
+import planespotter.dataclasses.Area;
 import planespotter.dataclasses.Position;
 import planespotter.model.io.CSVWriter;
 import planespotter.model.io.DBOut;
@@ -52,12 +54,8 @@ import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.ByteBuffer;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.Vector;
+import java.util.*;
 
 @GitIgnore
 @TestOnly
@@ -65,16 +63,24 @@ public class Test {
 
     // TEST-MAIN
     public static void main(String[] args) throws Exception {
-        Unsafe unsafe = getUnsafe();
-        //unsafe.invokeCleaner(ByteBuffer.allocateDirect(1024));
+        /*Unsafe unsafe = getUnsafe();
         long ptr = 0xf53eb3a6;
         double d = 4.20;
         unsafe.putDouble(ptr, d);
-        System.out.println(unsafe.getDouble(ptr));
+        System.out.println(unsafe.getDouble(ptr));*/
+
+        Area area = Area.fromString(Areas.UKRAINE);
+        System.out.println(area);
+        System.out.println(Areas.UKRAINE.equals(area.toString()));
 
 
     }
 
+    /**
+     * Test-Result:
+     *      default division: about 0 seconds
+     *      MathUtils division: about 3 seconds
+     */
     @SuppressWarnings("removal")
     private static void divisionBenchmark() {
         Random seedGen = new Random();
