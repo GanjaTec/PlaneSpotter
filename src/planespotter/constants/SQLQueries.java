@@ -98,7 +98,7 @@ public final class SQLQueries {
 		return out + ")";
 	}
 
-	public static String IS (String isWhat) {
+	public static String IS(String isWhat) {
 		return "IS " + Utilities.packString(isWhat);
 	}
 

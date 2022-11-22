@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  *
  */
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
 public @interface HighMemory {
 

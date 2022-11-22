@@ -192,11 +192,11 @@ public class PlaneMarker extends MapMarkerDot implements MapMarker {
      */
     @Override
     public void paint(@NotNull Graphics g, @NotNull Point position, int radius) {
-        if (this.painter == null) {
+        if (painter == null) {
             super.paint(g, position, radius);
             return;
         }
-        this.painter.paint(g, position, radius);
+        painter.paint(g, position, radius);
     }
 
 }

@@ -10,12 +10,11 @@ import java.util.Set;
 /**
  * @name Configuration
  * @author jml04
- * @version 1.0
+ * @version 1.1
  * 
  * @description
- * abstract class Configuration contains the internal planespotter-configuration
+ * abstract class Configuration contains the planespotter-configuration
  */
-// TODO: 24.08.2022 MERGE WITH UserSettings class
 public final class Configuration {
 
     public static final String CONFIG_FILENAME = Paths.RESOURCE_PATH + "config.psc";
@@ -24,7 +23,7 @@ public final class Configuration {
 
     public static final String CONNECTIONS_FILENAME = Paths.RESOURCE_PATH + "connections.psc";
 
-    @NotNull private final Map<String, Object> props = new HashMap<>();
+    private final Map<String, Object> props = new HashMap<>();
 
     @NotNull
     public Object getProperty(@NotNull String key) {

@@ -255,14 +255,14 @@ public abstract class Utilities {
         Fr24Deserializer deserializer = new Fr24Deserializer();
         int count, reqCount = 0;
         for (String area : worldRaster) {
-            System.out.println("Sending request...");
+            System.out.println("Sending request " + reqCount++ + "...");
             try {
-                response = new Fr24Supplier(reqCount++, area).sendRequest(5);
+                response = new Fr24Supplier(area).sendRequest(5);
                 count = (int) deserializer.deserialize(response).count();
                 if (count >= interestingCount) {
                     interesting.add(area);
                 }
-                Scheduler.sleep(500L);
+                Scheduler.sleep(300L); // limit request rate
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }
@@ -328,7 +328,7 @@ public abstract class Utilities {
      * @return a feet value in meters
      */
     public static int feetToMeters(@Range(from = 0, to = Integer.MAX_VALUE) int feet) {
-        return asInt(MathUtils.divide(feet, 3.2808));
+        return asInt(feet / 3.2808);
     }
 
     /**
@@ -724,7 +724,7 @@ public abstract class Utilities {
         BufferedImage buf = new BufferedImage(width, height, imageType);
         Graphics2D graphics = buf.createGraphics();
 
-        graphics.rotate(Math.toRadians(degrees), MathUtils.divide(width, 2), MathUtils.divide(height, 2));
+        graphics.rotate(Math.toRadians(degrees), (double) width / 2, (double) height / 2);
         if (flipHorizontally) {
             graphics.drawImage(img, width, 0, -width, height, null);
         } else {
@@ -851,6 +851,7 @@ public abstract class Utilities {
 
     /**
      * finds the {@link Class} who called this method
+     * equal to Reflection.getCallerClass()
      *
      * @return the caller class of this method as a {@link Class} object
      */

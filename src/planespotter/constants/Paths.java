@@ -28,36 +28,42 @@ public final class Paths {
      * src-path
      * contains all project sources
      */
-    @NotNull public static final String SRC_PATH = "src\\";
+    public static final String SRC_PATH = "src\\";
 
     /**
      * python-helper-path
      * contains all python-helper-scripts
      */
-    @NotNull public static final String PY_RUNTIME_HELPER = "python-helper\\runtime-helper\\";
+    public static final String PY_RUNTIME_HELPER = "python-helper\\runtime-helper\\";
 
     /**
      * libs-path
      * contains all external libraries
      */
-    @NotNull public static final String LIBS_PATH = SRC_PATH + "libs\\";
+    public static final String LIBS_PATH = SRC_PATH + "libs\\";
 
     /**
      * code path
      * contains all project code
      */
-    @NotNull public static final String CODE_PATH = SRC_PATH + "planespotter\\";
+    public static final String CODE_PATH = SRC_PATH + "planespotter\\";
 
     /**
      * resource-path
      * contains all project resources
      */
-    @NotNull public static final String RESOURCE_PATH = CODE_PATH + "resource\\";
+    public static final String RESOURCE_PATH = CODE_PATH + "resource\\";
 
     /**
      * image-path
      * contains all used images
      */
-    @NotNull public static final String IMAGE_PATH = RESOURCE_PATH + "img\\";
+    public static final String IMAGE_PATH = RESOURCE_PATH + "img\\";
+
+    /**
+     * CUDA-path
+     * contains .cu and .ptx files for GPU-tasks
+     */
+    public static final String CUDA_PATH = CODE_PATH + "cuda\\";
 
 }

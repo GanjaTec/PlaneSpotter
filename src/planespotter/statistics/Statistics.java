@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static planespotter.util.math.MathUtils.abs;
-import static planespotter.util.math.MathUtils.divide;
 
 /**
  * @name Statistics
@@ -218,7 +217,7 @@ public class Statistics {
                     km = abs(vector);
                     tDiffHrs = Time.timeDiff(tsCurrent, tsLast, TimeUnit.SECONDS, TimeUnit.HOURS);
                     if (tDiffHrs != 0.) {
-                        values[1] = divide(km, tDiffHrs) * divide(1., tDiffHrs);
+                        values[1] = (km / tDiffHrs) * (1.0 / tDiffHrs);
                         map.put(current, values);
                     }
                 }

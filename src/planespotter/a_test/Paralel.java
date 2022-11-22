@@ -21,7 +21,7 @@ public class Paralel {
 	public void startThreads() throws InterruptedException {
 		String[] areay= Areas.EASTERN_FRONT;
 		for(int i=0; i < areay.length; i++) {
-			Fr24Supplier s = new Fr24Supplier(i, areay[i]);
+			Fr24Supplier s = new Fr24Supplier(areay[i]);
 			ses.scheduleAtFixedRate(s, 10+(i*5), 60, TimeUnit.SECONDS);
 		}
 
@@ -42,7 +42,7 @@ public class Paralel {
 		String[] resultList = Areas.getAllAreas();
 	    int i = 0;
 	    for (String s : resultList) {
-			executor.execute(new Fr24Supplier(i, s));
+			executor.execute(new Fr24Supplier(s));
 			i += 1;
 	    }
 

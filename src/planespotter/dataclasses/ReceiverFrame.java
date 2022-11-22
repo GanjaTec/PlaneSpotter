@@ -3,38 +3,37 @@ package planespotter.dataclasses;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * ReceiverFrame Class
+ * @name ReceiverFrame
+ * @author Lukas
+ * @author jml04
+ * @version 1.0
  *
  * This class is used to retrieve information about the ADSB Receiver using Json
  */
 public class ReceiverFrame implements DataFrame {
 
-    //the version of dump1090 in use
-    @NotNull private final String version;
+    // the version of dump1090 in use
+    private final String version;
 
-    //how often aircraft.json is updated (for the file version), in milliseconds
+    // how often aircraft.json is updated (for the file version), in milliseconds
     private final int refresh;
 
-    //the current number of valid history files
+    // the current number of valid history files
     private final int history;
 
     // lat and lon in decimal degrees
-    private double lat, lon;
+    private final double lat, lon;
 
     /**
      * constructs a new {@link ReceiverFrame}
      *
-     * @param version
+     * @param version is the version of dump1090 (Decoder) in use
      * @param refresh is the refresh period in milliseconds
-     * @param history
+     * @param history is the current number of valid history files
      * @param position is the receiver {@link Position}
      */
     public ReceiverFrame(@NotNull String version, int refresh, int history, @NotNull Position position) {
-        this.version = version;
-        this.refresh = refresh;
-        this.history = history;
-        this.lat = position.lat();
-        this.lon = position.lon();
+        this(version, refresh, history, position.lat(), position.lon());
     }
 
     /**
@@ -47,7 +46,11 @@ public class ReceiverFrame implements DataFrame {
      * @param lon double
      */
     public ReceiverFrame(@NotNull String version, int refresh, int history, double lat, double lon) {
-        this(version, refresh, history, new Position(lat, lon));
+        this.version = version;
+        this.refresh = refresh;
+        this.history = history;
+        this.lat = lat;
+        this.lon = lon;
     }
 
     /**

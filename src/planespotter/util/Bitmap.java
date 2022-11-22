@@ -2,6 +2,7 @@ package planespotter.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
+import org.jetbrains.annotations.TestOnly;
 import planespotter.dataclasses.Position;
 import planespotter.throwables.InvalidArrayException;
 import planespotter.throwables.InvalidDataException;
@@ -13,8 +14,6 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Vector;
-
-import static planespotter.util.math.MathUtils.divide;
 
 /**
  * @name Bitmap
@@ -74,8 +73,8 @@ public class Bitmap {
             throw new OutOfRangeException("grid size must be 0.02 or higher!");
         }
 
-        int width = (int) divide(360.0, gridSize) + 1;
-        int height = (int) divide(180.0, gridSize) + 1;
+        int width = (int) (360.0 / gridSize) + 1;
+        int height = (int) (180.0 / gridSize) + 1;
         int[][] ints2d = new int[width][height];
 
         Arrays.stream(ints2d)
@@ -87,8 +86,8 @@ public class Bitmap {
         positions.parallelStream()
                 .forEach(pos -> {
                     int posX, posY;
-                    posX = (int) divide(pos.lon() + 180, gridSize);
-                    posY = (int) divide(pos.lat() + 90, gridSize);
+                    posX = (int) ((pos.lon() + 180) / gridSize);
+                    posY = (int) ((pos.lat() + 90) / gridSize);
                     ints2d[posX][posY]++;
                 });
 
@@ -109,7 +108,7 @@ public class Bitmap {
      * @param ints2d is the input 2D-int array, which is automatically converted to byte-array
      * @return Bitmap from 2D-int array
      */
-    @HighMemory(msg = "Huge 2D-arrays (with gridSize about 0.02 and lower) cause OutOfMemoryError")
+    @HighMemory(msg = "Huge 2D-arrays (with gridSize about 0.02 and lower) can cause OutOfMemoryErrors")
     @NotNull
     public static Bitmap fromInt2d(int[][] ints2d) {
 
@@ -256,8 +255,7 @@ public class Bitmap {
      */
     public BufferedImage toImage() {
         var img = new BufferedImage(this.width, this.height, BufferedImage.TYPE_BYTE_GRAY);
-        short lvl;
-        Color color;
+        short lvl; Color color;
         for (int x = 0; x < this.width; x++) {
             for (int y = 0; y < this.height; y++) {
                 // this should be an unsigned byte,
@@ -278,8 +276,7 @@ public class Bitmap {
      */
     public byte[] toByteArray() {
         byte[] bytes = new byte[this.width * this.height];
-        int i = 0;
-        for (int x = 0; x < this.width; x++) {
+        for (int i = 0, x = 0; x < this.width; x++) {
             for (int y = 0; y < this.height; y++, i++) {
                 bytes[i] = this.bitmap[x][y];
             }
@@ -287,6 +284,7 @@ public class Bitmap {
         return bytes;
     }
 
+    @TestOnly
     public float getGridSize() {
         int last = width - 1;
         byte[] fBytes = new byte[] {

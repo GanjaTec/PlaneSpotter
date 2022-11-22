@@ -39,13 +39,14 @@ import static planespotter.constants.ViewType.MAP_LIVE;
  * @see planespotter.controller.Controller
  * @see planespotter.model.Scheduler
  */
+// TODO: 15.11.2022 HOTKEY MASK instead of 3 different booleans
 public final class ActionHandler
         implements  ActionListener, KeyListener, ComponentListener, MouseListener,
                     ItemListener, WindowListener, ListSelectionListener {
 
     // ActionHandler instance, we need only one instance here,
     // because we don't want parallel listeners who listen to the same actions
-    @NotNull private static final ActionHandler INSTANCE;
+    private static final ActionHandler INSTANCE;
 
     // initializing all static members
     static {
@@ -53,7 +54,7 @@ public final class ActionHandler
     }
 
     // hotkey manager instance
-    @NotNull private final HotkeyManager hotkeyManager;
+    private final HotkeyManager hotkeyManager;
 
     // ActionHandler hash code
     private final int hashCode;

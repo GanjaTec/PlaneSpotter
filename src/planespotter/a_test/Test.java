@@ -10,6 +10,16 @@ import jcuda.runtime.JCuda;
 import jcuda.runtime.cudaMemcpyKind;
 */
 
+import jcuda.Pointer;
+import jcuda.driver.*;
+import jcuda.jcublas.JCublas;
+import jcuda.jcublas.JCublas2;
+import jcuda.jcudnn.JCudnn;
+import jcuda.jcufft.JCufft;
+import jcuda.jcurand.JCurand;
+import jcuda.jcusolver.JCusolver;
+import jcuda.jcusparse.JCusparse;
+import jcuda.runtime.JCuda;
 import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -24,9 +34,8 @@ import planespotter.statistics.BitmapCombiner;
 import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.unused.ANSIColor;
-import planespotter.util.Bitmap;
-import planespotter.util.Time;
-import planespotter.util.Utilities;
+import planespotter.util.*;
+import planespotter.util.math.MathUtils;
 import sun.misc.Unsafe;
 
 import javax.imageio.ImageIO;
@@ -43,69 +52,76 @@ import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.ByteBuffer;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.Vector;
 
+@GitIgnore
 @TestOnly
 public class Test {
 
-    private static final String bitmapPath = Paths.RESOURCE_PATH + "newTestBitMap.bmp";
-
     // TEST-MAIN
     public static void main(String[] args) throws Exception {
+        Unsafe unsafe = getUnsafe();
+        //unsafe.invokeCleaner(ByteBuffer.allocateDirect(1024));
+        long ptr = 0xf53eb3a6;
+        double d = 4.20;
+        unsafe.putDouble(ptr, d);
+        System.out.println(unsafe.getDouble(ptr));
 
-        // testing python scripts and functions in java
-/*
-        int a = 99, b = 111;
-        var func = "result = " + a + "+" + b;
-        var result = PyAdapter.runFunction(func);
-        System.out.println(result);
-        result = PyAdapter.runScript(Paths.PY_RUNTIME_HELPER + "testprint.py");
-        System.out.println(result);
-*/
-
-        long millis = Time.nowMillis();
-        trackingToCSV();
-        System.out.println(Time.elapsedMillis(millis));
-
-        /*Queue<String> areas = Utilities.calculateInterestingAreas2(24, 12, 20);
-        System.out.println(areas.size());*/
-
-        /*DBOut dope = DBOut.getDBOut();
-        Vector<Position> positions = dope.getAllTrackingPositions();
-        Bitmap bmp = Bitmap.fromPosVector(positions, 1f);
-        Bitmap.write(bmp, new File(Paths.RESOURCE_PATH + "test.bmp"));
-        byte minLvl = 1;
-        Queue<String> areas = Utilities.calculateInterestingAreas1(bmp, minLvl);
-        System.out.println(areas.size());*/
-
-/*
-        byte[] bts = Utilities.floatToBytes(1.5f);
-        System.out.println(Arrays.toString(bts));
-        float f = ByteBuffer.wrap(bts).getFloat();
-        System.out.println(f);
-*/
-
-/*
-
-        DBOut dbo = DBOut.getDBOut();
-        int[] aals = dbo.getFlightIDsByAirlineTag("AAL");
-        int[] dals = dbo.getFlightIDsByAirlineTag("DAL");
-        Vector<Position> apos = dbo.getAllTrackingPositions();
-        Vector<Position> bpos = dbo.getPositionsByFlightIDs(dals);
-        Bitmap a = Bitmap.fromPosVector(apos, 0.5f);
-        Bitmap b = Bitmap.fromPosVector(bpos, 0.5f);
-        SimpleBenchmark.benchmark(() -> {
-            Bitmap result = BitmapCombiner.combine(a, b);
-        });
-*/
 
     }
 
-    private static void airportsToCSV() throws SQLException, DataNotFoundException {
+    @SuppressWarnings("removal")
+    private static void divisionBenchmark() {
+        Random seedGen = new Random();
+        Random rand = new Random(seedGen.nextLong());
+        double[] a = new double[1000000];
+        double[] b = new double[1000000];
+        double[] res = new double[1000000];
+        Arrays.fill(a, rand.nextDouble());
+        rand.setSeed(seedGen.nextLong());
+        Arrays.fill(b, rand.nextDouble());
+
+        SimpleBenchmark.benchmark(() -> {
+            for (int i = 0; i < a.length; i++) {
+                res[i] = a[i] / b[i];
+            }
+        }, "Default Division");
+
+        SimpleBenchmark.benchmark(() -> {
+            for (int i = 0; i < a.length; i++) {
+                res[i] = MathUtils.divide(a[i], b[i]);
+            }
+        }, "MathUtils Division");
+    }
+
+    private static void cudaTest() {
+        String cuFile = Paths.CUDA_PATH + "CudaArrayMean.ptx";
+
+        // init
+        JCudaDriver.setExceptionsEnabled(true);
+        JCudaDriver.cuInit(0);
+
+        // getting CUDA device
+        CUdevice device = new CUdevice();
+        JCudaDriver.cuDeviceGet(device, 0);
+
+        // creating context
+        CUcontext context = new CUcontext();
+        JCudaDriver.cuCtxCreate(context, 0, device);
+
+        CUmodule module = new CUmodule();
+        JCudaDriver.cuModuleLoad(module, cuFile);
+
+        CUfunction func = new CUfunction();
+        JCudaDriver.cuModuleGetFunction(func, module, "mean");
+    }
+
+    private static void airportsToCSV() throws SQLException, DataNotFoundException, IOException {
         CSVWriter csv = new CSVWriter("SELECT * FROM airports");
         File file = new File(Paths.RESOURCE_PATH + "airports.csv");
         String[] header = new String[] {"ID", "iatatag", "name", "country", "lat", "lon"},
@@ -113,7 +129,7 @@ public class Test {
         csv.writeToCSV(file, header, types);
     }
 
-    private static void trackingToCSV() throws SQLException, DataNotFoundException {
+    private static void trackingToCSV() throws SQLException, DataNotFoundException, IOException {
         File file = new File(Paths.RESOURCE_PATH + "tracking.csv");
         CSVWriter csv = new CSVWriter("SELECT * FROM tracking");
 
@@ -122,7 +138,7 @@ public class Test {
         csv.writeToCSV(file, header, types);
     }
 
-    private static void flightsToCSV() throws SQLException, DataNotFoundException {
+    private static void flightsToCSV() throws SQLException, DataNotFoundException, IOException {
         File file = new File(Paths.RESOURCE_PATH + "flights.csv");
         CSVWriter csv = new CSVWriter("SELECT * FROM flights");
 

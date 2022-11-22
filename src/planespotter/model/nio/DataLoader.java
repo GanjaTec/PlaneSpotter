@@ -3,7 +3,6 @@ package planespotter.model.nio;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
-import planespotter.constants.Areas;
 import planespotter.constants.Configuration;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
@@ -50,6 +49,12 @@ public class DataLoader {
                             FR24_MASK = 2,
                             MIXED_MASK = ADSB_MASK | FR24_MASK,
                             ONLY_MILITARY_MASK =  4;
+
+    private static final String[] MILITARY_FILTERS = new String[] {
+            "NATO", "LAGR", "FORTE", "DUKE", "MULE",
+            "NCR", "JAKE", "BART", "RCH", "MMF", "VIVI",
+            "CASA", "K35R", "Q4", "REDEYE", "UAV"
+    };
 
     // max. size for data queue
     private final int maxQueueSize;
@@ -115,30 +120,18 @@ public class DataLoader {
         }
 
         long startTime = nowMillis();
-        String[] area = Areas.getCurrentArea(ctrl.getUI().getMap());
+        Area area = Area.currentArea(ctrl.getUI().getMap());
 
         // TODO: 05.10.2022 do always when connecting to ADSBSupplier
         ReceiverFrame crdata = ctrl.isAdsbEnabled() ? getReceiverFrame() : null;
 
         // updating live data list and map via Controller / MapManager
-        Vector<Flight> liveData = liveDataSpin(area, ctrl.getMask());
-        if (liveData != null) {
-            ctrl.setLiveDataList(liveData);
-            ctrl.updateMap(crdata);
-        }
+        Vector<Flight> liveData = getLiveFlights(area, ctrl.getDataMask());
+        ctrl.setLiveDataList(liveData);
+        ctrl.updateMap(crdata);
 
         // calculating wait time
         return updateMillis - elapsedMillis(startTime);
-    }
-
-    private Vector<Flight> liveDataSpin(@NotNull String @NotNull[] area, int mask) {
-        boolean onlyMilitary = (mask & ONLY_MILITARY_MASK) == ONLY_MILITARY_MASK;
-        return switch (mask & MIXED_MASK) {
-            case MIXED_MASK -> getLiveFlights(area, onlyMilitary, true, true);
-            case FR24_MASK -> getLiveFlights(area, onlyMilitary, false, true);
-            case ADSB_MASK -> getLiveFlights(area, onlyMilitary, true, false);
-            default -> null;
-        };
     }
 
     @Nullable
@@ -159,43 +152,46 @@ public class DataLoader {
 
     /**
      * loads live-data directly from Fr24 by running suppliers
-     * and turns them directly into Flight objects.
+     * and turns it directly into Flight objects.
      * This method doesn't load the data into the DB, but adds it
      * to the data-queue where the data can be added from,
      * but we poll it directly after putting it into
      * and parse it to {@link Flight}s
      *
-     * @param currentArea is a {@link String} array (length always 1 here) with the current area string
-     * @param onlyMilitary indicates if only military data should be loaded
+     * @param area is a {@link String} array (length always 1 here) with the current area string
+     * @param mask is the data mask that indicates which type of data should be loaded
      * @return Vector of {@link Flight} objects, loaded directly with {@link Supplier}s
-     * @see planespotter.constants.Areas
+     * @see planespotter.dataclasses.Area
      */
-    @Nullable
-    public Vector<Flight> getLiveFlights(@NotNull final String@NotNull[] currentArea, boolean onlyMilitary, boolean useAdsb, boolean useFr24) {
-
+    @NotNull
+    public Vector<Flight> getLiveFlights(@NotNull final Area area, int mask) {
         Fr24Deserializer deserializer = new Fr24Deserializer();
-        if (onlyMilitary) {
-            deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF", "VIVI", "CASA", "K35R", "Q4", "REDEYE", "UAV");
-        }
 
-        if (useAdsb) {
-            if (adsbSupplier == null) {
-                Controller ctrl = Controller.getInstance();
-                Configuration config = ctrl.getConfig();
-                adsbSupplier = new ADSBSupplier(config.getProperty("adsbRequestUri").toString(), this, config.getProperty("receiverRequestUri").toString());
-                adsbSupplier.setExceptionHandler(ctrl);
-            }
-            adsbSupplier.supply();
+        if ((mask & ONLY_MILITARY_MASK) == ONLY_MILITARY_MASK) {
+            deserializer.setFilter(MILITARY_FILTERS);
         }
-        if (useFr24) {
-            collectData(currentArea, deserializer, false, false);
+        if ((mask & ADSB_MASK) == ADSB_MASK) {
+            collectADSB();
+        }
+        if ((mask & FR24_MASK) == FR24_MASK) {
+            collectFr24(area.toStringArray(), deserializer, false, false);
         }
 
         AtomicInteger pseudoID = new AtomicInteger(0);
         Stream<? extends Frame> frames = pollFrames(Integer.MAX_VALUE);
-        return frames == null ? null : frames
+        return frames == null ? new Vector<>() : frames
                 .map(frame -> Flight.parseFlight(frame, pseudoID.getAndIncrement()))
                 .collect(Collectors.toCollection(Vector::new));
+    }
+
+    private void collectADSB() {
+        if (adsbSupplier == null) {
+            Controller ctrl = Controller.getInstance();
+            Configuration config = ctrl.getConfig();
+            adsbSupplier = new ADSBSupplier(config.getProperty("adsbRequestUri").toString(), this, config.getProperty("receiverRequestUri").toString());
+            adsbSupplier.setExceptionHandler(ctrl);
+        }
+        adsbSupplier.supply();
     }
 
     /**
@@ -226,8 +222,8 @@ public class DataLoader {
      * @param deserializer is the {@link Fr24Deserializer} which is used to deserialize the requested data
      * @param ignoreMaxSize if it's true, allowed max size of data-queue is ignored
      */
-    public synchronized boolean collectData(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize, boolean parallel) {
-        AtomicInteger tNumber = new AtomicInteger(0);
+    @Deprecated
+    public synchronized boolean collectFr24(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize, boolean parallel) {
         Stream<String> areaStream = Arrays.stream(areas);
         if (parallel) {
             areaStream = areaStream.parallel();
@@ -237,7 +233,7 @@ public class DataLoader {
                 System.out.println("Max queue-size reached!");
                 return;
             }
-            Fr24Supplier supplier = new Fr24Supplier(tNumber.getAndIncrement(), area);
+            Fr24Supplier supplier = new Fr24Supplier(area);
             supplier.setExceptionHandler(Controller.getInstance());
 
             try {
