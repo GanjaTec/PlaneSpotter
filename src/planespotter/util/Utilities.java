@@ -4,16 +4,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.TestOnly;
+import planespotter.a_test.Test;
 import planespotter.constants.Areas;
 import planespotter.constants.UnicodeChar;
+import planespotter.dataclasses.Area;
 import planespotter.dataclasses.DataPoint;
 import planespotter.dataclasses.Flight;
 import planespotter.dataclasses.Position;
+import planespotter.model.Collector;
+import planespotter.model.io.Fr24Collector;
 import planespotter.model.Scheduler;
+import planespotter.model.io.Inserter;
+import planespotter.model.io.Parkable;
+import planespotter.model.nio.DataLoader;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
+import planespotter.statistics.Statistics;
 import planespotter.throwables.*;
-import planespotter.util.math.MathUtils;
+import sun.misc.Unsafe;
 
 import javax.swing.*;
 import java.awt.*;
@@ -230,6 +238,7 @@ public abstract class Utilities {
      * @param minLvl
      * @return
      */
+    @TestOnly
     public static Queue<String> calculateInterestingAreas1(@NotNull Bitmap bmp, byte minLvl) {
         if (bmp.width > 361) {
             throw new InvalidDataException("Bitmap is too huge, please use gridSize 1.0f here");
@@ -248,28 +257,75 @@ public abstract class Utilities {
     }
 
     @TestOnly
+    @SuppressWarnings("deprecation")
     public static Queue<String> calculateInterestingAreas2(double latGridSize, double lonGridSize, int interestingCount) {
         Queue<String> interesting = new ArrayDeque<>();
         String[] worldRaster = Areas.getWorldAreaRaster1D(latGridSize, lonGridSize);
         HttpResponse<String> response;
         Fr24Deserializer deserializer = new Fr24Deserializer();
+        DataLoader loader = new DataLoader();
         int count, reqCount = 0;
         for (String area : worldRaster) {
             System.out.println("Sending request " + reqCount++ + "...");
             try {
-                response = new Fr24Supplier(area).sendRequest(5);
+                response = new Fr24Supplier(area, loader).sendRequest(5);
                 count = (int) deserializer.deserialize(response).count();
                 if (count >= interestingCount) {
                     interesting.add(area);
                 }
                 Scheduler.sleep(300L); // limit request rate
-            } catch (IOException | InterruptedException e) {
+            } catch (IOException | InterruptedException | MalformedAreaException e) {
                 e.printStackTrace();
             }
         }
         System.out.println("Requests sent: " + reqCount);
         System.out.println("Interesting areas: " + interesting);
         return interesting;
+    }
+
+    /**
+     * best method, use this one instead of no.1 and 2
+     *
+     * @param latGridSize
+     * @param lonGridSize
+     * @param interestingByteLvl
+     * @return
+     * @throws DataNotFoundException
+     */
+    @SuppressWarnings("deprecation")
+    public static Collection<Area> calculateInterestingAreas3(double latGridSize, double lonGridSize, int interestingByteLvl) throws DataNotFoundException {
+        Collection<Area> interesting = Collections.synchronizedCollection(new ArrayDeque<>());
+        String[] raster = Areas.getWorldAreaRaster1D(latGridSize, lonGridSize);
+        byte[][] bmp = new Statistics().globalPositionBitmap(1.0f).getBitmap();
+        Arrays.stream(raster)
+                .parallel()
+                .map(area -> {
+                    try {
+                        return Area.fromString(area);
+                    } catch (MalformedAreaException e) {
+                        System.err.println(e);
+                    }
+                    return null;
+                })
+                .forEach(area -> {
+                    if (area == null) {
+                        return;
+                    }
+                    Position pos1 = area.getTopLeft();
+                    Position pos2 = area.getBottomRight();
+                    int lat1 = (int) pos1.lat() + 90,
+                        lon1 = (int) pos1.lon() + 180,
+                        lat2 = (int) pos2.lat() + 90,
+                        lon2 = (int) pos2.lon() + 180,
+                        lvl = ((bmp[lon1][lat1] + bmp[lon2][lat2]) / 2);
+
+                    if (lvl < interestingByteLvl) {
+                        return;
+                    }
+                    interesting.add(area);
+                });
+        return interesting;
+
     }
 
     /**
@@ -858,6 +914,27 @@ public abstract class Utilities {
     public static Class<?> getCallerClass() {
         StackWalker stackWalker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
         return stackWalker.getCallerClass();
+    }
+
+    /**
+     * gets the {@link Unsafe} class with Reflection
+     *
+     * @return
+     */
+    public static Unsafe getUnsafe() {
+        Class<?> caller = Utilities.getCallerClass();
+        if (caller != Test.class && caller != Parkable.class && caller != Utilities.class) {
+            System.err.println(caller);
+            throw new IllegalCallerException("This method may only be used in the Test class or in special cases!");
+        }
+        try {
+            Field field = Unsafe.class.getDeclaredField("theUnsafe");
+            field.setAccessible(true);
+            return (Unsafe) field.get(null);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        throw new NullPointerException("couldn't load the Unsafe class!");
     }
 
     /**

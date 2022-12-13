@@ -1,24 +1,26 @@
-package planespotter.model;
+package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
-import planespotter.constants.Areas;
 import planespotter.controller.Controller;
+import planespotter.dataclasses.Area;
 import planespotter.dataclasses.Frame;
 import planespotter.display.models.SupplierDisplay;
-import planespotter.model.io.DBIn;
-import planespotter.model.io.Inserter;
-import planespotter.model.io.Keeper;
-import planespotter.model.io.KeeperOfTheArchives;
+import planespotter.model.Collector;
+import planespotter.model.Scheduler;
 import planespotter.model.nio.DataLoader;
 import planespotter.model.nio.FilterManager;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
+import planespotter.throwables.DataNotFoundException;
+import planespotter.util.Utilities;
 import planespotter.util.math.MathUtils;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * @name Fr24Collector
@@ -32,25 +34,34 @@ import java.awt.event.ActionListener;
  * @see planespotter.model.nio.Fr24Supplier
  * @see planespotter.model.nio.Fr24Deserializer
  */
-public class Fr24Collector extends Collector<Fr24Supplier> {
+public final class Fr24Collector extends Collector<Fr24Supplier> {
+
+    private static final Object REQ_LOCK;
+
     // inserted frames per write
     public static final int FRAMES_PER_WRITE;
-    // insert period in seconds
-    protected static final int REQUEST_PERIOD;
+
+    // insert period in milliseconds
+    private static final int REQUEST_PERIOD;
+
     // static initializer
     static {
+        REQ_LOCK = new Object();
         FRAMES_PER_WRITE = 800;
-        REQUEST_PERIOD = 60;
+        REQUEST_PERIOD = 250;
     }
 
-    @Nullable private final FilterManager filterManager;
+    private final FilterManager filterManager;
 
-    @NotNull private final DataLoader dataLoader;
+    private final DataLoader dataLoader;
 
-    @NotNull private final Inserter inserter;
+    private final Inserter inserter;
 
     // raster of areas (whole world) in 1D-Array
-    @NotNull private final String[] worldAreaRaster1D;
+    private final Area[] areas;
+    private final Queue<Area> areaQueue;
+
+    private final int dataMask;
 
     /**
      * Fr24-Collector Main-method
@@ -59,8 +70,15 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
      */
     public static void main(String[] args) {
         // only military with a small grid size
-        int sLat = 2, sLon = 4;
-        new Fr24Collector(true, true, sLat, sLon).start();
+        //int sLat = 2, sLon = 4;
+        int sLat = 6, sLon = 12;
+        Fr24Collector collector;
+        try {
+            collector = new Fr24Collector(true, true, sLat, sLon, 1, Inserter.INSERT_ALL);
+            collector.start();
+        } catch (DataNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -71,8 +89,10 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
     public Fr24Collector(boolean exitOnClose,
                          boolean withFilters,
                          @Range(from = 2, to = 180) int gridSizeLat,
-                         @Range(from = 2, to = 360) int gridSizeLon) {
-        super(exitOnClose, new Fr24Supplier());
+                         @Range(from = 2, to = 360) int gridSizeLon,
+                         @Range(from = 0, to = 2) int dataMask,
+                         @Range(from = 1, to = 2) int insertMode) throws DataNotFoundException {
+        super(exitOnClose, new Fr24Supplier(new DataLoader()));
         int closeOperation = (exitOnClose)
                 ? WindowConstants.EXIT_ON_CLOSE
                 : WindowConstants.DISPOSE_ON_CLOSE;
@@ -80,9 +100,12 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         this.filterManager = withFilters
                 ? (FilterManager) Controller.getInstance().getConfig().getProperty("collectorFilters")
                 : null;
-        this.dataLoader = new DataLoader();
-        this.inserter = new Inserter(this.dataLoader, super.getErrorQueue());
-        this.worldAreaRaster1D = Areas.getWorldAreaRaster1D(gridSizeLat, gridSizeLon);
+        this.dataLoader = super.supplier.getDataLoader();
+        this.inserter = new Inserter(this.dataLoader, super.getErrorQueue(), insertMode);
+        this.areas = Utilities.calculateInterestingAreas3(gridSizeLat, gridSizeLon, 0)
+                              .toArray(Area[]::new);
+        this.dataMask = dataMask;
+        this.areaQueue = new ConcurrentLinkedQueue<>();
     }
 
     /**
@@ -97,23 +120,26 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
         if (this.filtersEnabled()) {
             deserializer.setFilter("NATO", "LAGR", "FORTE", "DUKE", "MULE", "NCR", "JAKE", "BART", "RCH", "MMF", "CASA", "VIVI");
         }
-        String[] specialAreas = Areas.EASTERN_FRONT;
-        super.startNewMainThread(() -> this.collect(deserializer, keeper, specialAreas), "Fr24-Collector");
+        super.startNewMainThread(() -> this.collect(keeper), "Fr24-Collector");
     }
 
     /**
      * collecting task for the collector
      */
-    private synchronized void collect(@NotNull final Fr24Deserializer deserializer, @NotNull final Keeper keeper, @NotNull String @Nullable ... extAreas) {
+    private synchronized void collect(@NotNull final Keeper keeper) {
 
-        scheduler.schedule(() -> scheduler.exec(() -> {
-            // executing suppliers to collect Fr24-Data
-            dataLoader.collectFr24(extAreas, deserializer, true, true);
-            // adding all deserialized world-raster-areas to frames deque
-            dataLoader.collectFr24(worldAreaRaster1D, deserializer, true, true);
-            
-        }, "Data Collector Thread", false, Scheduler.HIGH_PRIO, true),
-                "Collect Data", 0, REQUEST_PERIOD);
+        scheduler.schedule(() -> {
+            synchronized (REQ_LOCK) {
+                if (areaQueue.isEmpty()) {
+                    areaQueue.addAll(Arrays.stream(areas).toList());
+                }
+                Area next = areaQueue.poll();
+                if (!dataLoader.collectData(next, dataMask)) {
+                    System.err.println("No data collected!");
+                }
+
+            }
+        }, "Collector Thread", 0, REQUEST_PERIOD);
 
         scheduler.runThread(inserter, "Inserter Thread", true, Scheduler.MID_PRIO);
         // executing the keeper every 400 seconds
@@ -134,9 +160,16 @@ public class Fr24Collector extends Collector<Fr24Supplier> {
             Throwable nextError = errorQueue.poll();
             Controller.getInstance().handleException(nextError);
             display.update(insertedNow.get(), newPlanesNow.get(), newFlightsNow.get(),
-                           (lastFrame != null) ? lastFrame.toShortString() : "None",
-                           dataLoader.getQueueSize(), nextError);
+                    (lastFrame != null) ? lastFrame.toShortString() : "None",
+                    dataLoader.getQueueSize(), nextError);
         }, 0, 1000);
+    }
+
+    @Override
+    public boolean stopCollecting() {
+        inserter.stop();
+        inserter.park();
+        return super.stopCollecting();
     }
 
     /**

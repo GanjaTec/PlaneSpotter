@@ -2,6 +2,8 @@ package planespotter.model.io;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
+import org.jetbrains.annotations.TestOnly;
+import planespotter.a_test.Test;
 import planespotter.constants.SQLQueries;
 import planespotter.dataclasses.*;
 import planespotter.throwables.DataNotFoundException;
@@ -122,10 +124,12 @@ public final class DBOut extends DBConnector {
 				 ResultSet rsDest = destResult.resultSet()) {
 				// getting airports and replacing array
 				if (rsSrc.next()) {
-					aps[0] = new Airport(rsSrc.getInt("ID"), rsSrc.getString("iatatag"), rsSrc.getString("name"), convertCoords(rsSrc.getString("coords")));
+					aps[0] = new Airport(rsSrc.getInt("ID"), rsSrc.getString("iatatag"), rsSrc.getString("name"),
+										 new Position(rsSrc.getDouble("lat"), rsSrc.getDouble("lon")));
 				}
 				if (rsDest.next()) {
-					aps[1] = new Airport(rsDest.getInt("ID"), rsDest.getString("iatatag"), rsDest.getString("name"), convertCoords(rsDest.getString("coords")));
+					aps[1] = new Airport(rsDest.getInt("ID"), rsDest.getString("iatatag"), rsDest.getString("name"),
+										new Position(rsDest.getDouble("lat"), rsDest.getDouble("lon")));
 				}
 			} catch (SQLException | NoAccessException e) {
 				e.printStackTrace();
@@ -1331,4 +1335,25 @@ public final class DBOut extends DBConnector {
 		}
 	}
 
+	@TestOnly
+	public Queue<DataPoint> allTrackingData() throws DataNotFoundException {
+		if (Utilities.getCallerClass() != Test.class) {
+			throw new IllegalAccessError();
+		}
+		Queue<DataPoint> dps = new ArrayDeque<>();
+		Position pos; DataPoint dp;
+		try (PreparedStatement stmt = createPreparedStatement("SELECT * FROM tracking", true)) {
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				pos = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
+				dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"), pos, rs.getInt("timestamp"),
+						rs.getInt("squawk"), rs.getInt("groundspeed"), rs.getInt("heading"), rs.getInt("altitude"));
+				dps.add(dp);
+			}
+
+		} catch (SQLException e) {
+			throw new DataNotFoundException(e);
+		}
+		return dps;
+	}
 }

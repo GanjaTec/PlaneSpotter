@@ -4,9 +4,9 @@ import org.jetbrains.annotations.NotNull;
 import planespotter.dataclasses.Area;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.ExceptionHandler;
-import planespotter.model.Fr24Collector;
-import planespotter.model.io.DBIn;
+import planespotter.model.io.Fr24Collector;
 import planespotter.throwables.Fr24Exception;
+import planespotter.throwables.MalformedAreaException;
 import planespotter.util.Time;
 import planespotter.util.Utilities;
 
@@ -39,19 +39,21 @@ public class Fr24Supplier extends HttpSupplier {
 
 	// class instance fields
 	private final String threadName;
-	private final String area;
+	private final Area area;
+	private final DataLoader dataLoader;
+	private final Fr24Deserializer deserializer;
 
 	/**
 	 * constructs a default {@link Fr24Supplier} with thread number 0 and no area,
 	 * can be used as utility-supplier if needed.
 	 * WARNING: this supplier is not able to collect data
 	 */
-	public Fr24Supplier() {
-		this("");
+	public Fr24Supplier(@NotNull DataLoader dataLoader) {
+		this((Area) null, dataLoader);
 	}
 
-	public Fr24Supplier(@NotNull Area area) {
-		this(area.toString());
+	public Fr24Supplier(Area area, @NotNull DataLoader dataLoader) {
+		this(area, dataLoader, new Fr24Deserializer());
 	}
 
 	/**
@@ -59,9 +61,29 @@ public class Fr24Supplier extends HttpSupplier {
 	 *
 	 * @param area is the area String
 	 */
-	public Fr24Supplier(@NotNull String area) {
+	public Fr24Supplier(@NotNull String area, @NotNull DataLoader dataLoader) throws MalformedAreaException {
+		this(area, dataLoader, new Fr24Deserializer());
+	}
+
+	/**
+	 * constructs a custom {@link Fr24Supplier} with thread number and area
+	 *
+	 * @param area is the area String
+	 */
+	public Fr24Supplier(@NotNull String area, @NotNull DataLoader dataLoader, @NotNull Fr24Deserializer deserializer) throws MalformedAreaException {
+		this(Area.fromString(area), dataLoader, deserializer);
+	}
+
+	/**
+	 * constructs a custom {@link Fr24Supplier} with thread number and area
+	 *
+	 * @param area is the area String
+	 */
+	public Fr24Supplier(Area area, @NotNull DataLoader dataLoader, @NotNull Fr24Deserializer deserializer) {
 		this.threadName = "Supplier Thread";
 		this.area = area;
+		this.dataLoader = dataLoader;
+		this.deserializer = deserializer;
 	}
 
 	/**
@@ -71,21 +93,19 @@ public class Fr24Supplier extends HttpSupplier {
 	@Override
 	public void supply() {
 		try {
-			System.out.println("Thread '" + getThreadName() + "' is starting...");
-			// use Proto-deserializer for correct frame data
-			Fr24Deserializer deserializer = new Fr24Deserializer();
 			HttpResponse<String> response = sendRequest(3);
 
 			Utilities.checkStatusCode(response.statusCode());
 			Stream<Fr24Frame> fr24Frames = deserializer.deserialize(response);
 			// writing frames to DB
-			DBIn.getDBIn().write(fr24Frames);
+			dataLoader.insertLater(fr24Frames);
+
 		} catch (IOException | InterruptedException | IllegalArgumentException | Fr24Exception e) {
 			ExceptionHandler onError = getExceptionHandler();
 			if (onError != null) {
 				onError.handleException(e);
 			} else {
-				e.printStackTrace();
+				System.err.println(e);
 			}
 		}
 	}
@@ -182,4 +202,12 @@ public class Fr24Supplier extends HttpSupplier {
 		return this.threadName;
 	}
 
+	/**
+	 * getter for {@link DataLoader}
+	 *
+	 * @return data loader of this supplier
+	 */
+	public DataLoader getDataLoader() {
+		return dataLoader;
+	}
 }
