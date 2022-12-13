@@ -6,6 +6,7 @@ import planespotter.controller.Controller;
 import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.OutOfRangeException;
 
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -35,10 +36,10 @@ public class Scheduler {
     public static final byte LOW_PRIO, MID_PRIO, HIGH_PRIO;
 
     // thread maker (thread factory)
-    @NotNull private static final ThreadMaker threadMaker;
+    private static final ThreadMaker threadMaker;
 
     // handler for rejected executions
-    @NotNull private static final RejectedExecutionHandler rejectedExecutionHandler;
+    private static final RejectedExecutionHandler rejectedExecutionHandler;
 
     // initializing static fields
     static {
@@ -50,13 +51,14 @@ public class Scheduler {
     }
 
     // ThreadPoolExecutor for (parallel) execution of different threads
-    @NotNull private final ThreadPoolExecutor exe;
+    private final ThreadPoolExecutor exe;
 
     // ScheduledExecutorService for scheduled execution at a fixed rate
-    @NotNull private final ScheduledExecutorService scheduled_exe;
+    private final ScheduledExecutorService scheduled_exe;
 
-    // hash code
-    private final int hashCode = System.identityHashCode(this);
+    // task queue for the "invoke"-method
+    private final Queue<Callable<Object>> taskQueue;
+    private final int maxQueueSize;
 
     /**
      * constructor, creates a new Scheduler with a max size
@@ -77,6 +79,8 @@ public class Scheduler {
         this.exe = new ThreadPoolExecutor(0, maxPoolSize, keepAliveSeconds,
                                           TimeUnit.SECONDS, new SynchronousQueue<>(), threadMaker, rejectedExecutionHandler);
         this.scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker, rejectedExecutionHandler);
+        this.maxQueueSize = 100;
+        this.taskQueue = new ArrayBlockingQueue<>(maxQueueSize, true);
     }
 
     /**
@@ -308,14 +312,6 @@ public class Scheduler {
      */
     public int largestPoolSize() {
         return exe.getLargestPoolSize();
-    }
-
-    /**
-     * @return scheduler hash code
-     */
-    @Override
-    public int hashCode() {
-        return hashCode;
     }
 
     /**
