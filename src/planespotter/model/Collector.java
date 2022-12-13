@@ -2,7 +2,10 @@ package planespotter.model;
 
 import org.jetbrains.annotations.NotNull;
 import planespotter.display.models.SupplierDisplay;
+import planespotter.model.io.Fr24Collector;
+import planespotter.model.io.Parkable;
 import planespotter.model.nio.Supplier;
+import planespotter.util.Utilities;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -19,15 +22,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Create a subclass to implement a new Collector and implement startCollecting()
  * @see Fr24Collector
  */
-public abstract class Collector<S extends Supplier> {
+public abstract class Collector<S extends Supplier> implements Parkable {
 
     // monitor object for Collector and its subclasses
-    protected static final Object SYNC;
-
-    // static initializer
-    static {
-        SYNC = new Object();
-    }
+    protected static final Object SYNC = new Object();
 
     // 'paused' and 'enabled' flags | is set by the display events
     private boolean paused, enabled, isSubTask;
@@ -99,27 +97,24 @@ public abstract class Collector<S extends Supplier> {
     /**
      * collector start method, starts the display and the collecting-task
      */
-    public synchronized void start() {
-        this.display.start();
-        this.scheduler = new Scheduler();
-        this.startCollecting();
+    public synchronized final void start() {
+        display.start();
+        scheduler = new Scheduler();
+        startCollecting();
     }
 
     /**
      * stops the collector main thread and shuts down the Scheduler,
-     * must be returned in the stop() method
+     * must be returned to the stop() method,
+     *
+     * note: when overriding this method, make sure to use
+     *       super.stopCollecting() at the end to stop the collector
      *
      * @return true if collector was stopped successfully, else false
      */
-    public final boolean stopCollecting() {
-        this.mainThread.interrupt();
-        Thread.currentThread().interrupt(); // ?
-        boolean success = this.scheduler.shutdownNow() && this.mainThread.isInterrupted();
-        try {
-            Scheduler.sleepSec(2);
-        } finally {
-            System.out.println("Collector stopped successfully!");
-        }
+    public boolean stopCollecting() {
+        boolean success = scheduler.shutdownNow();
+        park();
         return success;
     }
 
@@ -129,11 +124,8 @@ public abstract class Collector<S extends Supplier> {
      * @param newTask is the new Task, must be a 'collecting task' as runnable (can be written as lambda)
      * @param tName is the thread name
      */
-    protected void startNewMainThread(@NotNull Runnable newTask, @NotNull String tName) {
-        this.mainThread = this.scheduler.runThread(newTask, tName, false, Scheduler.MID_PRIO);
-        /*this.mainThread = new Thread(newTask);
-        this.mainThread.setName(tName);
-        this.mainThread.start();*/
+    protected final void startNewMainThread(@NotNull Runnable newTask, @NotNull String tName) {
+        mainThread = scheduler.runThread(newTask, tName, false, Scheduler.MID_PRIO);
     }
 
     /**

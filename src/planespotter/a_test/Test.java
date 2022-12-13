@@ -10,16 +10,7 @@ import jcuda.runtime.JCuda;
 import jcuda.runtime.cudaMemcpyKind;
 */
 
-import jcuda.Pointer;
 import jcuda.driver.*;
-import jcuda.jcublas.JCublas;
-import jcuda.jcublas.JCublas2;
-import jcuda.jcudnn.JCudnn;
-import jcuda.jcufft.JCufft;
-import jcuda.jcurand.JCurand;
-import jcuda.jcusolver.JCusolver;
-import jcuda.jcusparse.JCusparse;
-import jcuda.runtime.JCuda;
 import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -28,7 +19,6 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 import planespotter.constants.Paths;
 import planespotter.dataclasses.Position;
-import planespotter.model.io.CSVWriter;
 import planespotter.model.io.DBOut;
 import planespotter.statistics.BitmapCombiner;
 import planespotter.statistics.Statistics;
@@ -48,16 +38,10 @@ import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.ByteBuffer;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.Vector;
+import java.util.*;
 
 @GitIgnore
 @TestOnly
@@ -65,16 +49,34 @@ public class Test {
 
     // TEST-MAIN
     public static void main(String[] args) throws Exception {
-        Unsafe unsafe = getUnsafe();
-        //unsafe.invokeCleaner(ByteBuffer.allocateDirect(1024));
+        /*Unsafe unsafe = getUnsafe();
         long ptr = 0xf53eb3a6;
         double d = 4.20;
         unsafe.putDouble(ptr, d);
-        System.out.println(unsafe.getDouble(ptr));
+        System.out.println(unsafe.getDouble(ptr));*/
+        Object sync = new Object();
+        new Thread(() -> {
+                    System.out.println("Waiting...");
+                    synchronized (sync) {
+                        try {
+                            sync.wait(5000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        System.out.println("Parking...");
+                        getUnsafe().park(true, 5000);
+                    }
+                }, "TestThread-1").start();
 
-
+       /* Collection<Area> areas = Utilities.calculateInterestingAreas3(10, 10, 0);
+        System.out.println("Interesting areas: " + areas.size());*/
     }
 
+    /**
+     * Test-Result:
+     *      default division: about 0 seconds
+     *      MathUtils division: about 3 seconds
+     */
     @SuppressWarnings("removal")
     private static void divisionBenchmark() {
         Random seedGen = new Random();
@@ -119,32 +121,6 @@ public class Test {
 
         CUfunction func = new CUfunction();
         JCudaDriver.cuModuleGetFunction(func, module, "mean");
-    }
-
-    private static void airportsToCSV() throws SQLException, DataNotFoundException, IOException {
-        CSVWriter csv = new CSVWriter("SELECT * FROM airports");
-        File file = new File(Paths.RESOURCE_PATH + "airports.csv");
-        String[] header = new String[] {"ID", "iatatag", "name", "country", "lat", "lon"},
-                 types  = new String[] {"int", "string", "string", "string", "double", "double"};
-        csv.writeToCSV(file, header, types);
-    }
-
-    private static void trackingToCSV() throws SQLException, DataNotFoundException, IOException {
-        File file = new File(Paths.RESOURCE_PATH + "tracking.csv");
-        CSVWriter csv = new CSVWriter("SELECT * FROM tracking");
-
-        String[] header = new String[] {"ID", "flightid", "latitude", "longitude", "altitude", "groundspeed", "heading", "squawk", "timestamp"};
-        String[] types = new String[] {"int", "int", "double", "double", "int", "int", "int", "int", "long"};
-        csv.writeToCSV(file, header, types);
-    }
-
-    private static void flightsToCSV() throws SQLException, DataNotFoundException, IOException {
-        File file = new File(Paths.RESOURCE_PATH + "flights.csv");
-        CSVWriter csv = new CSVWriter("SELECT * FROM flights");
-
-        String[] header = new String[] {"ID", "plane", "src", "dest", "flightnr", "callsign", "start", "endTime"},
-                 types  = new String[] {"int", "string", "string", "string", "string", "string", "string", "string"};
-        csv.writeToCSV(file, header, types);
     }
 
     /*public static void gpuTest() {
@@ -242,17 +218,7 @@ public class Test {
     }
 
     private static Unsafe getUnsafe() {
-        if (Utilities.getCallerClass() != Test.class) {
-            throw new IllegalCallerException("This method may only be used in the Test class!");
-        }
-        try {
-            Field field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            return (Unsafe) field.get(null);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        throw new NullPointerException("couldn't load the Unsafe class!");
+        return Utilities.getUnsafe();
     }
 
     /**
@@ -269,13 +235,12 @@ public class Test {
         System.out.println(unsafe.getByte(address));
     }
 
-    private void testBitmapWrite() throws IOException {
-        var positions = new Test().TEST_POS_VECTOR;/*new DBOut()
+    private void testBitmapWrite() throws IOException, DataNotFoundException {
+        var positions = DBOut.getDBOut().getAllTrackingPositions();/*new DBOut()
                 .getTrackingsWithAirportTag("FRA")
                 .stream()
                 .map(DataPoint::pos)
                 .collect(Collectors.toCollection(Vector::new));*/
-        assert positions != null;
         var bmp = Bitmap.fromPosVector(positions, 0.5f);
         //test.createTestJFrame(bmp.toImage());
         // bitmap write & read funktioniert
@@ -403,10 +368,10 @@ public class Test {
             }
         }
 
-        this.createTestJFrame(img);
+        createTestJFrame(img);
     }
 
-    private <T> void createTestJFrame(T source) {
+    private static <T> void createTestJFrame(T source) {
         var panel = new JPanel();
         if (source instanceof BufferedImage img) {
             var label = new JLabel(new ImageIcon(img));
@@ -425,17 +390,6 @@ public class Test {
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.add(panel);
         frame.setVisible(true);
-    }
-
-    public final Vector<Position> TEST_POS_VECTOR;
-    {
-        Vector<Position> trackingPositions;
-        try {
-            trackingPositions = DBOut.getDBOut().getAllTrackingPositions();
-        } catch (DataNotFoundException e) {
-            trackingPositions = null;
-        }
-        TEST_POS_VECTOR = trackingPositions;
     }
 
     private void printPositionHeatMap() {

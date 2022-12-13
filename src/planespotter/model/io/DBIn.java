@@ -73,7 +73,10 @@ public final class DBIn extends DBConnector {
 	 * @param frames is a {@link Stream} of {@link Frame}s to write, can be {@link Fr24Frame}s
 	 *               and {@link planespotter.dataclasses.ADSBFrame}s
 	 */
-	public <E extends Frame> void write(@NotNull final Stream<E> frames) {
+	public <E extends Frame> void write(final Stream<E> frames) {
+		if (frames == null) {
+			return;
+		}
 		write((Deque<E>) frames.collect(Collectors.toCollection(ArrayDeque::new)));
 	}
 
@@ -85,8 +88,8 @@ public final class DBIn extends DBConnector {
 	 * @param frames is a {@link Deque} of {@link Frame}s to write, can be {@link Fr24Frame}s
 	 *               and {@link planespotter.dataclasses.ADSBFrame}s
 	 */
-	public synchronized <E extends Frame> void write(@NotNull final Deque<E> frames) {
-		if (!enabled || frames.isEmpty()) {
+	public synchronized <E extends Frame> void write(final Deque<E> frames) {
+		if (!enabled || frames == null || frames.isEmpty()) {
 			return;
 		}
 		Exception ex = null;
@@ -105,7 +108,7 @@ public final class DBIn extends DBConnector {
 			// ( For example when the DB gets cleared )
 		}
 		E frame;
-		 int airlineID, planeID, flightID;
+		int airlineID, planeID, flightID;
 		while (!frames.isEmpty() && enabled) {
 			frame = frames.poll();
 			// insert into planes

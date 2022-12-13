@@ -12,7 +12,6 @@ import java.sql.SQLException;
 
 public final class CSVWriter extends DBConnector {
 
-    private final StringBuilder rowBuffer = new StringBuilder();
     private PreparedStatement statement;
 
 
@@ -44,6 +43,9 @@ public final class CSVWriter extends DBConnector {
         }
         if (len != types.length) {
             throw new InvalidDataException("Invalid type array length, make sure it is as long as the header array");
+        }
+        if (!file.exists() && !file.createNewFile()) {
+            throw new FileNotFoundException("Could not create file '" + file.getAbsolutePath() + "'");
         }
 
         String type; Object next; int col;

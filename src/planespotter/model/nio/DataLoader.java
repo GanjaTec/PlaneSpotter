@@ -6,13 +6,6 @@ import org.jetbrains.annotations.Range;
 import planespotter.constants.Configuration;
 import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
-import planespotter.model.ExceptionHandler;
-import planespotter.util.Utilities;
-
-import javax.net.ssl.SSLHandshakeException;
-import java.io.IOException;
-import java.net.http.HttpResponse;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Queue;
 import java.util.Vector;
@@ -68,10 +61,15 @@ public class DataLoader {
     // live data loading period in milliseconds
     private int liveDataPeriod, adsbDataPeriod;
 
-    @Nullable private ADSBSupplier adsbSupplier;
+    private ADSBSupplier adsbSupplier;
 
     // frames, which will be inserted later (first loaded into the view)
-    @NotNull private final Queue<Frame> dataQueue;
+    private final Queue<Frame> dataQueue;
+
+    private final ADSBDeserializer adsbDeserializer;
+    private final Fr24Deserializer fr24Deserializer;
+
+
 
     /**
      * default {@link DataLoader} constructor, uses a maxQueueSize
@@ -92,6 +90,8 @@ public class DataLoader {
         this.dataQueue = new ConcurrentLinkedQueue<>();
         this.liveDataPeriod = liveDataPeriodSec * 1000;
         this.adsbDataPeriod = 2000;
+        this.adsbDeserializer = new ADSBDeserializer();
+        this.fr24Deserializer = new Fr24Deserializer();
     }
 
     public void run(@NotNull Controller ctrl) {
@@ -120,7 +120,7 @@ public class DataLoader {
         }
 
         long startTime = nowMillis();
-        Area area = Area.currentArea(ctrl.getUI().getMap());
+        Area area = ctrl.isFr24Enabled() ? Area.currentArea(ctrl.getUI().getMap()) : null;
 
         // TODO: 05.10.2022 do always when connecting to ADSBSupplier
         ReceiverFrame crdata = ctrl.isAdsbEnabled() ? getReceiverFrame() : null;
@@ -164,18 +164,13 @@ public class DataLoader {
      * @see planespotter.dataclasses.Area
      */
     @NotNull
-    public Vector<Flight> getLiveFlights(@NotNull final Area area, int mask) {
+    public Vector<Flight> getLiveFlights(final Area area, int mask) {
         Fr24Deserializer deserializer = new Fr24Deserializer();
 
         if ((mask & ONLY_MILITARY_MASK) == ONLY_MILITARY_MASK) {
             deserializer.setFilter(MILITARY_FILTERS);
         }
-        if ((mask & ADSB_MASK) == ADSB_MASK) {
-            collectADSB();
-        }
-        if ((mask & FR24_MASK) == FR24_MASK) {
-            collectFr24(area.toStringArray(), deserializer, false, false);
-        }
+        collectData(area, mask);
 
         AtomicInteger pseudoID = new AtomicInteger(0);
         Stream<? extends Frame> frames = pollFrames(Integer.MAX_VALUE);
@@ -184,11 +179,24 @@ public class DataLoader {
                 .collect(Collectors.toCollection(Vector::new));
     }
 
-    private void collectADSB() {
+    public boolean collectData(Area area, int mask) {
+        if (mask == NO_MASK) {
+            return false;
+        }
+        if ((mask & ADSB_MASK) == ADSB_MASK) {
+            collectADSB(adsbDeserializer);
+        }
+        if (area != null && (mask & FR24_MASK) == FR24_MASK) {
+            return collectFr24(fr24Deserializer, false, area);
+        }
+        return true;
+    }
+
+    private void collectADSB(@NotNull ADSBDeserializer deserializer) {
         if (adsbSupplier == null) {
             Controller ctrl = Controller.getInstance();
             Configuration config = ctrl.getConfig();
-            adsbSupplier = new ADSBSupplier(config.getProperty("adsbRequestUri").toString(), this, config.getProperty("receiverRequestUri").toString());
+            adsbSupplier = new ADSBSupplier(config.getProperty("adsbRequestUri").toString(), this, config.getProperty("receiverRequestUri").toString(), deserializer);
             adsbSupplier.setExceptionHandler(ctrl);
         }
         adsbSupplier.supply();
@@ -218,38 +226,19 @@ public class DataLoader {
      * gets HttpResponse's for specific areas and deserializes its data to Frames,
      * then directly adds the frames to the data-{@link Queue}
      *
-     * @param areas are the Areas where data should be deserialized from
-     * @param deserializer is the {@link Fr24Deserializer} which is used to deserialize the requested data
      * @param ignoreMaxSize if it's true, allowed max size of data-queue is ignored
+     * @param areas are the Areas where data should be deserialized from
      */
-    @Deprecated
-    public synchronized boolean collectFr24(@NotNull String[] areas, @NotNull final Fr24Deserializer deserializer, boolean ignoreMaxSize, boolean parallel) {
-        Stream<String> areaStream = Arrays.stream(areas);
-        if (parallel) {
-            areaStream = areaStream.parallel();
-        }
-        areaStream.forEach(area -> {
+    private synchronized boolean collectFr24(@NotNull Fr24Deserializer deserializer, boolean ignoreMaxSize, @NotNull Area @NotNull ... areas) {
+        for (Area area : areas) {
             if (!ignoreMaxSize && maxSizeReached()) {
                 System.out.println("Max queue-size reached!");
-                return;
+                return false;
             }
-            Fr24Supplier supplier = new Fr24Supplier(area);
+            Fr24Supplier supplier = new Fr24Supplier(area, this, deserializer);
             supplier.setExceptionHandler(Controller.getInstance());
-
-            try {
-                HttpResponse<String> response = supplier.sendRequest(2);
-                Utilities.checkStatusCode(response.statusCode());
-                Stream<Fr24Frame> data = deserializer.deserialize(response);
-                insertLater(data);
-            } catch (IOException | InterruptedException e) {
-                ExceptionHandler onError = supplier.getExceptionHandler();
-                if (onError != null && e instanceof SSLHandshakeException ssl) {
-                    onError.handleException(ssl);
-                } else {
-                    e.printStackTrace();
-                }
-            }
-        });
+            supplier.supply();
+        }
         return true;
     }
 

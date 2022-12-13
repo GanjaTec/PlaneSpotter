@@ -19,9 +19,7 @@ import planespotter.display.TreasureMap;
 import planespotter.display.UserInterface;
 import planespotter.display.models.ConnectionPane;
 import planespotter.model.*;
-import planespotter.model.io.DBIn;
-import planespotter.model.io.DBOut;
-import planespotter.model.io.FileWizard;
+import planespotter.model.io.*;
 import planespotter.model.nio.ADSBSupplier;
 import planespotter.model.nio.DataLoader;
 import planespotter.model.nio.FilterManager;
@@ -169,7 +167,7 @@ public final class Controller implements ExceptionHandler {
             }
         }
         // building database
-        PyAdapter.runScript("python-helper\\helper\\dbBuilder.py");
+        PyAdapter.runScript("python-helper\\helper\\dbBuilder.py", void.class);
 
     }
 
@@ -380,15 +378,18 @@ public final class Controller implements ExceptionHandler {
 
     /**
      * starts a {@link Fr24Collector} to collect Fr24-Data
-     * @see planespotter.model.Fr24Collector
+     * @see Fr24Collector
      * @see
-     *
-     * @param insertMode is the insert mode TODO ....
      */
     // TODO: 08.08.2022 add filters, INSERT MODE
-    void runCollector(int insertMode) {
-        Collector<Fr24Supplier> collector = new Fr24Collector(false, false, 6, 12);
-        collector.start();
+    void runCollector() {
+        Collector<Fr24Supplier> collector;
+        try {
+            collector = new Fr24Collector(false, false, 6, 12, getDataMask(), Inserter.INSERT_ALL);
+            collector.start();
+        } catch (DataNotFoundException e) {
+            handleException(e);
+        }
     }
 
     /**
@@ -841,7 +842,7 @@ public final class Controller implements ExceptionHandler {
      * tries to save the current view (bitmap or map viewer) in a file
      * file types: ('.bmp' / '.pls')
      */
-    public void saveFile() {
+    public void saveSelectedFile() {
         getUI().showLoadingScreen(true);
         setLoading(true);
 
@@ -891,7 +892,7 @@ public final class Controller implements ExceptionHandler {
      * loads a specific file, which the user selects in a file chooser,
      * if the filename ends with '.bmp' or '.pls', the file is loaded into the view
      */
-    public void loadFile() {
+    public void loadSelectedFile() {
 
         getUI().showLoadingScreen(true);
         try {

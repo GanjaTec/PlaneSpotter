@@ -1,5 +1,7 @@
 package planespotter.util;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -13,12 +15,34 @@ import java.util.concurrent.TimeUnit;
 public abstract class Time {
 
     /**
-     * getter for the current system time millis
+     * equal to System.currentTimeMillis()
      *
-     * @return current system time in milliseconds
+     * @return the difference, measured in milliseconds, between
+     *         the current time and midnight, January 1, 1970, UTC
      */
     public static long nowMillis() {
         return System.currentTimeMillis();
+    }
+
+    /**
+     * creates a {@link Date} from the current time millis
+     *
+     * @return the "now" {@link Date}
+     */
+    public static Date date() {
+        return dateFrom(nowMillis());
+    }
+
+    /**
+     * creates a {@link Date} from an {@link Instant} of the given epoch millis
+     *
+     * @param epochMillis are the epoch millis after midnight, January 1, 1970, UTC
+     * @return {@link Date}, parsed from the epoch millis
+     * @see Date
+     * @see Instant
+     */
+    public static Date dateFrom(long epochMillis) {
+        return Date.from(Instant.ofEpochMilli(epochMillis));
     }
 
     /**

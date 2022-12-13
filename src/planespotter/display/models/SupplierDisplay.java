@@ -5,9 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.constants.Images;
 import planespotter.controller.Controller;
-import planespotter.model.Collector;
-import planespotter.model.Fr24Collector;
-import planespotter.model.nio.Supplier;
+import planespotter.model.io.Fr24Collector;
 import planespotter.util.Utilities;
 
 import javax.swing.*;

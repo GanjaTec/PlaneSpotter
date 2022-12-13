@@ -9,10 +9,13 @@ import planespotter.model.nio.DataLoader;
 import java.util.Queue;
 import java.util.stream.Stream;
 
-public class Inserter implements Runnable {
+public final class Inserter implements Runnable, Parkable {
 
     // the insert monitor object
     private static final Object INSERT_LOCK = new Object();
+
+    // possible insert mode values
+    public static final int INSERT_UNIFORM = 1, INSERT_ALL = 2;
 
     // minimum insert count per write
     private static final int MIN_INSERT_COUNT = 1000;
@@ -26,16 +29,20 @@ public class Inserter implements Runnable {
     // reference to the error queue, where all errors are added to and displayed from
     private final Queue<Throwable> errorQueue;
 
+    // insert mode, one of INSERT_UNIFORM and INSERT_ALL
+    private final int insertMode;
+
     /**
      * constructs a new {@link Inserter} instance with {@link DataLoader} and error {@link Queue}
      *
      * @param dataLoader is the {@link DataLoader} which is used to load the data to be inserted
      * @param errorQueue is the error {@link Queue} where errors are collected and handled by the {@link planespotter.controller.Controller}
      */
-    public Inserter(@NotNull DataLoader dataLoader, @NotNull Queue<Throwable> errorQueue) {
+    public Inserter(@NotNull DataLoader dataLoader, @NotNull Queue<Throwable> errorQueue, int insertMode) {
         this.terminated = false;
         this.dataLoader = dataLoader;
         this.errorQueue = errorQueue;
+        this.insertMode = insertMode;
     }
 
     /**
@@ -48,19 +55,20 @@ public class Inserter implements Runnable {
     @Override
     public void run() {
         DBIn dbIn = DBIn.getDBIn();
+        int pollCount = insertMode == INSERT_ALL ? Integer.MAX_VALUE : MIN_INSERT_COUNT;
         while (!terminated) {
             synchronized (INSERT_LOCK) {
-                    Scheduler.sleep(500);
-                try (Stream<? extends Frame> frames = dataLoader.pollFrames(MIN_INSERT_COUNT)) { // try to change to Integer.MAX_VALUE
-                    // writing frames to DB
-                    if (frames != null) {
-                        dbIn.write(frames);
-                    }
-                } catch (final Throwable ex) {
-                    Thread.onSpinWait();
-                    if (!ex.getMessage().startsWith("Data-Queue is empty")) {
-                        errorQueue.add(ex);
-                    }
+                try {
+                    INSERT_LOCK.wait(100);
+                } catch (InterruptedException ignored) {
+                }
+                if (dataLoader.getQueueSize() < 400) {
+                    continue;
+                }
+                Stream<? extends Frame> frames = dataLoader.pollFrames(pollCount);
+                // writing frames to DB
+                if (frames != null) {
+                    dbIn.write(frames);
                 }
             }
         }

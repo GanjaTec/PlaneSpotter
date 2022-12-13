@@ -49,10 +49,20 @@ public class ADSBSupplier extends HttpSupplier {
      * @param dataLoader is a {@link DataLoader} which contains the data queue where data can be taken from
      */
     public ADSBSupplier(@NotNull String uri, @NotNull DataLoader dataLoader, @Nullable String receiverUri) {
+        this(uri, dataLoader, receiverUri, new ADSBDeserializer());
+    }
+
+    /**
+     * constructs a new {@link ADSBSupplier} with {@link URI} and {@link DataLoader}
+     *
+     * @param uri is the data request {@link URI}, can be changed later
+     * @param dataLoader is a {@link DataLoader} which contains the data queue where data can be taken from
+     */
+    public ADSBSupplier(@NotNull String uri, @NotNull DataLoader dataLoader, @Nullable String receiverUri, @NotNull ADSBDeserializer deserializer) {
         this.requestUri = URI.create(uri);
         this.receiverRequestUri = receiverUri != null ? URI.create(receiverUri) : null;
         this.dataLoader = dataLoader;
-        this.deserializer = new ADSBDeserializer();
+        this.deserializer = deserializer;
     }
 
     /**

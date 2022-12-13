@@ -1,7 +1,9 @@
 package planespotter.a_test;
 
 import planespotter.constants.Areas;
+import planespotter.model.nio.DataLoader;
 import planespotter.model.nio.Fr24Supplier;
+import planespotter.throwables.MalformedAreaException;
 import planespotter.unused.KeeperOfTheArchivesSenior;
 
 import java.util.concurrent.Executors;
@@ -10,6 +12,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 // TODO class can use Scheduler instead of the executer services, Scheduler contains both
+@Deprecated
 public class Paralel {
 	private int poolsize = 8;
 	private ThreadPoolExecutor exe =  (ThreadPoolExecutor) Executors.newFixedThreadPool(poolsize);
@@ -18,10 +21,12 @@ public class Paralel {
 	public Paralel() {
 	}
 
-	public void startThreads() throws InterruptedException {
+	public void startThreads() throws InterruptedException, MalformedAreaException {
+		DataLoader loader = new DataLoader();
+
 		String[] areay= Areas.EASTERN_FRONT;
 		for(int i=0; i < areay.length; i++) {
-			Fr24Supplier s = new Fr24Supplier(areay[i]);
+			Fr24Supplier s = new Fr24Supplier(areay[i], loader);
 			ses.scheduleAtFixedRate(s, 10+(i*5), 60, TimeUnit.SECONDS);
 		}
 
@@ -34,7 +39,8 @@ public class Paralel {
 	 * 
 	 * @throws InterruptedException
 	 */
-	public void runThreads() throws InterruptedException {
+	public void runThreads() throws InterruptedException, MalformedAreaException {
+		DataLoader dataLoader = new DataLoader();
 		ThreadPoolExecutor executor =  (ThreadPoolExecutor) Executors.newFixedThreadPool(poolsize);
 		exe.setKeepAliveTime(20, TimeUnit.SECONDS);
 		
@@ -42,7 +48,7 @@ public class Paralel {
 		String[] resultList = Areas.getAllAreas();
 	    int i = 0;
 	    for (String s : resultList) {
-			executor.execute(new Fr24Supplier(s));
+			executor.execute(new Fr24Supplier(s, dataLoader));
 			i += 1;
 	    }
 

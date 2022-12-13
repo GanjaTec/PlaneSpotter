@@ -244,16 +244,19 @@ public final class ActionHandler
         final String text = item.getText();
         final UserInterface ui = ctrl.getUI();
         switch (text) {
-            case "Open" -> ctrl.loadFile();
-            case "Save As" -> ctrl.saveFile();
-            case "Fullscreen" -> ui.setFullScreen(!ui.isFullscreen());
+            case "Open" -> ctrl.loadSelectedFile();
+            case "Save As" -> ctrl.saveSelectedFile();
+            case "Fullscreen" -> ui.setFullScreen(!ui.isFullScreen());
             case "Exit" -> ctrl.shutdown(false);
             case "Fr24-Supplier" -> {
-                int mode = JOptionPane.showOptionDialog(ctrl.getUI().getWindow(),
-                        "Do you want insert custom Antenna-Data? \nClick YES for ADSB-Data and NO for Fr24-Data",
+                int option = JOptionPane.showOptionDialog(ctrl.getUI().getWindow(),
+                        "Please choose an insert-mode",
                         "Insert Mode", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
                         null, new String[] {"ADSB-Data", "Fr24-Data", "Mixed-Data"}, null);
-                ctrl.runCollector(mode);
+                if (option == JOptionPane.CLOSED_OPTION) {
+                    return;
+                }
+                ctrl.runCollector();
             }
             case "ADSB-Supplier" -> ctrl.showConnectionManager();
             // TODO: 25.08.2022 ctrl.showStats(ViewType type)

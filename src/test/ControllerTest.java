@@ -1,5 +1,3 @@
-package test;
-
 import org.junit.jupiter.api.Test;
 import planespotter.controller.Controller;
 import planespotter.model.Scheduler;
