@@ -227,7 +227,7 @@ public class UserInterface {
      *
      * @return true if the fullscreen-mode is enabled, else false
      */
-    public boolean isFullscreen() {
+    public boolean isFullScreen() {
         return window.getExtendedState() == Frame.MAXIMIZED_BOTH && this.window.isUndecorated();
     }
 

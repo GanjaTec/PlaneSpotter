@@ -47,14 +47,14 @@ public class PyAdapter {
      *             null-return can be ignored, but it's recommended to
      *             catch the null-return to prevent a {@link NullPointerException}
      *
-     * @param <R> is the returned object's type, can be ignored
+     * @param <T> is the returned object's type, can be ignored
      * @return result of the function, or null if the function type is void
      * @see planespotter.model.PyAdapter
      * @see org.python.util.PythonInterpreter
      */
-    public static <R> R runFunction(String func) {
+    public static <T> T runFunction(String func, Class<T> resultClass) {
         py.exec(func);
-        return getResult();
+        return getResult(resultClass);
     }
 
     /**
@@ -62,12 +62,12 @@ public class PyAdapter {
      *
      * @param filename is the script-filename
      * @param params are the function params // does not work yet
-     * @param <R> is the returned object's type
+     * @param <T> is the returned object's type
      * @return result variable in python-script, if it's not None/null, else null
      * @see planespotter.model.PyAdapter
      * @see org.python.util.PythonInterpreter
      */
-    public static <R> R runScript(String filename, String... params) {
+    public static <T> T runScript(String filename, Class<T> resultClass, String... params) {
         int counter = 0;
         for (var in : params) {
             var ps = new PyString(in);
@@ -75,19 +75,20 @@ public class PyAdapter {
             counter++;
         }
         py.execfile(filename);
-        return getResult();
+        return getResult(resultClass);
     }
 
     /**
      * returns the result of a function called before
      *
-     * @param <R> is the result class type
+     * @param <T> is the result class type
      * @return the result of the function called before
      */
+    @SuppressWarnings("unchecked")
     @Nullable
-    private static <R> R getResult() {
+    private static <T> T getResult(Class<T> clazz) {
         try {
-            return (R) py.get("result");
+            return py.get("result", clazz);
         } catch (Exception all) {
             return null;
         }

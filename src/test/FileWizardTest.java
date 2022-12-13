@@ -1,5 +1,3 @@
-package test;
-
 import junit.framework.AssertionFailedError;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

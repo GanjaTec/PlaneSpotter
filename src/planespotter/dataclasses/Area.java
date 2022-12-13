@@ -25,7 +25,7 @@ public class Area {
 
     // value separator string
     public static final String SEPARATOR = "%2C";
-    private static final Pattern AREA_PATTERN = Pattern.compile("([0-9]*\\.[0-9]+(%[0-9A-Fa-f][0-9A-Fa-f][0-9]*\\.[0-9]+)+)");
+    private static final Pattern AREA_PATTERN = Pattern.compile("(-?[0-9]*\\.-?[0-9]+(%2C-?[0-9]*\\.-?[0-9]+)+)");
 
     //
     private final float latTopLeft, latBottomRight, lonTopLeft, lonBottomRight;

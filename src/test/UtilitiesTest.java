@@ -1,5 +1,3 @@
-package test;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import planespotter.constants.Sound;

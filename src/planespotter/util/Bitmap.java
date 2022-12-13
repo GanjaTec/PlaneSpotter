@@ -96,15 +96,6 @@ public class Bitmap {
         return Bitmap.fromInt2d(ints2d);
     }
 
-    private static void writeGridSize(int[][] ints2d, float gridSize, int width, int height) {
-        // writing gridSize to the last 4 bytes
-        int last = width - 1;
-        byte[] gridSizeBytes = Utilities.floatToBytes(gridSize);
-        for (int y = height - 4, i = 0; y < height; y++, i++) {
-            ints2d[last][y] = gridSizeBytes[i] + 128;
-        }
-    }
-
     /**
      * creates a Bitmap from position-vector,
      * the higher a field value, the more positions in this field
@@ -120,20 +111,22 @@ public class Bitmap {
     public static Bitmap fromPosVector(@NotNull Vector<Position> positions, @Range(from = 0, to = 2) float gridSize, @NotNull Area area) {
         checkGridSize(gridSize);
 
-        // TODO: 22.11.2022 adjust 2D array size with area (sowas wie " 0 - (area.y-area.x) ")
-
         int width = (int) (360.0 / gridSize) + 1;
         int height = (int) (180.0 / gridSize) + 1;
         int[][] ints2d = new int[width][height];
 
         fillZeros(ints2d);
 
+        double topLeftLat = area.getTopLeft().lat(),
+               topLeftLon = area.getTopLeft().lon(),
+               botRightLat = area.getBottomRight().lat(),
+               botRightLon = area.getBottomRight().lon();
+
         positions.parallelStream()
                 .forEach(pos -> {
                     int posX, posY;
                     double lat = pos.lat(), lon = pos.lon();
-                    if (   lat > area.getTopLeft().lat() || lat < area.getBottomRight().lat()
-                        || lon < area.getTopLeft().lon() || lon > area.getBottomRight().lon()) {
+                    if (lat > topLeftLat || lat < botRightLat || lon < topLeftLon || lon > botRightLon) {
                         return;
                     }
                     posX = (int) ((lon + 180) / gridSize);
@@ -141,8 +134,45 @@ public class Bitmap {
                     ints2d[posX][posY]++;
                 });
 
-        writeGridSize(ints2d, gridSize, width, height);
-        return Bitmap.fromInt2d(ints2d);
+        // TODO: 27.11.2022 das ganze könnte man auch in der fromInt2d machen,
+        //  dann direkt nur den area bereich in ein neues byte array kopieren
+
+        // FIXME: 26.11.2022 FIX Bitmap Ausrichtung, NegativeArraySizeException,
+
+        int sx = (int) ((topLeftLon + 180) / gridSize),
+            sy = (int) ((topLeftLat + 90) / gridSize), // FIXME ey is greater than sy
+            ex = (int) ((botRightLon + 180) / gridSize),
+            ey = (int) ((botRightLat + 90) / gridSize),
+            nw = ex - sx,
+            nh = sy - ey;
+        int[][] i2dNew = new int[nw][nh];
+
+        // FIXME: 26.11.2022 ArrayIndexOutOfBounds
+        for (int x_new = 0, x_old = sx; x_new < nw; x_new++, x_old++) {
+            for (int y_new = 0, y_old = sy; y_new < nh; y_new++, y_old++) {
+                i2dNew[x_new][x_old] = ints2d[x_old][y_old];
+            }
+        }
+
+        writeGridSize(i2dNew, gridSize, nw, nh);
+        return fromInt2d(i2dNew);
+    }
+
+    /**
+     *
+     *
+     * @param ints2d
+     * @param gridSize
+     * @param width
+     * @param height
+     */
+    private static void writeGridSize(int[][] ints2d, float gridSize, int width, int height) {
+        // writing gridSize to the last 4 bytes
+        int last = width - 1;
+        byte[] gridSizeBytes = Utilities.floatToBytes(gridSize);
+        for (int y = height - 4, i = 0; y < height; y++, i++) {
+            ints2d[last][y] = gridSizeBytes[i] + 128;
+        }
     }
 
     /**
@@ -279,7 +309,7 @@ public class Bitmap {
      * @return
      */
     @NotNull
-    public static File writeToCSV(@NotNull Bitmap bitmap, @NotNull String filename) {
+    public static File writeToCSV(@NotNull Bitmap bitmap, @NotNull String filename) throws IOException {
         File file = new File(Utilities.checkFileName(filename, "csv"));
         try (Writer fw = new FileWriter(file)) {
 
@@ -291,8 +321,6 @@ public class Bitmap {
                     fw.write(lvl + (c++ == len ? "\n" : ","));
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return file;
     }
@@ -383,7 +411,7 @@ public class Bitmap {
      */
     @Override
     public String toString() {
-        return Arrays.deepToString(getBitmap());
+        return "Bitmap[" + width + "x" + height + "]";
     }
 
 }
