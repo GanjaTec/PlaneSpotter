@@ -56,10 +56,6 @@ public class Scheduler {
     // ScheduledExecutorService for scheduled execution at a fixed rate
     private final ScheduledExecutorService scheduled_exe;
 
-    // task queue for the "invoke"-method
-    private final Queue<Callable<Object>> taskQueue;
-    private final int maxQueueSize;
-
     /**
      * constructor, creates a new Scheduler with a max size
      * of 20 and a thread-keep-alive-time of 4 seconds
@@ -79,8 +75,6 @@ public class Scheduler {
         this.exe = new ThreadPoolExecutor(0, maxPoolSize, keepAliveSeconds,
                                           TimeUnit.SECONDS, new SynchronousQueue<>(), threadMaker, rejectedExecutionHandler);
         this.scheduled_exe = new ScheduledThreadPoolExecutor(0, threadMaker, rejectedExecutionHandler);
-        this.maxQueueSize = 100;
-        this.taskQueue = new ArrayBlockingQueue<>(maxQueueSize, true);
     }
 
     /**
