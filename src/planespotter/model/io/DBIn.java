@@ -88,8 +88,8 @@ public final class DBIn extends DBConnector {
 	 * @param frames is a {@link Deque} of {@link Frame}s to write, can be {@link Fr24Frame}s
 	 *               and {@link planespotter.dataclasses.ADSBFrame}s
 	 */
-	public synchronized <E extends Frame> void write(@NotNull final Deque<E> frames) {
-		if (!enabled || frames.isEmpty()) {
+	public synchronized <E extends Frame> void write(final Deque<E> frames) {
+		if (!enabled || frames == null || frames.isEmpty()) {
 			return;
 		}
 		Exception ex = null;
