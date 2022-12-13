@@ -6,12 +6,21 @@ import planespotter.model.io.CSVWriter;
 import planespotter.throwables.DataNotFoundException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 
 public class DBToCSV {
 
-    public static void dbToCSV(String dirName) throws SQLException {
+    public static void main(String[] args) throws SQLException, FileNotFoundException {
+        String arg;
+        if (args.length == 0 || (arg = args[0]).isBlank()) {
+            arg = "DatabaseCSV";
+        }
+        dbToCSV(arg);
+    }
+
+    public static void dbToCSV(String dirName) throws SQLException, FileNotFoundException {
 
         String dir = Paths.RESOURCE_PATH + dirName + (dirName.endsWith("\\") ? "" : "\\");
         if (new File(dir).mkdir()) {
@@ -19,11 +28,19 @@ public class DBToCSV {
         }
         try {
             planesToCSV(dir);
+            System.out.println(dir + "planes.csv written successfully!");
             flightsToCSV(dir);
+            System.out.println(dir + "flights.csv written successfully!");
             airlinesToCSV(dir);
+            System.out.println(dir + "airlines.csv written successfully!");
             airportsToCSV(dir);
+            System.out.println(dir + "airports.csv written successfully!");
             trackingToCSV(dir);
+            System.out.println(dir + "tracking.csv written successfully!");
         } catch (DataNotFoundException | IOException e) {
+            if (e instanceof FileNotFoundException fnf) {
+                throw fnf;
+            }
             throw new SQLException(e);
         }
 
