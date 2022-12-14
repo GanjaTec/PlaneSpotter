@@ -16,6 +16,7 @@ import planespotter.util.Utilities;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -51,13 +52,20 @@ public class FileWizard {
         return fileWizard;
     }
 
+    public String readText(@NotNull File file) throws IOException {
+        try (FileInputStream in = new FileInputStream(file)) {
+
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
     /**
-     * writes all {@link planespotter.model.ConnectionManager.Connection}s from a given {@link ConnectionManager}
+     * writes all {@link ConnectionManager.ConnectionSource}s from a given {@link ConnectionManager}
      * to {@link File} with specific name
      *
      * @param filename is the filename for the connections-file (must end with '.psc')
      * @param cManager is the {@link ConnectionManager} where the
-     *                 {@link planespotter.model.ConnectionManager.Connection}s are from
+     *                 {@link ConnectionManager.ConnectionSource}s are from
      * @throws IOException if an error occurs during the write operation
      * @throws ExtensionException if the file name has the wrong file extension
      */
@@ -68,12 +76,12 @@ public class FileWizard {
     }
 
     /**
-     * writes all {@link planespotter.model.ConnectionManager.Connection}s from a given {@link ConnectionManager}
+     * writes all {@link ConnectionManager.ConnectionSource}s from a given {@link ConnectionManager}
      * to {@link File} with specific name
      *
      * @param file is the connections-{@link File} (name must end with '.psc')
      * @param cManager is the {@link ConnectionManager} where the
-     *                 {@link planespotter.model.ConnectionManager.Connection}s are from
+     *                 {@link ConnectionManager.ConnectionSource}s are from
      * @throws IOException if an error occurs during the write operation
      * @throws ExtensionException if the file name has the wrong file extension
      */
@@ -85,33 +93,33 @@ public class FileWizard {
         }
         try (Writer fw = new FileWriter(file);
              BufferedWriter buf = new BufferedWriter(fw)) {
-            for (ConnectionManager.Connection conn : cManager.getConnections()) {
+            for (ConnectionManager.ConnectionSource conn : cManager.getConnections()) {
                 buf.write(conn.name + ": " + conn.uri + ": " + conn.isMixWithFr24() + "\n");
             }
         }
     }
 
     /**
-     * reads a connection-{@link File} to a map of {@link planespotter.model.ConnectionManager.Connection} names,
-     * paired with the {@link planespotter.model.ConnectionManager.Connection}s itself
+     * reads a connection-{@link File} to a map of {@link ConnectionManager.ConnectionSource} names,
+     * paired with the {@link ConnectionManager.ConnectionSource}s itself
      *
      * @param filename is the filename for the connections-{@link File} (must end with '.psc')
      * @return {@link Map} of Connection names and Connections
      * @throws IOException if an error occurs during the writing process
      */
-    public Map<String, ConnectionManager.Connection> readConnections(@NotNull String filename) throws IOException {
+    public Map<String, ConnectionManager.ConnectionSource> readConnections(@NotNull String filename) throws IOException {
         return readConnections(new File(filename));
     }
 
     /**
-     * reads a connection-{@link File} to a map of {@link planespotter.model.ConnectionManager.Connection} names,
-     * paired with the {@link planespotter.model.ConnectionManager.Connection}s itself
+     * reads a connection-{@link File} to a map of {@link ConnectionManager.ConnectionSource} names,
+     * paired with the {@link ConnectionManager.ConnectionSource}s itself
      *
      * @param file is the connections-{@link File} (name must end with '.psc')
      * @return {@link Map} of Connection names and Connections
      * @throws IOException if an error occurs during the writing process
      */
-    public Map<String, ConnectionManager.Connection> readConnections(@NotNull File file) throws IOException {
+    public Map<String, ConnectionManager.ConnectionSource> readConnections(@NotNull File file) throws IOException {
         if (!file.exists()) {
             throw new FileNotFoundException("File '" + file.getName() + "' not found!");
         }
@@ -121,7 +129,7 @@ public class FileWizard {
                     .filter(line -> !line.isBlank() && line.contains(": "))
                     .map(line -> line.split(": "))
                     .filter(arr -> arr.length == 3)
-                    .collect(Collectors.toMap(arr -> arr[0], arr -> new ConnectionManager.Connection(arr[0], arr[1], Boolean.parseBoolean(arr[2]))));
+                    .collect(Collectors.toMap(arr -> arr[0], arr -> new ConnectionManager.ConnectionSource(arr[0], arr[1], Boolean.parseBoolean(arr[2]))));
         } catch (ArrayIndexOutOfBoundsException aioob) {
             throw new InvalidDataException("Couldn't read config file!");
         }

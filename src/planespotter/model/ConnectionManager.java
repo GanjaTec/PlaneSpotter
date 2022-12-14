@@ -18,22 +18,22 @@ import java.util.Map;
  * @version 1.0
  *
  * @description
- * The {@link ConnectionManager} class represents a Manager, that holds all {@link Connection}s,
+ * The {@link ConnectionManager} class represents a Manager, that holds all {@link ConnectionSource}s,
  * which are created by the user and contains functions to manage them
  */
 public class ConnectionManager {
 
     // map for all connections with custom as key
-    @NotNull private final Map<String, Connection> connections;
+    @NotNull private final Map<String, ConnectionSource> connections;
 
     // current selected conn
-    @Nullable private Connection selectedConn;
+    @Nullable private ConnectionManager.ConnectionSource selectedConn;
 
     /**
      * constructs a new {@link ConnectionManager} with an empty connection map
      */
     public ConnectionManager(@Nullable String filename) {
-        Map<String, Connection> cons;
+        Map<String, ConnectionSource> cons;
         if (filename == null || filename.isBlank()) {
             cons = new HashMap<>(0);
         } else {
@@ -49,7 +49,7 @@ public class ConnectionManager {
     }
 
     /**
-     * adds a {@link Connection} with custom name
+     * adds a {@link ConnectionSource} with custom name
      * and {@link URI} to the connection map
      *
      * @param key is the connection name, must be unique
@@ -60,12 +60,12 @@ public class ConnectionManager {
     public void add(@NotNull String key, @NotNull URI uri) throws KeyCheckFailedException, IllegalInputException {
         checkKey(key);
         Utilities.checkUri(uri);
-        Connection conn = new Connection(key, uri, false);
+        ConnectionSource conn = new ConnectionSource(key, uri, false);
         connections.put(conn.name, conn);
     }
 
     /**
-     * adds a {@link Connection} with custom name
+     * adds a {@link ConnectionSource} with custom name
      * and URI-String where an {@link URI} is created from,
      * to the connection map
      *
@@ -78,7 +78,7 @@ public class ConnectionManager {
     }
 
     /**
-     * adds a new {@link Connection} to the connections map
+     * adds a new {@link ConnectionSource} to the connections map
      *
      * @param key is the connection key, must be unique
      * @param host is the connection host, must not be blank
@@ -93,27 +93,27 @@ public class ConnectionManager {
     }
 
     /**
-     * gets a {@link Connection} from the connection map by key
+     * gets a {@link ConnectionSource} from the connection map by key
      *
      * @param key is the key {@link String}
-     * @return Connection with the specified key or null, if no {@link Connection} exists for this key
+     * @return Connection with the specified key or null, if no {@link ConnectionSource} exists for this key
      */
     @Nullable
-    public Connection get(@NotNull String key) {
+    public ConnectionManager.ConnectionSource get(@NotNull String key) {
         return connections.get(key);
     }
 
     /**
-     * sets the current selected {@link Connection}
+     * sets the current selected {@link ConnectionSource}
      *
-     * @param selected is the current selected {@link Connection}, nullable
+     * @param selected is the current selected {@link ConnectionSource}, nullable
      */
     public void setSelectedConn(@Nullable String selected) {
         selectedConn = selected == null ? null : get(selected);
     }
 
     /**
-     * removes a {@link Connection} from the connection map
+     * removes a {@link ConnectionSource} from the connection map
      *
      * @param key is the key to remove
      */
@@ -143,22 +143,22 @@ public class ConnectionManager {
     }
 
     /**
-     * getter for all {@link Connection} in a {@link Collection}
+     * getter for all {@link ConnectionSource} in a {@link Collection}
      *
-     * @return {@link Collection} of {@link Connection}s, the connection map values
+     * @return {@link Collection} of {@link ConnectionSource}s, the connection map values
      */
     @NotNull
-    public Collection<Connection> getConnections() {
+    public Collection<ConnectionSource> getConnections() {
         return connections.values();
     }
 
     /**
-     * getter for the current selected {@link Connection}
+     * getter for the current selected {@link ConnectionSource}
      *
-     * @return the current selected {@link Connection} or null if there is no
+     * @return the current selected {@link ConnectionSource} or null if there is no
      */
     @Nullable
-    public Connection getSelectedConn() {
+    public ConnectionManager.ConnectionSource getSelectedConn() {
         return selectedConn;
     }
 
@@ -169,7 +169,7 @@ public class ConnectionManager {
      * @description
      * The connection class represents a Connection with custom name and {@link URI}
      */
-    public static class Connection {
+    public static class ConnectionSource {
 
         // connection name (unique)
         @NotNull public final String name;
@@ -184,36 +184,36 @@ public class ConnectionManager {
         private transient boolean connected;
 
         /**
-         * constructs a new {@link Connection}
+         * constructs a new {@link ConnectionSource}
          *
          * @param name is the connection name
          * @param uri is the conection URI {@link String}
          * @param mixWithFr24 indicates if the ADSB data should be mixed with Fr24 data
          */
-        public Connection(@NotNull String name, @NotNull String uri, boolean mixWithFr24) {
+        public ConnectionSource(@NotNull String name, @NotNull String uri, boolean mixWithFr24) {
             this(name, URI.create(uri), false, mixWithFr24);
         }
 
         /**
-         * constructs a new {@link Connection}
+         * constructs a new {@link ConnectionSource}
          *
          * @param name is the connection name
          * @param uri is the conection URI
          * @param mixWithFr24 indicates if the ADSB data should be mixed with Fr24 data
          */
-        public Connection(@NotNull String name, @NotNull URI uri, boolean mixWithFr24) {
+        public ConnectionSource(@NotNull String name, @NotNull URI uri, boolean mixWithFr24) {
             this(name, uri, false, mixWithFr24);
         }
 
         /**
-         * constructs a new {@link Connection}
+         * constructs a new {@link ConnectionSource}
          *
          * @param name is the connection name
          * @param uri is the conection URI
-         * @param connected indicates if the {@link Connection} should be connected directly, usually false
+         * @param connected indicates if the {@link ConnectionSource} should be connected directly, usually false
          * @param mixWithFr24 indicates if the ADSB data should be mixed with Fr24 data
          */
-        public Connection(@NotNull String name, @NotNull URI uri, boolean connected, boolean mixWithFr24) {
+        public ConnectionSource(@NotNull String name, @NotNull URI uri, boolean connected, boolean mixWithFr24) {
             this.name = name;
             this.uri = uri;
             this.connected = connected;
@@ -221,9 +221,9 @@ public class ConnectionManager {
         }
 
         /**
-         * sets a {@link Connection} connected
+         * sets a {@link ConnectionSource} connected
          *
-         * @param c indicates if the {@link Connection} should be connected
+         * @param c indicates if the {@link ConnectionSource} should be connected
          */
         public void setConnected(boolean c) {
             connected = c;
@@ -232,7 +232,7 @@ public class ConnectionManager {
         /**
          * getter for 'connected' flag
          *
-         * @return true if this {@link Connection} is connected
+         * @return true if this {@link ConnectionSource} is connected
          */
         public boolean isConnected() {
             return connected;

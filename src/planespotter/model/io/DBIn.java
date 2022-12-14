@@ -153,13 +153,13 @@ public final class DBIn extends DBConnector {
 	 */
 	@NotNull
 	public synchronized CompletableFuture<Void> insertRemaining(@NotNull final Scheduler scheduler, @NotNull DataLoader dataLoader)
-			throws NoAccessException, EmptyQueueException {
+			throws NoAccessException {
 		if (!enabled) {
 			throw new NoAccessException("DB-Writer is disabled!");
 		}
 		Stream<? extends Frame> frames = dataLoader.pollFrames(Integer.MAX_VALUE);
 
-		return scheduler.exec(() -> write(frames), "Inserter", false, Scheduler.HIGH_PRIO, false);
+		return scheduler.exec(() -> write(frames), "Insert Remaining", false, Scheduler.HIGH_PRIO, false);
 
 	}
 

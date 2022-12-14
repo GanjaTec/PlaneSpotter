@@ -77,7 +77,7 @@ public class UserInterface {
         this.mapManager = new MapManager(this, actionHandler, defaultMapSource);
         this.searchPane = new SearchPane(this.layerPane, actionHandler);
         this.settings = new SettingsPane(this.window, actionHandler);
-        this.connectionPane = new ConnectionPane(window, actionHandler, actionHandler, actionHandler, connectionManager);
+        this.connectionPane = new ConnectionPane(window, actionHandler, connectionManager);
         this.window.add(this.layerPane);
 
         this.layerPane.setDefaultBottomComponent(getMap());
@@ -185,6 +185,24 @@ public class UserInterface {
     public String getUserInput(@NotNull String msg, @NotNull Number initValue) {
         String input;
         return (input = JOptionPane.showInputDialog(msg, initValue)) == null ? "" : input;
+    }
+
+    /**
+     * sets the {@link UserInterface} visibility
+     *
+     * @param show indicates if the UI should be shown or not
+     */
+    public void setVisible(boolean show) {
+        getWindow().setVisible(show);
+    }
+
+    /**
+     * getter for {@link UserInterface} visibility
+     *
+     * @return true if the UI is visible, else false
+     */
+    public boolean isVisible() {
+        return getWindow().isVisible();
     }
 
     /**
@@ -404,9 +422,8 @@ public class UserInterface {
                 new JMenuItem("coming soon...")
         };
         JMenuItem[] supplierItems = new JMenuItem[] {
-                new JMenuItem("Fr24-Supplier", Images.PLANE_ICON_16x.get()),
-                new JMenuItem("ADSB-Supplier", Images.PLANE_ICON_16x.get()),
-                new JMenuItem("Antenna", Images.ANTENNA_ICON_16x.get())
+                new JMenuItem("Run Supplier", Images.PLANE_ICON_16x.get()),
+                new JMenuItem("Source Manager", ANTENNA_ICON_16x.get())
         };
         Font font = UserInterface.DEFAULT_FONT.deriveFont(13f);
 

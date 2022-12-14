@@ -18,6 +18,7 @@ import planespotter.display.StatsView;
 import planespotter.display.TreasureMap;
 import planespotter.display.UserInterface;
 import planespotter.display.models.ConnectionPane;
+import planespotter.display.models.TextDialog;
 import planespotter.model.*;
 import planespotter.model.io.*;
 import planespotter.model.nio.ADSBSupplier;
@@ -197,7 +198,19 @@ public final class Controller implements ExceptionHandler {
         } finally {
             done(true);
         }
-        getUI().getWindow().setVisible(true);
+        getUI().setVisible(true);
+        showLicenseDialog();
+    }
+
+    void showLicenseDialog() {
+        File license = new File(Paths.LICENSE_PATH + "FR24_License.txt");
+        String text;
+        try {
+            text = FileWizard.getFileWizard().readText(license);
+        } catch (IOException e) {
+            text = "Could not read license file!";
+        }
+        TextDialog.showDialog(getUI().getWindow(), text);
     }
 
     /**
@@ -255,10 +268,7 @@ public final class Controller implements ExceptionHandler {
     private void initialize() {
         if (!this.initialized) {
             // trying to add tray icon to system tray
-            Utilities.addTrayIcon(Images.PLANE_ICON_16x.get().getImage(), e -> {
-                JFrame window = getUI().getWindow();
-                window.setVisible(!window.isVisible());
-            });
+            Utilities.addTrayIcon(Images.PLANE_ICON_16x.get().getImage(), e -> ui.setVisible(!ui.isVisible()));
             // testing connections
             try {
                 URL[] urls = new URL[] {
@@ -318,10 +328,10 @@ public final class Controller implements ExceptionHandler {
         }
         // inserting remaining frames, if option is enabled
         DBIn dbIn = DBIn.getDBIn();
-        if (insertRemainingFrames && dbIn.isEnabled()) {
+        if (insertRemainingFrames) {
             try {
                 dbIn.insertRemaining(scheduler, dataLoader);
-            } catch (NoAccessException | EmptyQueueException ignored) {
+            } catch (NoAccessException ignored) {
             }
         }
         // busy-waiting for remaining tasks
@@ -722,18 +732,18 @@ public final class Controller implements ExceptionHandler {
     }
 
     /**
-     * Connects / disconnects a the current selected {@link planespotter.model.ConnectionManager.Connection}
+     * Connects / disconnects a the current selected {@link ConnectionManager.ConnectionSource}
      *
-     * @param connect indicates if a {@link planespotter.model.ConnectionManager.Connection}
+     * @param connect indicates if a {@link ConnectionManager.ConnectionSource}
      *                should be connected or disconnected
      * @param mixWithFr24 indicates if the {@link planespotter.dataclasses.Frame}s, loaded by the
-     *                    {@link planespotter.model.ConnectionManager.Connection} should be
+     *                    {@link ConnectionManager.ConnectionSource} should be
      *                    mixed with {@link Fr24Frame}s
      */
     public void setConnection(boolean connect, boolean mixWithFr24) {
         ActionHandler onAction = ActionHandler.getActionHandler();
         ConnectionManager cmg = getConnectionManager();
-        ConnectionManager.Connection selectedConn = cmg.getSelectedConn();
+        ConnectionManager.ConnectionSource selectedConn = cmg.getSelectedConn();
         try {
             cmg.disconnectAll();
             setAdsbEnabled(connect);
@@ -761,7 +771,7 @@ public final class Controller implements ExceptionHandler {
     }
 
     /**
-     * adds a {@link planespotter.model.ConnectionManager.Connection} to the {@link ConnectionManager}
+     * adds a {@link ConnectionManager.ConnectionSource} to the {@link ConnectionManager}
      *
      * @param connPane is the {@link ConnectionPane} instance
      * @param connList is the {@link JList}, that contains all connections and also the selected one
@@ -814,7 +824,7 @@ public final class Controller implements ExceptionHandler {
     }
 
     /**
-     * removes {@link planespotter.model.ConnectionManager.Connection}s from
+     * removes {@link ConnectionManager.ConnectionSource}s from
      * the {@link ConnectionPane} and the {@link ConnectionManager}
      *
      * @param connList is the {@link JList}, that contains all connections and also the selected one
@@ -833,9 +843,10 @@ public final class Controller implements ExceptionHandler {
         }
         connList.setListData(listData);
 
-        ConnectionManager connMngr = getConnectionManager();
-        connMngr.setSelectedConn(null);
-        selectedValues.forEach(connMngr::remove);
+        connectionManager.setSelectedConn(null);
+        for (String selected : selectedValues) {
+            connectionManager.remove(selected);
+        }
     }
 
     /**
@@ -988,7 +999,7 @@ public final class Controller implements ExceptionHandler {
             ide.printStackTrace();
 
         } else if (thr instanceof ClassNotFoundException cnf) {
-            getUI().showWarning(Warning.UNKNOWN_ERROR, cnf.getMessage());
+            getUI().showWarning(Warning.UNKNOWN_ERROR, cnf + "\n" + cnf.getMessage());
             cnf.printStackTrace();
 
         } else if (thr instanceof NumberFormatException nfe) {
@@ -998,9 +1009,11 @@ public final class Controller implements ExceptionHandler {
             if (frex.getMessage().endsWith("not reachable!")) {
                 getUI().showWarning(Warning.URL_NOT_REACHABLE);
             }
+        } else if (thr instanceof InterruptedException ie) {
+            System.err.println(ie + ": " + ie.getMessage());
 
         } else if (thr != null) {
-            getUI().showWarning(Warning.UNKNOWN_ERROR, thr.getMessage());
+            getUI().showWarning(Warning.UNKNOWN_ERROR, thr + "\n" + thr.getMessage());
             thr.printStackTrace();
         }
     }

@@ -37,6 +37,14 @@ import java.util.stream.Stream;
  */
 public class Fr24Supplier extends HttpSupplier {
 
+	public  static final String FR24_ADDRESS_PATH = "https://data-live.flightradar24.com/zones/fcgi/feed.js";
+
+	// bounds define the visible area on the live map
+	private static final String FR24_QUERY_1 	  = "?faa=1&bounds=";
+
+	// Disable vehicles // Disable gliders and stats // Enabling everything else
+	private static final String FR24_QUERY_2 	  = "&satellite=1&mlat=1&flarm=1&adsb=1&gnd=1&air=1&vehicles=0&estimated=1&maxage=14400&gliders=0&stats=0";
+
 	// class instance fields
 	private final String threadName;
 	private final Area area;
@@ -86,6 +94,10 @@ public class Fr24Supplier extends HttpSupplier {
 		this.deserializer = deserializer;
 	}
 
+	private static URI getRequestURI(@NotNull Area area) {
+		return URI.create(FR24_ADDRESS_PATH + FR24_QUERY_1 + area + FR24_QUERY_2);
+	}
+
 	/**
 	 * Override for the supply method of the Supplier Interface
 	 * prepares and runs the supplier thread
@@ -105,7 +117,7 @@ public class Fr24Supplier extends HttpSupplier {
 			if (onError != null) {
 				onError.handleException(e);
 			} else {
-				System.err.println(e);
+				System.err.println("Unhandled exception occurred during Supplier-Process\n" + e);
 			}
 		}
 	}
@@ -144,22 +156,7 @@ public class Fr24Supplier extends HttpSupplier {
 	@NotNull
 	public HttpResponse<String> sendRequest(int timeoutSec) throws IOException, InterruptedException {
 
-		HttpRequest request = HttpRequest.newBuilder(URI.create("https://data-live.flightradar24.com/zones/fcgi/feed.js?faa=1&"
-				// bounds defines the visible area on the live map, directly linked to planes in the response
-				+ "bounds=" + area + "&"
-				+ "satellite=1&"
-				+ "mlat=1&"
-				+ "flarm=1&"
-				+ "adsb=1&"
-				+ "gnd=1&"
-				+ "air=1&"
-				// Disable vehicles
-				+ "vehicles=0&"
-				+ "estimated=1&"
-				+ "maxage=14400&"
-				// Disable gliders and stats
-				+ "gliders=0&"
-				+ "stats=0"))
+		HttpRequest request = HttpRequest.newBuilder(getRequestURI(area))
 				.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0")
 				.timeout(Duration.ofSeconds(timeoutSec))
 				.build();
@@ -167,7 +164,7 @@ public class Fr24Supplier extends HttpSupplier {
 	}
 	
 	/**
-	 * old method to write json to csv, not longer used but maybe will be in the future
+	 * old method to write json to csv, no longer used but maybe in the future
 	 *
 	 * @deprecated
 	 * 

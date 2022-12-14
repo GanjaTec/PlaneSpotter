@@ -19,7 +19,9 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 import planespotter.constants.Paths;
 import planespotter.dataclasses.Position;
+import planespotter.display.models.TextDialog;
 import planespotter.model.io.DBOut;
+import planespotter.model.io.FileWizard;
 import planespotter.statistics.BitmapCombiner;
 import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
@@ -54,19 +56,8 @@ public class Test {
         double d = 4.20;
         unsafe.putDouble(ptr, d);
         System.out.println(unsafe.getDouble(ptr));*/
-        Object sync = new Object();
-        new Thread(() -> {
-                    System.out.println("Waiting...");
-                    synchronized (sync) {
-                        try {
-                            sync.wait(5000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        System.out.println("Parking...");
-                        getUnsafe().park(true, 5000);
-                    }
-                }, "TestThread-1").start();
+
+
 
        /* Collection<Area> areas = Utilities.calculateInterestingAreas3(10, 10, 0);
         System.out.println("Interesting areas: " + areas.size());*/
