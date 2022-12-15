@@ -4,6 +4,8 @@ import libs.UWPButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.constants.DefaultColor;
+import planespotter.controller.ActionHandler;
+import planespotter.dataclasses.ConnectionSource;
 import planespotter.model.ConnectionManager;
 
 import javax.swing.*;
@@ -38,7 +40,7 @@ public class ConnectionPane extends JDialog {
 
     @NotNull private final AtomicBoolean uriMode;
 
-    public ConnectionPane(@NotNull Frame owner, @NotNull ListSelectionListener onListSelect, @NotNull ActionListener onButtonClick, @NotNull ActionListener onConnectClick, @NotNull ConnectionManager cManager) {
+    public ConnectionPane(@NotNull Frame owner, @NotNull ActionHandler actionHandler, @NotNull ConnectionManager cManager) {
         super(owner, "Connection Manager");
         setLocationRelativeTo(owner);
         setSize(500, 400);
@@ -50,9 +52,9 @@ public class ConnectionPane extends JDialog {
 
         this.uriMode = new AtomicBoolean(true);
 
-        this.connectionList = connectionList(0, 0, 287, 315, onListSelect, cManager);
-        this.connectionPanel = connectionPanel(0, 0, 200, 365, null, onConnectClick);
-        JPanel listOptions = listButtonPanel(200, 0, 287, 50, onButtonClick);
+        this.connectionList = connectionList(0, 0, 287, 315, actionHandler, cManager);
+        this.connectionPanel = connectionPanel(0, 0, 200, 365, null, actionHandler);
+        JPanel listOptions = listButtonPanel(200, 0, 287, 50, actionHandler);
 
         JScrollPane scrollPane = new JScrollPane(this.connectionList, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBounds(200, 50, 287, 315);
@@ -62,7 +64,7 @@ public class ConnectionPane extends JDialog {
         add(connectionPanel);
     }
 
-    public void showConnection(@Nullable ConnectionManager.Connection conn, @NotNull ActionListener onConnectClick) {
+    public void showConnection(@Nullable ConnectionSource conn, @NotNull ActionListener onConnectClick) {
         if (conn == null) {
             connectionList.setSelectedIndices(new int[0]);
         }
@@ -165,7 +167,7 @@ public class ConnectionPane extends JDialog {
     }
 
     @NotNull
-    private JPanel connectionPanel(int x, int y, int width, int height, @Nullable ConnectionManager.Connection conn, @NotNull ActionListener onConnectClick) {
+    private JPanel connectionPanel(int x, int y, int width, int height, @Nullable ConnectionSource conn, @NotNull ActionListener onConnectClick) {
         mixWithFr24 = false;
 
         JPanel panel = new JPanel(null);
@@ -187,7 +189,7 @@ public class ConnectionPane extends JDialog {
             nameLbl.setBounds(10, 20, width-20, 20);
             nameLbl.setForeground(foreground);
 
-            uriLbl = new JLabel("URI: " + conn.uri);
+            uriLbl = new JLabel("Host: " + conn.uri.getHost());
             uriLbl.setBounds(10, 60, width-20, 20);
             uriLbl.setForeground(foreground);
 
@@ -229,7 +231,7 @@ public class ConnectionPane extends JDialog {
         list.addListSelectionListener(onListChange);
         UIManager.put("ToggleButton.select", DefaultColor.DEFAULT_SEARCH_ACCENT_COLOR.get());
         list.setBounds(x, y, width, height);
-        ConnectionManager.Connection selected = cMngr.getSelectedConn();
+        ConnectionSource selected = cMngr.getSelectedConn();
         if (selected != null) {
             list.setSelectedValue(selected.name, true);
         }

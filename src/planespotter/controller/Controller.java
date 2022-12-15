@@ -18,6 +18,7 @@ import planespotter.display.StatsView;
 import planespotter.display.TreasureMap;
 import planespotter.display.UserInterface;
 import planespotter.display.models.ConnectionPane;
+import planespotter.display.models.TextDialog;
 import planespotter.model.*;
 import planespotter.model.io.*;
 import planespotter.model.nio.ADSBSupplier;
@@ -142,9 +143,10 @@ public final class Controller implements ExceptionHandler {
         this.dataLoader = new DataLoader();
         this.search = new Search();
         this.connectionManager = new ConnectionManager(Configuration.CONNECTIONS_FILENAME);
+        FileWizard fileWizard = FileWizard.getFileWizard();
         this.ui = new UserInterface(ActionHandler.getActionHandler(),
-                                    (TileSource) config.getProperty("currentMapSource"),
-                                    (String) config.getProperty("title"),
+                                    fileWizard.translateSource((String) config.getProperty("currentMapSource").val),
+                                    (String) config.getProperty("title").val,
                                     this.connectionManager);
         this.clicking = false;
         this.terminated = false;
@@ -197,7 +199,19 @@ public final class Controller implements ExceptionHandler {
         } finally {
             done(true);
         }
-        getUI().getWindow().setVisible(true);
+        getUI().setVisible(true);
+        showLicenseDialog();
+    }
+
+    void showLicenseDialog() {
+        File license = new File(Paths.LICENSE_PATH + "FR24_License.txt");
+        String text;
+        try {
+            text = FileWizard.getFileWizard().readText(license);
+        } catch (IOException e) {
+            text = "Could not read license file!";
+        }
+        TextDialog.showDialog(getUI().getWindow(), text);
     }
 
     /**
@@ -216,28 +230,36 @@ public final class Controller implements ExceptionHandler {
         config.setProperty("fr24RequestUri", "https://data-live.flightradar24.com/");
         config.setProperty("bingMap", new BingAerialTileSource());
         config.setProperty("transportMap", new OsmTileSource.TransportMap());
-        config.setProperty("openStreetMap", new TMSTileSource(new TileSourceInfo("OSM", (String) config.getProperty("mapBaseUrl"), "0")));
+        config.setProperty("openStreetMap", new TMSTileSource(new TileSourceInfo("OSM", (String) config.getProperty("mapBaseUrl").val, "0")));
 
+        // test only
         config.setProperty("receiverRequestUri", "http://192.168.178.47:8080/data/receiver.json");
 
         // initializing user properties
         FileWizard fileWizard = FileWizard.getFileWizard();
-        Object[] values = null;
+        Configuration.Property[] props = null;
         try {
-            values = fileWizard.readConfig(Configuration.CONFIG_FILENAME);
+            props = fileWizard.readConfig(new File(Configuration.CONFIG_FILENAME));
+            props = Arrays.stream(props)
+                    .map(p -> p.val instanceof Double d ? new Configuration.Property(p.key, d.intValue()) : p)
+                    .peek(p -> System.out.println(p.key + ": " + p.val)) // print
+                    .toArray(Configuration.Property[]::new);
 
         } catch (Exception e) {
             // catching all exceptions here to prevent ExceptionInInitializerError
             // printing stack trace for full exception information
             e.printStackTrace();
         } finally {
-            if (values == null || values.length != 4) {
-                values = new Object[] {50000, TreasureMap.OPEN_STREET_MAP, 6, 12};
+            if (props == null || props.length != 4) {
+                props = new Configuration.Property[] {
+                        new Configuration.Property("dataLimit", 50000),
+                        new Configuration.Property("currentMapSource", "OSM"),
+                        new Configuration.Property("gridSizeLat", 6),
+                        new Configuration.Property("gridSizeLon", 12)};
             }
-            config.setProperty("dataLimit", values[0]);
-            config.setProperty("currentMapSource", values[1]);
-            config.setProperty("gridSizeLat", values[2]);
-            config.setProperty("gridSizeLon", values[3]);
+            for (Configuration.Property prop : props) {
+                config.setProperty(prop);
+            }
         }
 
         // should also be saved in 'filters.psc', not static
@@ -255,15 +277,12 @@ public final class Controller implements ExceptionHandler {
     private void initialize() {
         if (!this.initialized) {
             // trying to add tray icon to system tray
-            Utilities.addTrayIcon(Images.PLANE_ICON_16x.get().getImage(), e -> {
-                JFrame window = getUI().getWindow();
-                window.setVisible(!window.isVisible());
-            });
+            Utilities.addTrayIcon(Images.PLANE_ICON_16x.get().getImage(), e -> ui.setVisible(!ui.isVisible()));
             // testing connections
             try {
                 URL[] urls = new URL[] {
-                        new URL((String) config.getProperty("fr24RequestUri")),
-                        new URL((String) config.getProperty("mapBaseUrl"))
+                        new URL((String) config.getProperty("fr24RequestUri").val),
+                        new URL((String) config.getProperty("mapBaseUrl").val)
                 };
                 Utilities.connectionPreCheck(2000, urls);
             } catch (IOException | Fr24Exception e) {
@@ -303,8 +322,8 @@ public final class Controller implements ExceptionHandler {
         // saving the configuration in 'config.psc'
         FileWizard fileWizard = FileWizard.getFileWizard();
         try {
-            fileWizard.writeConfig(config, Configuration.CONFIG_FILENAME);
-        } catch (IOException ioe) {
+            fileWizard.writeConfig(config, new File(Configuration.CONFIG_FILENAME));
+        } catch (IOException | ExtensionException ioe) {
             handleException(ioe);
         }
         try {
@@ -313,15 +332,15 @@ public final class Controller implements ExceptionHandler {
             handleException(e);
         }
         // saving log, if option is enabled
-        if ((boolean) getConfig().getProperty("saveLogs")) {
+        if ((boolean) getConfig().getProperty("saveLogs").val) {
             fileWizard.saveLogFile("a_log", "[DEBUG] No output text yet...");
         }
         // inserting remaining frames, if option is enabled
         DBIn dbIn = DBIn.getDBIn();
-        if (insertRemainingFrames && dbIn.isEnabled()) {
+        if (insertRemainingFrames) {
             try {
                 dbIn.insertRemaining(scheduler, dataLoader);
-            } catch (NoAccessException | EmptyQueueException ignored) {
+            } catch (NoAccessException ignored) {
             }
         }
         // busy-waiting for remaining tasks
@@ -512,12 +531,12 @@ public final class Controller implements ExceptionHandler {
             dataLimit = Integer.parseInt(data[0]);
             getConfig().setProperty("dataLimit", dataLimit);
             // data[1]
+            getConfig().setProperty("currentMapSource", data[1]);
             currentMapSource = switch (data[1]) {
                 case "Bing Map" -> TreasureMap.BING_MAP;
                 case "Transport Map" -> TreasureMap.TRANSPORT_MAP;
                 default /*"Open Street Map"*/ -> TreasureMap.OPEN_STREET_MAP;
             };
-            getConfig().setProperty("currentMapSource", currentMapSource);
             getUI().getMap().setTileSource(currentMapSource);
             // data[2]
             livePeriod = Integer.parseInt(data[2]) * 1000;
@@ -722,18 +741,18 @@ public final class Controller implements ExceptionHandler {
     }
 
     /**
-     * Connects / disconnects a the current selected {@link planespotter.model.ConnectionManager.Connection}
+     * Connects / disconnects a the current selected {@link ConnectionSource}
      *
-     * @param connect indicates if a {@link planespotter.model.ConnectionManager.Connection}
+     * @param connect indicates if a {@link ConnectionSource}
      *                should be connected or disconnected
      * @param mixWithFr24 indicates if the {@link planespotter.dataclasses.Frame}s, loaded by the
-     *                    {@link planespotter.model.ConnectionManager.Connection} should be
+     *                    {@link ConnectionSource} should be
      *                    mixed with {@link Fr24Frame}s
      */
     public void setConnection(boolean connect, boolean mixWithFr24) {
         ActionHandler onAction = ActionHandler.getActionHandler();
         ConnectionManager cmg = getConnectionManager();
-        ConnectionManager.Connection selectedConn = cmg.getSelectedConn();
+        ConnectionSource selectedConn = cmg.getSelectedConn();
         try {
             cmg.disconnectAll();
             setAdsbEnabled(connect);
@@ -761,7 +780,7 @@ public final class Controller implements ExceptionHandler {
     }
 
     /**
-     * adds a {@link planespotter.model.ConnectionManager.Connection} to the {@link ConnectionManager}
+     * adds a {@link ConnectionSource} to the {@link ConnectionManager}
      *
      * @param connPane is the {@link ConnectionPane} instance
      * @param connList is the {@link JList}, that contains all connections and also the selected one
@@ -814,7 +833,7 @@ public final class Controller implements ExceptionHandler {
     }
 
     /**
-     * removes {@link planespotter.model.ConnectionManager.Connection}s from
+     * removes {@link ConnectionSource}s from
      * the {@link ConnectionPane} and the {@link ConnectionManager}
      *
      * @param connList is the {@link JList}, that contains all connections and also the selected one
@@ -833,9 +852,10 @@ public final class Controller implements ExceptionHandler {
         }
         connList.setListData(listData);
 
-        ConnectionManager connMngr = getConnectionManager();
-        connMngr.setSelectedConn(null);
-        selectedValues.forEach(connMngr::remove);
+        connectionManager.setSelectedConn(null);
+        for (String selected : selectedValues) {
+            connectionManager.remove(selected);
+        }
     }
 
     /**
@@ -988,7 +1008,7 @@ public final class Controller implements ExceptionHandler {
             ide.printStackTrace();
 
         } else if (thr instanceof ClassNotFoundException cnf) {
-            getUI().showWarning(Warning.UNKNOWN_ERROR, cnf.getMessage());
+            getUI().showWarning(Warning.UNKNOWN_ERROR, cnf + "\n" + cnf.getMessage());
             cnf.printStackTrace();
 
         } else if (thr instanceof NumberFormatException nfe) {
@@ -998,9 +1018,11 @@ public final class Controller implements ExceptionHandler {
             if (frex.getMessage().endsWith("not reachable!")) {
                 getUI().showWarning(Warning.URL_NOT_REACHABLE);
             }
+        } else if (thr instanceof InterruptedException ie) {
+            System.err.println(ie + ": " + ie.getMessage());
 
         } else if (thr != null) {
-            getUI().showWarning(Warning.UNKNOWN_ERROR, thr.getMessage());
+            getUI().showWarning(Warning.UNKNOWN_ERROR, thr + "\n" + thr.getMessage());
             thr.printStackTrace();
         }
     }

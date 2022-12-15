@@ -10,6 +10,10 @@ import jcuda.runtime.JCuda;
 import jcuda.runtime.cudaMemcpyKind;
 */
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import jcuda.driver.*;
 import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartFactory;
@@ -18,6 +22,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 import planespotter.constants.Paths;
+import planespotter.dataclasses.ConnectionSource;
 import planespotter.dataclasses.Position;
 import planespotter.model.io.DBOut;
 import planespotter.statistics.BitmapCombiner;
@@ -37,11 +42,14 @@ import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
+import java.util.List;
 
 @GitIgnore
 @TestOnly
@@ -54,19 +62,8 @@ public class Test {
         double d = 4.20;
         unsafe.putDouble(ptr, d);
         System.out.println(unsafe.getDouble(ptr));*/
-        Object sync = new Object();
-        new Thread(() -> {
-                    System.out.println("Waiting...");
-                    synchronized (sync) {
-                        try {
-                            sync.wait(5000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        System.out.println("Parking...");
-                        getUnsafe().park(true, 5000);
-                    }
-                }, "TestThread-1").start();
+
+
 
        /* Collection<Area> areas = Utilities.calculateInterestingAreas3(10, 10, 0);
         System.out.println("Interesting areas: " + areas.size());*/

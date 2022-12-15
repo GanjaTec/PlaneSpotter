@@ -98,7 +98,7 @@ public final class Fr24Collector extends Collector<Fr24Supplier> {
                 : WindowConstants.DISPOSE_ON_CLOSE;
         super.display = new SupplierDisplay(closeOperation, onPause(), onStartStop());
         this.filterManager = withFilters
-                ? (FilterManager) Controller.getInstance().getConfig().getProperty("collectorFilters")
+                ? (FilterManager) Controller.getInstance().getConfig().getProperty("collectorFilters").val
                 : null;
         this.dataLoader = super.supplier.getDataLoader();
         this.inserter = new Inserter(this.dataLoader, super.getErrorQueue(), insertMode);

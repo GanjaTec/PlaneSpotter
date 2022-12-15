@@ -43,6 +43,12 @@ public final class Paths {
     public static final String LIBS_PATH = SRC_PATH + "libs\\";
 
     /**
+     * license-path
+     * contains all license files
+     */
+    public static final String LICENSE_PATH = SRC_PATH + "license\\";
+
+    /**
      * code path
      * contains all project code
      */

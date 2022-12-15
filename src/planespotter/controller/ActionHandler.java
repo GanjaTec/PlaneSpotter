@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import planespotter.constants.SearchType;
 import planespotter.constants.ViewType;
-import planespotter.constants.Warning;
+import planespotter.dataclasses.ConnectionSource;
 import planespotter.dataclasses.Hotkey;
 import planespotter.display.StatsView;
 import planespotter.display.UserInterface;
@@ -71,7 +71,7 @@ public final class ActionHandler
 
         // shift S / default search hotkey
         shiftSAction = () -> getActionHandler().menuClicked(new JMenu("Search"));
-        initKeys.put(new Hotkey(VK_S, true, false, false), shiftSAction);
+        initKeys.put(new Hotkey(VK_S, false, true, false), shiftSAction);
         // F11 / default fullscreen hotkey
         f11Action = () -> getActionHandler().menuItemClicked(Controller.getInstance(), new JMenuItem("Fullscreen"));
         initKeys.put(new Hotkey(VK_F11, false, false, false), f11Action);
@@ -248,7 +248,7 @@ public final class ActionHandler
             case "Save As" -> ctrl.saveSelectedFile();
             case "Fullscreen" -> ui.setFullScreen(!ui.isFullScreen());
             case "Exit" -> ctrl.shutdown(false);
-            case "Fr24-Supplier" -> {
+            case "Run Supplier" -> {
                 int option = JOptionPane.showOptionDialog(ctrl.getUI().getWindow(),
                         "Please choose an insert-mode",
                         "Insert Mode", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
@@ -256,9 +256,12 @@ public final class ActionHandler
                 if (option == JOptionPane.CLOSED_OPTION) {
                     return;
                 }
+                if (ctrl.isFr24Enabled()) {
+                    ctrl.showLicenseDialog();
+                }
                 ctrl.runCollector();
             }
-            case "ADSB-Supplier" -> ctrl.showConnectionManager();
+            case "Source Manager" -> ctrl.showConnectionManager();
             // TODO: 25.08.2022 ctrl.showStats(ViewType type)
             case "Top-Airports" -> {
                 try {
@@ -275,8 +278,6 @@ public final class ActionHandler
                 }
             }
             case "Position-HeatMap" -> ctrl.show(ViewType.MAP_HEATMAP);
-
-            case "Antenna" -> ui.showWarning(Warning.NOT_SUPPORTED_YET);
         }
     }
 
@@ -407,7 +408,7 @@ public final class ActionHandler
     @Override
     public synchronized void valueChanged(ListSelectionEvent e) {
         Controller ctrl = Controller.getInstance();
-        ConnectionManager.Connection conn; ConnectionManager connMngr;
+        ConnectionSource conn; ConnectionManager connMngr;
         if (e.getSource() instanceof JList<?> jlist) {
                 String selectedItem = (String) jlist.getSelectedValue();
                 connMngr = ctrl.getConnectionManager();
