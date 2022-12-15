@@ -2,10 +2,7 @@ package planespotter.constants;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @name Configuration
@@ -17,33 +14,51 @@ import java.util.Set;
  */
 public final class Configuration {
 
-    public static final String CONFIG_FILENAME = Paths.RESOURCE_PATH + "config.psc";
+    public static final String CONFIG_FILENAME = Paths.RESOURCE_PATH + "config.json";
 
     public static final String FILTERS_FILENAME = Paths.RESOURCE_PATH + "filters.psc";
 
     public static final String CONNECTIONS_FILENAME = Paths.RESOURCE_PATH + "connections.json";
 
-    private final Map<String, Object> props = new HashMap<>();
+    private final Map<String, Property> props = new HashMap<>();
 
     @NotNull
-    public Object getProperty(@NotNull String key) {
-        Object get;
+    public Property getProperty(@NotNull String key) {
+        Property get;
         if ((get = props.get(key)) == null) {
             throw new NullPointerException("No value found!");
         }
         return get;
     }
 
+    public void setProperty(@NotNull Property property) {
+        props.put(property.key, property);
+    }
+
     public void setProperty(@NotNull String key, @NotNull Object value) {
-        props.put(key, value);
+        setProperty(new Property(key, value));
     }
 
     @NotNull
-    public List<Map.Entry<String, Object>> getUserProperties() {
-        Set<String> userKeys = Set.of("dataLimit", "currentMapSource", "gridSizeLat", "gridSizeLon");
-        return props.entrySet()
-                .stream()
-                .filter(entry -> userKeys.contains(entry.getKey()))
-                .toList();
+    public Property[] getUserProperties() {
+        // FIXME: 15.12.2022 zahlen werden plötzlich als double gespeichert
+        return new Property[] {
+                props.get("dataLimit"),
+                props.get("currentMapSource"),
+                props.get("gridSizeLat"),
+                props.get("gridSizeLon")
+        };
     }
+
+    public static class Property {
+
+        public final String key;
+        public final Object val;
+
+        public Property(@NotNull String key, @NotNull Object val) {
+            this.key = key;
+            this.val = val;
+        }
+    }
+
 }

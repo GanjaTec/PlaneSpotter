@@ -1,6 +1,7 @@
 package planespotter.model.io;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -23,11 +24,8 @@ import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @name FileWizard
@@ -67,11 +65,29 @@ public class FileWizard {
         }
     }
 
-    public void writeConsJson(@NotNull String filename, @NotNull ConnectionManager cmng) throws IOException, ExtensionException {
-        writeConsJson(new File(filename), cmng);
+    /**
+     * writes all {@link ConnectionSource}s from a given {@link ConnectionManager}
+     * to {@link File} with specific name
+     *
+     * @param filename is the filename for the connections-file (must be '.json' type)
+     * @param cmng is the {@link ConnectionManager} where the {@link ConnectionSource}s are from
+     * @throws IOException if an error occurs during the write operation
+     * @throws ExtensionException if the file name has the wrong file extension
+     */
+    public void writeConnections(@NotNull String filename, @NotNull ConnectionManager cmng) throws IOException, ExtensionException {
+        writeConnections(new File(filename), cmng);
     }
 
-    public void writeConsJson(@NotNull File file, @NotNull ConnectionManager cmng) throws IOException, ExtensionException {
+    /**
+     * writes all {@link ConnectionSource}s from a given {@link ConnectionManager}
+     * to {@link File} with specific name
+     *
+     * @param file is the connections file (must be '.json' type)
+     * @param cmng is the {@link ConnectionManager} where the {@link ConnectionSource}s are from
+     * @throws IOException if an error occurs during the write operation
+     * @throws ExtensionException if the file name has the wrong file extension
+     */
+    public void writeConnections(@NotNull File file, @NotNull ConnectionManager cmng) throws IOException, ExtensionException {
         if (!file.getName().endsWith(".json")) {
             throw new ExtensionException("Only '.json' files allowed!");
         }
@@ -91,11 +107,27 @@ public class FileWizard {
         }
     }
 
-    public Map<String, ConnectionSource> readConsJson(@NotNull String filename) throws IOException, ExtensionException {
-        return readConsJson(new File(filename));
+    /**
+     * reads a connection-{@link File} to a map of {@link ConnectionSource} names,
+     * paired with the {@link ConnectionSource}s itself
+     *
+     * @param filename is the filename for the connections-{@link File} (must end with '.psc')
+     * @return {@link Map} of Connection names and Connections
+     * @throws IOException if an error occurs during the writing process
+     */
+    public Map<String, ConnectionSource> readConnections(@NotNull String filename) throws IOException, ExtensionException {
+        return readConnections(new File(filename));
     }
 
-    public Map<String, ConnectionSource> readConsJson(@NotNull File file) throws IOException, ExtensionException {
+    /**
+     * reads a connection-{@link File} to a map of {@link ConnectionSource} names,
+     * paired with the {@link ConnectionSource}s itself
+     *
+     * @param file is the connections-{@link File} (name must end with '.psc')
+     * @return {@link Map} of Connection names and Connections
+     * @throws IOException if an error occurs during the writing process
+     */
+    public Map<String, ConnectionSource> readConnections(@NotNull File file) throws IOException, ExtensionException {
         if (!file.getName().endsWith(".json")) {
             throw new ExtensionException("Only '.json' files allowed!");
         }
@@ -120,86 +152,6 @@ tc:     try (JsonReader reader = new JsonReader(new FileReader(file))) {
     }
 
     /**
-     * writes all {@link ConnectionSource}s from a given {@link ConnectionManager}
-     * to {@link File} with specific name
-     *
-     * @param filename is the filename for the connections-file (must end with '.psc')
-     * @param cManager is the {@link ConnectionManager} where the
-     *                 {@link ConnectionSource}s are from
-     * @throws IOException if an error occurs during the write operation
-     * @throws ExtensionException if the file name has the wrong file extension
-     */
-    @Deprecated(since = "json")
-    public void writeConnections(@NotNull String filename, @NotNull ConnectionManager cManager)
-            throws IOException, ExtensionException {
-
-        writeConnections(new File(filename), cManager);
-    }
-
-    /**
-     * writes all {@link ConnectionSource}s from a given {@link ConnectionManager}
-     * to {@link File} with specific name
-     *
-     * @param file is the connections-{@link File} (name must end with '.psc')
-     * @param cManager is the {@link ConnectionManager} where the
-     *                 {@link ConnectionSource}s are from
-     * @throws IOException if an error occurs during the write operation
-     * @throws ExtensionException if the file name has the wrong file extension
-     */
-    @Deprecated(since = "json")
-    public void writeConnections(@NotNull File file, @NotNull ConnectionManager cManager)
-            throws IOException, ExtensionException {
-
-        if (!file.getName().endsWith(".psc")) {
-            throw new ExtensionException("Only '.psc' extension allowed for connection file!");
-        }
-        try (Writer fw = new FileWriter(file);
-             BufferedWriter buf = new BufferedWriter(fw)) {
-            for (ConnectionSource conn : cManager.getConnections()) {
-                buf.write(conn.name + ": " + conn.uri + ": " + conn.isMixWithFr24() + "\n");
-            }
-        }
-    }
-
-    /**
-     * reads a connection-{@link File} to a map of {@link ConnectionSource} names,
-     * paired with the {@link ConnectionSource}s itself
-     *
-     * @param filename is the filename for the connections-{@link File} (must end with '.psc')
-     * @return {@link Map} of Connection names and Connections
-     * @throws IOException if an error occurs during the writing process
-     */
-    @Deprecated(since = "json")
-    public Map<String, ConnectionSource> readConnections(@NotNull String filename) throws IOException {
-        return readConnections(new File(filename));
-    }
-
-    /**
-     * reads a connection-{@link File} to a map of {@link ConnectionSource} names,
-     * paired with the {@link ConnectionSource}s itself
-     *
-     * @param file is the connections-{@link File} (name must end with '.psc')
-     * @return {@link Map} of Connection names and Connections
-     * @throws IOException if an error occurs during the writing process
-     */
-    @Deprecated(since = "json")
-    public Map<String, ConnectionSource> readConnections(@NotNull File file) throws IOException {
-        if (!file.exists()) {
-            throw new FileNotFoundException("File '" + file.getName() + "' not found!");
-        }
-        try (Reader fr = new FileReader(file);
-             BufferedReader buf = new BufferedReader(fr)) {
-            return buf.lines()
-                    .filter(line -> !line.isBlank() && line.contains(": "))
-                    .map(line -> line.split(": "))
-                    .filter(arr -> arr.length == 3)
-                    .collect(Collectors.toMap(arr -> arr[0], arr -> new ConnectionSource(arr[0], arr[1], Boolean.parseBoolean(arr[2]))));
-        } catch (ArrayIndexOutOfBoundsException aioob) {
-            throw new InvalidDataException("Couldn't read config file!");
-        }
-    }
-
-    /**
      * writes any type of image to a specific '.bmp' (bitmap) file
      *
      * @param img is the {@link Image} to be written
@@ -209,6 +161,49 @@ tc:     try (JsonReader reader = new JsonReader(new FileReader(file))) {
      */
     public void writeBitmapImg(@NotNull Image img, int imgType, @NotNull File file) throws IOException {
         ImageIO.write(Utilities.createBufferedImage(img, imgType), "BMP", file);
+    }
+
+    public void writeConfig(@NotNull Configuration config, @NotNull File file) throws IOException, ExtensionException {
+        if (!file.getName().endsWith(".json")) {
+            throw new ExtensionException("config file must end with '.json'");
+        }
+        Configuration.Property[] props = config.getUserProperties(); // length always 4
+        try (FileWriter fw = new FileWriter(file);
+             JsonWriter jw = new JsonWriter(fw)) {
+            jw.beginArray()
+                    .beginObject()
+                    .name("key").value(props[0].key)
+                    .name("val").value((int) props[0].val)
+                    .endObject().beginObject()
+                    .name("key").value(props[1].key)
+                    .name("val").value(props[1].val.toString())
+                    .endObject().beginObject()
+                    .name("key").value(props[2].key)
+                    .name("val").value((int) props[2].val)
+                    .endObject().beginObject()
+                    .name("key").value(props[3].key)
+                    .name("val").value((int) props[3].val)
+                    .endObject().endArray();
+        }
+    }
+
+    public Configuration.Property[] readConfig(@NotNull File file) throws IOException, ExtensionException {
+        if (!file.getName().endsWith(".json")) {
+            throw new ExtensionException("config file must end with '.json'");
+        }
+        List<Configuration.Property> props = new ArrayList<>();
+        Configuration.Property prop;
+        Gson gson = new Gson();
+        try (FileReader fr = new FileReader(file);
+             JsonReader jr = new JsonReader(fr)) {
+
+            jr.beginArray();
+            while (jr.hasNext()) {
+                prop = gson.fromJson(jr, Configuration.Property.class);
+                props.add(prop);
+            }
+        }
+        return props.toArray(Configuration.Property[]::new);
     }
 
     /**
@@ -230,9 +225,9 @@ tc:     try (JsonReader reader = new JsonReader(new FileReader(file))) {
         try (FileWriter fw = new FileWriter(file);
              BufferedWriter bw = new BufferedWriter(fw)) {
             String key; Object val;
-            for (Map.Entry<String, Object> property : config.getUserProperties()) {
-                key = property.getKey();
-                val = property.getValue();
+            for (Configuration.Property property : config.getUserProperties()) {
+                key = property.key;
+                val = property.val;
                 if (!val.getClass().isPrimitive() && !(val instanceof String)) {
                     throw new NotSerializableException("Cannot serialize the current value: " + val);
                 }
@@ -249,6 +244,7 @@ tc:     try (JsonReader reader = new JsonReader(new FileReader(file))) {
      * @throws ExtensionException if the file name does not end with '.psc'
      * @throws FileNotFoundException if the {@link File} was not found
      */
+    @Deprecated
     @NotNull
     public Object[] readConfig(@NotNull String filename)
             throws ExtensionException, FileNotFoundException, InvalidDataException {

@@ -39,7 +39,7 @@ public class ConnectionManager {
             cons = new HashMap<>(0);
         } else {
             try {
-                cons = FileWizard.getFileWizard().readConsJson(filename);
+                cons = FileWizard.getFileWizard().readConnections(filename);
                 //cons = FileWizard.getFileWizard().readConnections(filename);
             } catch (Throwable e) { // we don't want an exception in initializer
                 e.printStackTrace();

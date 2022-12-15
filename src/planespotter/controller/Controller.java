@@ -143,9 +143,10 @@ public final class Controller implements ExceptionHandler {
         this.dataLoader = new DataLoader();
         this.search = new Search();
         this.connectionManager = new ConnectionManager(Configuration.CONNECTIONS_FILENAME);
+        FileWizard fileWizard = FileWizard.getFileWizard();
         this.ui = new UserInterface(ActionHandler.getActionHandler(),
-                                    (TileSource) config.getProperty("currentMapSource"),
-                                    (String) config.getProperty("title"),
+                                    fileWizard.translateSource((String) config.getProperty("currentMapSource").val),
+                                    (String) config.getProperty("title").val,
                                     this.connectionManager);
         this.clicking = false;
         this.terminated = false;
@@ -229,29 +230,36 @@ public final class Controller implements ExceptionHandler {
         config.setProperty("fr24RequestUri", "https://data-live.flightradar24.com/");
         config.setProperty("bingMap", new BingAerialTileSource());
         config.setProperty("transportMap", new OsmTileSource.TransportMap());
-        config.setProperty("openStreetMap", new TMSTileSource(new TileSourceInfo("OSM", (String) config.getProperty("mapBaseUrl"), "0")));
+        config.setProperty("openStreetMap", new TMSTileSource(new TileSourceInfo("OSM", (String) config.getProperty("mapBaseUrl").val, "0")));
 
         // test only
         config.setProperty("receiverRequestUri", "http://192.168.178.47:8080/data/receiver.json");
 
         // initializing user properties
         FileWizard fileWizard = FileWizard.getFileWizard();
-        Object[] values = null;
+        Configuration.Property[] props = null;
         try {
-            values = fileWizard.readConfig(Configuration.CONFIG_FILENAME);
+            props = fileWizard.readConfig(new File(Configuration.CONFIG_FILENAME));
+            props = Arrays.stream(props)
+                    .map(p -> p.val instanceof Double d ? new Configuration.Property(p.key, d.intValue()) : p)
+                    .peek(p -> System.out.println(p.key + ": " + p.val)) // print
+                    .toArray(Configuration.Property[]::new);
 
         } catch (Exception e) {
             // catching all exceptions here to prevent ExceptionInInitializerError
             // printing stack trace for full exception information
             e.printStackTrace();
         } finally {
-            if (values == null || values.length != 4) {
-                values = new Object[] {50000, TreasureMap.OPEN_STREET_MAP, 6, 12};
+            if (props == null || props.length != 4) {
+                props = new Configuration.Property[] {
+                        new Configuration.Property("dataLimit", 50000),
+                        new Configuration.Property("currentMapSource", "OSM"),
+                        new Configuration.Property("gridSizeLat", 6),
+                        new Configuration.Property("gridSizeLon", 12)};
             }
-            config.setProperty("dataLimit", values[0]);
-            config.setProperty("currentMapSource", values[1]);
-            config.setProperty("gridSizeLat", values[2]);
-            config.setProperty("gridSizeLon", values[3]);
+            for (Configuration.Property prop : props) {
+                config.setProperty(prop);
+            }
         }
 
         // should also be saved in 'filters.psc', not static
@@ -273,8 +281,8 @@ public final class Controller implements ExceptionHandler {
             // testing connections
             try {
                 URL[] urls = new URL[] {
-                        new URL((String) config.getProperty("fr24RequestUri")),
-                        new URL((String) config.getProperty("mapBaseUrl"))
+                        new URL((String) config.getProperty("fr24RequestUri").val),
+                        new URL((String) config.getProperty("mapBaseUrl").val)
                 };
                 Utilities.connectionPreCheck(2000, urls);
             } catch (IOException | Fr24Exception e) {
@@ -314,17 +322,17 @@ public final class Controller implements ExceptionHandler {
         // saving the configuration in 'config.psc'
         FileWizard fileWizard = FileWizard.getFileWizard();
         try {
-            fileWizard.writeConfig(config, Configuration.CONFIG_FILENAME);
-        } catch (IOException ioe) {
+            fileWizard.writeConfig(config, new File(Configuration.CONFIG_FILENAME));
+        } catch (IOException | ExtensionException ioe) {
             handleException(ioe);
         }
         try {
-            fileWizard.writeConsJson(Configuration.CONNECTIONS_FILENAME, getConnectionManager());
+            fileWizard.writeConnections(Configuration.CONNECTIONS_FILENAME, getConnectionManager());
         } catch (IOException | ExtensionException e) {
             handleException(e);
         }
         // saving log, if option is enabled
-        if ((boolean) getConfig().getProperty("saveLogs")) {
+        if ((boolean) getConfig().getProperty("saveLogs").val) {
             fileWizard.saveLogFile("a_log", "[DEBUG] No output text yet...");
         }
         // inserting remaining frames, if option is enabled
@@ -523,12 +531,12 @@ public final class Controller implements ExceptionHandler {
             dataLimit = Integer.parseInt(data[0]);
             getConfig().setProperty("dataLimit", dataLimit);
             // data[1]
+            getConfig().setProperty("currentMapSource", data[1]);
             currentMapSource = switch (data[1]) {
                 case "Bing Map" -> TreasureMap.BING_MAP;
                 case "Transport Map" -> TreasureMap.TRANSPORT_MAP;
                 default /*"Open Street Map"*/ -> TreasureMap.OPEN_STREET_MAP;
             };
-            getConfig().setProperty("currentMapSource", currentMapSource);
             getUI().getMap().setTileSource(currentMapSource);
             // data[2]
             livePeriod = Integer.parseInt(data[2]) * 1000;
