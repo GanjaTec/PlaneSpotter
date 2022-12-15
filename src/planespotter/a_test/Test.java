@@ -10,6 +10,10 @@ import jcuda.runtime.JCuda;
 import jcuda.runtime.cudaMemcpyKind;
 */
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import jcuda.driver.*;
 import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartFactory;
@@ -18,10 +22,9 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 import planespotter.constants.Paths;
+import planespotter.dataclasses.ConnectionSource;
 import planespotter.dataclasses.Position;
-import planespotter.display.models.TextDialog;
 import planespotter.model.io.DBOut;
-import planespotter.model.io.FileWizard;
 import planespotter.statistics.BitmapCombiner;
 import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
@@ -39,11 +42,14 @@ import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
+import java.util.List;
 
 @GitIgnore
 @TestOnly
@@ -57,10 +63,55 @@ public class Test {
         unsafe.putDouble(ptr, d);
         System.out.println(unsafe.getDouble(ptr));*/
 
+        List<ConnectionSource> srcs = new ArrayList<>();
+        Gson gson = new Gson();
+        File file = new File(Paths.RESOURCE_PATH + "test.json");
+        ConnectionSource src;
+        try (JsonReader reader = new JsonReader(new FileReader(file))) {
+            reader.beginArray();
+            while (reader.hasNext()) {
+                try {
+                    src = gson.fromJson(reader, ConnectionSource.class);
+                } catch (JsonSyntaxException je) {
+                    reader.endArray();
+                    System.err.println("Reached end of JsonArray!");
+                    return;
+                }
+                srcs.add(src);
+            }
+            reader.endArray();
+        }
+
+        for (ConnectionSource s : srcs) {
+            System.out.print(s.name);
+            System.out.print("," + s.uri);
+            System.out.print("," + s.isMixWithFr24() + "\n");
+        }
 
 
        /* Collection<Area> areas = Utilities.calculateInterestingAreas3(10, 10, 0);
         System.out.println("Interesting areas: " + areas.size());*/
+    }
+
+    private static void jsonWriteTest() throws IOException {
+        ConnectionSource[] srcs = {
+                new ConnectionSource("test1", "uri1", false),
+                new ConnectionSource("test22222", "uri2222", true)
+        };
+        Gson gson = new Gson();
+        File file = new File(Paths.RESOURCE_PATH + "test.json");
+        try (JsonWriter writer = gson.newJsonWriter(new FileWriter(file))) {
+            writer.beginArray();
+            for (ConnectionSource src : srcs) {
+                writer.beginObject()
+                        .name("name").value(src.name)
+                        .name("uri").value(src.uri.toString())
+                        .name("connected").value(false)
+                        .name("mixWithFr24").value(src.isMixWithFr24())
+                        .endObject();
+            }
+            writer.endArray();
+        }
     }
 
     /**

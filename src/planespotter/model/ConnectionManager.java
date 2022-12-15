@@ -2,6 +2,7 @@ package planespotter.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import planespotter.dataclasses.ConnectionSource;
 import planespotter.model.io.FileWizard;
 import planespotter.throwables.IllegalInputException;
 import planespotter.throwables.KeyCheckFailedException;
@@ -27,7 +28,7 @@ public class ConnectionManager {
     @NotNull private final Map<String, ConnectionSource> connections;
 
     // current selected conn
-    @Nullable private ConnectionManager.ConnectionSource selectedConn;
+    @Nullable private ConnectionSource selectedConn;
 
     /**
      * constructs a new {@link ConnectionManager} with an empty connection map
@@ -38,7 +39,8 @@ public class ConnectionManager {
             cons = new HashMap<>(0);
         } else {
             try {
-                cons = FileWizard.getFileWizard().readConnections(filename);
+                cons = FileWizard.getFileWizard().readConsJson(filename);
+                //cons = FileWizard.getFileWizard().readConnections(filename);
             } catch (Throwable e) { // we don't want an exception in initializer
                 e.printStackTrace();
                 cons = new HashMap<>(0);
@@ -99,7 +101,7 @@ public class ConnectionManager {
      * @return Connection with the specified key or null, if no {@link ConnectionSource} exists for this key
      */
     @Nullable
-    public ConnectionManager.ConnectionSource get(@NotNull String key) {
+    public ConnectionSource get(@NotNull String key) {
         return connections.get(key);
     }
 
@@ -158,103 +160,8 @@ public class ConnectionManager {
      * @return the current selected {@link ConnectionSource} or null if there is no
      */
     @Nullable
-    public ConnectionManager.ConnectionSource getSelectedConn() {
+    public ConnectionSource getSelectedConn() {
         return selectedConn;
     }
 
-    /**
-     * @name Connection
-     * @version 1.0
-     *
-     * @description
-     * The connection class represents a Connection with custom name and {@link URI}
-     */
-    public static class ConnectionSource {
-
-        // connection name (unique)
-        @NotNull public final String name;
-
-        // connection URI
-        @NotNull public final URI uri;
-
-        // 'mix with Fr24-Data' flag
-        private boolean mixWithFr24;
-
-        // 'connected' flag
-        private transient boolean connected;
-
-        /**
-         * constructs a new {@link ConnectionSource}
-         *
-         * @param name is the connection name
-         * @param uri is the conection URI {@link String}
-         * @param mixWithFr24 indicates if the ADSB data should be mixed with Fr24 data
-         */
-        public ConnectionSource(@NotNull String name, @NotNull String uri, boolean mixWithFr24) {
-            this(name, URI.create(uri), false, mixWithFr24);
-        }
-
-        /**
-         * constructs a new {@link ConnectionSource}
-         *
-         * @param name is the connection name
-         * @param uri is the conection URI
-         * @param mixWithFr24 indicates if the ADSB data should be mixed with Fr24 data
-         */
-        public ConnectionSource(@NotNull String name, @NotNull URI uri, boolean mixWithFr24) {
-            this(name, uri, false, mixWithFr24);
-        }
-
-        /**
-         * constructs a new {@link ConnectionSource}
-         *
-         * @param name is the connection name
-         * @param uri is the conection URI
-         * @param connected indicates if the {@link ConnectionSource} should be connected directly, usually false
-         * @param mixWithFr24 indicates if the ADSB data should be mixed with Fr24 data
-         */
-        public ConnectionSource(@NotNull String name, @NotNull URI uri, boolean connected, boolean mixWithFr24) {
-            this.name = name;
-            this.uri = uri;
-            this.connected = connected;
-            this.mixWithFr24 = mixWithFr24;
-        }
-
-        /**
-         * sets a {@link ConnectionSource} connected
-         *
-         * @param c indicates if the {@link ConnectionSource} should be connected
-         */
-        public void setConnected(boolean c) {
-            connected = c;
-        }
-
-        /**
-         * getter for 'connected' flag
-         *
-         * @return true if this {@link ConnectionSource} is connected
-         */
-        public boolean isConnected() {
-            return connected;
-        }
-
-        /**
-         * getter for 'mix with Fr24 data' flag
-         *
-         * @return true if 'mix with Fr24 data' is enabled, else false
-         */
-        public boolean isMixWithFr24() {
-            return mixWithFr24;
-        }
-
-        /**
-         * sets the 'mix with Fr24 data' flag
-         *
-         * @param mixWithFr24 indicates if the ADSB data should be mixed with Fr24 data
-         */
-        public void setMixWithFr24(boolean mixWithFr24) {
-            this.mixWithFr24 = mixWithFr24;
-        }
-
-    }
 }

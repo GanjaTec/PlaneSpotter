@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import planespotter.constants.SearchType;
 import planespotter.constants.ViewType;
-import planespotter.constants.Warning;
+import planespotter.dataclasses.ConnectionSource;
 import planespotter.dataclasses.Hotkey;
 import planespotter.display.StatsView;
 import planespotter.display.UserInterface;
@@ -408,7 +408,7 @@ public final class ActionHandler
     @Override
     public synchronized void valueChanged(ListSelectionEvent e) {
         Controller ctrl = Controller.getInstance();
-        ConnectionManager.ConnectionSource conn; ConnectionManager connMngr;
+        ConnectionSource conn; ConnectionManager connMngr;
         if (e.getSource() instanceof JList<?> jlist) {
                 String selectedItem = (String) jlist.getSelectedValue();
                 connMngr = ctrl.getConnectionManager();

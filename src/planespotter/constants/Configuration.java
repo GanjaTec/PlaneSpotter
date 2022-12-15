@@ -21,7 +21,7 @@ public final class Configuration {
 
     public static final String FILTERS_FILENAME = Paths.RESOURCE_PATH + "filters.psc";
 
-    public static final String CONNECTIONS_FILENAME = Paths.RESOURCE_PATH + "connections.psc";
+    public static final String CONNECTIONS_FILENAME = Paths.RESOURCE_PATH + "connections.json";
 
     private final Map<String, Object> props = new HashMap<>();
 

@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.constants.DefaultColor;
 import planespotter.controller.ActionHandler;
+import planespotter.dataclasses.ConnectionSource;
 import planespotter.model.ConnectionManager;
 
 import javax.swing.*;
@@ -63,7 +64,7 @@ public class ConnectionPane extends JDialog {
         add(connectionPanel);
     }
 
-    public void showConnection(@Nullable ConnectionManager.ConnectionSource conn, @NotNull ActionListener onConnectClick) {
+    public void showConnection(@Nullable ConnectionSource conn, @NotNull ActionListener onConnectClick) {
         if (conn == null) {
             connectionList.setSelectedIndices(new int[0]);
         }
@@ -166,7 +167,7 @@ public class ConnectionPane extends JDialog {
     }
 
     @NotNull
-    private JPanel connectionPanel(int x, int y, int width, int height, @Nullable ConnectionManager.ConnectionSource conn, @NotNull ActionListener onConnectClick) {
+    private JPanel connectionPanel(int x, int y, int width, int height, @Nullable ConnectionSource conn, @NotNull ActionListener onConnectClick) {
         mixWithFr24 = false;
 
         JPanel panel = new JPanel(null);
@@ -230,7 +231,7 @@ public class ConnectionPane extends JDialog {
         list.addListSelectionListener(onListChange);
         UIManager.put("ToggleButton.select", DefaultColor.DEFAULT_SEARCH_ACCENT_COLOR.get());
         list.setBounds(x, y, width, height);
-        ConnectionManager.ConnectionSource selected = cMngr.getSelectedConn();
+        ConnectionSource selected = cMngr.getSelectedConn();
         if (selected != null) {
             list.setSelectedValue(selected.name, true);
         }

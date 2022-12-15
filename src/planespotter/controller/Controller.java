@@ -318,7 +318,7 @@ public final class Controller implements ExceptionHandler {
             handleException(ioe);
         }
         try {
-            fileWizard.writeConnections(Configuration.CONNECTIONS_FILENAME, getConnectionManager());
+            fileWizard.writeConsJson(Configuration.CONNECTIONS_FILENAME, getConnectionManager());
         } catch (IOException | ExtensionException e) {
             handleException(e);
         }
@@ -732,18 +732,18 @@ public final class Controller implements ExceptionHandler {
     }
 
     /**
-     * Connects / disconnects a the current selected {@link ConnectionManager.ConnectionSource}
+     * Connects / disconnects a the current selected {@link ConnectionSource}
      *
-     * @param connect indicates if a {@link ConnectionManager.ConnectionSource}
+     * @param connect indicates if a {@link ConnectionSource}
      *                should be connected or disconnected
      * @param mixWithFr24 indicates if the {@link planespotter.dataclasses.Frame}s, loaded by the
-     *                    {@link ConnectionManager.ConnectionSource} should be
+     *                    {@link ConnectionSource} should be
      *                    mixed with {@link Fr24Frame}s
      */
     public void setConnection(boolean connect, boolean mixWithFr24) {
         ActionHandler onAction = ActionHandler.getActionHandler();
         ConnectionManager cmg = getConnectionManager();
-        ConnectionManager.ConnectionSource selectedConn = cmg.getSelectedConn();
+        ConnectionSource selectedConn = cmg.getSelectedConn();
         try {
             cmg.disconnectAll();
             setAdsbEnabled(connect);
@@ -771,7 +771,7 @@ public final class Controller implements ExceptionHandler {
     }
 
     /**
-     * adds a {@link ConnectionManager.ConnectionSource} to the {@link ConnectionManager}
+     * adds a {@link ConnectionSource} to the {@link ConnectionManager}
      *
      * @param connPane is the {@link ConnectionPane} instance
      * @param connList is the {@link JList}, that contains all connections and also the selected one
@@ -824,7 +824,7 @@ public final class Controller implements ExceptionHandler {
     }
 
     /**
-     * removes {@link ConnectionManager.ConnectionSource}s from
+     * removes {@link ConnectionSource}s from
      * the {@link ConnectionPane} and the {@link ConnectionManager}
      *
      * @param connList is the {@link JList}, that contains all connections and also the selected one
