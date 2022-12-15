@@ -231,6 +231,7 @@ public final class Controller implements ExceptionHandler {
         config.setProperty("transportMap", new OsmTileSource.TransportMap());
         config.setProperty("openStreetMap", new TMSTileSource(new TileSourceInfo("OSM", (String) config.getProperty("mapBaseUrl"), "0")));
 
+        // test only
         config.setProperty("receiverRequestUri", "http://192.168.178.47:8080/data/receiver.json");
 
         // initializing user properties

@@ -71,7 +71,7 @@ public final class ActionHandler
 
         // shift S / default search hotkey
         shiftSAction = () -> getActionHandler().menuClicked(new JMenu("Search"));
-        initKeys.put(new Hotkey(VK_S, true, false, false), shiftSAction);
+        initKeys.put(new Hotkey(VK_S, false, true, false), shiftSAction);
         // F11 / default fullscreen hotkey
         f11Action = () -> getActionHandler().menuItemClicked(Controller.getInstance(), new JMenuItem("Fullscreen"));
         initKeys.put(new Hotkey(VK_F11, false, false, false), f11Action);

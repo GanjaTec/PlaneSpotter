@@ -63,55 +63,10 @@ public class Test {
         unsafe.putDouble(ptr, d);
         System.out.println(unsafe.getDouble(ptr));*/
 
-        List<ConnectionSource> srcs = new ArrayList<>();
-        Gson gson = new Gson();
-        File file = new File(Paths.RESOURCE_PATH + "test.json");
-        ConnectionSource src;
-        try (JsonReader reader = new JsonReader(new FileReader(file))) {
-            reader.beginArray();
-            while (reader.hasNext()) {
-                try {
-                    src = gson.fromJson(reader, ConnectionSource.class);
-                } catch (JsonSyntaxException je) {
-                    reader.endArray();
-                    System.err.println("Reached end of JsonArray!");
-                    return;
-                }
-                srcs.add(src);
-            }
-            reader.endArray();
-        }
-
-        for (ConnectionSource s : srcs) {
-            System.out.print(s.name);
-            System.out.print("," + s.uri);
-            System.out.print("," + s.isMixWithFr24() + "\n");
-        }
 
 
        /* Collection<Area> areas = Utilities.calculateInterestingAreas3(10, 10, 0);
         System.out.println("Interesting areas: " + areas.size());*/
-    }
-
-    private static void jsonWriteTest() throws IOException {
-        ConnectionSource[] srcs = {
-                new ConnectionSource("test1", "uri1", false),
-                new ConnectionSource("test22222", "uri2222", true)
-        };
-        Gson gson = new Gson();
-        File file = new File(Paths.RESOURCE_PATH + "test.json");
-        try (JsonWriter writer = gson.newJsonWriter(new FileWriter(file))) {
-            writer.beginArray();
-            for (ConnectionSource src : srcs) {
-                writer.beginObject()
-                        .name("name").value(src.name)
-                        .name("uri").value(src.uri.toString())
-                        .name("connected").value(false)
-                        .name("mixWithFr24").value(src.isMixWithFr24())
-                        .endObject();
-            }
-            writer.endArray();
-        }
     }
 
     /**
