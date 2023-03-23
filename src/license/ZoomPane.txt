@@ -1,0 +1,4 @@
+libs.ZoomPane license:
+
+link to author:
+https://github.com/Thanasis1101/Zoomable-Java-Panel/blob/master/src/zoomable/panel/MainPanel.java
