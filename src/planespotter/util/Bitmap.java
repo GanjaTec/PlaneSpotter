@@ -1,5 +1,8 @@
 package planespotter.util;
 
+import de.gtec.util.SimpleBenchmark;
+import de.gtec.util.bmp.Filler;
+import de.gtec.util.math.HighestValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.TestOnly;
@@ -213,16 +216,15 @@ public class Bitmap {
         if (height == 0) {
             throw new InvalidArrayException("input array is empty, height out of range!");
         }
+        long start = Time.nowMillis();
 
-        int max = Utilities.maxValue(ints2d);
+        int max = de.gtec.util.Utilities.highestValue(ints2d);
         byte[][] bytes = new byte[width][height];
-        int level;
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                level = ints2d[x][y];
-                bytes[x][y] = Utilities.toByteLevel(level, max);
-            }
-        }
+
+        System.out.println("Elapsed: " + Time.elapsedMillis(start) + " ms");
+
+        Filler.fill(bytes, ints2d, width, height, max);
+
         return new Bitmap(bytes);
     }
 

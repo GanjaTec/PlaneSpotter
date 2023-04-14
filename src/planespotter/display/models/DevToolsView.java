@@ -30,6 +30,12 @@ public class DevToolsView {
         dbToCSVMenu.add(comb);
         menuBar.add(dbToCSVMenu);
 
+        JMenu cloudToCSVMenu = new JMenu("Cloud to CSV");
+        JMenuItem fromServer = new JMenuItem("CSV from data Server");
+        fromServer.addMouseListener(handler);
+        cloudToCSVMenu.add(fromServer);
+        menuBar.add(cloudToCSVMenu);
+
         contentPane.setBounds(0, 15, 695, 470);
         contentPane.setBackground(DefaultColor.DEFAULT_FONT_COLOR.get());
 

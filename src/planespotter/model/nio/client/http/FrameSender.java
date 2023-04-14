@@ -1,8 +1,8 @@
 package planespotter.model.nio.client.http;
 
 import com.google.gson.Gson;
-import planespotter.dataclasses.Frame;
 import planespotter.dataclasses.UniFrame;
+import planespotter.model.DataOutput;
 
 import java.io.IOException;
 import java.net.URI;
@@ -11,11 +11,10 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.Flow;
 
-public class FrameSender implements HttpSender<UniFrame> {
+public class FrameSender implements HttpSender<UniFrame>, DataOutput {
 
-    private static final Gson gson = new Gson();
+    protected static final Gson gson = new Gson();
 
     @Override
     public void send(URI uri, UniFrame[] data) throws IOException {
@@ -24,7 +23,7 @@ public class FrameSender implements HttpSender<UniFrame> {
 
         HttpResponse<?> resp;
         try {
-            resp = httpPOST(uri, HttpResponse.BodyHandlers.ofString(), publisher, 20);
+            resp = httpJsonPOST(uri, HttpResponse.BodyHandlers.ofString(), publisher, 20);
         } catch (InterruptedException e) {
             throw new IOException(e);
         }
@@ -36,7 +35,7 @@ public class FrameSender implements HttpSender<UniFrame> {
     public void send(URI uri) throws IOException {
         HttpResponse<?> resp;
         try {
-            resp = httpGET(uri, HttpResponse.BodyHandlers.discarding());
+            resp = httpGET(uri, HttpResponse.BodyHandlers.discarding(), 5);
         } catch (InterruptedException e) {
             throw new IOException(e);
         }
@@ -49,7 +48,7 @@ public class FrameSender implements HttpSender<UniFrame> {
 
         HttpResponse<String> resp;
         try {
-            resp = (HttpResponse<String>) httpGET(uri, HttpResponse.BodyHandlers.ofString());
+            resp = (HttpResponse<String>) httpGET(uri, HttpResponse.BodyHandlers.ofString(), 20);
         } catch (IOException | InterruptedException e) {
             throw new IOException(e);
         }
@@ -60,12 +59,12 @@ public class FrameSender implements HttpSender<UniFrame> {
         return Arrays.asList(frames);
     }
 
-    private void checkStatus(int status) throws IOException {
-        if (status != 200)
+    void checkStatus(int status) throws IOException {
+        if ((status & 200) != 200)
             throw new IOException("HTTP Status code: " + status);
     }
 
-    private HttpResponse<?> httpPOST(URI uri, HttpResponse.BodyHandler<?> bodyHandler, HttpRequest.BodyPublisher bodyPublisher, int timeoutS) throws IOException, InterruptedException {
+    protected HttpResponse<?> httpJsonPOST(URI uri, HttpResponse.BodyHandler<?> bodyHandler, HttpRequest.BodyPublisher bodyPublisher, int timeoutS) throws IOException, InterruptedException {
         HttpRequest req = HttpRequest.newBuilder(uri)
                 .header("content-type", "application/json")
                 .POST(bodyPublisher)
@@ -74,10 +73,10 @@ public class FrameSender implements HttpSender<UniFrame> {
         return senderClient.send(req, bodyHandler);
     }
 
-    private HttpResponse<?> httpGET(URI uri, HttpResponse.BodyHandler<?> bodyHandler) throws IOException, InterruptedException {
+    protected HttpResponse<?> httpGET(URI uri, HttpResponse.BodyHandler<?> bodyHandler, int timeoutS) throws IOException, InterruptedException {
         HttpRequest req = HttpRequest.newBuilder(uri)
                 .GET()
-                .timeout(Duration.ofSeconds(5))
+                .timeout(Duration.ofSeconds(timeoutS))
                 .build();
         return senderClient.send(req, bodyHandler);
     }

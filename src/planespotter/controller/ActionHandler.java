@@ -18,7 +18,9 @@ import planespotter.model.ConnectionManager;
 import planespotter.model.Scheduler;
 import planespotter.model.Statistics;
 import planespotter.model.nio.client.DataUploader;
+import planespotter.model.nio.client.http.FrameFileReceiver;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.NoAccessException;
 import planespotter.util.DevTools;
 
 import javax.swing.*;
@@ -26,10 +28,12 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ScheduledFuture;
 
 import static java.awt.event.KeyEvent.*;
 import static planespotter.constants.ViewType.MAP_LIVE;
@@ -290,6 +294,13 @@ public final class ActionHandler
                     ctrl.handleException(e);
                 }
             }
+            case "Most-Tracked-Flights" -> {
+                try {
+                    StatsView.showMostTracked(ui, new Statistics());
+                } catch (DataNotFoundException e) {
+                    ctrl.handleException(e);
+                }
+            }
             case "Position-HeatMap" -> ctrl.show(ViewType.MAP_HEATMAP);
             case "Flight-Simulation" -> ctrl.runMapFlightSimulation();
             case "DevTools" -> ctrl.getUI().showDevToolsView();
@@ -312,59 +323,90 @@ public final class ActionHandler
                     }
             );
             case "Upload to Server (BETA)" -> {
-                UploadPane up = ui.getUploadPane();
-                if (up.getOnEnter() == null) {
-                    up.setOnEnter(e -> {
-                        if (e.getKeyCode() != VK_ENTER) {
-                            return;
-                        }
-                        JTextField src = (JTextField) e.getSource();
-                        String host = src.getText();
-                        if (host == null || host.isBlank()) {
-                            return;
-                        }
-                        ctrl.setUploadConnection(host);
-                    });
+                onOpenUploadPane(ctrl, ui);
+            }
+            case "CSV from data Server" -> {
+                // TODO: 25.03.2023 download frame csv
+                JFileChooser chooser = ui.showFileSaver(ui.getWindow(), ".csv");
+                File file = chooser.getSelectedFile();
+                String filename = file.getName();
+                if (!file.isDirectory()) {
+                    file = file.getParentFile();
                 }
-                if (up.getOnUpload() == null) {
-                    DataUploader<Frame> uploader = ctrl.getRestUploader();
-                    up.setOnUpload(e -> {
-                        if (up.isUpload()) {
-                            up.setUpload(false);
-                            up.setBtUploadTxt("Start Upload");
-                            ctrl.setUploadEnabled(false);
-                            up.stopUpdating();
-                            uploader.stop();
-                        } else {
-                            String host = up.getHost();
-                            if (host == null || host.isBlank()) {
-                                ui.showWarning(Warning.INVALID_DATA, "Make sure the 'Host' field is filled.");
-                                return;
-                            }
-                            up.setUpload(true);
-                            ctrl.setUploadConnection(host);
-                            up.setBtUploadTxt("Stop Upload");
-                            ctrl.setUploadEnabled(true);
-                            up.startUpdating(uploader);
-                            uploader.start();
-                        }
-                    });
+                Path path = file.toPath();
+                FrameFileReceiver sender = new FrameFileReceiver();
+                String host = ctrl.getRestUploader().getHost();
+                String uri = host + "/data/api/download/file/csv/filename=" + filename;
+                try {
+                    sender.getFile(uri, path, 20);
+                } catch (IOException e) {
+                    ui.showWarning(Warning.UNKNOWN_ERROR, "Could not download file! \n" + e.getMessage());
                 }
-                if (up.getOnDoDBWrite() == null) {
-                    up.setOnDoDBWrite(e -> {
-                        if (ctrl.isLocalDBWriteEnabled()) {
-                            ctrl.setLocalDBWriteEnabled(false);
-                            up.setBtLocalTxt("Enable local DB-Write");
-                        } else {
-                            ctrl.setLocalDBWriteEnabled(true);
-                            up.setBtLocalTxt("Disable local DB-Write");
-                        }
-                        up.repaint();
-                    });
-                }
-                up.setVisible(true);
             }
         }
+    }
+
+    private void onOpenUploadPane(@NotNull Controller ctrl, UserInterface ui) {
+        UploadPane up = ui.getUploadPane();
+        if (up.getOnEnter() == null) {
+            up.setOnEnter(e -> {
+                if (e.getKeyCode() != VK_ENTER) {
+                    return;
+                }
+                JTextField src = (JTextField) e.getSource();
+                String host = src.getText();
+                if (host == null || host.isBlank()) {
+                    return;
+                }
+                try {
+                    ctrl.setUploadConnection(host);
+                } catch (NoAccessException ex) {
+                    ui.showWarning(Warning.URL_NOT_REACHABLE, "Check your upload host!");
+                }
+            });
+        }
+        if (up.getOnUpload() == null) {
+            DataUploader<Frame> uploader = ctrl.getRestUploader();
+            up.setOnUpload(e -> {
+                if (up.isUpload()) {
+                    up.setUpload(false);
+                    up.setBtUploadTxt("Start Upload");
+                    ctrl.setUploadEnabled(false);
+                    up.stopUpdating();
+                    uploader.stop();
+                } else {
+                    String host = up.getHost();
+                    if (host == null || host.isBlank()) {
+                        ui.showWarning(Warning.INVALID_DATA, "Make sure the 'Host' field is filled.");
+                        return;
+                    }
+                    try {
+                        ctrl.setUploadConnection(host);
+                    } catch (NoAccessException ex) {
+                        ui.showWarning(Warning.URL_NOT_REACHABLE, "Check your upload host!");
+                        return;
+                    }
+                    up.setUpload(true);
+                    up.setBtUploadTxt("Stop Upload");
+                    ctrl.setUploadEnabled(true);
+                    up.startUpdating(uploader);
+                    uploader.start();
+                }
+            });
+        }
+        if (up.getOnDoDBWrite() == null) {
+            up.setOnDoDBWrite(e -> {
+                if (ctrl.isLocalDBWriteEnabled()) {
+                    ctrl.setLocalDBWriteEnabled(false);
+                    up.setBtLocalTxt("Enable local DB-Write");
+                } else {
+                    ctrl.setLocalDBWriteEnabled(true);
+                    up.setBtLocalTxt("Disable local DB-Write");
+                }
+                up.repaint();
+            });
+        }
+        up.setVisible(true);
     }
 
     /**

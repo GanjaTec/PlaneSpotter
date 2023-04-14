@@ -429,6 +429,7 @@ public class UserInterface {
         JMenuItem[] statsItems = new JMenuItem[] {
                 new JMenuItem("Top-Airports", Images.STATS_ICON_16x.get()),
                 new JMenuItem("Top-Airlines", Images.STATS_ICON_16x.get()),
+                new JMenuItem("Most-Tracked-Flights", Images.STATS_ICON_16x.get()),
                 heatMapMenu,
                 new JMenuItem("Flight-Simulation")
         };

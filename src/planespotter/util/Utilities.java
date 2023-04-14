@@ -25,10 +25,7 @@ import java.io.*;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLConnection;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -110,7 +107,7 @@ public final class Utilities {
      * @return true if this process is running with administrator rights, else false
      *         NOTE: always returns false on non-Windows systems
      */
-    public static boolean hasAdminRights() {
+    public static boolean hasWINAdminRights() {
         if (!isWinOS()) {
             return false;
         }
@@ -129,7 +126,7 @@ public final class Utilities {
      * @param urls are the {@link URL}s to check
      * @throws Fr24Exception if a connection check failed
      */
-    public static void connectionPreCheck(int timeoutMillis, @NotNull URL... urls) throws Fr24Exception {
+    public static void connectionPreCheck(int timeoutMillis, @NotNull URL... urls) throws ConnectException {
         URLConnection conn;
         InetAddress address = null;
         String hostName;
@@ -139,12 +136,15 @@ public final class Utilities {
                 conn.setConnectTimeout(timeoutMillis);
                 conn.connect();
                 address = InetAddress.getByName(url.getHost());
+                if (address == null) {
+                    continue;
+                }
                 if (!address.isReachable(timeoutMillis)) {
-                    throw new IOException();
+                    throw new ConnectException(address.getHostName() + " not reachable");
                 }
             } catch (IOException e) {
                 hostName = address == null ? "N/A" : address.getHostName();
-                throw new Fr24Exception("address " + hostName + "is not reachable!");
+                throw new ConnectException("address " + hostName + "is not reachable!");
             }
         }
     }

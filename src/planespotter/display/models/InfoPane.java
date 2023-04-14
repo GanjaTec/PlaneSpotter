@@ -24,7 +24,7 @@ public class InfoPane extends JPanel {
         String airlName = airline.name();
         String airlCountry = airline.country();
         String[] listData = new String[] {
-                "Flight-ID: " + flight.id(),
+                "Live-ID: " + flight.id(),
                 "Callsign: " + flight.callsign(),
                 "Flight-Nr.: " + flight.flightNr(),
                 "Start-Airport: " + src.iataTag() + "(" + ((srcName != null) ? srcName : "N/A") + ")",
@@ -35,12 +35,12 @@ public class InfoPane extends JPanel {
                 "Registration: " + plane.registration(),
                 "Airline: " + airline.iataTag() + "(" + ((airlName != null) ? airlName : "N/A") + ", " + ((airlCountry != null) ? airlCountry : "N/A") + ")",
                 "\n",
-                "Current Altitude: " + Utilities.feetToMeters(dataPoint.altitude()) + " meters",
-                "Current Speed: " + Utilities.knToKmh(dataPoint.speed()) + " km/h",
-                "Current Heading: " + dataPoint.heading() + "°",
-                "Current Position: " + pos.lat() + ", " + pos.lon(),
-                "Current Squawk-Code: " + dataPoint.squawk(),
-                "Current Timestamp: " + dataPoint.timestamp()
+                "Altitude: " + Utilities.feetToMeters(dataPoint.altitude()) + " meters",
+                "Speed: " + Utilities.knToKmh(dataPoint.speed()) + " km/h",
+                "Heading: " + dataPoint.heading() + "°",
+                "Position: " + pos.lat() + ", " + pos.lon(),
+                "Squawk-Code: " + dataPoint.squawk(),
+                "Timestamp: " + dataPoint.timestamp()
         };
         return new InfoPane(parent, listData);
     }

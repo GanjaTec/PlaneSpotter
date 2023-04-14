@@ -6,6 +6,7 @@ import org.jetbrains.annotations.TestOnly;
 import planespotter.a_test.Test;
 import planespotter.constants.SQLQueries;
 import planespotter.dataclasses.*;
+import planespotter.model.DataOutput;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.NoAccessException;
@@ -34,7 +35,7 @@ import java.util.*;
  *
  */
 
-public final class DBOut extends DBConnector {
+public final class DBOut extends DBConnector implements DataOutput {
 
 	// (ONE and ONLY) DBOut instance
 	private static final DBOut INSTANCE = new DBOut();
@@ -1336,15 +1337,16 @@ public final class DBOut extends DBConnector {
 	}
 
 	@TestOnly
-	public Queue<DataPoint> allTrackingData() throws DataNotFoundException {
-		if (Utilities.getCallerClass() != Test.class) {
+	public Queue<DataPoint> allTrackingData(int dataLimit) throws DataNotFoundException {
+		/*if (Utilities.getCallerClass() != Test.class) {
 			throw new IllegalAccessError();
-		}
+		}*/
 		Queue<DataPoint> dps = new ArrayDeque<>();
 		Position pos; DataPoint dp;
+		int i = 0;
 		try (PreparedStatement stmt = createPreparedStatement("SELECT * FROM tracking", true)) {
 			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
+			while (rs.next() && i++ < dataLimit) {
 				pos = new Position(rs.getDouble("latitude"), rs.getDouble("longitude"));
 				dp = new DataPoint(rs.getInt("ID"), rs.getInt("flightid"), pos, rs.getInt("timestamp"),
 						rs.getInt("squawk"), rs.getInt("groundspeed"), rs.getInt("heading"), rs.getInt("altitude"));

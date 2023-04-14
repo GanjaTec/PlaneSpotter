@@ -1,23 +1,34 @@
 package planespotter.model;
 
+import de.gtec.util.math.Maths;
+import de.gtec.util.math.vector.Vector2D;
+import de.gtec.util.math.vector.Vectors;
+import de.gtec.util.threading.ConcurrentCollections;
+import de.gtec.util.threading.Threading;
 import org.jetbrains.annotations.NotNull;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
+import planespotter.controller.Controller;
 import planespotter.dataclasses.*;
 import planespotter.model.io.DBOut;
+import planespotter.model.nio.client.http.FrameSender;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.throwables.InvalidDataException;
 import planespotter.util.Bitmap;
 import planespotter.util.Time;
 import planespotter.util.Utilities;
-import planespotter.util.math.Vector2D;
 
+import java.io.IOException;
+import java.net.URI;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static planespotter.util.math.MathUtils.abs;
 
@@ -32,6 +43,14 @@ import static planespotter.util.math.MathUtils.abs;
  * to save data efficiently, but some methods should be improved to work faster
  */
 public class Statistics {
+
+    private class Triple<A, B, C> {
+        final A a; final B b; final C c;
+
+        Triple(A a, B b, C c) {
+            this.a = a; this.b = b; this.c = c;
+        }
+    };
 
     /**
      * {@link Statistics} constructor,
@@ -99,6 +118,140 @@ public class Statistics {
         DBOut dbOut = DBOut.getDBOut();
         Vector<Position> allPositions = dbOut.getAllTrackingPositions();
         return Bitmap.fromPosVector(allPositions, gridSize);
+    }
+
+    /**
+     * calculates the flights with the longest tracked
+     * flight-route, might be unaccurate when a flight
+     * has a too long time period between data points
+     *
+     * @return the most tracked flights (longest routes), key is the callsign, value is the route length in KM
+     */
+    public Map<String, Integer> mostTrackedFlights(int minCount) throws DataNotFoundException {
+        // helper
+        DataOutputManager out = DataOutputManager.getOutputManager();
+        DataOutput currentOut = out.getCurrentOut();
+        Controller ctrl = Controller.getInstance();
+
+        Map<Object, Triple<Vector2D<Double>, Integer, Long>> mostTracked = ConcurrentCollections.map();
+
+        if (currentOut instanceof DBOut dbOut) {
+
+            int limit = (int) ctrl.getConfig().getProperty("dataLimit").val;
+            mostTracked = localMostTracked(mostTracked, dbOut, limit);
+
+        } else if (currentOut instanceof FrameSender frameSender) {
+
+            String host = ctrl.getRestUploader().getHost();
+            URI uri = URI.create(host + "/data/api/download/all");
+            mostTracked = onlineMostTracked(mostTracked, frameSender, uri);
+        }
+        return filteredAndSorted(mostTracked, minCount);
+    }
+
+    @NotNull
+    private Map<Object, Triple<Vector2D<Double>, Integer, Long>> localMostTracked(Map<Object, Triple<Vector2D<Double>, Integer, Long>> mostTracked, DBOut dbOut, int dataLimit) throws DataNotFoundException {
+        Queue<DataPoint> tracking = dbOut.allTrackingData(dataLimit);
+        DataPoint[] arr = tracking.stream().toArray(DataPoint[]::new);
+
+        Arrays.sort(arr, Comparator.comparingLong(DataPoint::timestamp));
+        tracking = Threading.concurrentQueue(Arrays.asList(arr));
+
+        while (!tracking.isEmpty()) {
+            Vector2D<Double> now;
+            DataPoint dp = tracking.poll();
+            int fid = dp.flightID();
+            if (fid == 998) {
+                // skipping invalid entry (could be N/A or private flight)
+                continue;
+            }
+            // TODO: 29.03.2023 add timestamp to tuple , always re-calc avg timestamp and check variation
+            long timestamp = dp.timestamp();
+            double xn = dp.pos().lat();
+            double yn = dp.pos().lon();
+            now = new Vector2D<>(xn, yn);
+
+            if (!mostTracked.containsKey(fid)) {
+                mostTracked.put(fid, new Triple<>(now, 0, dp.timestamp()));
+
+            } else {
+                Triple<Vector2D<Double>, Integer, Long> entry = mostTracked.get(fid);
+                long time = entry.c;
+                int distance = entry.b;
+
+                if (Math.abs(time - timestamp) > 360000) { // ~ 1 hour
+                    // timestamps too far from eachother
+                    mostTracked.put(fid, new Triple<>(now, distance, timestamp));
+                    continue;
+                }
+                Vector2D last = entry.a;
+                de.gtec.util.math.vector.Vector<Double> result = Vectors.subtract(now, last);
+                distance += Maths.abs(result);
+
+                mostTracked.put(fid, new Triple<>(now, distance, timestamp));
+            }
+        }
+        return mostTracked.entrySet()
+                .stream()
+                .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue()));
+    }
+
+
+    @NotNull
+    private Map<Object, Triple<Vector2D<Double>, Integer, Long>> onlineMostTracked(Map<Object, Triple<Vector2D<Double>, Integer, Long>> mostTracked, FrameSender frameSender, URI uri) throws DataNotFoundException {
+        Queue<UniFrame> frames;
+        try {
+            frames = Threading.concurrentQueue(frameSender.getData(uri));
+        } catch (IOException e) {
+            throw new DataNotFoundException("Could not load data");
+        }
+        UniFrame[] arr = frames.stream().toArray(UniFrame[]::new);
+
+        Arrays.sort(arr, Comparator.comparingLong(Frame::getTimestamp));
+        frames = Threading.concurrentQueue(Arrays.asList(arr));
+
+        while (!frames.isEmpty()) {
+            Vector2D<Double> now;
+            UniFrame frame = frames.poll();
+            String key = frame.getCallsign();
+            long timestamp = frame.getTimestamp();
+            double xn = Maths.latDegreesToKm(frame.getLat());
+            double yn = Maths.lonDegreesToKm(frame.getLat(), frame.getLon());
+            now = new Vector2D<>(xn, yn);
+
+            if (!mostTracked.containsKey(key)) {
+                mostTracked.put(key, new Triple<>(now, 0, timestamp));
+
+            } else {
+                Triple<Vector2D<Double>, Integer, Long> entry = mostTracked.get(key);
+                long time = entry.c;
+                int distance = entry.b;
+
+                if (Math.abs(time - timestamp) > 360000) { // ~ 1 hour
+                    // timestamps too far from eachother
+                    mostTracked.put(key, new Triple<>(now, distance, timestamp));
+                    continue;
+                }
+                Vector2D last = entry.a;
+                de.gtec.util.math.vector.Vector result = Vectors.subtract(now, last);
+                distance += Maths.abs(result);
+
+                mostTracked.put(key, new Triple<>(now, distance, timestamp));
+            }
+        }
+        return mostTracked.entrySet()
+                .stream()
+                .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue()));
+    }
+
+    @NotNull
+    private Map<String, Integer> filteredAndSorted(Map<Object, Triple<Vector2D<Double>, Integer, Long>> mostTracked, int minValue) {
+        return mostTracked.entrySet()
+                .parallelStream()
+                .filter(e -> e.getValue().b >= minValue)
+                .sorted(Comparator.comparingInt(e -> e.getValue().b))
+                .limit(50)
+                .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().b));
     }
 
     /**
@@ -196,7 +349,7 @@ public class Statistics {
             HashMap<Position, double[]> map = new HashMap<>();
 
             Position current, last;
-            Vector2D<Double> vector;
+            planespotter.util.math.Vector2D<Double> vector;
             double[] values;
             long tsCurrent, tsLast;
             double km, tDiffHrs;
@@ -212,7 +365,7 @@ public class Statistics {
                 current = dp.pos();
                 tsCurrent = dp.timestamp();
                 if (counter > 0) {
-                    vector = Vector2D.ofDegrees(last, current);
+                    vector = planespotter.util.math.Vector2D.ofDegrees(last, current);
                     values[0] = dp.speed();
                     km = abs(vector);
                     tDiffHrs = Time.timeDiff(tsCurrent, tsLast, TimeUnit.SECONDS, TimeUnit.HOURS);

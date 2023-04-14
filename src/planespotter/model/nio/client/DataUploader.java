@@ -1,14 +1,22 @@
 package planespotter.model.nio.client;
 
+import de.gtec.util.Utilities;
+import de.gtec.util.math.WeightMovingAverage;
 import de.gtec.util.threading.Threading;
 import de.gtec.util.time.Time;
+import org.jetbrains.annotations.Nullable;
 import planespotter.dataclasses.Frame;
 import planespotter.dataclasses.UniFrame;
+import planespotter.display.models.UploadPane;
 import planespotter.model.Scheduler;
 import planespotter.model.nio.client.http.FrameSender;
+import planespotter.throwables.NoAccessException;
 
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.util.*;
 
 public class DataUploader<D extends Frame> {
@@ -18,16 +26,22 @@ public class DataUploader<D extends Frame> {
     private final FrameSender sender;
 
     private final Scheduler scheduler;
+
     private Queue<D> uploadQueue;
+
     private Queue<Throwable> errorQueue;
+
     private String host;
+
+    private UploadPane paneRef;
+
     private boolean running;
 
     private int minUploadCount;
 
     private int flow, byteFlow;
 
-    public DataUploader(String host, int minUploadCount, Scheduler scheduler) {
+    public DataUploader(String host, int minUploadCount, Scheduler scheduler, @Nullable UploadPane paneRef) {
         this.sender = new FrameSender();
         this.scheduler = scheduler;
         this.uploadQueue = Threading.concurrentQueue();
@@ -36,6 +50,7 @@ public class DataUploader<D extends Frame> {
         this.running = false;
         this.minUploadCount = minUploadCount;
         this.flow = 1;
+        this.paneRef = paneRef;
     }
 
     public void start() {
@@ -64,10 +79,15 @@ public class DataUploader<D extends Frame> {
         }
         long start = Time.nowMillis();
         URI uri = URI.create(host + "/data/api/upload/frames");
-        UniFrame[] buffer = new UniFrame[uploadQueue.size()];
+        UniFrame[] buffer = new UniFrame[getQueueSize()];
         int idx = 0;
         while (!uploadQueue.isEmpty()) {
+            // polling and resetting queue size
             D frame = uploadQueue.poll();
+            if (paneRef != null) {
+                paneRef.setQueueCount(getQueueSize());
+            }
+
             if (frame != null) {
                 buffer[idx++] = UniFrame.of(frame);
             }
@@ -79,8 +99,8 @@ public class DataUploader<D extends Frame> {
             errorQueue.add(e);
         } finally {
             long elapsed = Time.elapsedMillis(start);
-            this.flow = (int) (B * (idx / elapsed) + A * getFlow());
-            this.byteFlow = (int) (B * ((idx * UniFrame.SIZE) / elapsed) + A * getByteFlow());
+            this.flow = (int) WeightMovingAverage.avg(idx / elapsed, getFlow());
+            this.byteFlow = (int) WeightMovingAverage.avg((idx * UniFrame.SIZE) / elapsed, getByteFlow());
         }
     }
 
@@ -139,4 +159,10 @@ public class DataUploader<D extends Frame> {
     public void setMinUploadCount(int minUploadCount) {
         this.minUploadCount = minUploadCount;
     }
+
+    public void setPaneRef(UploadPane paneRef) {
+        this.paneRef = paneRef;
+    }
+
+
 }

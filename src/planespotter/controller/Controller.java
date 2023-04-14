@@ -1,5 +1,7 @@
 package planespotter.controller;
 
+import de.gtec.util.bmp.Filler;
+import de.gtec.util.math.WeightMovingAverage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.Coordinate;
@@ -25,7 +27,6 @@ import planespotter.model.io.*;
 import planespotter.model.nio.ADSBSupplier;
 import planespotter.model.nio.DataProcessor;
 import planespotter.model.nio.FilterManager;
-import planespotter.model.nio.Fr24Supplier;
 import planespotter.model.nio.client.DataUploader;
 import planespotter.model.simulation.FlightSimulation;
 import planespotter.model.simulation.Simulator;
@@ -42,6 +43,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.http.HttpTimeoutException;
@@ -51,6 +53,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static planespotter.constants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
 import static planespotter.constants.ViewType.*;
@@ -93,6 +96,10 @@ public final class Controller implements ExceptionHandler {
 
         // initializing Controller singleton instance
         INSTANCE = new Controller();
+
+        // TODO: 26.03.2023 DOWNLOAD DLL's
+        Filler.setUseNativeFill(false); // my java code java seems to be faster here
+        WeightMovingAverage.setUseNativeAvg(true);
     }
 
     // -- instance fields --
@@ -145,7 +152,7 @@ public final class Controller implements ExceptionHandler {
     private Controller() {
         this.hashCode = System.identityHashCode(INSTANCE);
         this.config = new Configuration();
-        initConfig();
+        initConfig(); // Config
         this.scheduler = new Scheduler();
         this.dataProcessor = new DataProcessor();
         this.search = new Search();
@@ -159,7 +166,9 @@ public final class Controller implements ExceptionHandler {
         this.clicking = false;
         this.terminated = false;
         ConnectionSource upcon = connectionManager.getUploadConnection();
-        this.restUploader = new DataUploader<>(upcon != null ? upcon.uri.getHost() : "127.0.0.1", (int) config.getProperty("uploader.threshold").val, scheduler);
+        this.restUploader = new DataUploader<>(upcon != null ? upcon.uri.getHost() : "127.0.0.1",
+                (int) config.getProperty("uploader.threshold").val,
+                scheduler, ui.getUploadPane());
         this.dataMask = DataProcessor.FR24_MASK | DataProcessor.LOCAL_WRITE_MASK; // local write with FR24-Frames
         initLevel++; // UI
     }
@@ -183,8 +192,9 @@ public final class Controller implements ExceptionHandler {
                 return;
             }
         }
+        // FIXME: 26.03.2023 program crashes, bcause file not found
         // building database
-        PyAdapter.runScript("python-helper\\helper\\dbBuilder.py", void.class);
+        PyAdapter.runScript("python-helper/helper/dbBuilder.py", void.class);
 
     }
 
@@ -243,7 +253,7 @@ public final class Controller implements ExceptionHandler {
         // initializing static properties
         config.setProperty("title", "PlaneSpotter v0.5-alpha");
         config.setProperty("threadKeepAliveTime", 4L);
-        config.setProperty("maxThreads", 80);
+        config.setProperty("maxThreads", 40);
         config.setProperty("saveLogs", false);
         config.setProperty("uploader.threshold", 5000);
         config.setProperty("mapBaseUrl", "https://a.tile.openstreetmap.de");
@@ -278,9 +288,9 @@ public final class Controller implements ExceptionHandler {
 
         // should also be saved in 'filters.psc', not static
         FilterManager collectorFilterManager = new FilterManager()
-                .add("RCH").add("DUKE").add("FORTE").add("CASA").add("VIVI")
-                .add("EYE").add("NCR").add("LAGR").add("SNIPER").add("VALOR")
-                .add("MMF").add("HOIS").add("K35R").add("SONIC").add("Q4");
+                .addAll("RCH", "DUKE", "FORTE", "CASA", "VIVI", "EYE",
+                        "NCR", "LAGR", "SNIPER", "VALOR", "MMF", "HOIS",
+                        "K35R", "SONIC", "Q4", "CL", "MARTI");
         config.setProperty("collectorFilters", collectorFilterManager);
     }
 
@@ -305,6 +315,7 @@ public final class Controller implements ExceptionHandler {
             handleException(e);
         }
         // starting tasks and finishing
+        DataOutputManager.initialize(getDataMask());
         setAdsbEnabled(false);
         liveThread = scheduler.runThread(() -> dataProcessor.run(this), "LiveData Loader", true, Scheduler.HIGH_PRIO);
         show(MAP_LIVE);
@@ -316,10 +327,10 @@ public final class Controller implements ExceptionHandler {
      * shuts down the program if the uses chooses so
      * executes last tasks and closes the program carefully
      *
-     * @param insertRemainingFrames indicates if the remaining loaded live-frames
+     * @param processRemainingFrames indicates if the remaining loaded live-frames
      *                              should be inserted or removed
      */
-    public synchronized void shutdown(boolean insertRemainingFrames) {
+    public synchronized void shutdown(boolean processRemainingFrames) {
         // confirm dialog for shutdown
         int option = JOptionPane.showConfirmDialog(getUI().getWindow(),
                 "Do you really want to exit PlaneSpotter?",
@@ -352,20 +363,26 @@ public final class Controller implements ExceptionHandler {
         }
         // inserting remaining frames, if option is enabled
         DBIn dbIn = DBIn.getDBIn();
-        if (insertRemainingFrames && fr24Collector != null) {
-            try {
-                fr24Collector.getInserter().insertRemaining(scheduler, dataProcessor);
-            } catch (NoAccessException ignored) {
+        if (processRemainingFrames) {
+            if (isLocalDBWriteEnabled() && fr24Collector != null) {
+                try {
+                    fr24Collector.getInserter().insertRemaining(scheduler, dataProcessor);
+                } catch (NoAccessException ignored) {
+                }
+            }
+            if (isUploadEnabled()) {
+                restUploader.addData(dataProcessor.pollFrames(Integer.MAX_VALUE).collect(Collectors.toList()));
+                restUploader.upload();
             }
         }
 /*        // busy-waiting for remaining tasks
         while (scheduler.active() > 0) {
-            Thread.onSpinWait();
+            Threading.onSpinWait();
         }
 */
         try {
             // shutting down scheduler
-            scheduler.shutdown(insertRemainingFrames ? 20 : 3);
+            scheduler.shutdown(processRemainingFrames ? 20 : 3);
             // disabling last tasks
             dbIn.setEnabled(false);
             done(true);
@@ -434,8 +451,14 @@ public final class Controller implements ExceptionHandler {
      *
      * @param host
      */
-    public void setUploadConnection(String host) {
+    public void setUploadConnection(String host) throws NoAccessException {
         restUploader.setHost(host);
+        URI uri = URI.create(restUploader.getHost());
+        try {
+            Utilities.connectionPreCheck(5, uri.toURL());
+        } catch (ConnectException | MalformedURLException e) {
+            throw new NoAccessException(host + " not accessible!");
+        }
         try {
             connectionManager.setUploadConnection("http://" + host + ":8080");
         } catch (KeyCheckFailedException | IllegalInputException ignored) {
@@ -1280,11 +1303,6 @@ public final class Controller implements ExceptionHandler {
         } else if (isAdsbEnabled()) {
             this.dataMask -= DataProcessor.ADSB_MASK;
         }
-        /*if (!adsbEnabled && isAdsbEnabled()) {
-            this.mask -= DataLoader.ADSB_MASK;
-        } else if (adsbEnabled && !isAdsbEnabled()) {
-            this.mask += DataLoader.ADSB_MASK;
-        }*/
     }
 
     /**
@@ -1307,11 +1325,6 @@ public final class Controller implements ExceptionHandler {
         } else if (isFr24Enabled()) {
             this.dataMask -= DataProcessor.FR24_MASK;
         }
-        /*if (!fr24Enabled && isFr24Enabled()) {
-            this.mask -= DataLoader.FR24_MASK;
-        }else if (fr24Enabled && !isFr24Enabled()) {
-            this.mask += DataLoader.FR24_MASK;
-        }*/
     }
 
     /**
@@ -1334,6 +1347,8 @@ public final class Controller implements ExceptionHandler {
         } else if (isLocalDBWriteEnabled()) {
             this.dataMask -= DataProcessor.LOCAL_WRITE_MASK;
         }
+        DataOutputManager om = DataOutputManager.getOutputManager();
+        om.setDataMask(this.dataMask);
     }
 
     /**
@@ -1356,6 +1371,8 @@ public final class Controller implements ExceptionHandler {
         } else if (isUploadEnabled()) {
             this.dataMask -= DataProcessor.UPLOAD_MASK;
         }
+        DataOutputManager om = DataOutputManager.getOutputManager();
+        om.setDataMask(this.dataMask);
     }
 
     /**

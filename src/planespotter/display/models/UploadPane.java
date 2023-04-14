@@ -169,7 +169,7 @@ public class UploadPane extends JDialog {
         if (updateTask != null && !updateTask.isDone()) {
             return; // already running
         }
-        updateTask = Threading.runRepeated(() -> updateTask(uploader), 0, 500);
+        updateTask = Threading.runRepeated(() -> updateTask(uploader), 0, 100);
     }
 
     public void stopUpdating() {

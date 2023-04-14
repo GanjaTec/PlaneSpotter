@@ -20,6 +20,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Map;
 
 import static org.jfree.chart.ChartFactory.createBarChart;
 
@@ -79,6 +80,27 @@ public class StatsView {
         } catch (NumberFormatException nfe) {
             ui.showWarning(Warning.NUMBER_EXPECTED);
         }
+    }
+
+    public static void showMostTracked(UserInterface ui, Statistics stats)
+            throws DataNotFoundException {
+
+        String input = ui.getUserInput("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
+        if (input.isBlank()) {
+            return;
+        }
+        LayerPane layerPane = ui.getLayerPane();
+        int minCount;
+        try {
+            minCount = Integer.parseInt(input);
+        } catch (NumberFormatException nfe) {
+            ui.showWarning(Warning.NUMBER_EXPECTED);
+            return;
+        }
+        Map<String, Integer> mostTracked = stats.mostTrackedFlights(minCount);
+        CategoryDataset dataset = Statistics.createBarDataset(mostTracked);
+        ChartPanel chart = StatsView.barChartPanel(layerPane, "Most tracked Flights", "Flight", "Distance (km)", dataset);
+        layerPane.replaceBottom(chart);
     }
 
     @NotNull
