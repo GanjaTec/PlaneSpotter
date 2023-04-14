@@ -51,6 +51,25 @@ public class ConnectionManager {
     }
 
     /**
+     * sets the REST upload connection
+     *
+     * @param uri is the uri of the {@link ConnectionSource}
+     */
+    public void setUploadConnection(String uri) throws KeyCheckFailedException, IllegalInputException {
+        add("Default Data Upload", uri);
+    }
+
+    /**
+     * returns the REST upload connection
+     *
+     * @return REST upload connection or null, if not set
+     */
+    @Nullable
+    public ConnectionSource getUploadConnection() {
+        return connections.get("Default Data Upload");
+    }
+
+    /**
      * adds a {@link ConnectionSource} with custom name
      * and {@link URI} to the connection map
      *

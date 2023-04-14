@@ -49,8 +49,8 @@ public class PyAdapter {
      *
      * @param <T> is the returned object's type, can be ignored
      * @return result of the function, or null if the function type is void
-     * @see planespotter.model.PyAdapter
-     * @see org.python.util.PythonInterpreter
+     * @see PyAdapter
+     * @see PythonInterpreter
      */
     public static <T> T runFunction(String func, Class<T> resultClass) {
         py.exec(func);
@@ -64,8 +64,8 @@ public class PyAdapter {
      * @param params are the function params // does not work yet
      * @param <T> is the returned object's type
      * @return result variable in python-script, if it's not None/null, else null
-     * @see planespotter.model.PyAdapter
-     * @see org.python.util.PythonInterpreter
+     * @see PyAdapter
+     * @see PythonInterpreter
      */
     public static <T> T runScript(String filename, Class<T> resultClass, String... params) {
         int counter = 0;
@@ -84,7 +84,6 @@ public class PyAdapter {
      * @param <T> is the result class type
      * @return the result of the function called before
      */
-    @SuppressWarnings("unchecked")
     @Nullable
     private static <T> T getResult(Class<T> clazz) {
         try {

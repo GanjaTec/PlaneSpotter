@@ -1,6 +1,7 @@
 package planespotter.controller;
 
-import libs.ZoomPane;
+import de.gtec.util.bmp.Filler;
+import de.gtec.util.math.WeightMovingAverage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.Coordinate;
@@ -12,24 +13,26 @@ import org.openstreetmap.gui.jmapviewer.tilesources.OsmTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.TMSTileSource;
 import org.openstreetmap.gui.jmapviewer.tilesources.TileSourceInfo;
 import planespotter.constants.*;
+import planespotter.constants.props.Configuration;
+import planespotter.constants.props.Property;
 import planespotter.dataclasses.*;
+import planespotter.dataclasses.Frame;
 import planespotter.display.MapManager;
 import planespotter.display.StatsView;
 import planespotter.display.TreasureMap;
 import planespotter.display.UserInterface;
-import planespotter.display.models.ConnectionPane;
-import planespotter.display.models.TextDialog;
+import planespotter.display.models.*;
 import planespotter.model.*;
 import planespotter.model.io.*;
 import planespotter.model.nio.ADSBSupplier;
-import planespotter.model.nio.DataLoader;
+import planespotter.model.nio.DataProcessor;
 import planespotter.model.nio.FilterManager;
-import planespotter.model.nio.Fr24Supplier;
-import planespotter.statistics.Statistics;
+import planespotter.model.nio.client.DataUploader;
+import planespotter.model.simulation.FlightSimulation;
+import planespotter.model.simulation.Simulator;
 import planespotter.throwables.*;
 import planespotter.util.Bitmap;
 import planespotter.util.Utilities;
-import planespotter.util.math.MathUtils;
 
 import javax.imageio.ImageIO;
 import javax.net.ssl.SSLHandshakeException;
@@ -40,6 +43,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.http.HttpTimeoutException;
@@ -49,9 +53,9 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static planespotter.constants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
-import static planespotter.constants.Sound.SOUND_DEFAULT;
 import static planespotter.constants.ViewType.*;
 
 /**
@@ -79,15 +83,23 @@ public final class Controller implements ExceptionHandler {
     // ONLY Controller instance
     private static final Controller INSTANCE;
 
+    private static int initLevel;
+
     // static initializer
     static {
         // initializing 'root' members
         RUNTIME = Runtime.getRuntime();
-        INSTANCE = new Controller();
         ROOT_PATH = Utilities.getAbsoluteRootPath();
 
         // initializing database file, recreating if invalid
         initDB();
+
+        // initializing Controller singleton instance
+        INSTANCE = new Controller();
+
+        // TODO: 26.03.2023 DOWNLOAD DLL's
+        Filler.setUseNativeFill(false); // my java code java seems to be faster here
+        WeightMovingAverage.setUseNativeAvg(true);
     }
 
     // -- instance fields --
@@ -95,11 +107,8 @@ public final class Controller implements ExceptionHandler {
     // hash code
     private final int hashCode;
 
-    // already-clicking/-initialized flag
-    private boolean clicking, initialized, terminated;
-
-    // boolean loading is true when something is loading
-    private volatile boolean loading;
+    // 'already-clicking' flag
+    private boolean clicking, terminated;
 
     // loadedData contains all loaded DataPoints
     private volatile Vector<DataPoint> loadedData;
@@ -108,28 +117,33 @@ public final class Controller implements ExceptionHandler {
     private volatile Vector<Flight> liveData;
 
     // scheduler, contains executor services / thread pools
-    @NotNull private final Scheduler scheduler;
+    private final Scheduler scheduler;
 
     // new graphical user interface
-    @NotNull private final UserInterface ui;
+    private final UserInterface ui;
 
     // live data thread
-    @Nullable private Thread liveThread;
+    private Thread liveThread;
 
     // data loader instance (for live data tasks)
-    @NotNull private final DataLoader dataLoader;
+    private final DataProcessor dataProcessor;
 
     // configuration instance
-    @NotNull private final Configuration config;
+    private final Configuration config;
 
     // connection manager, manages user-input connections
-    @NotNull private final ConnectionManager connectionManager;
+    private final ConnectionManager connectionManager;
 
     // search object for DB-search operations
-    @NotNull private final Search search;
+    private final Search search;
+
+    // data-REST-uploader
+    private final DataUploader<Frame> restUploader;
+
+    private Fr24Collector fr24Collector;
 
     // DataLoader mask
-    private int mask;
+    private int dataMask;
 
     /**
      * private constructor for Controller main instance,
@@ -138,19 +152,25 @@ public final class Controller implements ExceptionHandler {
     private Controller() {
         this.hashCode = System.identityHashCode(INSTANCE);
         this.config = new Configuration();
-        initConfig();
+        initConfig(); // Config
         this.scheduler = new Scheduler();
-        this.dataLoader = new DataLoader();
+        this.dataProcessor = new DataProcessor();
         this.search = new Search();
         this.connectionManager = new ConnectionManager(Configuration.CONNECTIONS_FILENAME);
         FileWizard fileWizard = FileWizard.getFileWizard();
+        initLevel++; // IO
         this.ui = new UserInterface(ActionHandler.getActionHandler(),
-                                    fileWizard.translateSource((String) config.getProperty("currentMapSource").val),
-                                    (String) config.getProperty("title").val,
-                                    this.connectionManager);
+                fileWizard.translateSource((String) config.getProperty("currentMapSource").val),
+                (String) config.getProperty("title").val,
+                this.connectionManager);
         this.clicking = false;
         this.terminated = false;
-        this.mask = DataLoader.FR24_MASK;
+        ConnectionSource upcon = connectionManager.getUploadConnection();
+        this.restUploader = new DataUploader<>(upcon != null ? upcon.uri.getHost() : "127.0.0.1",
+                (int) config.getProperty("uploader.threshold").val,
+                scheduler, ui.getUploadPane());
+        this.dataMask = DataProcessor.FR24_MASK | DataProcessor.LOCAL_WRITE_MASK; // local write with FR24-Frames
+        initLevel++; // UI
     }
 
     /**
@@ -158,6 +178,10 @@ public final class Controller implements ExceptionHandler {
      * replaces it if the file is invalid
      */
     private static void initDB() {
+        if (initLevel > InitLevel.NOTHING) {
+            return;
+        }
+        initLevel++; // CONFIG
         File dbFile = new File("plane.db");
         if (dbFile.exists()) {
             long space = dbFile.getTotalSpace();
@@ -168,8 +192,9 @@ public final class Controller implements ExceptionHandler {
                 return;
             }
         }
+        // FIXME: 26.03.2023 program crashes, bcause file not found
         // building database
-        PyAdapter.runScript("python-helper\\helper\\dbBuilder.py", void.class);
+        PyAdapter.runScript("python-helper/helper/dbBuilder.py", void.class);
 
     }
 
@@ -188,8 +213,8 @@ public final class Controller implements ExceptionHandler {
      * and opening an {@link UserInterface} (window)
      */
     public synchronized void start() {
-        if (initialized) {
-            return;
+        if (initLevel != InitLevel.UI) {
+            throw new RuntimeException("Wrong initLevel: " + initLevel + " (expected: " + InitLevel.UI + ")");
         }
         Thread animation = scheduler.shortTask(() -> getUI().startScreenAnimation(2));
         initialize();
@@ -204,10 +229,10 @@ public final class Controller implements ExceptionHandler {
     }
 
     void showLicenseDialog() {
-        File license = new File(Paths.LICENSE_PATH + "FR24_License.txt");
+        File license = new File(Paths.LICENSE + "FR24_License.txt");
         String text;
         try {
-            text = FileWizard.getFileWizard().readText(license);
+            text = FileWizard.getFileWizard().readUTF(license);
         } catch (IOException e) {
             text = "Could not read license file!";
         }
@@ -221,11 +246,16 @@ public final class Controller implements ExceptionHandler {
      * {@link Configuration}.setProperty(key, value) if needed
      */
     private void initConfig() {
+        if (initLevel > InitLevel.CONFIG) {
+            return;
+        }
+        initLevel++;
         // initializing static properties
-        config.setProperty("title", "PlaneSpotter v0.4-alpha");
+        config.setProperty("title", "PlaneSpotter v0.5-alpha");
         config.setProperty("threadKeepAliveTime", 4L);
-        config.setProperty("maxThreads", 80);
+        config.setProperty("maxThreads", 40);
         config.setProperty("saveLogs", false);
+        config.setProperty("uploader.threshold", 5000);
         config.setProperty("mapBaseUrl", "https://a.tile.openstreetmap.de");
         config.setProperty("fr24RequestUri", "https://data-live.flightradar24.com/");
         config.setProperty("bingMap", new BingAerialTileSource());
@@ -237,36 +267,30 @@ public final class Controller implements ExceptionHandler {
 
         // initializing user properties
         FileWizard fileWizard = FileWizard.getFileWizard();
-        Configuration.Property[] props = null;
+        Configuration props = null;
         try {
             props = fileWizard.readConfig(new File(Configuration.CONFIG_FILENAME));
-            props = Arrays.stream(props)
-                    .map(p -> p.val instanceof Double d ? new Configuration.Property(p.key, d.intValue()) : p)
-                    .peek(p -> System.out.println(p.key + ": " + p.val)) // print
-                    .toArray(Configuration.Property[]::new);
-
         } catch (Exception e) {
             // catching all exceptions here to prevent ExceptionInInitializerError
             // printing stack trace for full exception information
             e.printStackTrace();
         } finally {
-            if (props == null || props.length != 4) {
-                props = new Configuration.Property[] {
-                        new Configuration.Property("dataLimit", 50000),
-                        new Configuration.Property("currentMapSource", "OSM"),
-                        new Configuration.Property("gridSizeLat", 6),
-                        new Configuration.Property("gridSizeLon", 12)};
+            if (props == null || props.elements() != 4) {
+                props = new Configuration(new Property[] {
+                        new Property("dataLimit", 50000),
+                        new Property("currentMapSource", "OSM"),
+                        new Property("gridSizeLat", 6),
+                        new Property("gridSizeLon", 12)
+                });
             }
-            for (Configuration.Property prop : props) {
-                config.setProperty(prop);
-            }
+            config.merge(props);
         }
 
         // should also be saved in 'filters.psc', not static
         FilterManager collectorFilterManager = new FilterManager()
-                .add("RCH").add("DUKE").add("FORTE").add("CASA").add("VIVI")
-                .add("EYE").add("NCR").add("LAGR").add("SNIPER").add("VALOR")
-                .add("MMF").add("HOIS").add("K35R").add("SONIC").add("Q4");
+                .addAll("RCH", "DUKE", "FORTE", "CASA", "VIVI", "EYE",
+                        "NCR", "LAGR", "SNIPER", "VALOR", "MMF", "HOIS",
+                        "K35R", "SONIC", "Q4", "CL", "MARTI");
         config.setProperty("collectorFilters", collectorFilterManager);
     }
 
@@ -275,25 +299,27 @@ public final class Controller implements ExceptionHandler {
      * and initializing the Main-Tasks and Executors
      */
     private void initialize() {
-        if (!this.initialized) {
-            // trying to add tray icon to system tray
-            Utilities.addTrayIcon(Images.PLANE_ICON_16x.get().getImage(), e -> ui.setVisible(!ui.isVisible()));
-            // testing connections
-            try {
-                URL[] urls = new URL[] {
-                        new URL((String) config.getProperty("fr24RequestUri").val),
-                        new URL((String) config.getProperty("mapBaseUrl").val)
-                };
-                Utilities.connectionPreCheck(2000, urls);
-            } catch (IOException | Fr24Exception e) {
-                handleException(e);
-            }
-            // starting tasks and finishing
-            setAdsbEnabled(false);
-            liveThread = scheduler.runThread(() -> dataLoader.run(this), "LiveData Loader", true, Scheduler.HIGH_PRIO);
-            this.initialized = true;
-            show(MAP_LIVE);
+        if (initLevel >= InitLevel.INITIALIZED) {
+            return;
         }
+        // trying to add tray icon to system tray
+        Utilities.addTrayIcon(Images.PLANE_ICON_16x.get().getImage(), e -> ui.setVisible(!ui.isVisible()));
+        // testing connections
+        try {
+            URL[] urls = new URL[] {
+                    new URL((String) config.getProperty("fr24RequestUri").val),
+                    new URL((String) config.getProperty("mapBaseUrl").val)
+            };
+            Utilities.connectionPreCheck(2000, urls);
+        } catch (IOException | Fr24Exception e) {
+            handleException(e);
+        }
+        // starting tasks and finishing
+        DataOutputManager.initialize(getDataMask());
+        setAdsbEnabled(false);
+        liveThread = scheduler.runThread(() -> dataProcessor.run(this), "LiveData Loader", true, Scheduler.HIGH_PRIO);
+        show(MAP_LIVE);
+        initLevel++;
     }
 
     /**
@@ -301,20 +327,20 @@ public final class Controller implements ExceptionHandler {
      * shuts down the program if the uses chooses so
      * executes last tasks and closes the program carefully
      *
-     * @param insertRemainingFrames indicates if the remaining loaded live-frames
+     * @param processRemainingFrames indicates if the remaining loaded live-frames
      *                              should be inserted or removed
      */
-    public synchronized void shutdown(boolean insertRemainingFrames) {
+    public synchronized void shutdown(boolean processRemainingFrames) {
         // confirm dialog for shutdown
         int option = JOptionPane.showConfirmDialog(getUI().getWindow(),
                 "Do you really want to exit PlaneSpotter?",
-                    "Exit", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                "Exit", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (option != JOptionPane.YES_OPTION) {
             return; // no-option case, no shutdown, abort method
         }
         getUI().showLoadingScreen(true);
         // disabling tasks
-        dataLoader.setLive(false);
+        dataProcessor.setLive(false);
         if (liveThread != null && liveThread.isAlive()) {
             liveThread.interrupt();
         }
@@ -337,25 +363,34 @@ public final class Controller implements ExceptionHandler {
         }
         // inserting remaining frames, if option is enabled
         DBIn dbIn = DBIn.getDBIn();
-        if (insertRemainingFrames) {
-            try {
-                dbIn.insertRemaining(scheduler, dataLoader);
-            } catch (NoAccessException ignored) {
+        if (processRemainingFrames) {
+            if (isLocalDBWriteEnabled() && fr24Collector != null) {
+                try {
+                    fr24Collector.getInserter().insertRemaining(scheduler, dataProcessor);
+                } catch (NoAccessException ignored) {
+                }
+            }
+            if (isUploadEnabled()) {
+                restUploader.addData(dataProcessor.pollFrames(Integer.MAX_VALUE).collect(Collectors.toList()));
+                restUploader.upload();
             }
         }
-        // busy-waiting for remaining tasks
+/*        // busy-waiting for remaining tasks
         while (scheduler.active() > 0) {
-            Thread.onSpinWait();
+            Threading.onSpinWait();
         }
-        // disabling last tasks
-        dbIn.setEnabled(false);
-        done(true);
-        this.terminated = true;
-        // shutting down scheduler
-        boolean shutdown = scheduler.shutdown(1);
-        byte exitStatus = MathUtils.toBinary(shutdown);
-        // shutting down the VM
-        RUNTIME.exit(exitStatus);
+*/
+        try {
+            // shutting down scheduler
+            scheduler.shutdown(processRemainingFrames ? 20 : 3);
+            // disabling last tasks
+            dbIn.setEnabled(false);
+            done(true);
+            this.terminated = true;
+        } finally {
+            // finally, shutting down JVM
+            RUNTIME.exit(ExitStatus.SUCCESS);
+        }
 
     }
 
@@ -375,7 +410,7 @@ public final class Controller implements ExceptionHandler {
         // saving last error log
         FileWizard.getFileWizard().saveLogFile("ps-crash", System.out.toString());
         // shutting down VM directly, won't wait for any tasks
-        RUNTIME.halt(-1);
+        RUNTIME.halt(ExitStatus.HALT);
     }
 
     /**
@@ -386,9 +421,8 @@ public final class Controller implements ExceptionHandler {
      */
     public void done(boolean playSound) {
         try {
-            this.loading = false;
             if (playSound) {
-                Utilities.playSound(SOUND_DEFAULT.get());
+                Utilities.playSound(WinSound.SOUND_DEFAULT.get());
             }
         } finally {
             getUI().showLoadingScreen(false);
@@ -398,16 +432,36 @@ public final class Controller implements ExceptionHandler {
     /**
      * starts a {@link Fr24Collector} to collect Fr24-Data
      * @see Fr24Collector
-     * @see
      */
     // TODO: 08.08.2022 add filters, INSERT MODE
     void runCollector() {
-        Collector<Fr24Supplier> collector;
+        int lat = (int) getConfig().getProperty("gridSizeLat").val;
+        int lon = (int) getConfig().getProperty("gridSizeLon").val;
         try {
-            collector = new Fr24Collector(false, false, 6, 12, getDataMask(), Inserter.INSERT_ALL);
-            collector.start();
+            fr24Collector = new Fr24Collector(false, false, lat, lon, getDataMask(), Inserter.INSERT_ALL);
         } catch (DataNotFoundException e) {
             handleException(e);
+            return;
+        }
+        fr24Collector.start();
+    }
+
+    /**
+     *
+     *
+     * @param host
+     */
+    public void setUploadConnection(String host) throws NoAccessException {
+        restUploader.setHost(host);
+        URI uri = URI.create(restUploader.getHost());
+        try {
+            Utilities.connectionPreCheck(5, uri.toURL());
+        } catch (ConnectException | MalformedURLException e) {
+            throw new NoAccessException(host + " not accessible!");
+        }
+        try {
+            connectionManager.setUploadConnection("http://" + host + ":8080");
+        } catch (KeyCheckFailedException | IllegalInputException ignored) {
         }
     }
 
@@ -426,7 +480,7 @@ public final class Controller implements ExceptionHandler {
             getUI().showLoadingScreen(true);
 
             if (type != MAP_LIVE) {
-                dataLoader.setLive(false);
+                dataProcessor.setLive(false);
             }
 
             getUI().setViewType(type);
@@ -434,13 +488,12 @@ public final class Controller implements ExceptionHandler {
 
             switch (type) {
                 case LIST_FLIGHT -> { /*removed Flight-List implementation*/ }
-                case MAP_LIVE -> dataLoader.setLive(true);
+                case MAP_LIVE -> dataProcessor.setLive(true);
                 case MAP_TRACKING -> mapManager.createTrackingMap(getDataList(), null, true);
                 case MAP_TRACKING_NP -> mapManager.createTrackingMap(getDataList(), null, false);
                 case MAP_FROMSEARCH -> mapManager.createSearchMap(getDataList(), false);
                 // significance map should be improved
                 //case MAP_SIGNIFICANCE -> showSignificanceMap(mapManager, dbOut);
-                // heatmap should be implemented
                 case MAP_HEATMAP -> showBitmap(null, null);
             }
         } finally {
@@ -511,6 +564,43 @@ public final class Controller implements ExceptionHandler {
         getUI().getMapManager().updateMap(getLiveDataList(), receiverData);
     }
 
+    // TODO: 18.01.2023 comment
+    /**
+     *
+     */
+    public void runMapFlightSimulation() {
+
+        String idOrCallSign = JOptionPane.showInputDialog("Please enter a flight ID or call sign!");
+
+        FlightSimulation simulation = FlightSimulation.of(idOrCallSign);
+        if (simulation == null) {
+            getUI().showWarning(Warning.INVALID_DATA, "Input data is invalid, try another one!");
+            return;
+        }
+        LayerPane lp = getUI().getLayerPane();
+        MapManager mapManager = getUI().getMapManager();
+        SimulationAddons addons = new SimulationAddons(lp);
+        Simulator<DataPoint> simulator = new Simulator<>(0, 300, simulation);
+        simulator.setOnTick(() -> {
+            addons.setStatus(simulator.getStatus());
+            addons.setRemaining(simulator.getRemainingMillis());
+        });
+        simulator.setOnStop(() -> {
+            addons.setStatus(simulator.getStatus());
+            addons.setRemaining(simulator.getRemainingMillis());
+        });
+        simulator.setOnClose(() -> {
+            addons.setStatus(simulator.getStatus());
+            addons.setRemaining(simulator.getRemainingMillis());
+            mapManager.clearMap();
+            lp.removeTop();
+        });
+        addons.setStartAction(e -> simulator.start());
+        addons.setStopAction(e -> simulator.stop());
+        addons.setCloseAction(e -> simulator.close());
+        lp.addTop(addons, 0, 0, lp.getWidth(), lp.getHeight());
+    }
+
     /**
      * confirms and saves the changed user settings
      * in the 'configuration.psc' file
@@ -540,12 +630,12 @@ public final class Controller implements ExceptionHandler {
             getUI().getMap().setTileSource(currentMapSource);
             // data[2]
             livePeriod = Integer.parseInt(data[2]) * 1000;
-            dataLoader.setLiveDataPeriod(livePeriod);
+            dataProcessor.setLiveDataPeriod(livePeriod);
         } finally {
             // saving config after reset
             try {
-                FileWizard.getFileWizard().writeConfig(config, Configuration.CONFIG_FILENAME);
-            } catch (IOException ioe) {
+                FileWizard.getFileWizard().writeConfig(config, new File(Configuration.CONFIG_FILENAME));
+            } catch (IOException | ExtensionException ioe) {
                 handleException(ioe);
             }
             done(false);
@@ -569,7 +659,7 @@ public final class Controller implements ExceptionHandler {
         boolean markerHit = false;
         int counter;
 
-        if (!this.clicking && dataLoader.isLive()) {
+        if (!this.clicking && dataProcessor.isLive()) {
             try {
                 this.clicking = true;
                 map = getUI().getMap();
@@ -669,8 +759,8 @@ public final class Controller implements ExceptionHandler {
      */
     // TODO: 09.09.2022 improve
     public void onMarkerHit(ViewType viewType, @NotNull PlaneMarker marker,
-                             int counter, Vector<DataPoint> dataPoints,
-                             DBOut dbOut) {
+                            int counter, Vector<DataPoint> dataPoints,
+                            DBOut dbOut) {
 
         Flight flight = null;
         int flightID;
@@ -745,7 +835,7 @@ public final class Controller implements ExceptionHandler {
      *
      * @param connect indicates if a {@link ConnectionSource}
      *                should be connected or disconnected
-     * @param mixWithFr24 indicates if the {@link planespotter.dataclasses.Frame}s, loaded by the
+     * @param mixWithFr24 indicates if the {@link Frame}s, loaded by the
      *                    {@link ConnectionSource} should be
      *                    mixed with {@link Fr24Frame}s
      */
@@ -813,7 +903,7 @@ public final class Controller implements ExceptionHandler {
                         path = input[3];
 
                 if (    host == null   || port == null
-                     || host.isBlank() || port.isBlank()) {
+                        || host.isBlank() || port.isBlank()) {
                     ui.showWarning(Warning.FIELDS_NOT_FILLED);
                     return;
                 }
@@ -969,12 +1059,12 @@ public final class Controller implements ExceptionHandler {
             // handling for all I/O-exceptions
             if (ioe instanceof SSLHandshakeException ssl) {
                 getUI().showWarning(Warning.HANDSHAKE, ssl.getMessage());
-                dataLoader.setLive(false);
+                dataProcessor.setLive(false);
                 DBIn dbIn = DBIn.getDBIn();
                 dbIn.setEnabled(false);
                 Scheduler.sleepSec(60);
                 dbIn.setEnabled(true);
-                dataLoader.setLive(true);
+                dataProcessor.setLive(true);
 
             } else if (ioe instanceof HttpTimeoutException) {
                 getUI().showWarning(Warning.TIMEOUT, "Http Connection timed out!");
@@ -1098,13 +1188,13 @@ public final class Controller implements ExceptionHandler {
     }
 
     /**
-     * getter for the {@link DataLoader} instance
+     * getter for the {@link DataProcessor} instance
      *
-     * @return the {@link DataLoader} instance
+     * @return the {@link DataProcessor} instance
      */
     @NotNull
-    public DataLoader getDataLoader() {
-        return dataLoader;
+    public DataProcessor getDataLoader() {
+        return dataProcessor;
     }
 
     /**
@@ -1182,7 +1272,6 @@ public final class Controller implements ExceptionHandler {
      * @param b is the loading value ( true or false )
      */
     public void setLoading(boolean b) {
-        this.loading = b;
     }
 
     /**
@@ -1200,7 +1289,7 @@ public final class Controller implements ExceptionHandler {
      * @return true if adsb supplier is enabled, else false
      */
     public boolean isAdsbEnabled() {
-        return (this.mask & DataLoader.ADSB_MASK) == DataLoader.ADSB_MASK;
+        return (this.dataMask & DataProcessor.ADSB_MASK) == DataProcessor.ADSB_MASK;
     }
 
     /**
@@ -1209,10 +1298,10 @@ public final class Controller implements ExceptionHandler {
      * @param adsbEnabled indicates if the {@link ADSBSupplier} should be enabled
      */
     public void setAdsbEnabled(boolean adsbEnabled) {
-        if (!adsbEnabled && isAdsbEnabled()) {
-            this.mask -= DataLoader.ADSB_MASK;
-        }else if (adsbEnabled && !isAdsbEnabled()) {
-            this.mask += DataLoader.ADSB_MASK;
+        if (adsbEnabled) {
+            this.dataMask |= DataProcessor.ADSB_MASK;
+        } else if (isAdsbEnabled()) {
+            this.dataMask -= DataProcessor.ADSB_MASK;
         }
     }
 
@@ -1222,7 +1311,7 @@ public final class Controller implements ExceptionHandler {
      * @return the Fr24Suppplier enabled' flag
      */
     public boolean isFr24Enabled() {
-        return (mask & DataLoader.FR24_MASK) == DataLoader.FR24_MASK;
+        return (dataMask & DataProcessor.FR24_MASK) == DataProcessor.FR24_MASK;
     }
 
     /**
@@ -1231,21 +1320,69 @@ public final class Controller implements ExceptionHandler {
      * @param fr24Enabled indicates if the 'Fr24Supplier enabled' flag should be enabled/disabled
      */
     public void setFr24Enabled(boolean fr24Enabled) {
-        if (!fr24Enabled && isFr24Enabled()) {
-            this.mask -= DataLoader.FR24_MASK;
-        }else if (fr24Enabled && !isFr24Enabled()) {
-            this.mask += DataLoader.FR24_MASK;
+        if (fr24Enabled) {
+            this.dataMask |= DataProcessor.FR24_MASK;
+        } else if (isFr24Enabled()) {
+            this.dataMask -= DataProcessor.FR24_MASK;
         }
     }
 
     /**
-     * getter for {@link DataLoader} mask
+     *
+     *
+     * @return
+     */
+    public boolean isLocalDBWriteEnabled() {
+        return (dataMask & DataProcessor.LOCAL_WRITE_MASK) == DataProcessor.LOCAL_WRITE_MASK;
+    }
+
+    /**
+     *
+     *
+     * @param enable
+     */
+    public void setLocalDBWriteEnabled(boolean enable) {
+        if (enable) {
+            this.dataMask |= DataProcessor.LOCAL_WRITE_MASK;
+        } else if (isLocalDBWriteEnabled()) {
+            this.dataMask -= DataProcessor.LOCAL_WRITE_MASK;
+        }
+        DataOutputManager om = DataOutputManager.getOutputManager();
+        om.setDataMask(this.dataMask);
+    }
+
+    /**
+     *
+     *
+     * @return
+     */
+    public boolean isUploadEnabled() {
+        return (dataMask & DataProcessor.UPLOAD_MASK) == DataProcessor.UPLOAD_MASK;
+    }
+
+    /**
+     *
+     *
+     * @param enable
+     */
+    public void setUploadEnabled(boolean enable) {
+        if (enable) {
+            this.dataMask |= DataProcessor.UPLOAD_MASK;
+        } else if (isUploadEnabled()) {
+            this.dataMask -= DataProcessor.UPLOAD_MASK;
+        }
+        DataOutputManager om = DataOutputManager.getOutputManager();
+        om.setDataMask(this.dataMask);
+    }
+
+    /**
+     * getter for {@link DataProcessor} mask
      *
      * @return DataLoader mask
-     * @see planespotter.model.nio.DataLoader for mask constants
+     * @see DataProcessor for mask constants
      */
     public int getDataMask() {
-        return mask;
+        return dataMask;
     }
 
     /**
@@ -1256,6 +1393,15 @@ public final class Controller implements ExceptionHandler {
     @NotNull
     public ConnectionManager getConnectionManager() {
         return this.connectionManager;
+    }
+
+    /**
+     * getter for {@link DataUploader} instance
+     *
+     * @return the REST data uploader
+     */
+    public DataUploader<Frame> getRestUploader() {
+        return restUploader;
     }
 
     /**

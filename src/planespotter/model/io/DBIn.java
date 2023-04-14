@@ -5,16 +5,17 @@ import planespotter.constants.SQLQueries;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.dataclasses.Frame;
 import planespotter.model.Scheduler;
-import planespotter.model.nio.DataLoader;
+import planespotter.model.nio.DataProcessor;
 import planespotter.throwables.DataNotFoundException;
-import planespotter.throwables.EmptyQueueException;
 import planespotter.throwables.MalformedFrameException;
 import planespotter.throwables.NoAccessException;
+import planespotter.util.Utilities;
 
 import java.sql.*;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,6 +40,7 @@ public final class DBIn extends DBConnector {
 
 	// inserted frames counter for all writeToDB inserts
 	private int frameCount, planeCount, flightCount;
+	private long frameBytes;
 
 	// initializing instance
 	static {
@@ -53,6 +55,7 @@ public final class DBIn extends DBConnector {
 		this.frameCount = 0;
 		this.planeCount = 0;
 		this.flightCount = 0;
+		this.frameBytes = 0L;
 		this.enabled = true;
 	}
 
@@ -77,7 +80,7 @@ public final class DBIn extends DBConnector {
 		if (frames == null) {
 			return;
 		}
-		write((Deque<E>) frames.collect(Collectors.toCollection(ArrayDeque::new)));
+		write((Queue<E>) frames.collect(Collectors.toCollection(ArrayDeque::new)));
 	}
 
 	/**
@@ -88,7 +91,7 @@ public final class DBIn extends DBConnector {
 	 * @param frames is a {@link Deque} of {@link Frame}s to write, can be {@link Fr24Frame}s
 	 *               and {@link planespotter.dataclasses.ADSBFrame}s
 	 */
-	public synchronized <E extends Frame> void write(final Deque<E> frames) {
+	public synchronized <E extends Frame> void write(final Queue<E> frames) {
 		if (!enabled || frames == null || frames.isEmpty()) {
 			return;
 		}
@@ -136,6 +139,7 @@ public final class DBIn extends DBConnector {
 			insertTracking(frame, flightID);
 			// increasing the inserted frames value
 			increaseFrameCount();
+			increaseFrameBytes(frame);
 			// setting current frame as last frame
 			lastFrame = frame;
 		}
@@ -143,24 +147,6 @@ public final class DBIn extends DBConnector {
 		if (ex != null) {
 			ex.printStackTrace();
 		}
-	}
-
-	/**
-	 * inserts all remaining data from the insertLater-queue into the DB
-	 *
-	 * @param scheduler is the Scheduler which executes tasks
-	 * @return inserted frames count as an int
-	 */
-	@NotNull
-	public synchronized CompletableFuture<Void> insertRemaining(@NotNull final Scheduler scheduler, @NotNull DataLoader dataLoader)
-			throws NoAccessException {
-		if (!enabled) {
-			throw new NoAccessException("DB-Writer is disabled!");
-		}
-		Stream<? extends Frame> frames = dataLoader.pollFrames(Integer.MAX_VALUE);
-
-		return scheduler.exec(() -> write(frames), "Insert Remaining", false, Scheduler.HIGH_PRIO, false);
-
 	}
 
 	/**
@@ -189,6 +175,16 @@ public final class DBIn extends DBConnector {
 	}
 
 	/**
+	 * getter for the 'frame bytes',
+	 * might not be accurate
+	 *
+	 * @return all inserted frame bytes
+	 */
+	public long getFrameBytes() {
+		return frameBytes;
+	}
+
+	/**
 	 * @return all inserted frames count
 	 */
 	public int getFrameCount() {
@@ -207,6 +203,15 @@ public final class DBIn extends DBConnector {
 	 */
 	public int getFlightCount() {
 		return flightCount;
+	}
+
+	/**
+	 * increases the frame bytes
+	 *
+	 * @param frame is the new {@link Frame}
+	 */
+	private synchronized void increaseFrameBytes(@NotNull Frame frame) {
+		frameBytes += Utilities.getBytes(frame);
 	}
 
 	/**

@@ -19,6 +19,7 @@ public enum ViewType {
     MAP_TRACKING_NP,
     MAP_TRACKING,
     MAP_HEATMAP,
-    MAP_SIGNIFICANCE;
+    MAP_SIGNIFICANCE,
+    MAP_SIMULATION;
     // TODO: 28.08.2022 bitmap
 }

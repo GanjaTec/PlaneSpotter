@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Range;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 import planespotter.constants.Areas;
 import planespotter.display.TreasureMap;
-import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.MalformedAreaException;
 
 import java.util.Arrays;
@@ -18,10 +17,10 @@ import java.util.regex.Pattern;
  *
  * @description
  * The {@link Area} class represents an area on the map,
- * more simple than the {@link planespotter.constants.Areas} strings
- * @see planespotter.constants.Areas
+ * more simple than the {@link Areas} strings
+ * @see Areas
  */
-public class Area {
+public final class Area {
 
     // value separator string
     public static final String SEPARATOR = "%2C";

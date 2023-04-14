@@ -2,7 +2,7 @@ package planespotter.model;
 
 import org.jetbrains.annotations.TestOnly;
 import planespotter.model.nio.ADSBSupplier;
-import planespotter.model.nio.DataLoader;
+import planespotter.model.nio.DataProcessor;
 
 /**
  * @name ADSBCollector
@@ -27,7 +27,7 @@ public class ADSBCollector extends Collector<ADSBSupplier> {
      *                    when the 'X'-button is pressed
      */
     protected ADSBCollector(String requestUri, boolean exitOnClose) {
-        super(exitOnClose, new ADSBSupplier(requestUri, new DataLoader(), null)); // example
+        super(exitOnClose, new ADSBSupplier(requestUri, new DataProcessor(), null)); // example
     }
 
     /**

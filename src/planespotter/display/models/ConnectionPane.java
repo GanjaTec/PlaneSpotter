@@ -1,6 +1,5 @@
 package planespotter.display.models;
 
-import libs.UWPButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.constants.DefaultColor;

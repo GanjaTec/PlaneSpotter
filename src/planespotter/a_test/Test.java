@@ -10,11 +10,8 @@ import jcuda.runtime.JCuda;
 import jcuda.runtime.cudaMemcpyKind;
 */
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import jcuda.driver.*;
+import jnr.ffi.annotations.In;
 import org.jetbrains.annotations.TestOnly;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -22,14 +19,16 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 import planespotter.constants.Paths;
-import planespotter.dataclasses.ConnectionSource;
+import planespotter.controller.Controller;
+import planespotter.dataclasses.Area;
 import planespotter.dataclasses.Position;
+import planespotter.model.Statistics;
 import planespotter.model.io.DBOut;
-import planespotter.statistics.BitmapCombiner;
-import planespotter.statistics.Statistics;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.unused.ANSIColor;
 import planespotter.util.*;
+import planespotter.util.combine.BitmapMaxCombiner;
+import planespotter.util.combine.BitmapMeanCombiner;
 import planespotter.util.math.MathUtils;
 import sun.misc.Unsafe;
 
@@ -42,14 +41,15 @@ import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
-import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @GitIgnore
 @TestOnly
@@ -57,16 +57,79 @@ public class Test {
 
     // TEST-MAIN
     public static void main(String[] args) throws Exception {
-        /*Unsafe unsafe = getUnsafe();
-        long ptr = 0xf53eb3a6;
-        double d = 4.20;
-        unsafe.putDouble(ptr, d);
-        System.out.println(unsafe.getDouble(ptr));*/
 
+        int subnetmask = 0xffffff00;
+        int addr1 = 0xb7440f21;
+        int addr2 = 0xb7440f59;
+        int addr3 = 0xb7445759;
 
+        // binary and: subnetmask & address => subnet comparison
+        //                                  produces => subnet address
+        System.out.println(Integer.toHexString(subnetmask & addr1));
+        System.out.println(Integer.toHexString(subnetmask & addr2));
+        System.out.println(Integer.toHexString(subnetmask & addr3));
 
-       /* Collection<Area> areas = Utilities.calculateInterestingAreas3(10, 10, 0);
-        System.out.println("Interesting areas: " + areas.size());*/
+    }
+
+    private static void samplerTest() {
+        Sampler sampler = new Sampler(1000, Integer.MAX_VALUE) {
+            final Runtime rt = Controller.RUNTIME;
+
+            @Override
+            public void sample() {
+                // kB
+                int totalMemory = (int) rt.totalMemory() / 1000;
+                int freeMemory = (int) rt.freeMemory() / 1000;
+                int memoryUsage = totalMemory - freeMemory;
+
+                Sample sample = new Sample(memoryUsage, Time.nowMillis());
+                addSample(sample);
+                System.out.println(sample);
+            }
+        };
+        SamplerChart pane = new SamplerChart(sampler, "Sampler", "Time", "Value", 500, 300);
+        ScheduledExecutorService exe = Executors.newScheduledThreadPool(1);
+        exe.scheduleAtFixedRate(sampler, 0, 2000, TimeUnit.MILLISECONDS);
+        //JFreeChart pane = new Statistics().airportSignificance(200);
+        /*DefaultXYDataset xy = new DefaultXYDataset();
+        JFreeChart chart = ChartFactory.createTimeSeriesChart("Chart", "Time", "Value", xy);
+        ChartPanel pane = new ChartPanel(chart);
+        pane.setSize(500, 300);*/
+        JFrame frame = new JFrame("Test");
+        frame.setSize(pane.getSize());
+        frame.add(pane);
+        frame.setVisible(true);
+    }
+
+    private static void combineBitmapTest() throws FileNotFoundException {
+        String path1 = Paths.RESOURCE + "bmphistory\\bmp005\\hist001.bmp",
+               path2 = Paths.RESOURCE + "bmphistory\\bmp005\\hist002.bmp";
+
+        Bitmap bmp1 = Bitmap.fromImage(path1), bmp2 = Bitmap.fromImage(path2);
+        BitmapMeanCombiner meanCombiner = new BitmapMeanCombiner(bmp1, bmp2);
+        Bitmap meanResult = meanCombiner.combine().getResult();
+        BitmapMaxCombiner maxCombiner = new BitmapMaxCombiner(bmp1, bmp2);
+        Bitmap maxResult = maxCombiner.combine().getResult();
+        createTestJFrame("MeanCombiner", meanResult.toImage(false));
+        createTestJFrame("MaxCombiner", maxResult.toImage(false));
+    }
+
+    private static void interestingAreasBitmap() throws DataNotFoundException {
+        Collection<Area> areas = Utilities.calculateInterestingAreas(6, 12, 0);
+        byte[][] bytes = new byte[360][180];
+        for (int x = 0; x < bytes.length; x++) {
+            for (int y = 0; y < bytes[0].length; y++) {
+                bytes[x][y] = -128;
+            }
+        }
+
+        for (Area area : areas) {
+            int x = (int) (area.getTopLeft().lon() + 180);
+            int y = (int) (area.getTopLeft().lat() + 90);
+            bytes[x][y] = 127;
+        }
+        Bitmap bmp = new Bitmap(bytes);
+        createTestJFrame("Interesting Areas", bmp);
     }
 
     /**
@@ -99,7 +162,7 @@ public class Test {
     }
 
     private static void cudaTest() {
-        String cuFile = Paths.CUDA_PATH + "CudaArrayMean.ptx";
+        String cuFile = Paths.CUDA + "CudaArrayMean.ptx";
 
         // init
         JCudaDriver.setExceptionsEnabled(true);
@@ -166,9 +229,9 @@ public class Test {
         long start = Time.nowMillis();
         Bitmap bitmap = Bitmap.fromPosVector(positions, 0.025f);
         Bitmap b2 = Bitmap.fromPosVector(positions, 0.025f);
-        BitmapCombiner combiner = new BitmapCombiner(bitmap, b2);
+        BitmapMeanCombiner combiner = new BitmapMeanCombiner(bitmap, b2);
         Bitmap result = combiner
-                .combineAll()
+                .combine()
                 .getResult();
         System.out.println(result.equals(bitmap));
         System.out.println(result.equals(b2));
@@ -183,7 +246,7 @@ public class Test {
             pageFormat.setOrientation(PageFormat.LANDSCAPE);
             pageFormat.setPaper(new Paper());
             try {
-                g.drawImage(ImageIO.read(new File(Paths.RESOURCE_PATH + "bitmap.bmp")), 0, 0, null);
+                g.drawImage(ImageIO.read(new File(Paths.RESOURCE + "bitmap.bmp")), 0, 0, null);
             } catch (IOException e) {
                 e.printStackTrace();
                 return -1;
@@ -241,7 +304,7 @@ public class Test {
         var bmp = Bitmap.fromPosVector(positions, 0.5f);
         //test.createTestJFrame(bmp.toImage());
         // bitmap write & read funktioniert
-        Bitmap.write(bmp, new File(Paths.RESOURCE_PATH + "bmpBitmap.bmp"));
+        Bitmap.write(bmp, new File(Paths.RESOURCE + "bmpBitmap.bmp"));
     }
 
     /*private void speedChartTest() throws DataNotFoundException {
@@ -365,24 +428,27 @@ public class Test {
             }
         }
 
-        createTestJFrame(img);
+        createTestJFrame("Img-Test", img);
     }
 
-    private static <T> void createTestJFrame(T source) {
+    private static <T> void createTestJFrame(String title, T source) {
         var panel = new JPanel();
         if (source instanceof BufferedImage img) {
             var label = new JLabel(new ImageIcon(img));
             panel.setSize(img.getWidth() + 100, img.getHeight() + 100);
             panel.add(label);
-       /* } else if (source instanceof Diagram dia) {
-            panel.setLayout(null);
-            panel.setSize(dia.getSize());
-            panel.add(dia);*/
-        } else if (source instanceof Component cmp){
+        } else if (source instanceof Bitmap bmp) {
+            BufferedImage image = bmp.toImage(true);
+            ImageIcon icon = Utilities.scale(new ImageIcon(image), bmp.width, bmp.height);
+            JLabel lbl = new JLabel(icon);
+            lbl.setSize(bmp.width, bmp.height);
+            panel.setSize(lbl.getSize());
+            panel.add(lbl);
+        } else if (source instanceof Component cmp) {
             panel.setSize(cmp.getSize());
             panel.add(cmp);
         }
-        var frame = new JFrame();
+        var frame = new JFrame(title);
         frame.setSize(panel.getSize());
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.add(panel);

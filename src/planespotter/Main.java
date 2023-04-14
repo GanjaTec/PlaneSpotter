@@ -1,6 +1,8 @@
 package planespotter;
 
 import planespotter.controller.Controller;
+import planespotter.model.io.BufferedCSVWriter;
+import planespotter.model.io.DBToCSV;
 
 /**
  * @name Main
@@ -9,13 +11,16 @@ import planespotter.controller.Controller;
  *
  * Main is the main class which contains the main()-methods to start the program
  */
-public abstract class Main {
+public final class Main {
 
     /**
      * Project Main-Method
      * @param args -> can be ignored
      */
     public static void main(String[] args) {
+        DBToCSV.setDebugMode(true);
+        BufferedCSVWriter.setDebugMode(true);
+
         // starting program with controller
         final Controller control = Controller.getInstance();
         control.start();

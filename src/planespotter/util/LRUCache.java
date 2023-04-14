@@ -4,7 +4,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
-import planespotter.util.math.MathUtils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -21,8 +20,8 @@ import java.util.stream.Stream;
  * @description
  * Class LRUCache represents a Cache with Least-Recently-Used strategy and any key and value.
  * The LRU-algorithm is not finished, should probably be improved in the future.
- * @see planespotter.util.LRUCache.CacheElement
- * @see java.util.LinkedHashMap
+ * @see CacheElement
+ * @see LinkedHashMap
  */
 public class LRUCache<K, V> {
 

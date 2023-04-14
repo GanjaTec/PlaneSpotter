@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @see planespotter.controller.ActionHandler
  * @see java.awt.KeyEventDispatcher
  */
-public class Hotkey {
+public final class Hotkey {
 
     // the key code, represents a key
     private final int keyCode;

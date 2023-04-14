@@ -1,6 +1,5 @@
 package planespotter.display;
 
-import libs.ZoomPane;
 import org.jetbrains.annotations.NotNull;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -8,7 +7,8 @@ import org.jfree.data.category.CategoryDataset;
 import planespotter.constants.UnicodeChar;
 import planespotter.constants.Warning;
 import planespotter.display.models.LayerPane;
-import planespotter.statistics.Statistics;
+import planespotter.display.models.ZoomPane;
+import planespotter.model.Statistics;
 import planespotter.throwables.DataNotFoundException;
 import planespotter.util.Bitmap;
 import planespotter.util.Utilities;
@@ -20,6 +20,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Map;
 
 import static org.jfree.chart.ChartFactory.createBarChart;
 
@@ -41,7 +42,7 @@ public class StatsView {
      * @param bitmap
      */
     public static void showPosHeatMap(@NotNull UserInterface ui, @NotNull Bitmap bitmap) {
-        showPosHeatMap(ui, bitmap.toImage());
+        showPosHeatMap(ui, bitmap.toImage(true));
     }
 
     public static void showPosHeatMap(@NotNull UserInterface ui, @NotNull BufferedImage bitmapImg) {
@@ -81,9 +82,30 @@ public class StatsView {
         }
     }
 
+    public static void showMostTracked(UserInterface ui, Statistics stats)
+            throws DataNotFoundException {
+
+        String input = ui.getUserInput("Please enter a minimum significance (0-" + UnicodeChar.INFINITY.get() + ")", 250);
+        if (input.isBlank()) {
+            return;
+        }
+        LayerPane layerPane = ui.getLayerPane();
+        int minCount;
+        try {
+            minCount = Integer.parseInt(input);
+        } catch (NumberFormatException nfe) {
+            ui.showWarning(Warning.NUMBER_EXPECTED);
+            return;
+        }
+        Map<String, Integer> mostTracked = stats.mostTrackedFlights(minCount);
+        CategoryDataset dataset = Statistics.createBarDataset(mostTracked);
+        ChartPanel chart = StatsView.barChartPanel(layerPane, "Most tracked Flights", "Flight", "Distance (km)", dataset);
+        layerPane.replaceBottom(chart);
+    }
+
     @NotNull
     private static JPanel heatMapPanel(@NotNull Component parent, @NotNull Bitmap bitmap) {
-        return heatMapPanel(parent, bitmap.toImage());
+        return heatMapPanel(parent, bitmap.toImage(true));
     }
 
     @NotNull

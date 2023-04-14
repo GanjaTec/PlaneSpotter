@@ -13,10 +13,13 @@ package planespotter.dataclasses;
  */
 public class Fr24Frame extends Frame {
 
+	// size of a Fr24Frame in bytes
+	public static final int SIZE = 360;
+
 	// additional fields
 
 	// Icao Address
-	private final String icaoaddr;
+	private String icaoaddr;
 
 	// tailnumber
 	private final String tailnumber;
@@ -93,6 +96,11 @@ public class Fr24Frame extends Frame {
 		this .unknown3 = unk3;
 		this.airline = airline;
 
+	}
+
+	@Override
+	public void setIcaoAddr(String icao) {
+		this.icaoaddr = icao;
 	}
 
 	/**

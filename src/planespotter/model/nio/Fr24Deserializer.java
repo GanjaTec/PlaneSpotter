@@ -27,7 +27,7 @@ public class Fr24Deserializer implements Deserializer<HttpResponse<String>> {
     @NotNull private static final Gson gson = new Gson();
 
     // filter manager, contains all data filters
-    @NotNull private FilterManager filterManager;
+    private FilterManager filterManager;
 
     /**
      * Fr24-Deserializer-constructor
@@ -43,6 +43,15 @@ public class Fr24Deserializer implements Deserializer<HttpResponse<String>> {
      */
     public void setFilter(@NotNull String... filter) {
         filterManager.set(filter);
+    }
+
+    /**
+     * sets the {@link FilterManager}
+     *
+     * @param filterManager is the {@link FilterManager} containing the filters
+     */
+    public void setFilterManager(@NotNull FilterManager filterManager) {
+        this.filterManager = filterManager;
     }
 
     /**

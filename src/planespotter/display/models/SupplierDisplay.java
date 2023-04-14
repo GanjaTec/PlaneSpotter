@@ -1,11 +1,9 @@
 package planespotter.display.models;
 
-import libs.UWPButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import planespotter.constants.Images;
-import planespotter.controller.Controller;
-import planespotter.model.io.Fr24Collector;
+import planespotter.model.Fr24Collector;
 import planespotter.util.Utilities;
 
 import javax.swing.*;
@@ -14,7 +12,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 import static planespotter.constants.DefaultColor.*;
 import static planespotter.constants.Images.FLYING_PLANE_ICON;
@@ -34,11 +31,11 @@ public class SupplierDisplay implements WindowListener {
                                 QUEUE_SIZE_TXT = "Queued Frames: ";
     // inserted values indexes:   0 = allFrames,   1 = newPlanes,   2 = newFlights
     private final int[] inserted = {0, 0, 0};
-    private int totalMemory = (int) Controller.RUNTIME.totalMemory() / 10_000;
+
     // swing components
     private final UWPButton pauseButton = new UWPButton(),
                             startStopButton = new UWPButton();
-    private final JProgressBar progressBar = new JProgressBar(JProgressBar.HORIZONTAL, 0, totalMemory);
+    private final JProgressBar progressBar = new JProgressBar(JProgressBar.HORIZONTAL, 0, Utilities.getTotalMemory());
     private final JLabel insertedLabel = new JLabel(),
                          memoryLabel = new JLabel(),
                          newPlanesLabel = new JLabel(),
@@ -146,29 +143,26 @@ public class SupplierDisplay implements WindowListener {
         statusLabel.setText(STATUS_TXT + text);
     }
 
-    public synchronized void update(final int insertedNow, final int newPlanesNow, final int newFlightsNow, String lastFrame, int queueSize, @Nullable Throwable error) {
+    public void update(final int insertedNow, final int newPlanesNow, final int newFlightsNow,
+                                    final long frameBytesPerS, final long frameBytesAll,
+                                    String lastFrame, int queueSize, @Nullable Throwable error) {
         inserted[0] += insertedNow;
         inserted[1] += newPlanesNow;
         inserted[2] += newFlightsNow;
-        totalMemory = (int) Controller.RUNTIME.totalMemory() / 10_000;
-        int freeMemory = (int) Controller.RUNTIME.freeMemory() / 10_000;
+        int totalMemory = Utilities.getTotalMemory();
+        int freeMemory = Utilities.getFreeMemory();
         int memoryUsage = totalMemory - freeMemory;
 
         insertedLabel.setText("Inserted Frames: " + inserted[0] + ", " + insertedNow + " per Sec.");
-        memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + totalMemory + " MB");
+        long allKB = frameBytesAll / 1000;
+        long perSecKB = frameBytesPerS / 1000;
+        memoryLabel.setText("Inserted Memory: " + allKB + " kB (" + perSecKB + " kB/s)");
         newPlanesLabel.setText("New Planes: " + inserted[1] + ", " + newPlanesNow + " per Sec.");
         newFlightsLabel.setText("New Flights: " + inserted[2] + ", " + newFlightsNow + " per Sec.");
+        progressBar.setMaximum(totalMemory);
         progressBar.setValue(memoryUsage);
         setLastFrame(lastFrame);
         setQueueSize(queueSize);
-        try {
-            TimeUnit.MILLISECONDS.sleep(500);
-        } catch (InterruptedException ignored) {
-        }
-        freeMemory = (int) (Controller.RUNTIME.freeMemory() / 10_000);
-        memoryUsage = (totalMemory - freeMemory);
-        progressBar.setValue(memoryUsage);
-        memoryLabel.setText("Memory: free: " + freeMemory + " MB, total: " + totalMemory + " MB");
         if (error != null) {
             setError(error.getMessage());
         }

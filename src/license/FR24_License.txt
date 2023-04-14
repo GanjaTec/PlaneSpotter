@@ -1,0 +1,16 @@
+FlightRadar24 License
+
+The data PlaneSpotter uses comes directly from a flightradar24.com data service.
+
+You are NOT FREE to use this data, click on the first link to see more information about
+FlightRadar's subscription plans.
+
+ONLY USE PlaneSpotter with a valid and subscribed FR24 data service.
+
+The PlaneSpotter team assumes NO LIABILITY for illegal use of data.
+
+
+visit https://www.flightradar24.com/commercial-services/data-services
+for more information about FlightRadar24's data services
+
+visit https://www.flightradar24.com/ for the FlightRadar24 homepage

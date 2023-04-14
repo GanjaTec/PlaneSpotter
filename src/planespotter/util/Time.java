@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
  * @description
  * class Time contains easy and helpful time utility functions
  */
-public abstract class Time {
+public final class Time {
 
     /**
      * equal to System.currentTimeMillis()

@@ -1,7 +1,6 @@
 package planespotter.dataclasses;
 
 import org.jetbrains.annotations.NotNull;
-import planespotter.model.ConnectionManager;
 
 import java.net.URI;
 
@@ -10,7 +9,7 @@ import java.net.URI;
  * @name Connection
  * @description The connection class represents a Connection with custom name and {@link URI}
  */
-public class ConnectionSource {
+public final class ConnectionSource {
 
     // connection name (unique)
     @NotNull

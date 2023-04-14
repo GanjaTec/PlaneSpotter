@@ -7,20 +7,14 @@ import org.jetbrains.annotations.TestOnly;
 import planespotter.a_test.Test;
 import planespotter.constants.Areas;
 import planespotter.constants.UnicodeChar;
-import planespotter.dataclasses.Area;
-import planespotter.dataclasses.DataPoint;
-import planespotter.dataclasses.Flight;
-import planespotter.dataclasses.Position;
-import planespotter.model.Collector;
-import planespotter.model.io.Fr24Collector;
-import planespotter.model.Scheduler;
-import planespotter.model.io.Inserter;
-import planespotter.model.io.Parkable;
-import planespotter.model.nio.DataLoader;
-import planespotter.model.nio.Fr24Deserializer;
-import planespotter.model.nio.Fr24Supplier;
-import planespotter.statistics.Statistics;
+import planespotter.constants.WinSound;
+import planespotter.controller.Controller;
+import planespotter.dataclasses.Frame;
+import planespotter.dataclasses.*;
+import planespotter.model.Parkable;
+import planespotter.model.Statistics;
 import planespotter.throwables.*;
+import planespotter.util.math.Size2D;
 import sun.misc.Unsafe;
 
 import javax.swing.*;
@@ -31,21 +25,18 @@ import java.io.*;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.http.HttpResponse;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static de.gtec.util.Utilities.isWinOS;
 
 /**
  * @name Utilities
@@ -57,7 +48,7 @@ import java.util.stream.Stream;
  * @description
  * class Utilities contains different utility-methods for different usages
  */
-public abstract class Utilities {
+public final class Utilities {
 
     /**
      * char-values connected to hex-int-values
@@ -102,6 +93,32 @@ public abstract class Utilities {
         return System.getProperty("user.dir") + "\\";
     }
 
+    public static int getTotalMemory() {
+        return (int) Controller.RUNTIME.totalMemory();
+    }
+
+    public static int getFreeMemory() {
+        return (int) Controller.RUNTIME.freeMemory();
+    }
+
+    /**
+     * only works on windows systems
+     *
+     * @return true if this process is running with administrator rights, else false
+     *         NOTE: always returns false on non-Windows systems
+     */
+    public static boolean hasWINAdminRights() {
+        if (!isWinOS()) {
+            return false;
+        }
+        String[] groups = (new com.sun.security.auth.module.NTSystem()).getGroupIDs();
+        for (String group : groups) {
+            if (group.equals("S-1-5-32-544"))
+                return true;
+        }
+        return false;
+    }
+
     /**
      * does a connection pre-check for all given {@link URL}s
      *
@@ -109,7 +126,7 @@ public abstract class Utilities {
      * @param urls are the {@link URL}s to check
      * @throws Fr24Exception if a connection check failed
      */
-    public static void connectionPreCheck(int timeoutMillis, @NotNull URL... urls) throws Fr24Exception {
+    public static void connectionPreCheck(int timeoutMillis, @NotNull URL... urls) throws ConnectException {
         URLConnection conn;
         InetAddress address = null;
         String hostName;
@@ -119,12 +136,15 @@ public abstract class Utilities {
                 conn.setConnectTimeout(timeoutMillis);
                 conn.connect();
                 address = InetAddress.getByName(url.getHost());
+                if (address == null) {
+                    continue;
+                }
                 if (!address.isReachable(timeoutMillis)) {
-                    throw new IOException();
+                    throw new ConnectException(address.getHostName() + " not reachable");
                 }
             } catch (IOException e) {
                 hostName = address == null ? "N/A" : address.getHostName();
-                throw new Fr24Exception("address " + hostName + "is not reachable!");
+                throw new ConnectException("address " + hostName + "is not reachable!");
             }
         }
     }
@@ -160,7 +180,7 @@ public abstract class Utilities {
      * plays a sound from the default toolkit
      *
      * @param sound is the sound to be played
-     * @see planespotter.constants.Sound
+     * @see WinSound
      */
     public static boolean playSound(@NotNull final String sound) {
         Runnable sound2 = (Runnable) Toolkit.getDefaultToolkit().getDesktopProperty(sound);
@@ -196,7 +216,7 @@ public abstract class Utilities {
      * @param startValue is the start max-value
      * @return max value of the input int-array
      */
-    private static int findMax(final int[] in, final int startValue) {
+    public static int findMax(final int[] in, final int startValue) {
         int max = startValue;
 
         for (int curr : in) {
@@ -205,6 +225,20 @@ public abstract class Utilities {
             }
         }
         return max;
+    }
+
+    /**
+     * returns the 'SIZE' constant of the current frame class
+     *
+     * note: the byte count might not be accurate
+     *
+     * @param frame is the input {@link Frame}
+     * @return byte-count of the {@link Frame}
+     */
+    public static int getBytes(@NotNull Frame frame) {
+        return frame instanceof Fr24Frame
+                ? Fr24Frame.SIZE : frame instanceof ADSBFrame
+                ? ADSBFrame.SIZE : Frame.SIZE;
     }
 
     /**
@@ -230,61 +264,21 @@ public abstract class Utilities {
         return ByteBuffer.wrap(bytes).getFloat();
     }
 
-    /**
-     *
-     * IMPORTANT: only use Bitmaps of gridSize 1.0 here
-     *
-     * @param bmp
-     * @param minLvl
-     * @return
-     */
-    @TestOnly
-    public static Queue<String> calculateInterestingAreas1(@NotNull Bitmap bmp, byte minLvl) {
-        if (bmp.width > 361) {
-            throw new InvalidDataException("Bitmap is too huge, please use gridSize 1.0f here");
-        }
-        Queue<String> areas = new ArrayDeque<>();
-        byte[][] bytes = bmp.getBitmap();
-        for (int x = 0; x < bmp.width; x++) {
-            for (int y = 0; y < bmp.height; y++) {
-                if (bytes[x][y] < minLvl) {
-                    continue;
-                }
-                areas.add(Areas.newArea(y, y + 1, x, x + 1));
+    public static Size2D checkBmpSize(@NotNull Bitmap[] bmps) {
+        int c = 0, w = 0, h = 0;
+        for (Bitmap bmp : bmps) {
+            if (c++ == 0) {
+                w = bmp.getBitmap().length;
+                h = bmp.getBitmap()[0].length;
+            } else if (bmp.getBitmap().length != w || bmp.getBitmap()[0].length != h) {
+                throw new InvalidArrayException("Array sizes do not match!");
             }
         }
-        return areas;
-    }
-
-    @TestOnly
-    @SuppressWarnings("deprecation")
-    public static Queue<String> calculateInterestingAreas2(double latGridSize, double lonGridSize, int interestingCount) {
-        Queue<String> interesting = new ArrayDeque<>();
-        String[] worldRaster = Areas.getWorldAreaRaster1D(latGridSize, lonGridSize);
-        HttpResponse<String> response;
-        Fr24Deserializer deserializer = new Fr24Deserializer();
-        DataLoader loader = new DataLoader();
-        int count, reqCount = 0;
-        for (String area : worldRaster) {
-            System.out.println("Sending request " + reqCount++ + "...");
-            try {
-                response = new Fr24Supplier(area, loader).sendRequest(5);
-                count = (int) deserializer.deserialize(response).count();
-                if (count >= interestingCount) {
-                    interesting.add(area);
-                }
-                Scheduler.sleep(300L); // limit request rate
-            } catch (IOException | InterruptedException | MalformedAreaException e) {
-                e.printStackTrace();
-            }
-        }
-        System.out.println("Requests sent: " + reqCount);
-        System.out.println("Interesting areas: " + interesting);
-        return interesting;
+        return new Size2D(w, h);
     }
 
     /**
-     * best method, use this one instead of no.1 and 2
+     *
      *
      * @param latGridSize
      * @param lonGridSize
@@ -293,9 +287,10 @@ public abstract class Utilities {
      * @throws DataNotFoundException
      */
     @SuppressWarnings("deprecation")
-    public static Collection<Area> calculateInterestingAreas3(double latGridSize, double lonGridSize, int interestingByteLvl) throws DataNotFoundException {
+    public static Collection<Area> calculateInterestingAreas(double latGridSize, double lonGridSize, int interestingByteLvl) throws DataNotFoundException {
         Collection<Area> interesting = Collections.synchronizedCollection(new ArrayDeque<>());
         String[] raster = Areas.getWorldAreaRaster1D(latGridSize, lonGridSize);
+        // TODO: 24.12.2022 REPLACE WITH .bmp FILE
         byte[][] bmp = new Statistics().globalPositionBitmap(1.0f).getBitmap();
         Arrays.stream(raster)
                 .parallel()

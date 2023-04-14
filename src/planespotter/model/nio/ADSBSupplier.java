@@ -31,7 +31,7 @@ public class ADSBSupplier extends HttpSupplier {
     @Nullable private URI receiverRequestUri;
 
     // DataLoader instance with data queue
-    @NotNull private final DataLoader dataLoader;
+    @NotNull private final DataProcessor dataProcessor;
 
     // Deserializer for deserializing ADSB data (ADSBDeserializer)
     @NotNull private final ADSBDeserializer deserializer;
@@ -43,31 +43,31 @@ public class ADSBSupplier extends HttpSupplier {
     private byte initialized = 0;
 
     /**
-     * constructs a new {@link ADSBSupplier} with {@link URI} and {@link DataLoader}
+     * constructs a new {@link ADSBSupplier} with {@link URI} and {@link DataProcessor}
      *
      * @param uri is the data request {@link URI}, can be changed later
-     * @param dataLoader is a {@link DataLoader} which contains the data queue where data can be taken from
+     * @param dataProcessor is a {@link DataProcessor} which contains the data queue where data can be taken from
      */
-    public ADSBSupplier(@NotNull String uri, @NotNull DataLoader dataLoader, @Nullable String receiverUri) {
-        this(uri, dataLoader, receiverUri, new ADSBDeserializer());
+    public ADSBSupplier(@NotNull String uri, @NotNull DataProcessor dataProcessor, @Nullable String receiverUri) {
+        this(uri, dataProcessor, receiverUri, new ADSBDeserializer());
     }
 
     /**
-     * constructs a new {@link ADSBSupplier} with {@link URI} and {@link DataLoader}
+     * constructs a new {@link ADSBSupplier} with {@link URI} and {@link DataProcessor}
      *
      * @param uri is the data request {@link URI}, can be changed later
-     * @param dataLoader is a {@link DataLoader} which contains the data queue where data can be taken from
+     * @param dataProcessor is a {@link DataProcessor} which contains the data queue where data can be taken from
      */
-    public ADSBSupplier(@NotNull String uri, @NotNull DataLoader dataLoader, @Nullable String receiverUri, @NotNull ADSBDeserializer deserializer) {
+    public ADSBSupplier(@NotNull String uri, @NotNull DataProcessor dataProcessor, @Nullable String receiverUri, @NotNull ADSBDeserializer deserializer) {
         this.requestUri = URI.create(uri);
         this.receiverRequestUri = receiverUri != null ? URI.create(receiverUri) : null;
-        this.dataLoader = dataLoader;
+        this.dataProcessor = dataProcessor;
         this.deserializer = deserializer;
     }
 
     /**
      * {@link Supplier}-task, supplies ADSB data from the
-     * request URI to the {@link DataLoader}-data queue,
+     * request URI to the {@link DataProcessor}-data queue,
      * handles exceptions with the {@link HttpSupplier}-{@link ExceptionHandler}
      */
     @Override
@@ -79,7 +79,7 @@ public class ADSBSupplier extends HttpSupplier {
             }
             HttpResponse<String> response = sendRequest(2);
             Stream<? extends Frame> frames = deserializer.deserialize(response); // ADSB frames
-            dataLoader.insertLater(frames);
+            dataProcessor.insertLater(frames);
         } catch (IOException | InterruptedException | IllegalArgumentException e) {
             ExceptionHandler onError = getExceptionHandler();
             if (onError != null) {

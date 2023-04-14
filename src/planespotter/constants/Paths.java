@@ -1,6 +1,5 @@
 package planespotter.constants;
 
-import org.jetbrains.annotations.NotNull;
 import planespotter.controller.Controller;
 import planespotter.util.Utilities;
 
@@ -22,13 +21,13 @@ public final class Paths {
      * initialized with the working directory when the program is started
      */
     @SuppressWarnings(value = "Does not work yet")
-    public static final String ROOT_PATH = (Controller.ROOT_PATH == null) ? Utilities.getAbsoluteRootPath() : Controller.ROOT_PATH;
+    public static final String ROOT = (Controller.ROOT_PATH == null) ? Utilities.getAbsoluteRootPath() : Controller.ROOT_PATH;
 
     /**
      * src-path
      * contains all project sources
      */
-    public static final String SRC_PATH = "src\\";
+    public static final String SOURCE = "src\\";
 
     /**
      * python-helper-path
@@ -40,36 +39,47 @@ public final class Paths {
      * libs-path
      * contains all external libraries
      */
-    public static final String LIBS_PATH = SRC_PATH + "libs\\";
+    public static final String LIBS = SOURCE + "libs\\";
 
     /**
      * license-path
      * contains all license files
      */
-    public static final String LICENSE_PATH = SRC_PATH + "license\\";
+    public static final String LICENSE = SOURCE + "license\\";
 
     /**
      * code path
      * contains all project code
      */
-    public static final String CODE_PATH = SRC_PATH + "planespotter\\";
+    public static final String CODE = SOURCE + "planespotter\\";
 
     /**
      * resource-path
      * contains all project resources
      */
-    public static final String RESOURCE_PATH = CODE_PATH + "resource\\";
+    public static final String RESOURCE = CODE + "resource\\";
+
+    /**
+     * Bitmap-history path
+     * contains all history Bitmaps
+     */
+    public static final String BMP_HISTORY = RESOURCE + "bmphistory\\";
+
+    /**
+     * Database CSV exports
+     */
+    public static final String DB_CSV = RESOURCE + "DatabaseCSV\\";
 
     /**
      * image-path
      * contains all used images
      */
-    public static final String IMAGE_PATH = RESOURCE_PATH + "img\\";
+    public static final String IMAGES = RESOURCE + "img\\";
 
     /**
      * CUDA-path
      * contains .cu and .ptx files for GPU-tasks
      */
-    public static final String CUDA_PATH = CODE_PATH + "cuda\\";
+    public static final String CUDA = CODE + "cuda\\";
 
 }

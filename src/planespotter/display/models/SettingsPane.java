@@ -1,12 +1,10 @@
 package planespotter.display.models;
 
-import libs.UWPButton;
 import org.jetbrains.annotations.NotNull;
 import planespotter.controller.ActionHandler;
 import planespotter.display.UserInterface;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyListener;
@@ -52,7 +50,7 @@ public class SettingsPane extends JDialog {
         super.setLayout(null);
         super.setBackground(DEFAULT_SEARCH_ACCENT_COLOR.get());
         super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        super.setType(Window.Type.POPUP);
+        super.setType(Type.POPUP);
         super.setResizable(false);
         super.setFocusable(false);
         // adding labels

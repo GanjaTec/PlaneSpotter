@@ -1,5 +1,8 @@
 package planespotter.util;
 
+import de.gtec.util.SimpleBenchmark;
+import de.gtec.util.bmp.Filler;
+import de.gtec.util.math.HighestValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.TestOnly;
@@ -79,7 +82,8 @@ public class Bitmap {
         int height = (int) (180.0 / gridSize) + 1;
         int[][] ints2d = new int[width][height];
 
-        fillZeros(ints2d);
+        // nicht nötig
+        //fillZeros(ints2d);
 
         // the parallel stream performs much better than
         // a normal for-loop, 3s against 12s, we can use
@@ -106,7 +110,7 @@ public class Bitmap {
      * @param gridSize is the bitmap grid size, 1 is normal (360x180), 0.5 is the double (720x360)
      *                 (should be 0.05 or higher to prevent memory problems)
      * @param area is the {@link Area} or: the Bitmap region on the map
-     * @return Bitmap instance, created by pos-vector under a certain grid size, but only a certain {@link planespotter.dataclasses.Area}
+     * @return Bitmap instance, created by pos-vector under a certain grid size, but only a certain {@link Area}
      */
     public static Bitmap fromPosVector(@NotNull Vector<Position> positions, @Range(from = 0, to = 2) float gridSize, @NotNull Area area) {
         checkGridSize(gridSize);
@@ -212,16 +216,15 @@ public class Bitmap {
         if (height == 0) {
             throw new InvalidArrayException("input array is empty, height out of range!");
         }
+        long start = Time.nowMillis();
 
-        int max = Utilities.maxValue(ints2d);
+        int max = de.gtec.util.Utilities.highestValue(ints2d);
         byte[][] bytes = new byte[width][height];
-        int level;
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                level = ints2d[x][y];
-                bytes[x][y] = Utilities.toByteLevel(level, max);
-            }
-        }
+
+        System.out.println("Elapsed: " + Time.elapsedMillis(start) + " ms");
+
+        Filler.fill(bytes, ints2d, width, height, max);
+
         return new Bitmap(bytes);
     }
 
@@ -299,7 +302,7 @@ public class Bitmap {
         if (filename.endsWith(".bmp")) {
             file = new File(filename + ".bmp");
         }
-        ImageIO.write(bitmap.toImage(), "BMP", file);
+        ImageIO.write(bitmap.toImage(true), "BMP", file);
         return file;
     }
 
@@ -343,7 +346,7 @@ public class Bitmap {
      *
      * @return {@link BufferedImage} displaying the {@link Bitmap}
      */
-    public BufferedImage toImage() {
+    public BufferedImage toImage(boolean rotateAndFlip) {
         var img = new BufferedImage(this.width, this.height, BufferedImage.TYPE_BYTE_GRAY);
         short lvl; Color color;
         for (int x = 0; x < this.width; x++) {
@@ -356,7 +359,9 @@ public class Bitmap {
                 img.setRGB(x, y, color.getRGB());
             }
         }
-        return Utilities.rotate(img, 180, BufferedImage.TYPE_BYTE_GRAY, true);
+        return rotateAndFlip
+                ? Utilities.rotate(img, 180, BufferedImage.TYPE_BYTE_GRAY, true)
+                : img;
     }
 
     /**

@@ -38,28 +38,34 @@ import static planespotter.constants.Images.*;
 public class UserInterface {
 
     // the default font with a size of 16, can be changed
-    @NotNull public static final Font DEFAULT_FONT = new Font("DialogInput", Font.BOLD, 16);
+    public static final Font DEFAULT_FONT = new Font("DialogInput", Font.BOLD, 16);
 
     // main window, contains all components
-    @NotNull private final JFrame window;
+    private final JFrame window;
 
     // layer pane, contains all view layers and layer-operations
-    @NotNull private final LayerPane layerPane;
+    private final LayerPane layerPane;
 
     // search panel for data search
-    @NotNull private final SearchPane searchPane;
+    private final SearchPane searchPane;
 
     // settings panel, contains all settings
-    @NotNull private final SettingsPane settings;
+    private final SettingsPane settings;
 
     // connection pane, for connection managing
-    @NotNull private final ConnectionPane connectionPane;
+    private final ConnectionPane connectionPane;
+
+    // data upload pane
+    private final UploadPane uploadPane;
 
     // map manager, manages map operations
-    @NotNull private final MapManager mapManager;
+    private final MapManager mapManager;
+
+    // dev tools view
+    @Nullable private DevToolsView devToolsView;
 
     // the current view type
-    @NotNull private ViewType currentViewType;
+    private ViewType currentViewType;
 
     // indicates if a warning is shown at the moment
     private boolean warningShown;
@@ -78,11 +84,14 @@ public class UserInterface {
         this.searchPane = new SearchPane(this.layerPane, actionHandler);
         this.settings = new SettingsPane(this.window, actionHandler);
         this.connectionPane = new ConnectionPane(window, actionHandler, connectionManager);
+        this.uploadPane = new UploadPane(this.window, "Data Upload", null, null, null);
         this.window.add(this.layerPane);
 
         this.layerPane.setDefaultBottomComponent(getMap());
         this.layerPane.setDefaultOverTopComponent(loadingScreen());
         this.layerPane.setBottomDefault();
+
+        this.devToolsView = null;
 
         this.currentViewType = ViewType.MAP_LIVE;
     }
@@ -404,6 +413,11 @@ public class UserInterface {
         settingsMenu.addMouseListener(actionHandler);
         closeMenu.addMouseListener(actionHandler);
 
+        JMenuItem devTools = new JMenuItem("DevTools");
+        devTools.addMouseListener(actionHandler);
+        devTools.setFont(DEFAULT_FONT);
+        helpMenu.add(devTools);
+
         JMenuItem[] fileItems = new JMenuItem[] {
                 new JMenuItem("Open", Images.OPEN_FILE_ICON_16x.get()),
                 new JMenuItem("Save As", Images.SAVE_FILE_ICON_16x.get()),
@@ -415,14 +429,17 @@ public class UserInterface {
         JMenuItem[] statsItems = new JMenuItem[] {
                 new JMenuItem("Top-Airports", Images.STATS_ICON_16x.get()),
                 new JMenuItem("Top-Airlines", Images.STATS_ICON_16x.get()),
-                heatMapMenu
+                new JMenuItem("Most-Tracked-Flights", Images.STATS_ICON_16x.get()),
+                heatMapMenu,
+                new JMenuItem("Flight-Simulation")
         };
         JMenuItem[] heatMapItems = new JMenuItem[] {
                 new JMenuItem("Position-HeatMap"),
-                new JMenuItem("coming soon...")
+                new JMenuItem("Coming soon...")
         };
         JMenuItem[] supplierItems = new JMenuItem[] {
                 new JMenuItem("Run Supplier", Images.PLANE_ICON_16x.get()),
+                new JMenuItem("Upload to Server (BETA)", ANTENNA_ICON_16x.get()),
                 new JMenuItem("Source Manager", ANTENNA_ICON_16x.get())
         };
         Font font = UserInterface.DEFAULT_FONT.deriveFont(13f);
@@ -502,7 +519,7 @@ public class UserInterface {
      * @return UI loading screen as {@link JLabel}
      */
     @NotNull
-    private JLabel loadingScreen() {
+    public JLabel loadingScreen() {
         ImageIcon img = LOADING_CYCLE_GIF.get();
         JLabel label = new JLabel(img);
         label.setSize(img.getIconWidth(), img.getIconHeight());
@@ -551,5 +568,19 @@ public class UserInterface {
         fileChooser.showOpenDialog(parent);
 
         return fileChooser;
+    }
+
+    @Nullable
+    public DevToolsView getDevToolsView() {
+        return devToolsView;
+    }
+
+    public void showDevToolsView() {
+        devToolsView = DevToolsView.getInstance();
+        devToolsView.setVisible(true);
+    }
+
+    public UploadPane getUploadPane() {
+        return uploadPane;
     }
 }

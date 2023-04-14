@@ -14,7 +14,7 @@ import planespotter.unused.ProtoSupplierADSB;
  * by deserializing it and turning it into database-friendly
  * Frames
  * @see ProtoSupplierADSB
- * @see planespotter.model.nio.Fr24Supplier
+ * @see Fr24Supplier
  * for examples
  */
 @FunctionalInterface
@@ -24,8 +24,8 @@ public interface Supplier extends Runnable {
      * supplier-method,
      * collects data, deserializes
      * and supplies it to the database
-     * @see planespotter.model.nio.ADSBSupplier
-     * @see planespotter.model.nio.Fr24Supplier
+     * @see ADSBSupplier
+     * @see Fr24Supplier
      * for examples
      *
      */

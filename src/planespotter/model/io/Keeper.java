@@ -8,7 +8,7 @@ package planespotter.model.io;
  * @description
  * Functional Interface Keeper represents an abstract Database-Keeper
  * which keeps all data correct.
- * @see planespotter.model.io.KeeperOfTheArchives
+ * @see KeeperOfTheArchives
  * @see planespotter.unused.KeeperOfTheArchivesSenior
  */
 @FunctionalInterface

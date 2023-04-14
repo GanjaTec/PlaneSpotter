@@ -1,7 +1,9 @@
+package test;
+
 import org.junit.jupiter.api.Test;
 import planespotter.constants.Areas;
 import planespotter.dataclasses.Fr24Frame;
-import planespotter.model.nio.DataLoader;
+import planespotter.model.nio.DataProcessor;
 import planespotter.model.nio.Fr24Deserializer;
 import planespotter.model.nio.Fr24Supplier;
 
@@ -31,9 +33,9 @@ class Fr24DeserializerTest {
         assertDoesNotThrow(() -> {
             // testing deserialize of a HttpResponse
             HttpResponse<String> response;
-            DataLoader dataLoader = new DataLoader();
+            DataProcessor dataProcessor = new DataProcessor();
             try {
-                response = new Fr24Supplier(Areas.CGN_LANDESCHNEISE, dataLoader).sendRequest(2);
+                response = new Fr24Supplier(Areas.CGN_LANDESCHNEISE, dataProcessor).sendRequest(2);
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
                 throw new Error("Assertion failed because of the HttpResponse!", e);

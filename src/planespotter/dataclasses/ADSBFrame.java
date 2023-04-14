@@ -15,13 +15,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ADSBFrame extends Frame {
 
+    // size of an ADSBFrame in bytes
+    public static final int SIZE = 132;
+
     /*
      * we need to name the class fields EQUAL to the JSON fields,
      * so some field names might not be that meaningful
      */
 
     // hex (ICAO) and flight (mostly call sign) Strings
-    private final String hex, flight;
+    private String hex;
+    private final String flight;
 
     // track (heading) and gs (ground speed)
     private final int track, gs;
@@ -47,6 +51,11 @@ public class ADSBFrame extends Frame {
         this.flight = flight;
         this.track = track;
         this.gs = trueAirSpeed;
+    }
+
+    @Override
+    public void setIcaoAddr(String icao) {
+        this.hex = icao;
     }
 
     /**

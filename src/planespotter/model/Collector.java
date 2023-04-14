@@ -2,14 +2,12 @@ package planespotter.model;
 
 import org.jetbrains.annotations.NotNull;
 import planespotter.display.models.SupplierDisplay;
-import planespotter.model.io.Fr24Collector;
-import planespotter.model.io.Parkable;
 import planespotter.model.nio.Supplier;
-import planespotter.util.Utilities;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @name Collector
@@ -43,9 +41,10 @@ public abstract class Collector<S extends Supplier> implements Parkable {
     protected Scheduler scheduler;
 
     // atomic integers as Frame-, Flight- and Plane-counter
-    protected final AtomicInteger insertedNow, insertedFrames,
+    protected final AtomicInteger newFramesNow, newFramesAll,
                                   newPlanesNow, newPlanesAll,
                                   newFlightsNow, newFlightsAll;
+    protected final AtomicLong frameBytesNow, frameBytesAll;
 
     // error queue, collects errors
     protected final Queue<Throwable> errorQueue;
@@ -59,12 +58,14 @@ public abstract class Collector<S extends Supplier> implements Parkable {
     protected Collector(boolean exitOnClose, @NotNull S supplier) {
         this.supplier = supplier;
         this.display = null;
-        this.insertedNow = new AtomicInteger(0);
-        this.insertedFrames = new AtomicInteger(0);
+        this.newFramesNow = new AtomicInteger(0);
+        this.newFramesAll = new AtomicInteger(0);
         this.newPlanesNow = new AtomicInteger(0);
         this.newPlanesAll = new AtomicInteger(0);
         this.newFlightsNow = new AtomicInteger(0);
         this.newFlightsAll = new AtomicInteger(0);
+        this.frameBytesNow = new AtomicLong(0L);
+        this.frameBytesAll = new AtomicLong(0);
         this.errorQueue = new ArrayDeque<>();
         // setting collector flags to 'running'
         this.paused = false;

@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static planespotter.constants.Paths.IMAGE_PATH;
+import static planespotter.constants.Paths.IMAGES;
 
 /**
  * @name Images
@@ -15,26 +15,26 @@ import static planespotter.constants.Paths.IMAGE_PATH;
  * enum Images contains all images that are used in the {@link planespotter.display.UserInterface}
  */
 public enum Images {
-    TITLE(new ImageIcon(IMAGE_PATH + "newTitle.png")),
-    PAPER_PLANE_ICON(new ImageIcon(IMAGE_PATH + "planespotter_icon.png")),
-    FLYING_PLANE_ICON(new ImageIcon(IMAGE_PATH + "flying_plane_icon.png")),
-    START_SCREEN(new ImageIcon(IMAGE_PATH + "start_img.png")),
-    LOADING_CYCLE_GIF(new ImageIcon(IMAGE_PATH + "loading2.gif")),
-    OPEN_FILE_ICON_16x(new ImageIcon(IMAGE_PATH + "open_file_icon_16x.png")),
-    SAVE_FILE_ICON_16x(new ImageIcon(IMAGE_PATH + "save_file_icon_16x.png")),
-    PLANE_ICON_16x(new ImageIcon(IMAGE_PATH + "plane_icon_16x.png")),
-    ANTENNA_ICON_16x(new ImageIcon(IMAGE_PATH + "antenna_icon_16x.png")),
-    STATS_ICON_16x(new ImageIcon(IMAGE_PATH + "stats_icon_16x.png")),
-    HEATMAP_ICON_16x(new ImageIcon(IMAGE_PATH + "heatmap_icon_16x.png")),
-    MAP_ICON_16x(new ImageIcon(IMAGE_PATH + "map_icon_16x.png")),
-    EXIT_ICON_16x(new ImageIcon(IMAGE_PATH + "exit_icon_16x.png")),
-    AIRPLANE_ICON_8x(new ImageIcon(IMAGE_PATH + "airplane_icon_8x.png")),
-    DEFAULT_AIRPLANE_ICON_16x(new ImageIcon(IMAGE_PATH  + "airplane_icon_16x.png")),
-    SELECTED_AIRPLANE_ICON_16x(new ImageIcon(IMAGE_PATH + "selected_airplane_icon_16x.png")),
-    FULLSCREEN_ICON_16x(new ImageIcon(IMAGE_PATH + "fullscreen_icon_16x.png"));
+    TITLE(new ImageIcon(IMAGES + "newTitle.png")),
+    PAPER_PLANE_ICON(new ImageIcon(IMAGES + "planespotter_icon.png")),
+    FLYING_PLANE_ICON(new ImageIcon(IMAGES + "flying_plane_icon.png")),
+    START_SCREEN(new ImageIcon(IMAGES + "start_img.png")),
+    LOADING_CYCLE_GIF(new ImageIcon(IMAGES + "loading2.gif")),
+    OPEN_FILE_ICON_16x(new ImageIcon(IMAGES + "open_file_icon_16x.png")),
+    SAVE_FILE_ICON_16x(new ImageIcon(IMAGES + "save_file_icon_16x.png")),
+    PLANE_ICON_16x(new ImageIcon(IMAGES + "plane_icon_16x.png")),
+    ANTENNA_ICON_16x(new ImageIcon(IMAGES + "antenna_icon_16x.png")),
+    STATS_ICON_16x(new ImageIcon(IMAGES + "stats_icon_16x.png")),
+    HEATMAP_ICON_16x(new ImageIcon(IMAGES + "heatmap_icon_16x.png")),
+    MAP_ICON_16x(new ImageIcon(IMAGES + "map_icon_16x.png")),
+    EXIT_ICON_16x(new ImageIcon(IMAGES + "exit_icon_16x.png")),
+    AIRPLANE_ICON_8x(new ImageIcon(IMAGES + "airplane_icon_8x.png")),
+    DEFAULT_AIRPLANE_ICON_16x(new ImageIcon(IMAGES + "airplane_icon_16x.png")),
+    SELECTED_AIRPLANE_ICON_16x(new ImageIcon(IMAGES + "selected_airplane_icon_16x.png")),
+    FULLSCREEN_ICON_16x(new ImageIcon(IMAGES + "fullscreen_icon_16x.png"));
 
     // image instance field
-    @NotNull private final ImageIcon img;
+    private final ImageIcon img;
 
     // private enum constructor
     Images(final @NotNull ImageIcon img) {

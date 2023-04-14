@@ -14,11 +14,11 @@ import java.util.*;
  */
 public final class Configuration {
 
-    public static final String CONFIG_FILENAME = Paths.RESOURCE_PATH + "config.json";
+    public static final String CONFIG_FILENAME = Paths.RESOURCE + "config.json";
 
-    public static final String FILTERS_FILENAME = Paths.RESOURCE_PATH + "filters.psc";
+    public static final String FILTERS_FILENAME = Paths.RESOURCE + "filters.psc";
 
-    public static final String CONNECTIONS_FILENAME = Paths.RESOURCE_PATH + "connections.json";
+    public static final String CONNECTIONS_FILENAME = Paths.RESOURCE + "connections.json";
 
     private final Map<String, Property> props = new HashMap<>();
 

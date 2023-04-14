@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import planespotter.dataclasses.Area;
 import planespotter.dataclasses.Fr24Frame;
 import planespotter.model.ExceptionHandler;
-import planespotter.model.io.Fr24Collector;
+import planespotter.model.Fr24Collector;
 import planespotter.throwables.Fr24Exception;
 import planespotter.throwables.MalformedAreaException;
 import planespotter.util.Time;
@@ -48,7 +48,7 @@ public class Fr24Supplier extends HttpSupplier {
 	// class instance fields
 	private final String threadName;
 	private final Area area;
-	private final DataLoader dataLoader;
+	private final DataProcessor dataProcessor;
 	private final Fr24Deserializer deserializer;
 
 	/**
@@ -56,21 +56,12 @@ public class Fr24Supplier extends HttpSupplier {
 	 * can be used as utility-supplier if needed.
 	 * WARNING: this supplier is not able to collect data
 	 */
-	public Fr24Supplier(@NotNull DataLoader dataLoader) {
-		this((Area) null, dataLoader);
+	public Fr24Supplier(@NotNull DataProcessor dataProcessor) {
+		this((Area) null, dataProcessor);
 	}
 
-	public Fr24Supplier(Area area, @NotNull DataLoader dataLoader) {
-		this(area, dataLoader, new Fr24Deserializer());
-	}
-
-	/**
-	 * constructs a custom {@link Fr24Supplier} with thread number and area
-	 *
-	 * @param area is the area String
-	 */
-	public Fr24Supplier(@NotNull String area, @NotNull DataLoader dataLoader) throws MalformedAreaException {
-		this(area, dataLoader, new Fr24Deserializer());
+	public Fr24Supplier(Area area, @NotNull DataProcessor dataProcessor) {
+		this(area, dataProcessor, new Fr24Deserializer());
 	}
 
 	/**
@@ -78,8 +69,8 @@ public class Fr24Supplier extends HttpSupplier {
 	 *
 	 * @param area is the area String
 	 */
-	public Fr24Supplier(@NotNull String area, @NotNull DataLoader dataLoader, @NotNull Fr24Deserializer deserializer) throws MalformedAreaException {
-		this(Area.fromString(area), dataLoader, deserializer);
+	public Fr24Supplier(@NotNull String area, @NotNull DataProcessor dataProcessor) throws MalformedAreaException {
+		this(area, dataProcessor, new Fr24Deserializer());
 	}
 
 	/**
@@ -87,10 +78,19 @@ public class Fr24Supplier extends HttpSupplier {
 	 *
 	 * @param area is the area String
 	 */
-	public Fr24Supplier(Area area, @NotNull DataLoader dataLoader, @NotNull Fr24Deserializer deserializer) {
+	public Fr24Supplier(@NotNull String area, @NotNull DataProcessor dataProcessor, @NotNull Fr24Deserializer deserializer) throws MalformedAreaException {
+		this(Area.fromString(area), dataProcessor, deserializer);
+	}
+
+	/**
+	 * constructs a custom {@link Fr24Supplier} with thread number and area
+	 *
+	 * @param area is the area String
+	 */
+	public Fr24Supplier(Area area, @NotNull DataProcessor dataProcessor, @NotNull Fr24Deserializer deserializer) {
 		this.threadName = "Supplier Thread";
 		this.area = area;
-		this.dataLoader = dataLoader;
+		this.dataProcessor = dataProcessor;
 		this.deserializer = deserializer;
 	}
 
@@ -110,7 +110,7 @@ public class Fr24Supplier extends HttpSupplier {
 			Utilities.checkStatusCode(response.statusCode());
 			Stream<Fr24Frame> fr24Frames = deserializer.deserialize(response);
 			// writing frames to DB
-			dataLoader.insertLater(fr24Frames);
+			dataProcessor.insertLater(fr24Frames);
 
 		} catch (IOException | InterruptedException | IllegalArgumentException | Fr24Exception e) {
 			ExceptionHandler onError = getExceptionHandler();
@@ -200,11 +200,11 @@ public class Fr24Supplier extends HttpSupplier {
 	}
 
 	/**
-	 * getter for {@link DataLoader}
+	 * getter for {@link DataProcessor}
 	 *
 	 * @return data loader of this supplier
 	 */
-	public DataLoader getDataLoader() {
-		return dataLoader;
+	public DataProcessor getDataLoader() {
+		return dataProcessor;
 	}
 }

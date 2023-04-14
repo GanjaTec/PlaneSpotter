@@ -1,14 +1,15 @@
 package planespotter.model.io;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.interfaces.TileSource;
-import planespotter.constants.Configuration;
+import planespotter.constants.props.Configuration;
+import planespotter.constants.props.Property;
+import planespotter.constants.props.UserProperties;
 import planespotter.dataclasses.ConnectionSource;
 import planespotter.dataclasses.MapData;
 import planespotter.display.TreasureMap;
@@ -24,8 +25,9 @@ import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
-import java.util.*;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @name FileWizard
@@ -58,7 +60,7 @@ public class FileWizard {
         return fileWizard;
     }
 
-    public String readText(@NotNull File file) throws IOException {
+    public String readUTF(@NotNull File file) throws IOException {
         try (FileInputStream in = new FileInputStream(file)) {
 
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
@@ -167,140 +169,52 @@ tc:     try (JsonReader reader = new JsonReader(new FileReader(file))) {
         if (!file.getName().endsWith(".json")) {
             throw new ExtensionException("config file must end with '.json'");
         }
-        Configuration.Property[] props = config.getUserProperties(); // length always 4
+        Property[] props = config.getUserProperties().toArray(); // length always 4
         try (FileWriter fw = new FileWriter(file);
              JsonWriter jw = new JsonWriter(fw)) {
-            jw.beginArray()
-                    .beginObject()
-                    .name("key").value(props[0].key)
-                    .name("val").value((int) props[0].val)
-                    .endObject().beginObject()
-                    .name("key").value(props[1].key)
-                    .name("val").value(props[1].val.toString())
-                    .endObject().beginObject()
-                    .name("key").value(props[2].key)
-                    .name("val").value((int) props[2].val)
-                    .endObject().beginObject()
-                    .name("key").value(props[3].key)
-                    .name("val").value((int) props[3].val)
-                    .endObject().endArray();
+            jw.beginObject()
+                    .name(props[0].key).value((int) props[0].val)
+                    .name(props[1].key).value(props[1].val.toString())
+                    .name(props[2].key).value((int) props[2].val)
+                    .name(props[3].key).value((int) props[3].val)
+                    .endObject();
         }
     }
 
-    public Configuration.Property[] readConfig(@NotNull File file) throws IOException, ExtensionException {
+    public Configuration readConfig(@NotNull File file) throws IOException, ExtensionException {
         if (!file.getName().endsWith(".json")) {
             throw new ExtensionException("config file must end with '.json'");
         }
-        List<Configuration.Property> props = new ArrayList<>();
-        Configuration.Property prop;
+        //List<Property> props = new ArrayList<>();
+        UserProperties props = null;
         Gson gson = new Gson();
         try (FileReader fr = new FileReader(file);
              JsonReader jr = new JsonReader(fr)) {
 
-            jr.beginArray();
-            while (jr.hasNext()) {
-                prop = gson.fromJson(jr, Configuration.Property.class);
-                props.add(prop);
+            if (jr.hasNext()) {
+                props = gson.fromJson(jr, UserProperties.class);
             }
         }
-        return props.toArray(Configuration.Property[]::new);
-    }
-
-    /**
-     * writes a {@link Configuration} to a specific {@link File}
-     * {@see Configuration.CONFIG_FILENAME}
-     *
-     * @param config is the {@link Configuration} to be written
-     * @param filename is the filename of the configuration file (must end with '.psc')
-     * @throws IOException if an error occurs the writing process
-     */
-    public void writeConfig(@NotNull Configuration config, @NotNull String filename) throws IOException {
-        if (filename.isBlank()) {
-            throw new InvalidDataException("File name must not be blank!");
+        if (props == null) {
+            throw new IOException("Could not read UserProperties");
         }
-        File file = new File(filename);
-        if (!file.exists() && !file.createNewFile()) {
-            file.createNewFile(); // result ignored
-        }
-        try (FileWriter fw = new FileWriter(file);
-             BufferedWriter bw = new BufferedWriter(fw)) {
-            String key; Object val;
-            for (Configuration.Property property : config.getUserProperties()) {
-                key = property.key;
-                val = property.val;
-                if (!val.getClass().isPrimitive() && !(val instanceof String)) {
-                    throw new NotSerializableException("Cannot serialize the current value: " + val);
-                }
-                bw.write(key + ": " + val);
-            }
-        }
-    }
-
-    /**
-     * reads a {@link Configuration} from specific {@link File}
-     *
-     * @param filename is the {@link File} name of the configuration file (must end with '.psc')
-     * @return array of {@link Object}s, the config values
-     * @throws ExtensionException if the file name does not end with '.psc'
-     * @throws FileNotFoundException if the {@link File} was not found
-     */
-    @Deprecated
-    @NotNull
-    public Object[] readConfig(@NotNull String filename)
-            throws ExtensionException, FileNotFoundException, InvalidDataException {
-
-        System.out.println("Reading configuration file...");
-        if (!filename.endsWith(".psc")) {
-            throw new ExtensionException("File must end with '.psc'");
-        }
-        File file = new File(filename);
-        if (!file.exists()) {
-            throw new FileNotFoundException("Configuration file not found!");
-        }
-        try (Reader fileReader = new FileReader(file);
-             BufferedReader buf = new BufferedReader(fileReader)) {
-            return buf.lines()
-                    .filter(line -> !line.startsWith("#") && line.contains(":"))
-                    .map(line -> line.split(": "))
-                    .filter(vals -> vals.length > 1)
-                    .map(entry -> {
-                        String key = entry[0],
-                                value = entry[1];
-                        switch (key) {
-                            case "dataLimit", "gridSizeLat", "gridSizeLon" -> {
-                                try {
-                                    return Integer.parseInt(value);
-                                } catch (NumberFormatException nfe) {
-                                    throw new InvalidDataException("Couldn't parse String to Int!");
-                                }
-                            }
-                            case "currentMapSource" -> {
-                                return translateSource(value);
-                            }
-                            default -> throw new InvalidDataException("Couldn't read settings data!");
-                        }
-                    })
-                    .toArray(Object[]::new);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        throw new InvalidDataException("Couldn't read settings data!");
+        return new Configuration(props.toArray());
     }
 
     /**
      * translates a {@link String} to {@link TileSource}
      *
      * @param name is the source name
-     * @return {@link TileSource} constant, coonverted from {@link String}
+     * @return {@link TileSource} constant, converted from {@link String}
      * @throws InvalidDataException if the input {@link String} does not match a {@link TileSource} constant
      */
     @NotNull
     public TileSource translateSource(@NotNull String name) {
         return switch (name) {
             case "OSM" -> TreasureMap.OPEN_STREET_MAP;
-            case "Public Transport" -> TreasureMap.TRANSPORT_MAP;
-            case "Bing" -> TreasureMap.BING_MAP;
-            default -> throw new InvalidDataException("Couldn't read map source data!");
+            case "Transport Map" -> TreasureMap.TRANSPORT_MAP;
+            case "Bing Map" -> TreasureMap.BING_MAP;
+            default -> TreasureMap.OPEN_STREET_MAP;
         };
     }
 
@@ -313,12 +227,12 @@ tc:     try (JsonReader reader = new JsonReader(new FileReader(file))) {
      * @return the loaded route as a data point vector
      */
     @NotNull
-    public synchronized MapData loadPlsFile(@NotNull File selected)
+    public MapData loadPlsFile(@NotNull File selected)
             throws InvalidDataException, FileNotFoundException {
 
         if (selected.exists()) {
             try {
-                return this.readMapData(selected);
+                return readMapData(selected);
             } catch (IOException ioe) {
                 throw new InvalidDataException("Map data is invalid, try another file!");
             }
@@ -333,7 +247,7 @@ tc:     try (JsonReader reader = new JsonReader(new FileReader(file))) {
      * @param mapData is the {@link MapData} to be saved
      * @param file is the {@link File} where the map data is saved in (name must end with '.psc')
      */
-    public synchronized void savePlsFile(@NotNull MapData mapData, @NotNull File file)
+    public void savePlsFile(@NotNull MapData mapData, @NotNull File file)
             throws DataNotFoundException, FileAlreadyExistsException {
 
         try {
@@ -345,7 +259,7 @@ tc:     try (JsonReader reader = new JsonReader(new FileReader(file))) {
             if (mapData.data().isEmpty()) {
                 throw new DataNotFoundException("Couldn't save flight route, loaded data is empty!");
             }
-            this.writeMapData(file, mapData);
+            writeMapData(file, mapData);
 
         } catch (FileAlreadyExistsException fae) {
             throw new FileAlreadyExistsException("File already exists");
@@ -361,7 +275,7 @@ tc:     try (JsonReader reader = new JsonReader(new FileReader(file))) {
      * @param logged is the logged text
      */
     // TODO will be replaced with log4j (-> saving logs)
-    public synchronized void saveLogFile(@Nullable String prefixName, @NotNull String logged) {
+    public void saveLogFile(@Nullable String prefixName, @NotNull String logged) {
         try {
             String prefix = (prefixName == null) ? "log_" : prefixName + "_";
             String filename = prefix + Time.nowMillis() + ".log";
@@ -383,8 +297,7 @@ tc:     try (JsonReader reader = new JsonReader(new FileReader(file))) {
      * @throws IOException if an error occurs during the reading process
      */
     @NotNull
-    private synchronized MapData readMapData(@NotNull File file)
-            throws IOException {
+    private MapData readMapData(@NotNull File file) throws IOException {
 
         // replaced default try-finally block with try-with-resource block,
         //  which has automatic resource-management
@@ -406,7 +319,7 @@ tc:     try (JsonReader reader = new JsonReader(new FileReader(file))) {
      * @param mapData is the {@link MapData} to be written
      * @throws IOException if an error occurs during the writing process
      */
-    private synchronized void writeMapData(@NotNull File toWrite, @NotNull MapData mapData)
+    private void writeMapData(@NotNull File toWrite, @NotNull MapData mapData)
             throws IOException {
         try (FileOutputStream fos = new FileOutputStream(toWrite);
              ObjectOutputStream oos = new ObjectOutputStream(fos)) {

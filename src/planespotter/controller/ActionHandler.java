@@ -1,25 +1,36 @@
 package planespotter.controller;
 
+import de.gtec.util.threading.Threading;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
+import planespotter.constants.Paths;
 import planespotter.constants.SearchType;
 import planespotter.constants.ViewType;
+import planespotter.constants.Warning;
 import planespotter.dataclasses.ConnectionSource;
+import planespotter.dataclasses.Frame;
 import planespotter.dataclasses.Hotkey;
 import planespotter.display.StatsView;
 import planespotter.display.UserInterface;
 import planespotter.display.models.*;
 import planespotter.model.ConnectionManager;
 import planespotter.model.Scheduler;
-import planespotter.statistics.Statistics;
+import planespotter.model.Statistics;
+import planespotter.model.nio.client.DataUploader;
+import planespotter.model.nio.client.http.FrameFileReceiver;
 import planespotter.throwables.DataNotFoundException;
+import planespotter.throwables.NoAccessException;
+import planespotter.util.DevTools;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -35,9 +46,9 @@ import static planespotter.constants.ViewType.MAP_LIVE;
  *
  * Singleton class {@link ActionHandler} handles user interactions in the UI and does further action
  * (usually calls the {@link Controller} to do further action)
- * @see planespotter.display.UserInterface
- * @see planespotter.controller.Controller
- * @see planespotter.model.Scheduler
+ * @see UserInterface
+ * @see Controller
+ * @see Scheduler
  */
 // TODO: 15.11.2022 HOTKEY MASK instead of 3 different booleans
 public final class ActionHandler
@@ -66,15 +77,18 @@ public final class ActionHandler
      * private {@link ActionHandler} constructor for main instance
      */
     private ActionHandler() {
-        Runnable shiftSAction, f11Action;
+        Runnable ctrlSAction, f11Action, ctrlPlusAction;
         Map<Hotkey, Runnable> initKeys = new HashMap<>();
 
-        // shift S / default search hotkey
-        shiftSAction = () -> getActionHandler().menuClicked(new JMenu("Search"));
-        initKeys.put(new Hotkey(VK_S, false, true, false), shiftSAction);
+        // Ctrl S / default search hotkey
+        ctrlSAction = () -> getActionHandler().menuClicked(new JMenu("Search"));
+        initKeys.put(new Hotkey(VK_S, false, true, false), ctrlSAction);
         // F11 / default fullscreen hotkey
         f11Action = () -> getActionHandler().menuItemClicked(Controller.getInstance(), new JMenuItem("Fullscreen"));
         initKeys.put(new Hotkey(VK_F11, false, false, false), f11Action);
+        // Ctrl T / open Dev Tools Window
+        ctrlPlusAction = () -> Controller.getInstance().getUI().showDevToolsView();
+        initKeys.put(new Hotkey(VK_PLUS, false, true, false), ctrlPlusAction);
 
         this.hotkeyManager = new HotkeyManager(initKeys);
         this.hashCode = System.identityHashCode(this);
@@ -164,8 +178,9 @@ public final class ActionHandler
                 case MAP_TRACKING -> ctrl.onTrackingClick(clicked);
                 default -> false;
             };
-            if (!hit) {
-                ui.getLayerPane().removeTop();
+            LayerPane lp = ui.getLayerPane();
+            if (!hit && !(lp.getTop() instanceof SimulationAddons)) {
+                lp.removeTop();
             }
         }
     }
@@ -214,6 +229,8 @@ public final class ActionHandler
             ip.setBounds(0, 0, 270, layerPane.getHeight());
             JList<String> infoList = ip.getInfoList();
             infoList.setBounds(10, 10, infoList.getWidth(), infoList.getHeight());
+        } else if (top instanceof SimulationAddons) {
+            top.setBounds(0, 0, layerPane.getWidth(), layerPane.getHeight());
         }
 
     }
@@ -277,8 +294,119 @@ public final class ActionHandler
                     ctrl.handleException(e);
                 }
             }
+            case "Most-Tracked-Flights" -> {
+                try {
+                    StatsView.showMostTracked(ui, new Statistics());
+                } catch (DataNotFoundException e) {
+                    ctrl.handleException(e);
+                }
+            }
             case "Position-HeatMap" -> ctrl.show(ViewType.MAP_HEATMAP);
+            case "Flight-Simulation" -> ctrl.runMapFlightSimulation();
+            case "DevTools" -> ctrl.getUI().showDevToolsView();
+            case "table-separated CSV's" -> Threading.runAsync(() -> {
+                        System.out.println("Writing table-separated CSV's...");
+                        if (DevTools.saveDBAsCSV(DevTools.SEPARATE_TABLES, Paths.DB_CSV)) {
+                            JOptionPane.showMessageDialog(ui.getWindow(), "Database saved in " + Paths.DB_CSV + " (table-separated)");
+                        } else {
+                            ui.showWarning(Warning.UNKNOWN_ERROR, "Error occurred while saving DB to CSV\n" + DevTools.getLastError());
+                        }
+                    }
+            );
+            case "table-combined CSV" -> Threading.runAsync(() -> {
+                        System.out.println("Writing table-combined CSV, this might take a few minutes...");
+                        if (DevTools.saveDBAsCSV(DevTools.COMBINE_TABLES, Paths.DB_CSV)) {
+                            JOptionPane.showMessageDialog(ui.getWindow(), "Database saved in " + Paths.DB_CSV + " (combined-tables)");
+                        } else {
+                            ui.showWarning(Warning.UNKNOWN_ERROR, "Error occurred while saving DB to CSV\n" + DevTools.getLastError());
+                        }
+                    }
+            );
+            case "Upload to Server (BETA)" -> {
+                onOpenUploadPane(ctrl, ui);
+            }
+            case "CSV from data Server" -> {
+                // TODO: 25.03.2023 download frame csv
+                JFileChooser chooser = ui.showFileSaver(ui.getWindow(), ".csv");
+                File file = chooser.getSelectedFile();
+                String filename = file.getName();
+                if (!file.isDirectory()) {
+                    file = file.getParentFile();
+                }
+                Path path = file.toPath();
+                FrameFileReceiver sender = new FrameFileReceiver();
+                String host = ctrl.getRestUploader().getHost();
+                String uri = host + "/data/api/download/file/csv/filename=" + filename;
+                try {
+                    sender.getFile(uri, path, 20);
+                } catch (IOException e) {
+                    ui.showWarning(Warning.UNKNOWN_ERROR, "Could not download file! \n" + e.getMessage());
+                }
+            }
         }
+    }
+
+    private void onOpenUploadPane(@NotNull Controller ctrl, UserInterface ui) {
+        UploadPane up = ui.getUploadPane();
+        if (up.getOnEnter() == null) {
+            up.setOnEnter(e -> {
+                if (e.getKeyCode() != VK_ENTER) {
+                    return;
+                }
+                JTextField src = (JTextField) e.getSource();
+                String host = src.getText();
+                if (host == null || host.isBlank()) {
+                    return;
+                }
+                try {
+                    ctrl.setUploadConnection(host);
+                } catch (NoAccessException ex) {
+                    ui.showWarning(Warning.URL_NOT_REACHABLE, "Check your upload host!");
+                }
+            });
+        }
+        if (up.getOnUpload() == null) {
+            DataUploader<Frame> uploader = ctrl.getRestUploader();
+            up.setOnUpload(e -> {
+                if (up.isUpload()) {
+                    up.setUpload(false);
+                    up.setBtUploadTxt("Start Upload");
+                    ctrl.setUploadEnabled(false);
+                    up.stopUpdating();
+                    uploader.stop();
+                } else {
+                    String host = up.getHost();
+                    if (host == null || host.isBlank()) {
+                        ui.showWarning(Warning.INVALID_DATA, "Make sure the 'Host' field is filled.");
+                        return;
+                    }
+                    try {
+                        ctrl.setUploadConnection(host);
+                    } catch (NoAccessException ex) {
+                        ui.showWarning(Warning.URL_NOT_REACHABLE, "Check your upload host!");
+                        return;
+                    }
+                    up.setUpload(true);
+                    up.setBtUploadTxt("Stop Upload");
+                    ctrl.setUploadEnabled(true);
+                    up.startUpdating(uploader);
+                    uploader.start();
+                }
+            });
+        }
+        if (up.getOnDoDBWrite() == null) {
+            up.setOnDoDBWrite(e -> {
+                if (ctrl.isLocalDBWriteEnabled()) {
+                    ctrl.setLocalDBWriteEnabled(false);
+                    up.setBtLocalTxt("Enable local DB-Write");
+                } else {
+                    ctrl.setLocalDBWriteEnabled(true);
+                    up.setBtLocalTxt("Disable local DB-Write");
+                }
+                up.repaint();
+            });
+        }
+        up.setVisible(true);
     }
 
     /**

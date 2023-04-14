@@ -2,6 +2,9 @@ package planespotter.util.math;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
+import planespotter.throwables.InvalidArrayException;
+import planespotter.throwables.OutOfRangeException;
+import planespotter.util.Bytes;
 import planespotter.util.Utilities;
 
 import java.math.BigDecimal;
@@ -119,4 +122,73 @@ public abstract class MathUtils {
     public static @Range(from = 0, to = 1) byte toBinary(boolean bool) {
         return (byte) (bool ? 0 : 1);
     }
+
+    public static byte[] arrayMean(byte[][] arrays) {
+        int len = arrays.length;
+        if (len == 0) {
+            throw new InvalidArrayException("Too few arrays given, must be at least 2");
+        }
+        if (len == 1) {
+            return arrays[0];
+        }
+        int arrayLen = arrays[0].length;
+        checkArraySizes(arrays, len, arrayLen);
+
+        byte[] result = new byte[arrayLen];
+        for (int i = 0, mean; i < arrayLen; i++) {
+            mean = 0;
+            for (byte[] bts : arrays) {
+                mean += Bytes.toUnsignedInt(bts[i]);
+            }
+            result[i] = Bytes.fromUnsignedInt(mean / len);
+        }
+        return result;
+    }
+
+    public static byte[] arrayMax(byte[][] arrays) {
+        int len = arrays.length;
+        if (len < 2) {
+            throw new InvalidArrayException("Too few arrays given, must be at least 2");
+        }
+        int arrayLen = arrays[0].length;
+        checkArraySizes(arrays, len, arrayLen);
+
+        byte[] result = new byte[arrayLen];
+        for (int i = 0; i < arrayLen; i++) {
+            byte max = -128;
+            for (int j = 0; j < len; j++) {
+                max = (byte) Math.max(max, arrays[j][i]);
+            }
+            result[i] = max;
+        }
+        return result;
+    }
+
+    public static byte[] arrayBinOr(byte[][] arrays) {
+        int len = arrays.length;
+        if (len < 2) {
+            throw new InvalidArrayException("Too few arrays given, must be at least 2");
+        }
+        int arrayLen = arrays[0].length;
+        checkArraySizes(arrays, len, arrayLen);
+
+        byte[] result = new byte[arrayLen];
+        for (int i = 0, or; i < arrayLen; i++) {
+            or = 0;
+            for (int j = 0; j < len; j++) {
+                or |= Bytes.toUnsignedInt(arrays[j][i]);
+            }
+            result[i] = Bytes.fromUnsignedInt(or);
+        }
+        return result;
+    }
+
+    private static void checkArraySizes(byte[][] arrays, int len, int arrayLen) {
+        for (int i = 1; i < len; i++) {
+            if (arrayLen != arrays[i].length) {
+                throw new OutOfRangeException("Array sizes do not match");
+            }
+        }
+    }
+
 }

@@ -1,7 +1,5 @@
 package planespotter.dataclasses;
 
-import java.io.Serializable;
-
 /**
  * @name Frame
  * @author jml04
@@ -13,6 +11,9 @@ import java.io.Serializable;
  * have all default frame fields e.g. latitude, longitude ,etc...
  */
 public abstract class Frame implements DataFrame {
+
+    // size of a Frame in bytes
+    public static final int SIZE = 200;
 
     // default Frame fields
     private final double lat;
@@ -43,6 +44,13 @@ public abstract class Frame implements DataFrame {
         this.squawk = squawk;
         this.timestamp = timestamp;
     }
+
+    /**
+     *
+     *
+     * @param icao
+     */
+    public abstract void setIcaoAddr(String icao);
 
     /**
      * abstract getter for ICAO address,

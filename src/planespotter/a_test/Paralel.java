@@ -1,7 +1,7 @@
 package planespotter.a_test;
 
 import planespotter.constants.Areas;
-import planespotter.model.nio.DataLoader;
+import planespotter.model.nio.DataProcessor;
 import planespotter.model.nio.Fr24Supplier;
 import planespotter.throwables.MalformedAreaException;
 import planespotter.unused.KeeperOfTheArchivesSenior;
@@ -22,7 +22,7 @@ public class Paralel {
 	}
 
 	public void startThreads() throws InterruptedException, MalformedAreaException {
-		DataLoader loader = new DataLoader();
+		DataProcessor loader = new DataProcessor();
 
 		String[] areay= Areas.EASTERN_FRONT;
 		for(int i=0; i < areay.length; i++) {
@@ -40,7 +40,7 @@ public class Paralel {
 	 * @throws InterruptedException
 	 */
 	public void runThreads() throws InterruptedException, MalformedAreaException {
-		DataLoader dataLoader = new DataLoader();
+		DataProcessor dataProcessor = new DataProcessor();
 		ThreadPoolExecutor executor =  (ThreadPoolExecutor) Executors.newFixedThreadPool(poolsize);
 		exe.setKeepAliveTime(20, TimeUnit.SECONDS);
 		
@@ -48,7 +48,7 @@ public class Paralel {
 		String[] resultList = Areas.getAllAreas();
 	    int i = 0;
 	    for (String s : resultList) {
-			executor.execute(new Fr24Supplier(s, dataLoader));
+			executor.execute(new Fr24Supplier(s, dataProcessor));
 			i += 1;
 	    }
 

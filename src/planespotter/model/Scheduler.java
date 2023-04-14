@@ -6,7 +6,6 @@ import planespotter.controller.Controller;
 import planespotter.throwables.InvalidDataException;
 import planespotter.throwables.OutOfRangeException;
 
-import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -20,10 +19,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * It is able to execute tasks once and in period,
  * hold it static if you need only one instance, else use multiple instances
  * which can be started and stopped parallel.
- * @see planespotter.controller.Controller
- * @see planespotter.model.Scheduler.ThreadMaker
- * @see java.util.concurrent.ThreadPoolExecutor
- * @see java.util.concurrent.ScheduledExecutorService
+ * @see Controller
+ * @see ThreadMaker
+ * @see ThreadPoolExecutor
+ * @see ScheduledExecutorService
  */
 public class Scheduler {
 

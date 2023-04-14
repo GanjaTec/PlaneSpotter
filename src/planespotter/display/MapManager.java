@@ -6,18 +6,16 @@ import org.openstreetmap.gui.jmapviewer.*;
 import org.openstreetmap.gui.jmapviewer.interfaces.*;
 import planespotter.controller.ActionHandler;
 import planespotter.dataclasses.*;
+import planespotter.display.models.SimulationAddons;
 import planespotter.util.Utilities;
 import planespotter.util.math.MathUtils;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-
-import static planespotter.constants.DefaultColor.DEFAULT_BORDER_COLOR;
 
 /**
  * @name MapManager
@@ -30,13 +28,16 @@ import static planespotter.constants.DefaultColor.DEFAULT_BORDER_COLOR;
 public final class MapManager {
 
     // reference to the UserInterface
-    @NotNull private final UserInterface ui;
+    private final UserInterface ui;
 
     // map viewer
-    @NotNull private final TreasureMap mapViewer;
+    private final TreasureMap mapViewer;
 
     // current selected (clicked) ICAO
     @Nullable private String selectedICAO;
+
+    // ui addons for flight simulation
+    @Nullable private SimulationAddons simAddons;
 
     /**
      * constructor for LayerPane without parent JPanel
@@ -50,6 +51,7 @@ public final class MapManager {
         this.mapViewer = defaultMapViewer(ui.getLayerPane(), defaultMapSource);
         this.mapViewer.addMouseListener(listener);
         this.selectedICAO = null;
+        this.simAddons = null;
     }
 
     public void updateMap(@Nullable Vector<Flight> flights, @Nullable ReceiverFrame receiverData) {
@@ -96,7 +98,7 @@ public final class MapManager {
 
         mapController.setMovementMouseButton(1);
         viewer.setBounds(parent.getBounds());
-        viewer.setBorder(BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR.get()));
+        //viewer.setBorder(BorderFactory.createLineBorder(DEFAULT_BORDER_COLOR.get()));
         viewer.setZoomControlsVisible(false);
         viewer.setTileSource(mapType);
         viewer.setVisible(true);
@@ -199,7 +201,7 @@ public final class MapManager {
         Position dpPos;
         DataPoint lastdp = null;
         PlaneMarker newMarker;
-        Coordinate coord1, coord2;
+        Position coord1, coord2;
         MapPolygonImpl line;
         Color markerColor;
         List<MapPolygon> polys = new ArrayList<>(size);
@@ -223,10 +225,9 @@ public final class MapManager {
                         && dp.timestamp() >= lastdp.timestamp()
                         && noLonJump(lastdp, dp)) {
 
-                    coord1 = dpPos.toCoordinate();
-                    coord2 = lastdp.pos().toCoordinate();
-                    line = new MapPolygonImpl(coord1, coord2, coord1); // we need a line, so we use one point twice
-                    line.setColor(markerColor);
+                    coord1 = dpPos;
+                    coord2 = lastdp.pos();
+                    line = new MapLine(coord1, coord2, markerColor); // we need a line, so we use one point twice
                     polys.add(line);
                 }
             }
@@ -245,6 +246,34 @@ public final class MapManager {
         if (dataPoints.size() == 1 && flight != null) {
             ui.showInfo(flight, dataPoints.get(0));
         }
+    }
+
+    public void createSimulationMap(@NotNull Stack<DataPoint> data) {
+        if (data.isEmpty()) {
+            return;
+        }
+        Position pos;
+        DataPoint dp = data.pop();
+        pos = dp.pos();
+        List<MapMarker> markers = new ArrayList<>();
+        List<MapPolygon> polys  = new ArrayList<>();
+
+        PlaneMarker marker = PlaneMarker.fromPosition(dp.pos(), dp.heading(), true, false);
+        markers.add(marker);
+
+        while (!data.isEmpty()) {
+            dp = data.pop();
+            Color color = Utilities.colorByAltitude(dp.altitude());
+
+            marker = PlaneMarker.fromDataPoint(dp, color, false, false);
+            markers.add(marker);
+
+            polys.add(new MapLine(pos, dp.pos(), color));
+            pos = dp.pos();
+        }
+        clearMap();
+        mapViewer.setMapMarkerList(markers);
+        mapViewer.setMapPolygonList(polys);
     }
 
     public void createSearchMap(Vector<DataPoint> dataPoints, boolean showAllPoints) {
@@ -314,6 +343,15 @@ public final class MapManager {
      */
     public void setSelectedICAO(@Nullable String selectedICAO) {
         this.selectedICAO = selectedICAO;
+    }
+
+    @Nullable
+    public SimulationAddons getSimulationAddons() {
+        return simAddons;
+    }
+
+    public void setSimulationAddons(@Nullable SimulationAddons simAddons) {
+        this.simAddons = simAddons;
     }
 
     /**

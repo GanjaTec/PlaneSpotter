@@ -26,7 +26,7 @@ import static planespotter.constants.DefaultColor.DEFAULT_MAP_ICON_COLOR;
  * {@link Flight}s, {@link DataPoint}s or {@link Position}s into {@link PlaneMarker}s
  * @see planespotter.display.TreasureMap
  * @see planespotter.display.MapManager
- * @see org.openstreetmap.gui.jmapviewer.MapMarkerDot
+ * @see MapMarkerDot
  */
 public class PlaneMarker extends MapMarkerDot implements MapMarker {
 
